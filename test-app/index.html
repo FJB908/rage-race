@@ -1,0 +1,334 @@
+inder<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- The game has its own fixed colours. "only light" is the official opt-out: the browser must not force its
+     own dark mode onto the page (which was dimming the bright colours: teal to dark green, gold to brown). -->
+<meta name="color-scheme" content="only light">
+<meta name="supported-color-schemes" content="light">
+<meta name="theme-color" content="#0d1017">
+<meta name="darkreader-lock">
+<title>RAGE RACE</title>
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<!-- START / MAIN MENU -->
+<div id="s-start" class="screen menu">
+    <header class="m-top">
+        <button class="m-avatar" type="button" data-go="profile" aria-label="Open profile"><i></i><i></i><span class="m-lvl" id="m-lvl">1</span></button>
+        <div class="m-who"><div class="m-name" id="m-name">Player</div><div class="m-xpbar"><div id="m-xpfill"></div></div></div>
+        <button class="m-coins" type="button" data-go="shop" aria-label="Coins, open the shop"><span class="coin-dot"></span><span id="wallet-num">0</span><span class="m-plus">+</span></button>
+        <button class="m-gear" type="button" id="btn-settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
+    </header>
+
+    <div class="m-body" id="m-body">
+        <!-- HOME -->
+        <section class="m-tab on" data-tab="home">
+            <button class="m-strip" type="button" data-go="shop">
+                <span class="m-strip-l"><span class="m-kick gold">NEXT UNLOCK</span><span class="m-strip-t" id="m-next">Skins in the shop</span></span>
+                <span class="m-strip-sw" id="m-next-sw"></span>
+            </button>
+            <div class="m-stage">
+                <div class="m-halo" id="m-halo"></div>
+                <canvas class="m-hero-c" id="m-hero" width="360" height="360"></canvas>
+                <div class="m-shadow"></div>
+            </div>
+            <button class="m-row" type="button" data-go="play"><span><span class="m-kick">MODE</span><span class="m-row-t" id="m-mode">Race · Quick match</span></span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button class="m-play" type="button" id="btn-home-play">PLAY</button>
+            <button class="m-pass-entry" type="button" id="btn-pass-open">
+                <span class="m-pass-art" aria-hidden="true">01</span>
+                <span class="m-pass-copy"><small>FREE SEASON PASS</small><strong>Season 01 · Afterglow</strong><span id="m-pass-progress">0 / 3 rewards claimed</span><i class="m-pass-meter"><b id="m-pass-meter-fill"></b></i></span>
+                <span class="m-pass-arrow" aria-hidden="true">›</span>
+            </button>
+            <div class="m-two">
+                <button class="m-tile violet" type="button" data-go="friends"><b>Party</b><span>Race with friends</span></button>
+                <button class="m-tile gold" type="button" id="m-tile-parkour"><b>Parkour</b><span id="m-tile-pk">Levels &amp; the Tower</span></button>
+            </div>
+        </section>
+
+        <!-- PLAY -->
+        <section class="m-tab" data-tab="play">
+            <h1 class="m-h1">Play</h1><p class="m-sub">Pick how you want to race.</p>
+            <h2 class="m-h2">RACE</h2>
+            <button class="m-card teal" type="button" id="btn-find"><span><b>Quick match</b><span>4 players · first to the top</span></span><em>Play</em></button>
+            <button class="m-card violet" type="button" data-go="friends"><span><b>Party</b><span>Private room with friends</span></span><em>Soon</em></button>
+            <h2 class="m-h2">SURVIVAL</h2>
+            <button class="m-card red" type="button" id="btn-escape"><span><b>Escape</b><span>4 players · outrun the rising void</span></span><em id="start-best"></em></button>
+            <h2 class="m-h2">SOLO</h2>
+            <button class="m-card gold stack" type="button" id="btn-parkour">
+                <span class="m-card-top"><b>Parkour</b><em id="start-pk"></em></span>
+                <span class="m-mini3">
+                    <span><small>Dimension I</small><strong id="m-d1">★ 0/30</strong></span>
+                    <span id="m-d2box"><small>Dimension II</small><strong id="m-d2">28★</strong></span>
+                    <span><small>The Tower</small><strong id="m-tower">--</strong></span>
+                </span>
+            </button>
+            <h2 class="m-h2">COMING LATER</h2>
+            <div class="m-two">
+                <div class="m-card locked"><span><b>Ranked</b><span>Seasonal ladder</span></span></div>
+                <div class="m-card locked"><span><b>Events</b><span>Limited-time rules</span></span></div>
+            </div>
+        </section>
+
+        <!-- SHOP -->
+        <section class="m-tab" data-tab="shop">
+            <h1 class="m-h1">Shop</h1><p class="m-sub">Cosmetics, trails, and season supplies.</p>
+            <div class="m-pills">
+                <button class="m-pill on" type="button" data-cat="skin">Skins</button>
+                <button class="m-pill" type="button" data-cat="hat">Headwear</button>
+                <button class="m-pill" type="button" data-cat="face">Face</button>
+                <button class="m-pill" type="button" data-cat="trail">Trails</button>
+                <button class="m-pill" type="button" data-cat="resources">Resources</button>
+            </div>
+            <div class="m-grid" id="m-skins"></div>
+            <div class="m-resource-shop" id="m-resource-shop" hidden>
+                <div class="resource-balance"><span>AVAILABLE</span><strong><i class="coin-dot"></i><b id="resource-coins">0</b> COINS</strong><strong><b id="resource-pass">0</b> PASS POINTS</strong></div>
+                <div class="resource-grid" id="resource-grid"></div>
+                <section class="pass-track" aria-labelledby="pass-track-title">
+                    <div class="pass-track-head"><strong id="pass-track-title">SEASON 01 REWARDS</strong><span>Redeem Pass Points</span></div>
+                    <div class="pass-reward-grid" id="pass-reward-grid"></div>
+                </section>
+                <button class="resource-locked" type="button" disabled>REWARDED VIDEO · ANDROID BUILD ONLY</button>
+                <button class="resource-locked" type="button" disabled>PLAY STORE PACKS · BILLING NOT CONNECTED</button>
+                <p class="m-note">Video rewards and real-money purchases stay unavailable until their native services are connected.</p>
+            </div>
+            <p class="m-note">Earn Coins and Pass Points from reward drops. Redeem Pass Points for Season 01 cosmetics.</p>
+        </section>
+
+        <!-- FRIENDS -->
+        <section class="m-tab" data-tab="friends">
+            <h1 class="m-h1">Friends</h1>
+            <div class="m-party">
+                <div class="m-party-h"><b>Your party</b><span>1 / 4</span></div>
+                <div class="m-slots">
+                    <div class="m-slot you"><span class="m-slot-av" id="m-party-av"><i></i><i></i></span><strong>You</strong><small>HOST</small></div>
+                    <div class="m-slot empty">Invite</div><div class="m-slot empty">Invite</div><div class="m-slot empty">Invite</div>
+                </div>
+                <div class="m-code"><span>Room code</span><strong>· · · · ·</strong></div>
+                <button class="m-party-go" type="button" disabled>PARTY RACES COMING SOON</button>
+            </div>
+            <div class="m-empty">
+                <b>Online play is on its way</b>
+                <span>Party rooms and a friends list arrive with online races. Until then, jump into a Quick match.</span>
+                <button class="m-link" type="button" id="m-friends-race">Play a Quick match</button>
+            </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section class="m-tab" data-tab="profile">
+            <div class="m-pcard">
+                <canvas class="m-hero-c sm" id="m-hero2" width="200" height="200"></canvas>
+                <div class="m-pinfo">
+                    <label class="m-namelbl" for="m-name-input">Name</label>
+                    <input class="m-nameinp" id="m-name-input" maxlength="16" autocomplete="off" spellcheck="false">
+                    <span class="m-plvl" id="m-plvl">Level 1 · 0 / 120 XP</span>
+                    <div class="m-xpbar"><div id="m-xpfill2"></div></div>
+                </div>
+            </div>
+            <h2 class="m-h2">EQUIPPED</h2>
+            <div class="m-two">
+                <button class="m-eq" type="button" data-shop="skin"><i id="m-eq-skin"></i><span><small>Skin</small><strong id="m-eq-skin-n">Classic</strong></span></button>
+                <button class="m-eq" type="button" data-shop="hat"><i id="m-eq-hat"></i><span><small>Headwear</small><strong id="m-eq-hat-n">None</strong></span></button>
+                <button class="m-eq" type="button" data-shop="face"><i id="m-eq-face"></i><span><small>Face</small><strong id="m-eq-face-n">None</strong></span></button>
+                <button class="m-eq" type="button" data-shop="trail"><i id="m-eq-trail"></i><span><small>Trail</small><strong id="m-eq-trail-n">None</strong></span></button>
+            </div>
+            <h2 class="m-h2">STATS</h2>
+            <div class="m-three">
+                <div class="m-stat"><small>Races</small><strong id="m-s-races">0</strong></div>
+                <div class="m-stat"><small>Wins</small><strong id="m-s-wins">0</strong></div>
+                <div class="m-stat"><small>Win rate</small><strong id="m-s-rate">--</strong></div>
+                <div class="m-stat"><small>Escape best</small><strong id="m-s-esc">--</strong></div>
+                <div class="m-stat"><small>Parkour</small><strong id="m-s-pk">★ 0</strong></div>
+                <div class="m-stat"><small>Tower best</small><strong id="m-s-tower">--</strong></div>
+                <div class="m-stat"><small>Pass points</small><strong id="m-s-pass">0</strong></div>
+            </div>
+        </section>
+    </div>
+
+    <nav class="m-nav" aria-label="Main">
+        <button type="button" class="on" data-go="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Home</span></button>
+        <button type="button" data-go="play"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Play</span></button>
+        <button type="button" data-go="shop"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Shop</span></button>
+        <button type="button" data-go="friends"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3 3 0 0 1 0 5.6"/><path d="M18 14.3c1.8.8 3 2.7 3 5.7"/></svg><span>Friends</span></button>
+        <button type="button" data-go="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4.1 3.4-7 7.5-7s7.5 2.9 7.5 7"/></svg><span>Profile</span></button>
+    </nav>
+</div>
+
+<!-- LOBBY -->
+<div id="s-lobby" class="screen" style="display:none;opacity:0">
+    <div class="searching">Race starting…</div>
+    <div class="panel" id="lobby-panel"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="s-results" class="screen" style="display:none;opacity:0">
+    <h1 class="brand" style="font-size:clamp(38px,11vw,60px)">FINISH</h1>
+    <p class="tag" id="result-sub" style="margin:10px 0 22px"></p>
+    <div class="board" id="board"></div>
+    <div class="loot-drop" id="loot-race"></div>
+    <button class="btn" id="btn-again">RACE AGAIN</button>
+    <button class="btn ghost" id="btn-results-menu" style="margin-top:12px">MAIN MENU</button>
+</div>
+
+<!-- ESCAPE GAME OVER -->
+<div id="s-over" class="screen" style="display:none;opacity:0;background:radial-gradient(120% 80% at 50% 110%, rgba(255,84,112,.28), transparent 60%), rgba(13,16,23,.9)">
+    <div class="over-kicker">CAUGHT BY THE VOID</div>
+    <div class="over-score"><span id="over-m">0</span></div>
+    <div class="over-best" id="over-best">NEW BEST</div>
+    <div class="over-stats">
+        <div class="stat"><span class="k">Height</span><span class="v" id="over-height">0 m</span></div>
+        <div class="stat"><span class="k">Coins</span><span class="v" id="over-coins">+0</span></div>
+        <div class="stat"><span class="k">Top combo</span><span class="v" id="over-combo">×1</span></div>
+    </div>
+    <div class="board" id="esc-board"></div>
+    <div class="loot-drop" id="loot-escape"></div>
+    <button class="btn" id="btn-esc-again">TRY AGAIN</button>
+    <button class="btn ghost" id="btn-esc-menu" style="margin-top:12px">MENU</button>
+</div>
+
+<!-- FREE SEASON PASS -->
+<div id="s-pass" class="screen pass-screen" style="display:none;opacity:0">
+    <section class="pass-screen-shell">
+        <header class="pass-screen-header">
+            <button class="pass-back" type="button" id="btn-pass-back" aria-label="Back to home">‹</button>
+            <div><span class="pass-eyebrow">FREE SEASON PASS</span><h1>AFTERGLOW</h1></div>
+            <div class="pass-screen-balance"><span>YOUR POINTS</span><strong id="pass-screen-balance">0</strong></div>
+        </header>
+        <div class="pass-progress-panel">
+            <div class="pass-progress-top"><strong id="pass-screen-claimed">0 / 3 REWARDS CLAIMED</strong><span id="pass-screen-next">Earn Pass Points from reward drops</span></div>
+            <div class="pass-progress-track"><i id="pass-screen-meter"></i></div>
+        </div>
+        <div class="pass-screen-rewards" id="pass-screen-rewards"></div>
+    </section>
+</div>
+
+<!-- LEVELS: select -->
+<div id="s-levels" class="screen" style="display:none;opacity:0">
+    <div class="over-kicker" id="lv-hub-title" style="color:var(--violet)">DIMENSION I</div>
+    <div class="lv-total"><span class="star on">★</span><span id="lv-total">0</span><small id="lv-total-max">/30</small></div>
+    <div class="dim-tabs" id="dim-tabs"></div>
+    <div class="lv-grid" id="lv-grid"></div>
+    <button class="tower-tile" id="btn-tower">
+        <span class="tt-title">THE TOWER</span>
+        <span class="tt-sub">1000 m · one slip can cost everything</span>
+        <span class="tt-meta" id="tower-meta"></span>
+    </button>
+    <button class="btn ghost" id="btn-lv-back">BACK</button>
+</div>
+
+<!-- LEVELS: complete -->
+<div id="s-lvdone" class="screen" style="display:none;opacity:0;background:radial-gradient(120% 80% at 50% -10%, rgba(255,207,63,.20), transparent 60%), rgba(13,16,23,.9)">
+    <div class="over-kicker" id="lvd-kicker" style="color:var(--gold)">LEVEL 1</div>
+    <div class="stars" id="lvd-stars"></div>
+    <div class="over-score" style="font-size:clamp(56px,18vw,88px)"><span id="lvd-time">0:00.0</span></div>
+    <div class="over-best" id="lvd-best">NEW BEST</div>
+    <div class="lvd-targets" id="lvd-targets"></div>
+    <div class="over-stats"><div class="stat"><span class="k">Falls</span><span class="v" id="lvd-falls">0</span></div></div>
+    <div class="loot-drop" id="loot-level"></div>
+    <button class="btn" id="btn-lvd-next">NEXT LEVEL</button>
+    <button class="btn ghost" id="btn-lvd-retry" style="margin-top:12px">RETRY</button>
+    <button class="btn ghost" id="btn-lvd-levels" style="margin-top:12px">LEVELS</button>
+</div>
+
+<!-- PARKOUR: continue a saved climb -->
+<div id="s-pk" class="screen" style="display:none;opacity:0">
+    <div class="over-kicker" style="color:var(--violet)">PARKOUR</div>
+    <div class="over-score"><span id="pk-save-m">0</span><small>m</small></div>
+    <p class="tag" id="pk-save-sub" style="margin:8px 0 26px"></p>
+    <button class="btn" id="btn-pk-continue">CONTINUE</button>
+    <button class="btn ghost" id="btn-pk-new" style="margin-top:12px">NEW CLIMB</button>
+    <button class="btn ghost" id="btn-pk-back" style="margin-top:12px">BACK</button>
+</div>
+
+<!-- PARKOUR: summit -->
+<div id="s-summit" class="screen" style="display:none;opacity:0;background:radial-gradient(120% 80% at 50% -10%, rgba(255,207,63,.25), transparent 60%), rgba(13,16,23,.9)">
+    <div class="over-kicker" style="color:var(--gold)">SUMMIT REACHED</div>
+    <div class="over-score"><span id="sum-time">0:00</span></div>
+    <div class="over-best" id="sum-best">NEW RECORD</div>
+    <div class="over-stats">
+        <div class="stat"><span class="k">Height</span><span class="v" id="sum-height">1000 m</span></div>
+        <div class="stat"><span class="k">Falls</span><span class="v" id="sum-falls">0</span></div>
+    </div>
+    <div class="loot-drop" id="loot-summit"></div>
+    <button class="btn" id="btn-sum-again">CLIMB AGAIN</button>
+    <button class="btn ghost" id="btn-sum-menu" style="margin-top:12px">MENU</button>
+</div>
+
+<!-- PAUSE / PROMPT -->
+<!-- SETTINGS -->
+<div id="s-settings" class="screen" style="display:none;opacity:0;background:rgba(13,16,23,.94)">
+    <div class="set-panel">
+        <h1 class="set-title">Settings</h1>
+        <div class="set-group">
+            <div class="set-row">
+                <label for="set-music-on">Music</label>
+                <button class="set-toggle" id="set-music-on" role="switch" type="button"><span></span></button>
+            </div>
+            <div class="set-row slider">
+                <label for="set-music-vol">Music volume</label>
+                <input id="set-music-vol" type="range" min="0" max="100" step="1">
+            </div>
+        </div>
+        <div class="set-group">
+            <div class="set-row">
+                <label for="set-sfx-on">Sound effects</label>
+                <button class="set-toggle" id="set-sfx-on" role="switch" type="button"><span></span></button>
+            </div>
+            <div class="set-row slider">
+                <label for="set-sfx-vol">Effects volume</label>
+                <input id="set-sfx-vol" type="range" min="0" max="100" step="1">
+            </div>
+        </div>
+        <div class="set-group">
+            <button class="set-line" type="button" id="set-test">Play a test sound</button>
+            <button class="set-line danger" type="button" id="set-reset">Reset all progress</button>
+        </div>
+        <p class="set-ver">Rage Race · v1.0</p>
+        <button class="btn" id="set-close" style="margin-top:6px">Done</button>
+    </div>
+</div>
+
+<div id="s-pause" class="screen" style="display:none;opacity:0;background:rgba(13,16,23,.88)">
+    <h1 class="brand" id="pause-title" style="font-size:clamp(34px,10vw,54px)">PAUSED</h1>
+    <p class="tag" id="pause-sub" style="margin:10px 0 24px"></p>
+    <div class="pause-btns" id="pause-btns"></div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+    <div class="hud-top">
+        <div class="place p1" id="pos-pill"><span id="pos-num">1</span><span id="pos-suf">st</span></div>
+        <div class="pos-pill esc-pill"><span id="esc-score">0</span></div>
+        <div class="pos-pill esc-pill coin" id="esc-coin-pill"><span class="coin-dot"></span><span id="esc-coins">0</span></div>
+        <div class="pos-pill lv-pill"><small>LV</small><span id="lv-num-hud">1</span></div>
+        <div class="pos-pill lv-pill time"><span id="lv-time">0:00.0</span></div>
+        <div class="pos-pill lv-pill falls" id="lv-falls-pill"><span class="fall-ico">↓</span><span id="lv-falls">0</span></div>
+        <div class="pos-pill pk-pill"><span id="pk-height">0</span><small>m</small></div>
+        <div class="pos-pill pk-pill falls" id="pk-falls-pill"><span class="fall-ico">↓</span><span id="pk-falls">0</span></div>
+        <div class="pos-pill pk-pill time"><span id="pk-time">0:00</span></div>
+        <div class="pos-pill esc-pill combo" id="esc-combo" style="display:none"><span id="esc-combo-x">×1</span><span class="combo-bar"><span id="esc-combo-fill"></span></span></div>
+        <div class="hint-bubble" id="hint">Drag & release ↑</div>
+        <button class="hud-btn" id="btn-mute" aria-label="Sound"></button>
+        <button class="hud-btn" id="btn-pause" aria-label="Pause"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.6"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.6"/></svg></button>
+    </div>
+    <div id="falltoast">FELL!</div>
+    <div id="spectate-bar" style="display:none">
+        <button id="spectate-prev" type="button" aria-label="Previous player">◄</button>
+        <div class="spectate-mid"><span class="spectate-eye">SPECTATING</span><span id="spectate-name">—</span></div>
+        <button id="spectate-next" type="button" aria-label="Next player">►</button>
+    </div>
+    <button id="item-slot" class="item-slot empty" aria-label="Use item">
+        <span class="item-icon" id="item-icon"></span>
+        <span class="item-badge" id="item-badge" style="display:none"></span>
+        <span class="item-bar"><span id="item-bar-fill"></span></span>
+    </button>
+    <div id="countdown">3</div>
+</div>
+
+<script src="js/game.js"></script>
+</body>
+</html>
