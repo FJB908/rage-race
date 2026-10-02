@@ -2639,6 +2639,34 @@ function drawMinimap() {
 /* ---------- Loop ---------- */
 let simAcc = 0, hitStop = 0, drewOnce = false;
 const SNAP_HZ = [30, 60, 90, 120, 144];
+/* ---------- Render interpolation ---------- */
+let prevCam = 0;
+function snapshotPrev(){
+    for (const p of players){ p._px = p.x; p._py = p.y; }
+    for (const pl of platforms){ if (pl.type === 'moving') pl._px = pl.x; }
+    prevCam = cameraY;
+}
+function applyInterp(a){
+    const saved = [];
+    for (const p of players){
+        if (p._px === undefined || Math.abs(p.x - p._px) > 150 || Math.abs(p.y - p._py) > 150) continue;   // teleport/respawn: no blend
+        saved.push(p, p.x, p.y);
+        p.x = p._px + (p.x - p._px) * a; p.y = p._py + (p.y - p._py) * a;
+    }
+    const sp = [];
+    for (const pl of platforms){
+        if (pl.type !== 'moving' || pl._px === undefined || Math.abs(pl.x - pl._px) > 150) continue;
+        sp.push(pl, pl.x); pl.x = pl._px + (pl.x - pl._px) * a;
+    }
+    const realCam = cameraY;
+    if (Math.abs(cameraY - prevCam) < 150) cameraY = prevCam + (cameraY - prevCam) * a;
+    return () => {
+        for (let i = 0; i < saved.length; i += 3){ saved[i].x = saved[i+1]; saved[i].y = saved[i+2]; }
+        for (let i = 0; i < sp.length; i += 2) sp[i].x = sp[i+1];
+        cameraY = realCam;
+    };
+}
+
 let qSlow = 0, qFast = 0;
 function adaptQuality(rawDt){
     if (rawDt > 0.1) return;                          // tab switch / hitch, ignore
@@ -2651,18 +2679,23 @@ function adaptQuality(rawDt){
 function loop(t){
     let dt=(t-last)/1000; last=t;
     adaptQuality(dt);
-    if (dt>0.1) dt=0.1;              // avoid spiral on lag
+    if (dt>0.25) dt=0.25;            // tab switch / long hitch: don't try to catch up more than this
     for (const hz of SNAP_HZ){ const iv = 1/hz; if (Math.abs(dt - iv) < iv*0.06){ dt = iv; break; } }
     if (hitStop > 0){ hitStop -= dt; simAcc += dt * 0.2; }
     else simAcc += dt;
     let steps = 0;
-    while (simAcc >= SIM_DT - 1e-6 && steps < 6) { update(SIM_DT); simAcc -= SIM_DT; steps++; }
+    while (simAcc >= SIM_DT - 1e-6 && steps < 10) { snapshotPrev(); update(SIM_DT); simAcc -= SIM_DT; steps++; }
     if (simAcc < 0) simAcc = 0;
-    if (steps === 6) simAcc = 0;
-    
-    draw(); // Altijd tekenen voor vloeiende 120Hz/144Hz animaties
+    if (steps === 10) simAcc %= SIM_DT;   // only throw away whole steps we truly can't afford
+
+    // The simulation runs at a fixed 60 Hz, but screens refresh at 60/90/120 Hz and frame times
+    // jitter. Draw the world blended between the last two sim states so motion stays even.
+    const a = Math.min(1, simAcc / SIM_DT);
+    const restore = applyInterp(a);
+    draw();
+    restore();
     drewOnce = true;
-    
+
     requestAnimationFrame(loop);
 }
 
