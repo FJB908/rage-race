@@ -1,8 +1,9 @@
-"use strict";
+// Import the ParticlePool instance from helpers and create an alias to its internal array.
+import { particlePool as particlePoolInstance } from './src/utils/helpers.js';
+const particlePool = particlePoolInstance.pool; // array of particles for fast access
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let CW = 0, CH = 0, DPR = 1;
-const particlePool = [];
 const SIDEBAR = 34;                           // right-hand progress rail (screen px) — defined before the first resize()
 // The WORLD is always WORLD_W wide, on every device — so every track, tower and level is
 // identical for everyone. The view scales it uniformly to fit the screen (capped, and
@@ -2528,18 +2529,16 @@ function draw() {
     drawUfoBeams();
 
     // OPTIMALISATIE DEELTJES (Particles)
+    particlePoolInstance.update(dt);
     for (const q of particles){
         // Negeer deeltjes die buiten beeld vallen
         if (q.y < viewTop || q.y > viewBottom) continue;
-        
-        ctx.globalAlpha=Math.max(0,q.life); 
+        ctx.globalAlpha=Math.max(0,q.life);
         ctx.fillStyle=q.color;
-        
         // Vierkanten (fillRect) zijn enorm veel sneller dan cirkels (arc)
         ctx.fillRect(q.x - q.size/2, q.y - q.size/2, q.size, q.size);
     }
-    ctx.globalAlpha=1;
-    drawShards();
+
 
     // floaters
     for (const f of floaters){
