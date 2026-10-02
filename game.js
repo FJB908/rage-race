@@ -3,6 +3,15 @@ const particlePool = [];                      // recycle bin for dead particles 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let CW = 0, CH = 0, DPR = 1;
+// Adaptive quality: phones render 2-3x more pixels than needed, and canvas glow (shadowBlur) is
+// very costly on mobile GPUs. Start capped and step down automatically if frames run slow.
+const QUALITY_STEPS = [{dpr:1.5, glow:1}, {dpr:1.25, glow:0.5}, {dpr:1, glow:0}];
+let qLevel = 0, dprCap = QUALITY_STEPS[0].dpr, glowK = 1;
+const _sbDesc = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'shadowBlur');
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'shadowBlur', {
+    get(){ return _sbDesc.get.call(this); },
+    set(v){ _sbDesc.set.call(this, v * glowK); }
+});
 const SIDEBAR = 34;                           // right-hand progress rail (screen px) — defined before the first resize()
 // The WORLD is always WORLD_W wide, on every device — so every track, tower and level is
 // identical for everyone. The view scales it uniformly to fit the screen (capped, and
@@ -11,7 +20,7 @@ const WORLD_W = 356;
 let VIEW_K = 1, VIEW_OX = 0, VH = 0;                 // scale, x-offset, visible world height
 
 function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    DPR = Math.min(window.devicePixelRatio || 1, dprCap);
     CW = window.innerWidth; CH = window.innerHeight;
     const avail = CW - SIDEBAR;
     VIEW_K = Math.max(0.6, Math.min(1.3, avail / WORLD_W));
@@ -2626,8 +2635,18 @@ function drawMinimap() {
 /* ---------- Loop ---------- */
 let simAcc = 0, hitStop = 0, drewOnce = false;
 const SNAP_HZ = [30, 60, 90, 120, 144];
+let qSlow = 0, qFast = 0;
+function adaptQuality(rawDt){
+    if (rawDt > 0.1) return;                          // tab switch / hitch, ignore
+    if (rawDt > 0.024) { qSlow++; qFast = 0; } else { qFast++; qSlow = Math.max(0, qSlow - 1); }
+    if (qSlow >= 45 && qLevel < QUALITY_STEPS.length - 1) {   // ~45 slow frames: step down
+        qLevel++; dprCap = QUALITY_STEPS[qLevel].dpr; glowK = QUALITY_STEPS[qLevel].glow;
+        qSlow = 0; resize();
+    }
+}
 function loop(t){
     let dt=(t-last)/1000; last=t;
+    adaptQuality(dt);
     if (dt>0.1) dt=0.1;              // avoid spiral on lag
     for (const hz of SNAP_HZ){ const iv = 1/hz; if (Math.abs(dt - iv) < iv*0.06){ dt = iv; break; } }
     if (hitStop > 0){ hitStop -= dt; simAcc += dt * 0.2; }
