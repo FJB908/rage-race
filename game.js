@@ -2179,7 +2179,7 @@ function showResults() {
     const msgs = ["Unbeatable.","Silver, so close.","Bronze, solid.","Fourth. Rage!"];
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
-    sub.textContent = msgs[you-1] || "";
+    sub.innerHTML = (msgs[you-1] || "") + (rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '');
     sub.style.color = you===1 ? 'var(--gold)' : 'var(--muted)';
 
     const board = document.getElementById('board');
@@ -2193,7 +2193,7 @@ function showResults() {
             <span>${p.name}</span><span class="time">${t}</span>`;
         board.appendChild(row);
     });
-    renderLootDrop('loot-race', rw);
+    if (rw.noDrop) document.getElementById('loot-race').innerHTML = ''; else renderLootDrop('loot-race', rw);
     showScreen('results');
 }
 
@@ -4253,7 +4253,14 @@ function rewardRace(place, finished, lootId){
     const passPoints = finished ? [50, 40, 32, 25][place-1] || 20 : 15;
     const id = lootId || newLootId('race');
     const pp = prog(), alreadyGranted = !!(pp.lootGrants[id] || pp.pendingDrops[id]);
-    const drop = awardLootDrop(id, {coins, xp, passPoints});
+    // Only the winner earns a supply drop; everyone else gets the base rewards straight away.
+    let drop = null;
+    if (place === 1 && finished) drop = awardLootDrop(id, {coins, xp, passPoints});
+    else if (!alreadyGranted){
+        const q = prog(); q.xp += xp; q.passPoints += passPoints; q.passPointsEarned += passPoints;
+        q.lootGrants[id] = { id, tier:'common', coins, xp, passPoints, cosmetic:null, noDrop:true }; saveProg(q); store('rr_coins', load('rr_coins', 0) + coins);
+    }
+    if (!drop) drop = { noDrop:true, coins, xp, passPoints };
     if (!alreadyGranted){ const p = prog(); p.races++; if (finished && place === 1) p.wins++; saveProg(p); }
     refreshMenu();
     return drop;
