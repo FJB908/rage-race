@@ -118,6 +118,7 @@ function showScreen(name) {
 
 /* ---------- Particles / floaters ---------- */
 function burst(cx, cy, color, count, speed) {
+    if (particles.length > 400) return;
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const spd = Math.random() * speed;
@@ -444,7 +445,7 @@ function shatterCeiling(x, y, w){
             color: Math.random()<0.5 ? '#8a93a8' : '#5b6272'
         });
     }
-    if (shardParticles.length > 220) shardParticles.splice(0, shardParticles.length-220);
+    { const maxS = [140, 80, 40][qLevel]; if (shardParticles.length > maxS) shardParticles.splice(0, shardParticles.length-maxS); }
     ring(x, y, '#c9d1e3', 60, true);
     burst(x, y, '#eef2f8', 10, 160);
 }
@@ -2129,6 +2130,9 @@ function update(dt) {
         }
     }
     particles.length = pIdx;
+    // Cap live particles (lower on slower quality levels) — the oldest are recycled first.
+    const maxP = [320, 180, 100][qLevel];
+    if (particles.length > maxP) { const dead = particles.splice(0, particles.length - maxP); for (const q of dead) particlePool.push(q); }
 
     // floaters
     let fIdx = 0;
