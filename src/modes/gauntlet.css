@@ -184,3 +184,8 @@ body.mode-gauntlet .place { margin-top:-2px; }
 .gt-cw-in small { z-index:1; font-size:12px; font-weight:800; letter-spacing:.34em; color:#ffd25a; }
 .gt-cw-in h2 { z-index:1; margin:0; font-family:var(--gtf); font-weight:800; font-size:clamp(48px,16vw,72px); line-height:1; background:linear-gradient(180deg,#fff4c2,#ffcf3f 55%,#ff9838); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 4px 0 rgba(0,0,0,.5)); }
 .gt-cw-in b { z-index:1; font-family:var(--gtf); font-size:22px; color:#eef2f8; }
+
+/* qualified counter: one quiet line */
+.gt-spots { flex-direction:row; align-items:center; padding:6px 12px; }
+.gt-spots-txt { width:100%; align-items:center; }
+.gt-spots-txt b { font-size:18px; } .gt-spots-txt span { font-size:14px; }

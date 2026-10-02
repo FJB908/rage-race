@@ -78,7 +78,7 @@
           '<div class="gt-chip stage"><b id="gt-stage-n">STAGE 1</b><span id="gt-stage-name">STAMPEDE</span></div>' +
           '<div class="gt-chip alive">' + icon('users') + '<b id="gt-alive">32</b></div>' +
         '</div>' +
-        '<div class="gt-spots" id="gt-spots"><div class="gt-slots" id="gt-slots"></div><div class="gt-spots-txt"><b id="gt-spots-n">0</b><span id="gt-spots-of"> / 16</span><em id="gt-spots-lbl">QUALIFIED</em></div></div>';
+        '<div class="gt-spots" id="gt-spots"><div class="gt-spots-txt"><b id="gt-spots-n">0</b><span id="gt-spots-of"> / 16</span><em id="gt-spots-lbl">QUALIFIED</em></div></div>';
     $('hud').appendChild(hudEl);
     const rewardsBtn = document.createElement('button');
     rewardsBtn.id = 'gt-rewards-btn'; rewardsBtn.type = 'button';
@@ -435,8 +435,13 @@
         if (gt.stage === 2) {
             const w = gt.winner;
             if (w) { burst(w.x, w.y, '#ffcf3f', 60, 420); ring(w.x, w.y, '#ffcf3f', 150); }
-            if (w) { crownSpotlight(w); SFX.play('finish'); if (w.local) haptic([40, 40, 40, 40, 120]); }
-            return after(w ? 3200 : 1100, () => finishRun());
+            if (w) {
+                // the game freezes for 2 s on the crown, then the winner is shown for 3 s, then the rewards
+                SFX.play('finish'); if (w.local) haptic([40, 40, 40, 40, 120]);
+                after(2000, () => crownSpotlight(w));
+                return after(5200, () => finishRun());
+            }
+            return after(1100, () => finishRun());
         }
         if (lp && gt.qualified.includes(lp)) {
             if (!GT.debug.fast) banner('check', gt.stage === 0 ? 'STAGE CLEARED' : 'THROUGH TO THE DUEL', '#7ee787');
@@ -531,6 +536,16 @@
             ctx.fillRect(8, fy - 200, 7, 200); ctx.fillRect(pw - 15, fy - 200, 7, 200);
             ctx.fillRect(8, fy - 206, pw - 16, 10);
             ctx.globalAlpha = 1;
+            // the players who made it stand in the box above the finish, in the order they crossed
+            const qn = gt.qualified.length;
+            if (qn && gt.stage < 2) {
+                const step = Math.min(31, (pw - 40) / Math.max(1, st.need - 1));
+                for (let i = 0; i < qn; i++) {
+                    const p = gt.qualified[i], x = 24 + i * step, y = fy - 20 - 30;
+                    if (p.local) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; roundRect(x - 16, y - 1, 32, 32, 8); ctx.stroke(); }
+                    ctx.drawImage(slotFace(p), x - 15, y, 30, 30);
+                }
+            }
             if (gt.stage === 2) {
                 ctx.shadowBlur = 24; ctx.shadowColor = '#ffcf3f';
                 drawCrown(pw / 2, fy - 118 + Math.sin(t * 2.4) * 5, 44);
@@ -644,7 +659,6 @@
         hudEl.style.setProperty('--sc', st.color);
         hudKey = '';
         $('gt-spots').classList.toggle('duel', gt.stage === 2);
-        $('gt-slots').innerHTML = '';
     }
     function updateHud() {
         const st = gt.st, lp = localP();
@@ -658,7 +672,6 @@
         $('gt-spots-n').textContent = gt.stage < 2 ? q : on;
         $('gt-spots-of').textContent = gt.stage < 2 ? ' / ' + st.need : '';
         $('gt-spots-lbl').textContent = gt.stage < 2 ? 'QUALIFIED' : 'LEFT. FIRST TO THE CROWN';
-        if (gt.stage < 2) fillSlots();
         // your live place among everyone still in the stage (qualified players count as ahead)
         if (lp && !lp.gone) {
             const place = q + ahead + 1, safe = gt.stage === 2 ? place <= 1 : place <= st.need;
@@ -667,20 +680,10 @@
             document.getElementById('pos-pill').className = 'place ' + (safe ? 'p1' : 'p4');
         }
     }
-    // One slot per qualifying spot; each fills with the qualified player's own look (you get a ring).
+    // A small picture of a player's look (used for the qualified row above the finish line).
     function slotFace(p) {
-        if (!p._mini) { p._mini = document.createElement('canvas'); p._mini.width = p._mini.height = 44; renderLook(p._mini, p.look, { scale:.17, cy:.6 }); }
+        if (!p._mini) { p._mini = document.createElement('canvas'); p._mini.width = p._mini.height = 44; renderLook(p._mini, p.look, { scale:.27, cy:.62 }); }
         return p._mini;
-    }
-    function fillSlots() {
-        const box = $('gt-slots'), need = gt.st.need;
-        if (box.childElementCount !== need) { box.innerHTML = ''; for (let i = 0; i < need; i++) box.appendChild(document.createElement('i')); }
-        const kids = box.children;
-        for (let i = 0; i < need; i++) {
-            const p = gt.qualified[i], el = kids[i];
-            if (p && el._p !== p) { el._p = p; el.innerHTML = ''; el.appendChild(slotFace(p).cloneNode(false)); const c = el.firstChild; c.getContext('2d').drawImage(slotFace(p), 0, 0); el.className = 'on' + (p.local ? ' me' : ''); }
-            else if (!p && el._p) { el._p = null; el.innerHTML = ''; el.className = ''; }
-        }
     }
     function spotsPulse() { const e = $('gt-spots'); e.classList.remove('pulse'); void e.offsetWidth; e.classList.add('pulse'); }
 
@@ -700,7 +703,7 @@
         el.innerHTML = '<div class="gt-cw-in"><div class="gt-cw-rays"></div><div class="gt-cw-av"><span class="gt-cw-crown">' + icon('crown') + '</span></div>' +
             '<small>' + (w.local ? 'YOU TOOK THE' : 'TAKES THE') + '</small><h2>CROWN</h2><b>' + (w.local ? 'YOU' : w.name) + '</b></div>';
         el.querySelector('.gt-cw-av').prepend(cv);
-        show(el); setTimeout(() => hide(el), 2900);
+        show(el); setTimeout(() => hide(el), 3000);
     }
 
     function showStageCard(st, i, done) {
