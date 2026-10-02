@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="src/ui/icons.css">
 <link rel="stylesheet" href="src/ui/lootbox.css">
 <link rel="stylesheet" href="src/ui/pass.css">
+<link rel="stylesheet" href="src/tutorial/tutorial.css">
 </head>
 <body>
 
@@ -278,6 +279,11 @@
             </div>
         </div>
         <div class="set-group">
+            <div class="set-row">
+                <label for="set-haptics">Vibration</label>
+                <button class="set-toggle" id="set-haptics" role="switch" type="button"><span></span></button>
+            </div>
+            <button class="set-line" type="button" id="set-tutorial">Play tutorial</button>
             <button class="set-line" type="button" id="set-test">Play a test sound</button>
             <button class="set-line danger" type="button" id="set-reset">Reset all progress</button>
         </div>
@@ -337,5 +343,6 @@
 <script src="src/ui/pass.js"></script>
 <script src="game.js"></script>
 <script src="src/ui/lootbox.js"></script>
+<script src="src/tutorial/tutorial.js"></script>
 </body>
 </html>

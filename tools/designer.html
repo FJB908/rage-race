@@ -446,7 +446,9 @@ function buildEditor() {
   const top = el('div', { className:'row' }); top.appendChild(F('Name', bind(it, 'name', 'text')));
   const rs = el('select'); RARITIES.forEach(r => rs.appendChild(el('option', { value:r, selected:r === it.rarity }, r)));
   rs.onchange = () => { it.rarity = rs.value; it.price = PRICE[it.rarity]; changed(true); }; top.appendChild(F('Rarity', rs)); box.appendChild(top);
-  box.appendChild(F('Price (coins)', bind(it, 'price', 'number', { step:50 })));
+  const pl_ = el('label', { className:'chk' }); pl_.appendChild(el('input', { type:'checkbox', checked:!!it.priceLock, onchange:e => { if (e.target.checked) it.priceLock = true; else delete it.priceLock; changed(true); } })); pl_.appendChild(document.createTextNode('Lock exact price (otherwise the game sets it from rarity)'));
+  if (it.priceLock) box.appendChild(F('Price (coins)', bind(it, 'price', 'number', { step:50 })));
+  box.appendChild(pl_);
   if (kind === 'skin') {
     const ps = el('select'); Object.keys(PATTERNS).forEach(p => ps.appendChild(el('option', { value:p, selected:p === it.pat.k }, p)));
     ps.onchange = () => { const old = it.pat; it.pat = { k:ps.value }; PATTERNS[ps.value].forEach((c, i) => it.pat[c] = old[c] || ['#35e0c8', '#7c6bff', '#ffcf3f'][i]); it.color = it.pat.a; changed(true); };

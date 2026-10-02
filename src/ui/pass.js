@@ -111,7 +111,7 @@
             await new Promise(res => openLootbox(drop, { title:'SEASON DROP', onDone:res }));
         } else {
             const cos = itemOf(t), q = prog(), dup = q.owned.includes(cos.id);
-            if (dup) { const back = Math.round(cos.price * 0.4); addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:cos.rarity }); }
+            if (dup) { const back = { common:100, rare:400, epic:1200, legendary:3000 }[cos.rarity] || 100; addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:cos.rarity }); }
             else { q.owned.push(cos.id); saveProg(q); await showRewardPops([{ type:'item', item:cos }], { tier:cos.rarity }); }
         }
     }
