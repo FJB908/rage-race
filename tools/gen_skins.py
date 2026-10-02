@@ -447,6 +447,10 @@ for id, s in S.items():
     else: newskins.append({'id':id,'name':s['name'],'color':s['color'],'price':s['price'],'rarity':s['rarity'],'pat':pat,'layers':s['layers']})
 compact = lambda o: json.dumps(o, separators=(',', ':'))
 open(OUT_STYLES, 'w').write('// Layered art for the built-in skins (applied over SKINS in game.js). Generated; edit freely.\nconst SKIN_STYLES = ' + compact(styles) + ';\n')
-data = {'skins':newskins,'hats':[],'faces':[],'trails':[]}
-open(OUT_CUSTOM, 'w').write('// Cosmetics made with tools/designer.html. Edit them in the tool; this file is rewritten when you press Save.\nconst CUSTOM_COSMETICS = ' + json.dumps(data, indent=1) + ';\n')
+import os
+cur = {'skins':[],'hats':[],'faces':[],'trails':[]}
+if os.path.exists(OUT_CUSTOM):
+    t = open(OUT_CUSTOM).read(); cur.update(json.loads(t[t.index('{'):t.rindex('}') + 1]))
+cur['skins'] = newskins
+open(OUT_CUSTOM, 'w').write('// Cosmetics made with tools/designer.html. Edit them in the tool; this file is rewritten when you press Save.\nconst CUSTOM_COSMETICS = ' + json.dumps(cur, indent=1) + ';\n')
 print(len(styles), 'restyled,', len(newskins), 'new')

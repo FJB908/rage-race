@@ -468,3 +468,5 @@
   background:rgba(13,16,23,.9); color:#eef2f8; font-weight:900; font-size:15px; letter-spacing:.1em; pointer-events:auto; box-shadow:0 5px 0 rgba(0,0,0,.4); -webkit-tap-highlight-color:transparent; }
 #finish-menu .ico { width:20px; height:20px; }
 #finish-menu:active { transform:translateX(-50%) translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.4); }
+
+.tr-pv { display:block; width:100%; height:auto; margin:2px 0 4px; border-radius:8px; background:#10151f; }

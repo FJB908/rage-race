@@ -8961,5 +8961,755 @@ const CUSTOM_COSMETICS = {
  ],
  "hats": [],
  "faces": [],
- "trails": []
+ "trails": [
+  {
+   "id": "c-hearts",
+   "name": "Heartbeat",
+   "color": "#ff5c8a",
+   "price": 700,
+   "rarity": "rare",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.0,
+     "rate": 0.05,
+     "max": 22,
+     "shape": "heart",
+     "colors": [
+      "#ffd0e0",
+      "#ff5c8a",
+      "#c4204e"
+     ],
+     "size": [
+      5.5,
+      1.6
+     ],
+     "spread": 6,
+     "drift": [
+      0,
+      -26
+     ],
+     "vx": 12,
+     "glow": 0.5
+    }
+   ]
+  },
+  {
+   "id": "c-notes",
+   "name": "Mixtape",
+   "color": "#52f5ff",
+   "price": 800,
+   "rarity": "rare",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.0,
+     "rate": 0.06,
+     "max": 18,
+     "shape": "note",
+     "colorMode": "seed",
+     "colors": [
+      "#ff5c8a",
+      "#ffd45e",
+      "#52f5ff",
+      "#b06bff"
+     ],
+     "size": [
+      5,
+      2.5
+     ],
+     "spread": 5,
+     "drift": [
+      0,
+      -22
+     ],
+     "vx": 18,
+     "spin": 0,
+     "randRot": false,
+     "glow": 0.3
+    }
+   ]
+  },
+  {
+   "id": "c-leaves",
+   "name": "Autumn Run",
+   "color": "#ff9a3c",
+   "price": 650,
+   "rarity": "rare",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.1,
+     "rate": 0.05,
+     "max": 20,
+     "shape": "leaf",
+     "colorMode": "seed",
+     "colors": [
+      "#ff9a3c",
+      "#d4481a",
+      "#ffcf3f",
+      "#8a4b1a"
+     ],
+     "size": [
+      4.4,
+      3
+     ],
+     "spread": 6,
+     "spin": 4,
+     "randRot": true,
+     "drift": [
+      0,
+      14
+     ],
+     "vx": 22,
+     "alpha": 0.95
+    }
+   ]
+  },
+  {
+   "id": "c-bubbles",
+   "name": "Soap Bubbles",
+   "color": "#9fdcff",
+   "price": 600,
+   "rarity": "rare",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.1,
+     "rate": 0.05,
+     "max": 20,
+     "shape": "bubble",
+     "colors": [
+      "#e8fbff",
+      "#9fdcff",
+      "#d9a8ff"
+     ],
+     "size": [
+      5.5,
+      4
+     ],
+     "spread": 8,
+     "drift": [
+      0,
+      -20
+     ],
+     "vx": 12,
+     "alpha": 0.9,
+     "glow": 0.3
+    }
+   ]
+  },
+  {
+   "id": "c-confetti",
+   "name": "Confetti",
+   "color": "#ffcf3f",
+   "price": 900,
+   "rarity": "rare",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.0,
+     "rate": 0.035,
+     "max": 34,
+     "shape": "square",
+     "colorMode": "seed",
+     "colors": [
+      "#ff4f6d",
+      "#ffcf3f",
+      "#4fd36b",
+      "#33c7ff",
+      "#b06bff",
+      "#ff9a3c"
+     ],
+     "size": [
+      3.2,
+      2.4
+     ],
+     "spread": 7,
+     "spin": 9,
+     "randRot": true,
+     "drift": [
+      0,
+      20
+     ],
+     "vx": 40,
+     "alpha": 1
+    }
+   ]
+  },
+  {
+   "id": "c-bolts",
+   "name": "Static",
+   "color": "#fff27a",
+   "price": 1200,
+   "rarity": "epic",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 0.5,
+     "rate": 0.035,
+     "max": 22,
+     "shape": "bolt",
+     "colors": [
+      "#ffffff",
+      "#fff27a",
+      "#52c8ff"
+     ],
+     "size": [
+      5.5,
+      1.5
+     ],
+     "spread": 8,
+     "randRot": true,
+     "jitter": 2,
+     "glow": 1
+    },
+    {
+     "life": 0.5,
+     "ribbon": {
+      "w": 2.4,
+      "colors": [
+       "#ffffff",
+       "#52c8ff"
+      ],
+      "alpha": 0.7
+     }
+    }
+   ]
+  },
+  {
+   "id": "c-fireflies",
+   "name": "Fireflies",
+   "color": "#8aff6a",
+   "price": 1000,
+   "rarity": "epic",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.3,
+     "rate": 0.07,
+     "max": 18,
+     "shape": "circle",
+     "colors": [
+      "#f4ff8a",
+      "#8aff6a",
+      "#2c8f3a"
+     ],
+     "size": [
+      2.6,
+      1.2
+     ],
+     "spread": 14,
+     "drift": [
+      0,
+      -6
+     ],
+     "vx": 14,
+     "twinkle": true,
+     "glow": 1.6,
+     "alpha": 1
+    }
+   ]
+  },
+  {
+   "id": "c-petals",
+   "name": "Cherry Petals",
+   "color": "#ffb3cf",
+   "price": 1100,
+   "rarity": "epic",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.2,
+     "rate": 0.045,
+     "max": 24,
+     "shape": "leaf",
+     "colors": [
+      "#fff0f5",
+      "#ffb3cf",
+      "#ff7aa8"
+     ],
+     "size": [
+      4,
+      2.6
+     ],
+     "spread": 7,
+     "spin": 3.5,
+     "randRot": true,
+     "drift": [
+      0,
+      12
+     ],
+     "vx": 26,
+     "alpha": 0.95
+    }
+   ]
+  },
+  {
+   "id": "c-rainbow",
+   "name": "Rainbow Road",
+   "color": "#ff4f6d",
+   "price": 1400,
+   "rarity": "epic",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 0.9,
+     "rate": 0.02,
+     "max": 40,
+     "ribbon": {
+      "w": 3.2,
+      "colors": [
+       "#ff4f6d"
+      ],
+      "alpha": 0.92,
+      "dy": -7.5
+     }
+    },
+    {
+     "life": 0.9,
+     "rate": 0.02,
+     "max": 40,
+     "ribbon": {
+      "w": 3.2,
+      "colors": [
+       "#ff9a3c"
+      ],
+      "alpha": 0.92,
+      "dy": -4.5
+     }
+    },
+    {
+     "life": 0.9,
+     "rate": 0.02,
+     "max": 40,
+     "ribbon": {
+      "w": 3.2,
+      "colors": [
+       "#ffe45e"
+      ],
+      "alpha": 0.92,
+      "dy": -1.5
+     }
+    },
+    {
+     "life": 0.9,
+     "rate": 0.02,
+     "max": 40,
+     "ribbon": {
+      "w": 3.2,
+      "colors": [
+       "#4fd36b"
+      ],
+      "alpha": 0.92,
+      "dy": 1.5
+     }
+    },
+    {
+     "life": 0.9,
+     "rate": 0.02,
+     "max": 40,
+     "ribbon": {
+      "w": 3.2,
+      "colors": [
+       "#33c7ff"
+      ],
+      "alpha": 0.92,
+      "dy": 4.5
+     }
+    },
+    {
+     "life": 0.9,
+     "rate": 0.02,
+     "max": 40,
+     "ribbon": {
+      "w": 3.2,
+      "colors": [
+       "#b06bff"
+      ],
+      "alpha": 0.92,
+      "dy": 7.5
+     }
+    }
+   ]
+  },
+  {
+   "id": "c-smoke",
+   "name": "Smoke Screen",
+   "color": "#8a909c",
+   "price": 700,
+   "rarity": "rare",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.1,
+     "rate": 0.04,
+     "max": 28,
+     "shape": "circle",
+     "colors": [
+      "#d0d4dc",
+      "#8a909c",
+      "#3c4150"
+     ],
+     "size": [
+      3,
+      9
+     ],
+     "spread": 4,
+     "drift": [
+      0,
+      -8
+     ],
+     "vx": 10,
+     "alpha": 0.5
+    }
+   ]
+  },
+  {
+   "id": "c-pixel",
+   "name": "Pixel Dust",
+   "color": "#52f5ff",
+   "price": 850,
+   "rarity": "rare",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 0.8,
+     "rate": 0.04,
+     "max": 26,
+     "shape": "square",
+     "colorMode": "seed",
+     "colors": [
+      "#52f5ff",
+      "#ff4fd8",
+      "#fff27a",
+      "#7dff6a"
+     ],
+     "size": [
+      3.2,
+      3.2
+     ],
+     "spread": 8,
+     "drift": [
+      0,
+      6
+     ],
+     "jitter": 0,
+     "alpha": 1
+    }
+   ]
+  },
+  {
+   "id": "c-void",
+   "name": "Event Horizon",
+   "color": "#8a4bff",
+   "price": 2400,
+   "rarity": "legendary",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.0,
+     "rate": 0.04,
+     "max": 26,
+     "shape": "ring",
+     "colors": [
+      "#d9b3ff",
+      "#8a4bff",
+      "#2a0f55"
+     ],
+     "size": [
+      6,
+      1
+     ],
+     "spread": 3,
+     "alpha": 0.9,
+     "glow": 0.8
+    },
+    {
+     "life": 1.0,
+     "ribbon": {
+      "w": 8,
+      "colors": [
+       "#1a0933",
+       "#4b1a8a",
+       "#0d0518"
+      ],
+      "alpha": 0.55
+     }
+    }
+   ]
+  },
+  {
+   "id": "c-toxic",
+   "name": "Toxic Drip",
+   "color": "#5ee04a",
+   "price": 1500,
+   "rarity": "epic",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.0,
+     "rate": 0.04,
+     "max": 26,
+     "shape": "drop",
+     "colors": [
+      "#d8ff5e",
+      "#5ee04a",
+      "#1f7a2a"
+     ],
+     "size": [
+      4.2,
+      1.5
+     ],
+     "spread": 6,
+     "drift": [
+      0,
+      28
+     ],
+     "vx": 8,
+     "glow": 0.7
+    },
+    {
+     "life": 1.0,
+     "shape": "bubble",
+     "colors": [
+      "#caff8a"
+     ],
+     "size": [
+      3,
+      1
+     ],
+     "spread": 10,
+     "drift": [
+      0,
+      -12
+     ],
+     "vx": 8,
+     "alpha": 0.8
+    }
+   ]
+  },
+  {
+   "id": "c-coins",
+   "name": "Cash Out",
+   "color": "#ffcc3a",
+   "price": 1700,
+   "rarity": "epic",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.0,
+     "rate": 0.045,
+     "max": 22,
+     "shape": "coin",
+     "colors": [
+      "#fff0a0",
+      "#ffcc3a",
+      "#c98a14"
+     ],
+     "size": [
+      5,
+      3.6
+     ],
+     "spread": 5,
+     "spin": 6,
+     "drift": [
+      0,
+      22
+     ],
+     "vx": 26,
+     "glow": 0.4,
+     "alpha": 1
+    }
+   ]
+  },
+  {
+   "id": "c-galaxy",
+   "name": "Milky Way",
+   "color": "#b06bff",
+   "price": 2600,
+   "rarity": "legendary",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.0,
+     "rate": 0.03,
+     "max": 32,
+     "ribbon": {
+      "w": 9,
+      "colors": [
+       "#b06bff",
+       "#4a2ac8",
+       "#0d0a33"
+      ],
+      "alpha": 0.55
+     }
+    },
+    {
+     "life": 1.0,
+     "shape": "star4",
+     "colorMode": "seed",
+     "colors": [
+      "#ffffff",
+      "#ffd6f3",
+      "#bfe9ff",
+      "#fff27a"
+     ],
+     "size": [
+      3.6,
+      0.6
+     ],
+     "spread": 10,
+     "twinkle": true,
+     "spin": 2,
+     "glow": 0.8
+    },
+    {
+     "life": 1.0,
+     "shape": "circle",
+     "colors": [
+      "#ffffff"
+     ],
+     "size": [
+      1,
+      0.3
+     ],
+     "spread": 14,
+     "alpha": 0.9
+    }
+   ]
+  },
+  {
+   "id": "c-neon",
+   "name": "Neon Strip",
+   "color": "#ff2fb9",
+   "price": 3000,
+   "rarity": "legendary",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 0.85,
+     "rate": 0.02,
+     "max": 40,
+     "ribbon": {
+      "w": 7,
+      "colors": [
+       "#ff2fb9",
+       "#52f5ff"
+      ],
+      "alpha": 0.75
+     }
+    },
+    {
+     "life": 0.85,
+     "ribbon": {
+      "w": 2,
+      "colors": [
+       "#ffffff",
+       "#ffffff"
+      ],
+      "alpha": 0.9
+     }
+    },
+    {
+     "life": 0.6,
+     "shape": "circle",
+     "colors": [
+      "#ff2fb9",
+      "#52f5ff"
+     ],
+     "colorMode": "seed",
+     "size": [
+      2,
+      0.5
+     ],
+     "spread": 10,
+     "glow": 1.4,
+     "drift": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c-ghost",
+   "name": "Ghost Train",
+   "color": "#cfd8ff",
+   "price": 1300,
+   "rarity": "epic",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 1.1,
+     "rate": 0.05,
+     "max": 22,
+     "shape": "drop",
+     "colors": [
+      "#ffffff",
+      "#cfd8ff",
+      "#8a96d8"
+     ],
+     "size": [
+      6,
+      2
+     ],
+     "spread": 4,
+     "drift": [
+      0,
+      -12
+     ],
+     "vx": 8,
+     "alpha": 0.6,
+     "glow": 0.6
+    },
+    {
+     "life": 1.1,
+     "ribbon": {
+      "w": 5,
+      "colors": [
+       "#ffffff",
+       "#8a96d8"
+      ],
+      "alpha": 0.25
+     }
+    }
+   ]
+  },
+  {
+   "id": "c-spark",
+   "name": "Sparkler",
+   "color": "#fff27a",
+   "price": 1900,
+   "rarity": "epic",
+   "style": "fx",
+   "fx": [
+    {
+     "life": 0.55,
+     "rate": 0.02,
+     "max": 40,
+     "shape": "star4",
+     "colors": [
+      "#ffffff",
+      "#fff27a",
+      "#ff9a3c"
+     ],
+     "size": [
+      4.2,
+      0.5
+     ],
+     "spread": 3,
+     "drift": [
+      0,
+      20
+     ],
+     "vx": 90,
+     "gravity": 140,
+     "twinkle": true,
+     "glow": 1,
+     "alpha": 1
+    }
+   ]
+  }
+ ]
 };

@@ -2038,11 +2038,12 @@ function updateCosmeticTrails(dt){
         const samples = p.trailSamples || (p.trailSamples = []);
         p.trailEmit -= dt;
         for (const sample of samples) sample.age += dt;
-        while (samples.length && samples[0].age > 0.52) samples.shift();
+        const tLife = trailLife(trail);
+        while (samples.length && samples[0].age > tLife) samples.shift();
         if (!trail || trail.style === 'none' || p.finished || p.ufoHold || Math.hypot(p.vx,p.vy) < 90 || p.trailEmit > 0) continue;
-        samples.push({x:p.x,y:p.y,age:0});
-        if (samples.length > 14) samples.shift();
-        p.trailEmit = 0.035;
+        samples.push({x:p.x,y:p.y,age:0,s:Math.random()});
+        if (samples.length > trailMax(trail)) samples.shift();
+        p.trailEmit = trailRate(trail);
     }
 }
 function update(dt) {
@@ -2203,6 +2204,7 @@ function drawCosmeticTrails(viewTop, viewBottom){
         const samples = p.trailSamples;
         if (!trail || trail.style === 'none' || !samples || !samples.length) continue;
         const visible = samples.filter(sample => sample.y >= viewTop && sample.y <= viewBottom);
+        if (trail.fx){ drawTrailFx(ctx, trail, visible, p.id); continue; }
         if ((trail.style === 'ribbon' || trail.style === 'comet') && visible.length > 1){
             ctx.save(); ctx.globalAlpha = 0.36; ctx.strokeStyle = trail.color; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
             ctx.beginPath(); visible.forEach((sample,i) => i ? ctx.lineTo(sample.x,sample.y) : ctx.moveTo(sample.x,sample.y)); ctx.stroke(); ctx.restore();
@@ -3529,6 +3531,7 @@ const TRAILS = [
 ];
 // Layered art for the built-in skins (src/data/skin-styles.js).
 if (typeof SKIN_STYLES !== 'undefined') for (const s of SKINS) if (SKIN_STYLES[s.id]) Object.assign(s, SKIN_STYLES[s.id]);
+if (typeof TRAIL_FX !== 'undefined') for (const t of TRAILS) if (TRAIL_FX[t.id]) t.fx = TRAIL_FX[t.id];
 // Items made in tools/designer.html (src/data/custom-cosmetics.js) join the built-in lists here.
 if (typeof CUSTOM_COSMETICS !== 'undefined'){
     for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
@@ -4115,10 +4118,11 @@ function renderShop(cat){
                 b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' ? ' leg' : '');
                 b.innerHTML = `<span class="m-skin-pv"><canvas width="160" height="160"></canvas></span>` +
                     `<b>${it.name}</b><span class="m-rar" style="color:${RARITY[it.rarity].color}">${RARITY[it.rarity].label}</span>` +
-                    (cat === 'trail' ? `<span class="trail-sample trail-${it.style}" style="--trail-color:${it.color}"><i></i><i></i><i></i></span>` : '') +
+                    (cat === 'trail' ? `<canvas class="tr-pv" width="300" height="80"></canvas>` : '') +
                     `<span class="m-skin-f"><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : R('coin', it.price)}</span></span>`;
                 const preview = { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail };
                 renderLook(b.querySelector('canvas'), preview, { scale:0.22, cy:0.62 });
+                { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it); }
                 b.addEventListener('click', () => {
                     const q = prog();
                     const slot = cat;
