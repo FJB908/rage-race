@@ -62,11 +62,11 @@
             const col_el = document.createElement('div');
             col_el.className = cls; col_el.dataset.i = i; col_el.style.setProperty('--rc', col);
             col_el.innerHTML =
-                '<div class="pz-node">' + (claimed ? '✓' : (i < st.done ? (i + 1) : (i + 1))) + '</div>' +
+                '<div class="pz-node">' + (claimed ? icon('check') : (i + 1)) + '</div>' +
                 '<button class="pz-card" type="button"' + (ready ? '' : ' tabindex="-1"') + '>' +
                   (cos ? '<span class="pz-rar">' + rar(cos.rarity).label.toUpperCase() + '</span>' : '') +
                   art(t, i) + '<div class="pz-name">' + label(t) + '</div>' +
-                  (ready ? '<span class="pz-claim">CLAIM</span>' : claimed ? '<span class="pz-state">CLAIMED</span>' : '<span class="pz-state lock">' + (i < st.done ? '' : '🔒') + '</span>') +
+                  (ready ? '<span class="pz-claim">CLAIM</span>' : claimed ? '<span class="pz-state">CLAIMED</span>' : '<span class="pz-state lock">' + (i < st.done ? '' : icon('lock')) + '</span>') +
                 '</button>';
             col_el.querySelector('.pz-card').addEventListener('click', () => { if (ready) claim([i]); });
             track.appendChild(col_el);

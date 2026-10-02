@@ -45,7 +45,7 @@
             <button class="m-pass-entry" type="button" id="btn-pass-open">
                 <span class="m-pass-art" aria-hidden="true">01</span>
                 <span class="m-pass-copy"><small>FREE SEASON PASS</small><strong>Season 01 · Afterglow</strong><span id="m-pass-progress">Tier 0 / 30</span><i class="m-pass-meter"><b id="m-pass-meter-fill"></b></i></span>
-                <span class="m-pass-arrow" aria-hidden="true">›</span>
+                <span class="m-pass-arrow" aria-hidden="true"><svg class="ico ico-chev-r" aria-hidden="true"><use href="#ico-chev-r"/></svg></span>
             </button>
             <div class="m-two">
                 <button class="m-tile violet" type="button" data-go="friends"><b>Party</b><span>Race with friends</span></button>
@@ -65,8 +65,8 @@
             <button class="m-card gold stack" type="button" id="btn-parkour">
                 <span class="m-card-top"><b>Parkour</b><em id="start-pk"></em></span>
                 <span class="m-mini3">
-                    <span><small>Dimension I</small><strong id="m-d1">★ 0/30</strong></span>
-                    <span id="m-d2box"><small>Dimension II</small><strong id="m-d2">28★</strong></span>
+                    <span><small>Dimension I</small><strong id="m-d1"><svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg> 0/30</strong></span>
+                    <span id="m-d2box"><small>Dimension II</small><strong id="m-d2">28 <svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg></strong></span>
                     <span><small>The Tower</small><strong id="m-tower">--</strong></span>
                 </span>
             </button>
@@ -88,15 +88,8 @@
                 <button class="m-pill" type="button" data-cat="resources">Resources</button>
             </div>
             <div class="m-grid" id="m-skins"></div>
-            <div class="m-resource-shop" id="m-resource-shop" hidden>
-                <div class="resource-balance"><span>AVAILABLE</span><strong><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg><b id="resource-coins">0</b></strong><strong><svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg><b id="resource-pass">0</b></strong></div>
-                <div class="resource-grid" id="resource-grid"></div>
-                
-                <button class="resource-locked" type="button" disabled>REWARDED VIDEO · ANDROID BUILD ONLY</button>
-                <button class="resource-locked" type="button" disabled>PLAY STORE PACKS · BILLING NOT CONNECTED</button>
-                <p class="m-note">Video rewards and real-money purchases stay unavailable until their native services are connected.</p>
-            </div>
-            <p class="m-note">Earn <svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg> and <svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg> from reward drops. Redeem <svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg> for Season 01 cosmetics.</p>
+            <div class="m-resource-shop" id="m-resource-shop" hidden></div>
+            
         </section>
 
         <!-- FRIENDS -->
@@ -142,7 +135,7 @@
                 <div class="m-stat"><small>Wins</small><strong id="m-s-wins">0</strong></div>
                 <div class="m-stat"><small>Win rate</small><strong id="m-s-rate">--</strong></div>
                 <div class="m-stat"><small>Escape best</small><strong id="m-s-esc">--</strong></div>
-                <div class="m-stat"><small>Parkour</small><strong id="m-s-pk">★ 0</strong></div>
+                <div class="m-stat"><small>Parkour</small><strong id="m-s-pk"><svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg> 0</strong></div>
                 <div class="m-stat"><small>Tower best</small><strong id="m-s-tower">--</strong></div>
                 <div class="m-stat"><small><svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg></small><strong id="m-s-pass">0</strong></div>
             </div>
@@ -194,7 +187,7 @@
 <div id="s-pass" class="screen pass-screen" style="display:none;opacity:0">
     <section class="pz-shell">
         <header class="pz-top">
-            <button class="pass-back" type="button" id="btn-pass-back" aria-label="Back to home">‹</button>
+            <button class="pass-back" type="button" id="btn-pass-back" aria-label="Back to home"><svg class="ico ico-chev-l" aria-hidden="true"><use href="#ico-chev-l"/></svg></button>
             <div class="pz-title"><span class="pz-eyebrow">SEASON 01 · FREE PASS</span><h1>AFTERGLOW</h1></div>
             <div class="pz-pts" id="pz-pts"></div>
         </header>
@@ -210,7 +203,7 @@
 <!-- LEVELS: select -->
 <div id="s-levels" class="screen" style="display:none;opacity:0">
     <div class="over-kicker" id="lv-hub-title" style="color:var(--violet)">DIMENSION I</div>
-    <div class="lv-total"><span class="star on">★</span><span id="lv-total">0</span><small id="lv-total-max">/30</small></div>
+    <div class="lv-total"><span class="star on"><svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg></span><span id="lv-total">0</span><small id="lv-total-max">/30</small></div>
     <div class="dim-tabs" id="dim-tabs"></div>
     <div class="lv-grid" id="lv-grid"></div>
     <button class="tower-tile" id="btn-tower">
@@ -307,20 +300,21 @@
         <div class="pos-pill esc-pill coin" id="esc-coin-pill"><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg><span id="esc-coins">0</span></div>
         <div class="pos-pill lv-pill"><small>LV</small><span id="lv-num-hud">1</span></div>
         <div class="pos-pill lv-pill time"><span id="lv-time">0:00.0</span></div>
-        <div class="pos-pill lv-pill falls" id="lv-falls-pill"><span class="fall-ico">↓</span><span id="lv-falls">0</span></div>
+        <div class="pos-pill lv-pill falls" id="lv-falls-pill"><span class="fall-ico"><svg class="ico ico-arrow-down" aria-hidden="true"><use href="#ico-arrow-down"/></svg></span><span id="lv-falls">0</span></div>
         <div class="pos-pill pk-pill"><span id="pk-height">0</span><small>m</small></div>
-        <div class="pos-pill pk-pill falls" id="pk-falls-pill"><span class="fall-ico">↓</span><span id="pk-falls">0</span></div>
+        <div class="pos-pill pk-pill falls" id="pk-falls-pill"><span class="fall-ico"><svg class="ico ico-arrow-down" aria-hidden="true"><use href="#ico-arrow-down"/></svg></span><span id="pk-falls">0</span></div>
         <div class="pos-pill pk-pill time"><span id="pk-time">0:00</span></div>
         <div class="pos-pill esc-pill combo" id="esc-combo" style="display:none"><span id="esc-combo-x">×1</span><span class="combo-bar"><span id="esc-combo-fill"></span></span></div>
-        <div class="hint-bubble" id="hint">Drag & release ↑</div>
+        <div class="hint-bubble" id="hint">Drag & release <svg class="ico ico-arrow-up" aria-hidden="true"><use href="#ico-arrow-up"/></svg></div>
         <button class="hud-btn" id="btn-mute" aria-label="Sound"></button>
         <button class="hud-btn" id="btn-pause" aria-label="Pause"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.6"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.6"/></svg></button>
     </div>
-    <div id="falltoast">FELL!</div>
+    
+    <button id="finish-menu" type="button" style="display:none"><svg class="ico ico-home" aria-hidden="true"><use href="#ico-home"/></svg><span>MAIN MENU</span></button>
     <div id="spectate-bar" style="display:none">
-        <button id="spectate-prev" type="button" aria-label="Previous player">◄</button>
+        <button id="spectate-prev" type="button" aria-label="Previous player"><svg class="ico ico-chev-l" aria-hidden="true"><use href="#ico-chev-l"/></svg></button>
         <div class="spectate-mid"><span class="spectate-eye">SPECTATING</span><span id="spectate-name">—</span></div>
-        <button id="spectate-next" type="button" aria-label="Next player">►</button>
+        <button id="spectate-next" type="button" aria-label="Next player"><svg class="ico ico-chev-r" aria-hidden="true"><use href="#ico-chev-r"/></svg></button>
     </div>
     <button id="item-slot" class="item-slot empty" aria-label="Use item">
         <span class="item-icon" id="item-icon"></span>

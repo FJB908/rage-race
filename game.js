@@ -96,10 +96,10 @@ const hud = document.getElementById('hud');
 const countdownEl = document.getElementById('countdown');
 const posNum = document.getElementById('pos-num');
 const hintEl = document.getElementById('hint');
-const fallToast = document.getElementById('falltoast');
 
 let screenTransition = 0;
 function showScreen(name) {
+    { const fm = document.getElementById('finish-menu'); if (fm) fm.style.display = 'none'; }   // only shown right after you finish
     const transition = ++screenTransition;
     if (typeof SFX !== 'undefined' && SFX.music){
         if (name === 'start') SFX.music.set('menu');
@@ -139,7 +139,7 @@ function burst(cx, cy, color, count, speed) {
         }
     }
 }
-function floatText(x,y,text,color){ floaters.push({x,y,text,color,life:1}); }
+function floatText(){}   // on-screen pop-up words were removed on purpose; icons and sound carry the feedback
 
 // Angular, rotating debris — reads as broken stone/ice, distinct from the round spark
 // particles used everywhere else. A ceiling shattering is a one-time, memorable event.
@@ -1660,7 +1660,7 @@ function handleFinish(p) {
     p.finishTime = (Date.now()-matchStart)/1000;
     finishedCount++;
     burst(p.x, p.y, p.color, 30, 260);
-    if (p.local){ floatText(p.x, p.y-30, "FINISH!", p.color); SFX.play('finish'); }
+    if (p.local){ SFX.play('finish'); showFinishMenu(true); }
     checkEnd();
     maybePromptBotsDone();
 }
@@ -1810,16 +1810,7 @@ function stepPlayer(p, dt) {
 }
 
 let lastFallToast = 0;
-function showFall(txt="FELL!") {
-    SFX.play('fall');
-    const now = Date.now();
-    if (now - lastFallToast < 900) return;
-    lastFallToast = now;
-    fallToast.textContent = txt;
-    fallToast.style.opacity = 1;
-    clearTimeout(showFall._t);
-    showFall._t = setTimeout(()=> fallToast.style.opacity = 0, 700);
-}
+function showFall() { SFX.play('fall'); }
 
 /* ---------- Player-vs-player bumping ---------- */
 function massOf(p){ return (p.r/BASE_R)**2 * (p.giantT > 0 ? 30 : 1) * ((p.rocketFx||0) > 0 ? 6 : 1); }
@@ -2505,7 +2496,6 @@ function draw() {
 
         // glow
         if (p.quakePending > 0 && Math.floor(p.quakePending*10)%2===0){ ctx.shadowBlur=24; ctx.shadowColor=ITEMS.quake.color; }
-        else if (p.charged){ ctx.shadowBlur=22; ctx.shadowColor=PLAT.boost; }
         else if (p.giantT > 0){ ctx.shadowBlur=26; ctx.shadowColor=ITEMS.giant.color; }
         else if (p.shieldT > 0){ ctx.shadowBlur=16+4*Math.sin(nowT*6); ctx.shadowColor=ITEMS.shield.color; }
         else if (p.windT > 0){ ctx.shadowBlur=14+8*Math.abs(Math.sin(nowT*8)); ctx.shadowColor=ITEMS.wind.color; }
@@ -2515,8 +2505,8 @@ function draw() {
 
         // SQUARE body
         const s = p.r;
-        if (!p.charged && p.look && p.look.skin){ drawSkinBody(ctx, s, k, skinById(p.look.skin)); }
-        else { ctx.fillStyle = p.charged ? PLAT.boost : p.color; roundRect(-s, -s, s*2, s*2, 4*k); ctx.fill(); }
+        if (p.look && p.look.skin){ drawSkinBody(ctx, s, k, skinById(p.look.skin)); }
+        else { ctx.fillStyle = p.color; roundRect(-s, -s, s*2, s*2, 4*k); ctx.fill(); }
         ctx.shadowBlur=0;
         if (p.chainT > 0){ ctx.fillStyle='rgba(17,20,28,0.30)'; roundRect(-s,-s,s*2,s*2,4*k); ctx.fill(); }
         ctx.strokeStyle='rgba(13,16,23,0.55)'; ctx.lineWidth=2*Math.sqrt(k);
@@ -2842,6 +2832,7 @@ function cycleSpectate(dir){
 function startSpectate(){
     spectating = true;
     resumeRace();                                   // unpause and let the race keep running
+    showFinishMenu(true);
     const list = stillRacing();
     setSpectate(list[0] || null);
 }
@@ -2864,6 +2855,19 @@ function updateSpectate(){
 document.getElementById('spectate-prev').addEventListener('click', (e) => { e.stopPropagation(); cycleSpectate(-1); });
 document.getElementById('spectate-next').addEventListener('click', (e) => { e.stopPropagation(); cycleSpectate(1); });
 
+// "Main menu" button that appears the moment YOU finish a race. Your rewards are still granted.
+const finishMenuBtn = document.getElementById('finish-menu');
+function showFinishMenu(on){ finishMenuBtn.style.display = on ? 'flex' : 'none'; }
+function leaveRaceToMenu(){
+    const order = [...players].sort((a,b) => a.finished && b.finished ? a.finishTime-b.finishTime : a.finished ? -1 : b.finished ? 1 : a.y-b.y);
+    const place = order.indexOf(players[0]) + 1;
+    try { rewardRace(place, !!players[0].finished, matchLootId); } catch(e){}
+    stopSpectate(); showFinishMenu(false);
+    state = 'menu'; gameMode = 'race'; hud.style.display = 'none';
+    document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level');
+    refreshStartMeta(); showScreen('start');
+}
+finishMenuBtn.addEventListener('click', e => { e.stopPropagation(); SFX.play('count'); leaveRaceToMenu(); });
 function maybePromptBotsDone() {
     if (botsDonePrompted || !players[0].finished) return;   // only makes sense once YOU'RE already done
     if (players.slice(1).every(b => b.finished)) return;    // everyone's in — the race is just ending normally
@@ -2876,6 +2880,7 @@ function maybePromptBotsDone() {
         ['Keep watching', startSpectate],
         ['View results', giveUpToResults, true],
         ['Restart', restartRace, true],
+        ['Main menu', leaveRaceToMenu, true],
     ]), 900);
 }
 
@@ -3380,7 +3385,8 @@ function drawEscapeOverlay(){
         ctx.strokeStyle = 'rgba(255,84,112,0.55)'; ctx.lineWidth = 1.2;
         roundRect(cx-34, by-13, 68, 26, 13); ctx.stroke();
         ctx.fillStyle = '#ff5470'; ctx.font = '700 12px Space Grotesk'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('▼ ' + mDown + ' m', cx, by+1);
+        ctx.fillText(mDown + ' m', cx + 7, by+1);
+        ctx.beginPath(); ctx.moveTo(cx-24, by-3); ctx.lineTo(cx-14, by-3); ctx.lineTo(cx-19, by+4); ctx.closePath(); ctx.fill();
         ctx.textBaseline = 'alphabetic';
     }
 }
@@ -3982,7 +3988,7 @@ function renderLootDrop(containerId, drop){
             const rewards = [R('coin', drop.coins, {plus:true}), R('xp', drop.xp, {plus:true}), R('pass', drop.passPoints, {plus:true})].map(x => x.replace('class="rwd ', 'class="loot-item rwd '));
             if (drop.cosmetic) rewards.push(`<span class="loot-item cosmetic" style="--loot-color:${drop.cosmetic.color || RARITY[drop.cosmetic.rarity].color}">${drop.cosmetic.rarity.toUpperCase()} · ${drop.cosmetic.name} added</span>`);
             else rewards.push(`<span class="loot-item">Cosmetic pity ${drop.pity}/25</span>`);
-            panel.innerHTML = `<div class="loot-crate opened tier-${tier}" aria-hidden="true">✓</div><div class="loot-info"><strong class="loot-title">DROP OPENED</strong><div class="loot-items">${rewards.map(reward => reward.startsWith('<span') ? reward : `<span class="loot-item">${reward}</span>`).join('')}</div></div>`;
+            panel.innerHTML = `<div class="loot-crate opened tier-${tier}" aria-hidden="true">${icon('check')}</div><div class="loot-info"><strong class="loot-title">DROP OPENED</strong><div class="loot-items">${rewards.map(reward => reward.startsWith('<span') ? reward : `<span class="loot-item">${reward}</span>`).join('')}</div></div>`;
         } });
     });
 }
@@ -4034,26 +4040,7 @@ function escGameOver(p){
         showScreen('over');
     }, 1100);
 }
-function renderResourceShop(){
-    const profile = prog(), grid = document.getElementById('resource-grid');
-    document.getElementById('resource-coins').textContent = load('rr_coins', 0).toLocaleString('en-US');
-    document.getElementById('resource-pass').textContent = profile.passPoints.toLocaleString('en-US');
-    grid.innerHTML = '';
-    for (const pack of RESOURCE_PACKS){
-        const button = document.createElement('button');
-        button.type = 'button'; button.className = 'resource-pack';
-        button.innerHTML = `<b>${pack.name}</b><small>${R('xp', pack.xp, {plus:true})}</small><small>${R('pass', pack.passPoints, {plus:true})}</small><span class="pack-cost">${R('coin', pack.price)} · BUY</span>`;
-        button.addEventListener('click', () => {
-            const coins = load('rr_coins', 0);
-            if (coins < pack.price){ button.animate([{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}], {duration:220}); return; }
-            const next = prog();
-            store('rr_coins', coins - pack.price);
-            next.xp += pack.xp; next.passPoints += pack.passPoints; next.passPointsEarned += pack.passPoints;
-            saveProg(next); SFX.play('coin'); refreshMenu(); renderShop('resources');
-        });
-        grid.appendChild(button);
-    }
-}
+function renderResourceShop(){ /* Resources tab is intentionally empty */ }
 function renderShop(cat){
     const grid = document.getElementById('m-skins'), resources = document.getElementById('m-resource-shop');
     const current = prog();
@@ -4135,10 +4122,10 @@ function refreshMenu(){
     document.getElementById('m-eq-trail').style.background = trail.color;
     let d1 = 0, d2 = 0;
     try { d1 = dimLoad(DIMENSIONS[0]).stars.reduce((a,b) => a+b, 0); d2 = dimLoad(DIMENSIONS[1]).stars.reduce((a,b) => a+b, 0); } catch(e){}
-    document.getElementById('m-d1').textContent = `★ ${d1}/30`;
-    document.getElementById('m-d2').textContent = (d1+d2) >= 28 ? `★ ${d2}/30` : '28★ to unlock';
+    document.getElementById('m-d1').innerHTML = `${icon('star')} ${d1}/30`;
+    document.getElementById('m-d2').innerHTML = (d1+d2) >= 28 ? `${icon('star')} ${d2}/30` : `28 ${icon('star')} to unlock`;
     document.getElementById('m-d2box').classList.toggle('locked', d1+d2 < 28);
-    document.getElementById('m-tile-pk').textContent = `★ ${d1+d2} / 60`;
+    document.getElementById('m-tile-pk').innerHTML = `${icon('star')} ${d1+d2} / 60`;
     const save = pkLoadSave(), bestM = load('rr_pk_best', 0), bestT = load('rr_pk_best_time', 0);
     document.getElementById('m-tower').textContent = bestT ? pkFmtTime(bestT) : save ? `${save.m || 0} m` : bestM ? `${bestM} m` : '--';
     document.getElementById('m-eq-skin').style.background = sk.color;
@@ -4148,7 +4135,7 @@ function refreshMenu(){
     document.getElementById('m-s-rate').textContent = p.races ? Math.round(100*p.wins/p.races) + '%' : '--';
     const esc = load('rr_esc_best_score', 0);
     document.getElementById('m-s-esc').textContent = esc ? esc.toLocaleString('en-US') : '--';
-    document.getElementById('m-s-pk').textContent = `★ ${d1 + d2}`;
+    document.getElementById('m-s-pk').innerHTML = `${icon('star')} ${d1 + d2}`;
     document.getElementById('m-s-tower').textContent = bestT ? pkFmtTime(bestT) : bestM ? `${bestM} m` : '--';
     document.getElementById('m-s-pass').textContent = p.passPoints.toLocaleString('en-US');
     renderShop('skin');
@@ -4202,7 +4189,7 @@ function refreshStartMeta(){
     try {
         const tot = dimTotalStars();
         const max = DIMENSIONS.reduce((a,dm) => a + dm.levels.length*3, 0);
-        document.getElementById('start-pk').textContent = tot ? '★ ' + tot + '/' + max : '';
+        document.getElementById('start-pk').innerHTML = tot ? icon('star') + ' ' + tot + '/' + max : '';
     } catch(e){}
     const pkEl = document.getElementById('start-pk');
     const save = (typeof pkLoadSave === 'function') ? pkLoadSave() : null;
@@ -4703,7 +4690,7 @@ function openLevels(gotoDim){
         const b = document.createElement('button');
         b.className = 'lv-tile' + (open ? '' : ' locked') + (d.stars[i] ? ' done' : '');
         b.style.setProperty('--lv', L.color);
-        const stars = [0,1,2].map(k => `<span class="s${k < d.stars[i] ? ' on' : ''}">★</span>`).join('');
+        const stars = [0,1,2].map(k => `<span class="s${k < d.stars[i] ? ' on' : ''}">${icon('star')}</span>`).join('');
         b.innerHTML = `<span class="lv-num">${i+1}</span><span class="lv-name">${L.name}</span>` +
                       (open ? `<span class="lv-stars">${stars}</span>` : `<span class="lv-lock">${LOCK_SVG}</span>`);
         b.addEventListener('click', () => {
@@ -4723,7 +4710,7 @@ function openLevels(gotoDim){
         const unlocked = dimUnlocked(di);
         const t = document.createElement('button');
         t.className = 'dim-tab' + (di === curDim ? ' active' : '') + (unlocked ? '' : ' locked');
-        t.innerHTML = unlocked ? dm.name : `${LOCK_SVG} ${dm.unlockStars}★`;
+        t.innerHTML = unlocked ? dm.name : `${icon('lock')} ${dm.unlockStars} ${icon('star')}`;
         t.addEventListener('click', () => {
             if (unlocked) openLevels(di);
             else t.animate([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}], {duration:220});
@@ -4801,12 +4788,12 @@ function lvComplete(p){
         document.getElementById('lvd-kicker').textContent = 'LEVEL ' + (i+1) + ' · ' + L.name.toUpperCase();
         document.getElementById('lvd-time').textContent = lvFmt(t);
         const sEl = document.getElementById('lvd-stars');
-        sEl.innerHTML = [0,1,2].map(k => `<span class="star${k < stars ? ' on' : ''}" style="animation-delay:${0.15 + k*0.18}s">★</span>`).join('');
+        sEl.innerHTML = [0,1,2].map(k => `<span class="star${k < stars ? ' on' : ''}" style="animation-delay:${0.15 + k*0.18}s">${icon('star')}</span>`).join('');
         const b = document.getElementById('lvd-best');
         b.textContent = isBest ? 'NEW BEST' : 'BEST ' + lvFmt(prevBest);
         b.classList.toggle('muted', !isBest);
         document.getElementById('lvd-falls').textContent = lv.falls;
-        document.getElementById('lvd-targets').innerHTML = `★★★ ${lvFmt(L.par3)} &nbsp;·&nbsp; ★★ ${lvFmt(L.par2)}`;
+        document.getElementById('lvd-targets').innerHTML = `${icon('star')}${icon('star')}${icon('star')} ${lvFmt(L.par3)} &nbsp;·&nbsp; ${icon('star')}${icon('star')} ${lvFmt(L.par2)}`;
         document.getElementById('btn-lvd-next').style.display = i < DIMENSIONS[curDim].levels.length - 1 ? '' : 'none';
         renderLootDrop('loot-level', loot);
         showScreen('lvdone');

@@ -463,3 +463,8 @@
         .m-pass-entry { grid-template-columns: 42px minmax(0,1fr) 14px; gap: 9px; padding: 9px 11px; }
         .m-pass-art { width: 40px; height: 44px; }
     }
+
+#finish-menu { position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100px + env(safe-area-inset-bottom,0px)); z-index:7; align-items:center; gap:8px; padding:12px 22px; border:2px solid rgba(255,255,255,.2); border-radius:16px;
+  background:rgba(13,16,23,.9); color:#eef2f8; font-weight:900; font-size:15px; letter-spacing:.1em; pointer-events:auto; box-shadow:0 5px 0 rgba(0,0,0,.4); -webkit-tap-highlight-color:transparent; }
+#finish-menu .ico { width:20px; height:20px; }
+#finish-menu:active { transform:translateX(-50%) translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.4); }
