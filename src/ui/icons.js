@@ -30,6 +30,16 @@
           '<path d="M24 22 L27.2 29 L35 29.9 L29.2 35 L30.9 42.5 L24 38.6 L17.1 42.5 L18.8 35 L13 29.9 L20.8 29 Z" fill="#fff" stroke="#1c1450" stroke-width="2" stroke-linejoin="round" transform="translate(32 32) scale(1.2) translate(-24 -32) translate(1 1)"/>' +
           '<path d="M10 16 H30" stroke="#fff" stroke-opacity=".5" stroke-width="2.5" stroke-linecap="round"/>' +
         '</symbol>' +
+        '<symbol id="ico-drop" viewBox="0 0 64 64">' +
+          '<ellipse cx="32" cy="57" rx="24" ry="3.4" fill="#000" opacity=".3"/>' +
+          '<rect x="8" y="28" width="48" height="27" rx="4" fill="#2a3142" stroke="#0d1017" stroke-width="3"/>' +
+          '<rect x="8" y="46" width="48" height="9" rx="3" fill="#0d1017" opacity=".35"/>' +
+          '<rect x="19" y="28" width="6" height="27" style="fill:var(--ic,#35e0c8)" opacity=".85"/><rect x="39" y="28" width="6" height="27" style="fill:var(--ic,#35e0c8)" opacity=".85"/>' +
+          '<path d="M6 30 V22 Q6 9 32 9 Q58 9 58 22 V30 Z" fill="#3a4258" stroke="#0d1017" stroke-width="3"/>' +
+          '<rect x="19" y="10" width="6" height="20" style="fill:var(--ic,#35e0c8)" opacity=".85"/><rect x="39" y="10" width="6" height="20" style="fill:var(--ic,#35e0c8)" opacity=".85"/>' +
+          '<path d="M12 21 Q22 13 32 13" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2.4" stroke-linecap="round"/>' +
+          '<rect x="26" y="24" width="12" height="11" rx="2.6" style="fill:var(--ic,#35e0c8)" stroke="#0d1017" stroke-width="2.4"/><circle cx="32" cy="29" r="1.8" fill="#0d1017"/><rect x="31" y="29" width="2" height="4" rx="1" fill="#0d1017"/>' +
+        '</symbol>' +
         '<symbol id="ico-star" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>' +
         '<symbol id="ico-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>' +
         '<symbol id="ico-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>' +

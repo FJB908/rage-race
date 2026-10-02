@@ -42,26 +42,6 @@
 .lb-hint { font-weight:800; letter-spacing:.14em; font-size:13px; color:#8b95a7; opacity:0; transition:opacity .3s; min-height:16px; }
 .lb.ready .lb-hint { opacity:1; animation:lbPulse 1.4s ease-in-out infinite; }
 @keyframes lbPulse { 50% { opacity:.35; } }
-
-.lb-rewards { position:absolute; z-index:4; left:0; right:0; top:0; bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:24px; pointer-events:none; }
-.lb-head { font-weight:900; font-size:30px; letter-spacing:.06em; color:var(--c); text-shadow:0 0 22px color-mix(in srgb,var(--c) 60%,transparent); opacity:0; transform:scale(.7); transition:all .45s cubic-bezier(.2,1.6,.4,1); text-align:center; }
-.lb-head.show { opacity:1; transform:none; }
-.lb-card { width:min(84vw,340px); display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 16px; border-radius:14px; border:1px solid color-mix(in srgb,var(--cc,#35e0c8) 55%,transparent);
-  background:linear-gradient(135deg,color-mix(in srgb,var(--cc,#35e0c8) 16%,#141925),#141925 70%); font-weight:800; opacity:0; transform:translateY(24px) scale(.9);
-  transition:all .42s cubic-bezier(.2,1.5,.4,1); }
-.lb-card.show { opacity:1; transform:none; }
-.lb-card .ico { width:34px; height:34px; }
-.lb-card b { font-size:22px; color:var(--cc); font-variant-numeric:tabular-nums; }
-.lb-item { width:min(80vw,320px); padding:22px 18px 18px; border-radius:22px; text-align:center; border:2px solid var(--ic); opacity:0; transform:scale(.3) rotate(-6deg);
-  background:radial-gradient(100% 80% at 50% 0%,color-mix(in srgb,var(--ic) 30%,#141925),#141925 72%); box-shadow:0 0 60px color-mix(in srgb,var(--ic) 55%,transparent), inset 0 0 40px color-mix(in srgb,var(--ic) 14%,transparent);
-  transition:all .7s cubic-bezier(.2,1.4,.35,1); }
-.lb-item.show { opacity:1; transform:none; }
-.lb-item canvas { width:180px; height:180px; display:block; margin:0 auto; }
-.lb-item .rar { font-weight:900; letter-spacing:.2em; font-size:13px; color:var(--ic); }
-.lb-item .nm { font-weight:900; font-size:26px; margin:4px 0 2px; }
-.lb-item .cat { color:#8b95a7; font-size:12px; letter-spacing:.14em; font-weight:700; }
-.lb-item .new { display:inline-block; margin-top:8px; padding:3px 10px; border-radius:99px; background:var(--ic); color:#0d1017; font-weight:900; font-size:11px; letter-spacing:.14em; }
-.lb-item .trail-sample { margin:6px auto 0; }
 .lb-btn { position:absolute; z-index:6; bottom:calc(28px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%) translateY(20px); min-width:200px; min-height:52px; border:0; border-radius:14px;
   background:var(--c); color:#0d1017; font-weight:900; font-size:17px; letter-spacing:.1em; opacity:0; pointer-events:none; transition:all .35s ease; box-shadow:0 8px 0 var(--c2); }
 .lb-btn.show { opacity:1; pointer-events:auto; transform:translateX(-50%); }
@@ -74,3 +54,38 @@
 .loot-crate.tier-epic { border-color:#b3a9ff; color:#b3a9ff; background:#231f3d; }
 .loot-crate.tier-legendary { border-color:#ffcf3f; color:#ffcf3f; background:#2d2812; box-shadow:0 0 18px rgba(255,207,63,.35); }
 .loot-crate.tier-common { border-color:#35e0c8; color:#35e0c8; background:#13302d; }
+
+/* tap-to-open crate */
+.lb.ready .lb-chest, .lb.in .lb-chest { touch-action:none; }
+.lb-chest.tap { animation:lbTap .3s ease-out !important; }
+@keyframes lbTap { 0% { transform:translate(0,0) rotate(0) scale(1); } 20% { transform:translate(calc(var(--amp,1)*-9px),2px) rotate(calc(var(--amp,1)*-3deg)) scale(1.04); } 45% { transform:translate(calc(var(--amp,1)*9px),-3px) rotate(calc(var(--amp,1)*3deg)) scale(1.06); } 70% { transform:translate(calc(var(--amp,1)*-5px),1px) rotate(calc(var(--amp,1)*-1.5deg)) scale(1.03); } 100% { transform:none; } }
+.lb-ring { position:absolute; left:50%; top:46%; width:40%; aspect-ratio:1; margin:-20% 0 0 -20%; border-radius:50%; border:4px solid var(--c); opacity:0; pointer-events:none; }
+.lb-ring.go { animation:lbRing .6s ease-out; }
+@keyframes lbRing { 0% { transform:scale(.4); opacity:.95; } 100% { transform:scale(3.2); opacity:0; } }
+.lb-title.pop { animation:lbTitlePop .5s cubic-bezier(.2,1.6,.4,1); }
+@keyframes lbTitlePop { 0% { transform:scale(.6); } 100% { transform:scale(1); } }
+.lb-pips { display:flex; gap:10px; margin-top:4px; opacity:0; transition:opacity .3s; }
+.lb.ready .lb-pips { opacity:1; }
+.lb-pips i { width:14px; height:14px; transform:rotate(45deg); border-radius:3px; background:#232a3b; border:2px solid #0d1017; transition:all .3s; }
+.lb-pips i.on { background:var(--pc); box-shadow:0 0 12px var(--pc); }
+.lb-luck { width:min(46vw,190px); height:7px; border-radius:99px; background:rgba(255,255,255,.1); overflow:hidden; opacity:0; transition:opacity .3s; }
+.lb.ready .lb-luck { opacity:1; }
+.lb-luck i { display:block; height:100%; width:100%; border-radius:99px; background:var(--c); box-shadow:0 0 10px var(--c); transition:width .4s ease; }
+.lb-hint { letter-spacing:.3em; }
+
+/* reward pops: icon + amount, no windows */
+.lb-pops { position:absolute; z-index:4; left:0; right:0; top:14%; bottom:110px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:0 16px; pointer-events:none; }
+.lb-row { display:flex; flex-wrap:wrap; justify-content:center; gap:14px 26px; }
+.lb-pop { display:flex; align-items:center; gap:10px; opacity:0; transform:scale(.2) translateY(30px); transition:all .5s cubic-bezier(.2,1.8,.35,1); }
+.lb-pop.show { opacity:1; transform:none; }
+.lb-pop .ico { width:54px; height:54px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
+.lb-pop b { font:900 40px/1 "Bricolage Grotesque","Space Grotesk",system-ui,sans-serif; font-variant-numeric:tabular-nums; color:#fff; text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 18px rgba(0,0,0,.35); }
+.pop-coin b { color:#ffd45e; } .pop-xp b { color:#8fd2ff; } .pop-pass b { color:#c9c0ff; }
+.lb-itempop { position:relative; display:flex; flex-direction:column; align-items:center; gap:2px; opacity:0; transform:scale(.2) rotate(-8deg); transition:all .7s cubic-bezier(.2,1.5,.35,1); }
+.lb-itempop.show { opacity:1; transform:none; }
+.lb-itempop .glow { position:absolute; left:50%; top:90px; width:300px; height:300px; margin:-150px 0 0 -150px; border-radius:50%; background:radial-gradient(circle,color-mix(in srgb,var(--ic) 65%,transparent) 0,transparent 68%); animation:lbPulse 1.6s ease-in-out infinite; }
+.lb-itempop canvas { position:relative; width:200px; height:200px; }
+.lb-itempop canvas.trp { width:200px; height:62px; margin-top:-4px; }
+.lb-itempop .rar { position:relative; font-weight:900; letter-spacing:.24em; font-size:13px; color:var(--ic); text-shadow:0 2px 0 rgba(0,0,0,.5); }
+.lb-itempop .nm { position:relative; font:900 30px/1.1 "Bricolage Grotesque","Space Grotesk",system-ui,sans-serif; text-align:center; text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 20px color-mix(in srgb,var(--ic) 60%,transparent); }
+.lb-itempop .new { position:relative; margin-top:6px; padding:3px 12px; border-radius:99px; background:var(--ic); color:#0d1017; font-weight:900; font-size:11px; letter-spacing:.16em; }

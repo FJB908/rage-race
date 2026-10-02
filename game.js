@@ -2179,7 +2179,7 @@ function showResults() {
     const msgs = ["Unbeatable.","Silver, so close.","Bronze, solid.","Fourth. Rage!"];
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
-    sub.innerHTML = (msgs[you-1] || "") + `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}`;
+    sub.textContent = msgs[you-1] || "";
     sub.style.color = you===1 ? 'var(--gold)' : 'var(--muted)';
 
     const board = document.getElementById('board');
@@ -3956,8 +3956,15 @@ function renderLook(cv, look, opts){
     drawHatAcc(c, s, k, look.hat, 0.3);
 }
 function randomBotLook(){
-    const pick = arr => arr[1 + Math.floor(Math.random() * (arr.length - 1))].id;
-    return { skin: null, hat: Math.random() < 0.55 ? pick(HATS) : 'none', face: Math.random() < 0.35 ? pick(FACES) : 'none' };
+    // Bots draw from the full catalogue (built-ins and designer items), common to legendary.
+    const pickAny = arr => arr[Math.floor(Math.random() * arr.length)].id;
+    const pickReal = arr => arr[1 + Math.floor(Math.random() * (arr.length - 1))].id;
+    return {
+        skin: Math.random() < 0.78 ? pickAny(SKINS) : null,
+        hat: Math.random() < 0.62 ? pickReal(HATS) : 'none',
+        face: Math.random() < 0.5 ? pickReal(FACES) : 'none',
+        trail: Math.random() < 0.4 ? pickReal(TRAILS) : 'none',
+    };
 }
 
 const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Parkour · Levels' };
@@ -3971,6 +3978,7 @@ function prog(){
     if (!Number.isFinite(d.passPointsEarned)) d.passPointsEarned = d.passPoints;
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
     if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
+    if (!d.pendingDrops || typeof d.pendingDrops !== 'object') d.pendingDrops = {};
     if (!Array.isArray(d.owned)) d.owned = ['classic'];
     if (!d.owned.includes('classic')) d.owned.push('classic');
     if (!d.trail || !TRAILS.some(trail => trail.id === d.trail)) d.trail = 'none';
@@ -3993,9 +4001,21 @@ function skinColor(){ return skinById(prog().skin).color; }
 function addXp(n){ const p = prog(); p.xp += Math.max(0, Math.round(n)); saveProg(p); }
 function addCoins(n){ store('rr_coins', load('rr_coins', 0) + Math.max(0, Math.round(n))); }
 function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Math.random().toString(36).slice(2, 9); }
-// Rarer cosmetics are much harder to get: weight by rarity, only among items not yet owned.
-function pickCosmetic(available){
-    const W = { common:60, rare:28, epic:9, legendary:3 }, by = {};
+// ---------- Supply drops ----------
+// A drop is a pending ticket until it is opened. Opening (see src/ui/lootbox.js) lets the player tap it to
+// level its rarity up; the final tier then decides the rewards (resolveDrop).
+const DROP_TIERS = ['common', 'rare', 'epic', 'legendary'];
+const DROP_COIN_MULT = { common:1, rare:1.75, epic:3, legendary:5 };
+const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, legendary:2.2 };
+const DROP_COSMETIC_CHANCE = { common:0.035, rare:0.09, epic:0.2, legendary:0.45 };
+const DROP_RARITY_WEIGHTS = {
+    common:    { common:60, rare:28, epic:9,  legendary:3 },
+    rare:      { common:36, rare:40, epic:18, legendary:6 },
+    epic:      { common:14, rare:34, epic:38, legendary:14 },
+    legendary: { common:5,  rare:20, epic:40, legendary:35 },
+};
+function pickCosmetic(available, tier){
+    const W = DROP_RARITY_WEIGHTS[tier] || DROP_RARITY_WEIGHTS.common, by = {};
     for (const it of available) (by[it.rarity] = by[it.rarity] || []).push(it);
     const rars = Object.keys(by);
     let x = Math.random() * rars.reduce((a, r) => a + (W[r] || 1), 0);
@@ -4005,15 +4025,32 @@ function pickCosmetic(available){
 function awardLootDrop(id, base){
     const p = prog();
     if (p.lootGrants[id]) return p.lootGrants[id];
+    if (p.pendingDrops[id]) return p.pendingDrops[id];
+    const r = Math.random();
     const drop = {
-        coins:Math.max(0, Math.round(base.coins || 0)),
-        xp:Math.max(0, Math.round(base.xp || 0)),
-        passPoints:Math.max(0, Math.round(base.passPoints || 0)),
-        cosmetic:null, pity:0,
+        id, pending:true, tier: r < 0.02 ? 'epic' : r < 0.14 ? 'rare' : 'common',
+        base:{ coins:Math.max(0, Math.round(base.coins || 0)), xp:Math.max(0, Math.round(base.xp || 0)), passPoints:Math.max(0, Math.round(base.passPoints || 0)) },
+    };
+    p.pendingDrops[id] = drop;
+    saveProg(p);
+    return drop;
+}
+// Turn a pending drop into rewards at the given final tier. Safe to call twice (second call returns the stored result).
+function resolveDrop(id, tier){
+    const p = prog();
+    if (p.lootGrants[id]) return p.lootGrants[id];
+    const pend = p.pendingDrops[id]; if (!pend) return null;
+    tier = DROP_TIERS.includes(tier) ? tier : pend.tier;
+    const drop = {
+        id, tier,
+        coins:Math.round(pend.base.coins * DROP_COIN_MULT[tier]),
+        xp:Math.round(pend.base.xp * DROP_XP_MULT[tier]),
+        passPoints:pend.base.passPoints,
+        cosmetic:null,
     };
     const available = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(item => item.price > 0 && !p.owned.includes(item.id));
-    if (available.length && (p.cosmeticPity >= 24 || Math.random() < 0.035)){
-        drop.cosmetic = pickCosmetic(available);
+    if (available.length && (p.cosmeticPity >= 24 || Math.random() < DROP_COSMETIC_CHANCE[tier])){
+        drop.cosmetic = pickCosmetic(available, tier);
         p.owned.push(drop.cosmetic.id);
         p.cosmeticPity = 0;
     } else if (available.length){
@@ -4021,38 +4058,41 @@ function awardLootDrop(id, base){
     } else {
         drop.coins += 100;
     }
-    drop.pity = p.cosmeticPity;
-    if (drop.cosmetic) drop.tier = drop.cosmetic.rarity;
-    else {   // no cosmetic: a lucky crate can still be a richer tier
-        const r = Math.random();
-        drop.tier = r < 0.02 ? 'epic' : r < 0.12 ? 'rare' : 'common';
-        drop.coins = Math.round(drop.coins * ({ common:1, rare:1.75, epic:3 }[drop.tier]));
-    }
     p.xp += drop.xp;
     p.passPoints += drop.passPoints;
     p.passPointsEarned += drop.passPoints;
     store('rr_coins', load('rr_coins', 0) + drop.coins);
+    delete p.pendingDrops[id];
     p.lootGrants[id] = drop;
     const grantIds = Object.keys(p.lootGrants);
     for (const oldId of grantIds.slice(0, Math.max(0, grantIds.length - 40))) delete p.lootGrants[oldId];
     saveProg(p);
     return drop;
 }
+// Anything left unopened is paid out at its starting tier whenever the player is back on the home screen.
+function settlePendingDrops(){
+    const p = prog();
+    for (const id of Object.keys(p.pendingDrops)) resolveDrop(id, p.pendingDrops[id].tier);
+}
 function renderLootDrop(containerId, drop){
     const panel = document.getElementById(containerId);
     if (!panel || !drop) return;
-    const tier = drop.tier || (drop.cosmetic ? drop.cosmetic.rarity : 'common');
-    const tierName = { common:'SUPPLY DROP', rare:'RARE DROP', epic:'EPIC DROP', legendary:'LEGENDARY DROP' }[tier] || 'SUPPLY DROP';
+    const tier = drop.tier || 'common';
+    const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
     panel.classList.remove('opening');
-    panel.innerHTML = `<div class="loot-crate tier-${tier}" aria-hidden="true"><span class="loot-box-art"></span></div><div class="loot-info"><strong class="loot-title">${tierName} READY</strong><span class="loot-copy">${icon('coin')}${icon('xp')}${icon('pass')} guaranteed · cosmetic chance 3.5%</span><button class="loot-open" type="button">OPEN DROP</button></div>`;
+    panel.innerHTML = `<div class="loot-crate tier-${tier}" aria-hidden="true">${icon('drop', 'loot-ico')}</div><div class="loot-info"><button class="loot-open" type="button">${icon('drop')}<span>OPEN</span></button></div>`;
+    panel.querySelector('.loot-crate').style.setProperty('--ic', TC[tier]);
     panel.querySelector('.loot-open').addEventListener('click', event => {
         const button = event.currentTarget;
         button.disabled = true;
-        openLootbox(drop, { onDone: () => {
-            const rewards = [R('coin', drop.coins, {plus:true}), R('xp', drop.xp, {plus:true}), R('pass', drop.passPoints, {plus:true})].map(x => x.replace('class="rwd ', 'class="loot-item rwd '));
-            if (drop.cosmetic) rewards.push(`<span class="loot-item cosmetic" style="--loot-color:${drop.cosmetic.color || RARITY[drop.cosmetic.rarity].color}">${drop.cosmetic.rarity.toUpperCase()} · ${drop.cosmetic.name} added</span>`);
-            else rewards.push(`<span class="loot-item">Cosmetic pity ${drop.pity}/25</span>`);
-            panel.innerHTML = `<div class="loot-crate opened tier-${tier}" aria-hidden="true">${icon('check')}</div><div class="loot-info"><strong class="loot-title">DROP OPENED</strong><div class="loot-items">${rewards.map(reward => reward.startsWith('<span') ? reward : `<span class="loot-item">${reward}</span>`).join('')}</div></div>`;
+        openLootbox(drop, { onDone: final => {
+            final = final || drop;
+            const chips = [R('coin', final.coins || 0, {plus:true}), R('xp', final.xp || 0, {plus:true})];
+            if (final.passPoints) chips.push(R('pass', final.passPoints, {plus:true}));
+            if (final.cosmetic) chips.push(`<span class="rwd rwd-item" style="color:${RARITY[final.cosmetic.rarity].color}"><b>${final.cosmetic.name}</b></span>`);
+            panel.innerHTML = `<div class="loot-crate opened tier-${final.tier || tier}" aria-hidden="true">${icon('check')}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;
+            panel.querySelector('.loot-crate').style.setProperty('--ic', TC[final.tier || tier]);
+            refreshMenu();
         } });
     });
 }
@@ -4212,7 +4252,7 @@ function rewardRace(place, finished, lootId){
     const xp    = finished ? [60, 45, 35, 25][place-1] || 15 : 15;
     const passPoints = finished ? [50, 40, 32, 25][place-1] || 20 : 15;
     const id = lootId || newLootId('race');
-    const alreadyGranted = !!prog().lootGrants[id];
+    const pp = prog(), alreadyGranted = !!(pp.lootGrants[id] || pp.pendingDrops[id]);
     const drop = awardLootDrop(id, {coins, xp, passPoints});
     if (!alreadyGranted){ const p = prog(); p.races++; if (finished && place === 1) p.wins++; saveProg(p); }
     refreshMenu();
@@ -4248,6 +4288,7 @@ document.getElementById('m-friends-race').addEventListener('click', () => { setL
 
 /* ---- menu meta (best + wallet) ---- */
 function refreshStartMeta(){
+    settlePendingDrops();
     const best = load('rr_esc_best_score', 0), coins = load('rr_coins', 0);
     document.getElementById('start-best').textContent = best > 0 ? 'Best ' + best.toLocaleString('en-US') : '';
     document.getElementById('wallet-num').textContent = coins;

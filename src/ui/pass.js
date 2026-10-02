@@ -99,42 +99,20 @@
     window.openPass = function () { renderPassScreen(); showScreen('pass'); setTimeout(passScrollToNext, 80); };
 
     // ---------- claiming ----------
-    function popup(opts) {
-        return new Promise(res => {
-            const el = document.createElement('div');
-            el.className = 'lb in ' + (opts.tierClass || '');
-            el.style.zIndex = 1001;
-            el.innerHTML = '<div class="lb-rays"></div><div class="lb-flash"></div><div class="lb-rewards"><div class="lb-head">' + opts.head + '</div>' + opts.body + '</div><button class="lb-btn" type="button">COLLECT</button>';
-            document.body.appendChild(el);
-            requestAnimationFrame(() => {
-                el.classList.add('burst');
-                el.querySelector('.lb-flash').classList.add('go');
-                setTimeout(() => { el.querySelector('.lb-head').classList.add('show'); const x = el.querySelector('.lb-item,.lb-card'); if (x) x.classList.add('show'); el.querySelector('.lb-btn').classList.add('show'); }, 120);
-            });
-            sfx('finish');
-            if (opts.after) opts.after(el);
-            el.querySelector('.lb-btn').addEventListener('click', () => { sfx('count'); el.classList.remove('in'); setTimeout(() => { el.remove(); res(); }, 300); });
-        });
-    }
     async function grant(i) {
         const t = PASS_TIERS[i], p = prog();
         if (p.passClaimed.includes(i)) return;
         p.passClaimed.push(i); saveProg(p);
         if (t.t === 'coins') {
             addCoins(t.n);
-            await popup({ head:'TIER ' + (i + 1), body:'<div class="lb-card" style="--cc:#ffcf3f"><span style="font-size:34px">' + icon('coin') + '</span><b>+' + t.n + '</b></div>' });
+            await showRewardPops([{ type:'coin', n:t.n }]);
         } else if (t.t === 'drop') {
             const drop = awardLootDrop(newLootId('pass'), { coins:60, xp:50, passPoints:0 });
             await new Promise(res => openLootbox(drop, { title:'SEASON DROP', onDone:res }));
         } else {
-            const cos = itemOf(t), q = prog(), dup = q.owned.includes(cos.id), rc = rar(cos.rarity).color;
-            if (dup) addCoins(Math.round(cos.price * 0.4)); else { q.owned.push(cos.id); saveProg(q); }
-            await popup({
-                head:rar(cos.rarity).label.toUpperCase() + '!', tierClass:cos.rarity === 'common' ? '' : 'tier-' + cos.rarity,
-                body:'<div class="lb-item" style="--ic:' + rc + '"><canvas width="400" height="400"></canvas><div class="rar">' + rar(cos.rarity).label.toUpperCase() + '</div><div class="nm">' + cos.name + '</div><div class="cat">' + t.cat.toUpperCase() + '</div>' +
-                    (dup ? '<span class="new">OWNED · ' + R('coin', Math.round(cos.price * 0.4), { plus:true }).replace(/<b>/, '<b style="color:#0d1017">') + '</span>' : '<span class="new">NEW</span>') + '</div>',
-                after:el => { try { renderLook(el.querySelector('canvas'), Object.assign(myLook(), { [t.cat]:cos.id }), { scale:.3, cy:.6 }); } catch (e) {} }
-            });
+            const cos = itemOf(t), q = prog(), dup = q.owned.includes(cos.id);
+            if (dup) { const back = Math.round(cos.price * 0.4); addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:cos.rarity }); }
+            else { q.owned.push(cos.id); saveProg(q); await showRewardPops([{ type:'item', item:cos }], { tier:cos.rarity }); }
         }
     }
     let busy = false;

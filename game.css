@@ -470,3 +470,8 @@
 #finish-menu:active { transform:translateX(-50%) translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.4); }
 
 .tr-pv { display:block; width:100%; height:auto; margin:2px 0 4px; border-radius:8px; background:#10151f; }
+
+.loot-crate { width:64px; height:64px; padding:6px; }
+.loot-info { justify-content:center; }
+.loot-open { min-height:42px; padding:0 18px; }
+.loot-open { font-family:inherit; font-weight:900; letter-spacing:.1em; }
