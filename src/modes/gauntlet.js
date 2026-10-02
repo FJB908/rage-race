@@ -475,10 +475,11 @@
         }
         if (vis.length > full) {
             vis.sort((a, b) => a._k - b._k);
-            let budget = 3;                                          // at most 3 picture refreshes a frame
+            let budget = 3, names = 0;                                          // at most 3 picture refreshes a frame
             for (let i = 0; i < vis.length; i++) {
                 const p = vis[i];
                 p._lod = i >= full; p._wasFull = i < full;
+                if (!p._noName) { if (names < 5) names++; else p._noName = true; }   // at most 5 name tags
                 if (p._lod) budget -= refreshSprite(p, budget);
             }
         } else for (const p of vis) p._wasFull = true;

@@ -715,7 +715,9 @@ function updateShockwaves(dt){
 function updateWindFx(dt){
     for (const p of players){
         if (!(p.windT > 0) || p.finished) continue;
-        if (Math.random() < dt*16){
+        const crowd = gameMode === 'gauntlet';                               // 31 players can be hit at once: only draw streaks where they are seen
+        if (crowd && (p.y < cameraY - 80 || p.y > cameraY + VH + 80 || windParticles.length > 90)) continue;
+        if (Math.random() < dt*(crowd ? 7 : 16)){
             const dir = p.windDir;
             windParticles.push({
                 x: p.x - dir*44, y: p.y + rnd(-26,26), vx: dir*rnd(280,440), vy: rnd(-8,8),
@@ -723,21 +725,25 @@ function updateWindFx(dt){
             });
         }
     }
-    for (let i=windParticles.length-1;i>=0;i--){
+    let k = 0;
+    for (let i=0;i<windParticles.length;i++){
         const w = windParticles[i];
         w.x += w.vx*dt; w.y += w.vy*dt; w.life -= w.decay*dt;
-        if (w.life <= 0) windParticles.splice(i,1);
+        if (w.life > 0) windParticles[k++] = w;
     }
+    windParticles.length = k;
 }
 function drawWindFx(){
+    if (!windParticles.length) return;
     ctx.save(); ctx.lineCap='round';
+    ctx.globalAlpha = 0.35; ctx.strokeStyle = ITEMS.wind.color; ctx.lineWidth = 2;
+    ctx.beginPath();                                   // one path for every streak: a single stroke instead of one per particle
     for (const w of windParticles){
         if (w.y < cameraY-60 || w.y > cameraY+VH+60) continue;
         const dir = Math.sign(w.vx) || 1;
-        ctx.globalAlpha = Math.max(0, w.life) * 0.5;
-        ctx.strokeStyle = ITEMS.wind.color; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x - dir*w.len, w.y); ctx.stroke();
+        ctx.moveTo(w.x, w.y); ctx.lineTo(w.x - dir*w.len, w.y);
     }
+    ctx.stroke();
     ctx.restore(); ctx.globalAlpha = 1;
 }
 // A single soft edge-glow on the side the wind is coming FROM, plus a small arrow-cluster
@@ -5053,12 +5059,13 @@ function lvComplete(p){
     const prevBest = d.best[i];
     const isBest = !prevBest || t < prevBest;
     if (isBest) d.best[i] = +t.toFixed(2);
+    const prevStars = d.stars[i];
     const gainedStars = Math.max(0, stars - d.stars[i]);
     d.stars[i] = Math.max(d.stars[i], stars);
     // Three stars earn a supply drop whose starting rarity follows the level's difficulty (and the dimension);
     // anything less pays the base rewards straight away.
     let loot;
-    if (stars >= 3){
+    if (stars >= 3 && prevStars < 3){   // the drop is a one-time reward for the first 3-star clear
         const n = DIMENSIONS[curDim].levels.length, f = i / Math.max(1, n - 1);
         const tier = lvDropTier(curDim, i);
         const coins = curDim === 0 ? Math.round(40 + f * 60) : Math.round(90 + f * 120);
