@@ -3527,6 +3527,8 @@ const TRAILS = [
     { id:'tidal',      name:'Tidal Current', color:'#62f5dc', price:3300, rarity:'legendary', style:'ribbon' },
     { id:'goldenhour', name:'Golden Hour',   color:'#ffcc69', price:3900, rarity:'legendary', style:'star' },
 ];
+// Layered art for the built-in skins (src/data/skin-styles.js).
+if (typeof SKIN_STYLES !== 'undefined') for (const s of SKINS) if (SKIN_STYLES[s.id]) Object.assign(s, SKIN_STYLES[s.id]);
 // Items made in tools/designer.html (src/data/custom-cosmetics.js) join the built-in lists here.
 if (typeof CUSTOM_COSMETICS !== 'undefined'){
     for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
