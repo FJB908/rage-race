@@ -3927,6 +3927,15 @@ function skinColor(){ return skinById(prog().skin).color; }
 function addXp(n){ const p = prog(); p.xp += Math.max(0, Math.round(n)); saveProg(p); }
 function addCoins(n){ store('rr_coins', load('rr_coins', 0) + Math.max(0, Math.round(n))); }
 function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Math.random().toString(36).slice(2, 9); }
+// Rarer cosmetics are much harder to get: weight by rarity, only among items not yet owned.
+function pickCosmetic(available){
+    const W = { common:60, rare:28, epic:9, legendary:3 }, by = {};
+    for (const it of available) (by[it.rarity] = by[it.rarity] || []).push(it);
+    const rars = Object.keys(by);
+    let x = Math.random() * rars.reduce((a, r) => a + (W[r] || 1), 0);
+    for (const r of rars){ x -= (W[r] || 1); if (x <= 0) return by[r][Math.floor(Math.random() * by[r].length)]; }
+    return available[0];
+}
 function awardLootDrop(id, base){
     const p = prog();
     if (p.lootGrants[id]) return p.lootGrants[id];
@@ -3938,7 +3947,7 @@ function awardLootDrop(id, base){
     };
     const available = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(item => item.price > 0 && !p.owned.includes(item.id));
     if (available.length && (p.cosmeticPity >= 24 || Math.random() < 0.035)){
-        drop.cosmetic = available[Math.floor(Math.random() * available.length)];
+        drop.cosmetic = pickCosmetic(available);
         p.owned.push(drop.cosmetic.id);
         p.cosmeticPity = 0;
     } else if (available.length){
@@ -3947,6 +3956,12 @@ function awardLootDrop(id, base){
         drop.coins += 100;
     }
     drop.pity = p.cosmeticPity;
+    if (drop.cosmetic) drop.tier = drop.cosmetic.rarity;
+    else {   // no cosmetic: a lucky crate can still be a richer tier
+        const r = Math.random();
+        drop.tier = r < 0.02 ? 'epic' : r < 0.12 ? 'rare' : 'common';
+        drop.coins = Math.round(drop.coins * ({ common:1, rare:1.75, epic:3 }[drop.tier]));
+    }
     p.xp += drop.xp;
     p.passPoints += drop.passPoints;
     p.passPointsEarned += drop.passPoints;
@@ -3960,18 +3975,19 @@ function awardLootDrop(id, base){
 function renderLootDrop(containerId, drop){
     const panel = document.getElementById(containerId);
     if (!panel || !drop) return;
+    const tier = drop.tier || (drop.cosmetic ? drop.cosmetic.rarity : 'common');
+    const tierName = { common:'SUPPLY DROP', rare:'RARE DROP', epic:'EPIC DROP', legendary:'LEGENDARY DROP' }[tier] || 'SUPPLY DROP';
     panel.classList.remove('opening');
-    panel.innerHTML = `<div class="loot-crate" aria-hidden="true"><span class="loot-box-art"></span></div><div class="loot-info"><strong class="loot-title">SUPPLY DROP READY</strong><span class="loot-copy">Guaranteed Coins, XP and Pass Points. Cosmetic chance: 3.5%.</span><button class="loot-open" type="button">OPEN DROP</button></div>`;
+    panel.innerHTML = `<div class="loot-crate tier-${tier}" aria-hidden="true"><span class="loot-box-art"></span></div><div class="loot-info"><strong class="loot-title">${tierName} READY</strong><span class="loot-copy">Guaranteed Coins, XP and Pass Points. Cosmetic chance: 3.5%.</span><button class="loot-open" type="button">OPEN DROP</button></div>`;
     panel.querySelector('.loot-open').addEventListener('click', event => {
         const button = event.currentTarget;
-        button.disabled = true; button.textContent = 'OPENING'; panel.classList.add('opening');
-        setTimeout(() => {
+        button.disabled = true;
+        openLootbox(drop, { onDone: () => {
             const rewards = [`+${drop.coins} Coins`, `+${drop.xp} XP`, `+${drop.passPoints} Pass Points`];
             if (drop.cosmetic) rewards.push(`<span class="loot-item cosmetic" style="--loot-color:${drop.cosmetic.color || RARITY[drop.cosmetic.rarity].color}">${drop.cosmetic.rarity.toUpperCase()} · ${drop.cosmetic.name} added</span>`);
             else rewards.push(`<span class="loot-item">Cosmetic pity ${drop.pity}/25</span>`);
-            panel.classList.remove('opening');
-            panel.innerHTML = `<div class="loot-crate opened" aria-hidden="true">✓</div><div class="loot-info"><strong class="loot-title">DROP OPENED</strong><div class="loot-items">${rewards.map(reward => reward.startsWith('<span') ? reward : `<span class="loot-item">${reward}</span>`).join('')}</div></div>`;
-        }, 760);
+            panel.innerHTML = `<div class="loot-crate opened tier-${tier}" aria-hidden="true">✓</div><div class="loot-info"><strong class="loot-title">DROP OPENED</strong><div class="loot-items">${rewards.map(reward => reward.startsWith('<span') ? reward : `<span class="loot-item">${reward}</span>`).join('')}</div></div>`;
+        } });
     });
 }
 function escGameOver(p){
