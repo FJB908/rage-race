@@ -4956,7 +4956,9 @@ function openLevels(gotoDim){
         b.className = 'lv-tile' + (open ? '' : ' locked') + (d.stars[i] ? ' done' : '');
         b.style.setProperty('--lv', L.color);
         const stars = [0,1,2].map(k => `<span class="s${k < d.stars[i] ? ' on' : ''}">${icon('star')}</span>`).join('');
-        b.innerHTML = `<span class="lv-num">${i+1}</span><span class="lv-name">${L.name}</span>` +
+        const tc = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' }[lvDropTier(curDim, i)];
+        const chest = open ? `<span class="lv-drop" title="3 stars: supply drop" style="--ic:${tc}">${icon('drop')}</span>` : '';
+        b.innerHTML = chest + `<span class="lv-num">${i+1}</span><span class="lv-name">${L.name}</span>` +
                       (open ? `<span class="lv-stars">${stars}</span>` : `<span class="lv-lock">${LOCK_SVG}</span>`);
         b.addEventListener('click', () => {
             if (open) lvStart(i);
@@ -5031,6 +5033,11 @@ function updateLevel(dt){
 }
 function lvFmt(t){ const m = Math.floor(t/60), s = t - m*60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); }
 
+// Which supply drop a level gives for 3 stars: rarity by the level's difficulty and its dimension.
+function lvDropTier(dim, i){
+    const n = DIMENSIONS[dim].levels.length, f = i / Math.max(1, n - 1);
+    return dim === 0 ? (f < 0.4 ? 'common' : f < 0.8 ? 'rare' : 'epic') : (f < 0.35 ? 'rare' : f < 0.7 ? 'epic' : 'legendary');
+}
 function lvComplete(p){
     SFX.play('finish');
     if (lv.done) return;
@@ -5053,7 +5060,7 @@ function lvComplete(p){
     let loot;
     if (stars >= 3){
         const n = DIMENSIONS[curDim].levels.length, f = i / Math.max(1, n - 1);
-        const tier = curDim === 0 ? (f < 0.4 ? 'common' : f < 0.8 ? 'rare' : 'epic') : (f < 0.35 ? 'rare' : f < 0.7 ? 'epic' : 'legendary');
+        const tier = lvDropTier(curDim, i);
         const coins = curDim === 0 ? Math.round(40 + f * 60) : Math.round(90 + f * 120);
         loot = awardLootDrop(lv.lootId, {coins, xp:25 + Math.round(f * 25), passPoints:50}, {tier});
     } else {

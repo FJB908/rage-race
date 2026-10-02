@@ -521,3 +521,6 @@
 .m-card.stack > .m-card-top { flex-direction:row; align-items:center; }
 .m-card.stack > .m-mini3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
 .m-card.stack > .m-mini3 > span { font-size:inherit; color:inherit; }
+
+.lv-drop { position:absolute; bottom:8px; right:8px; display:grid; place-items:center; width:30px; height:30px; border-radius:9px; background:rgba(13,16,23,.7); border:1px solid color-mix(in srgb,var(--ic) 55%,transparent); box-shadow:0 0 12px -3px var(--ic); }
+.lv-drop .ico { width:22px; height:22px; filter:none; }
