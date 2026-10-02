@@ -3527,6 +3527,11 @@ const TRAILS = [
     { id:'tidal',      name:'Tidal Current', color:'#62f5dc', price:3300, rarity:'legendary', style:'ribbon' },
     { id:'goldenhour', name:'Golden Hour',   color:'#ffcc69', price:3900, rarity:'legendary', style:'star' },
 ];
+// Items made in tools/designer.html (src/data/custom-cosmetics.js) join the built-in lists here.
+if (typeof CUSTOM_COSMETICS !== 'undefined'){
+    for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
+        for (const it of (CUSTOM_COSMETICS[key] || [])) if (!arr.some(x => x.id === it.id)) arr.push(Object.assign({ custom:true }, it));
+}
 const TRAIL_BY_ID = Object.fromEntries(TRAILS.map(trail => [trail.id, trail]));
 const COS_BY = { skin: SKINS, hat: HATS, face: FACES, trail: TRAILS };
 const RESOURCE_PACKS = [
@@ -3575,8 +3580,25 @@ function drawSkinBody(c, s, k, def){
 }
 
 // ---- headwear ----
+// Shape-layer cosmetics (hats/faces from the designer). Units: the body spans -12..12, y up is negative.
+function drawCustomLayers(c, s, k, layers){
+    c.save();
+    for (const L of layers){
+        c.globalAlpha = L.alpha === undefined ? 1 : L.alpha;
+        c.beginPath();
+        if (L.t === 'rect') rrPathAdd(c, (L.x - L.w/2)*k, (L.y - L.h/2)*k, L.w*k, L.h*k, Math.min(L.r || 0, L.w/2, L.h/2)*k);
+        else if (L.t === 'ellipse') c.ellipse(L.x*k, L.y*k, Math.max(.1, L.rx)*k, Math.max(.1, L.ry)*k, (L.rot || 0)*Math.PI/180, 0, 7);
+        else if (L.t === 'poly' && L.pts && L.pts.length > 2){ L.pts.forEach(([x, y], i) => i ? c.lineTo(x*k, y*k) : c.moveTo(x*k, y*k)); c.closePath(); }
+        else continue;
+        if (L.fill && L.fill !== 'none'){ c.fillStyle = L.fill; c.fill(); }
+        if (L.stroke){ c.strokeStyle = L.stroke; c.lineWidth = (L.sw || 1)*k; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(); }
+    }
+    c.restore();
+}
+function customLayers(list, id){ const d = list.find(x => x.id === id); return d && d.layers ? d.layers : null; }
 function drawHatAcc(c, s, k, id, t){
     if (!id || id === 'none') return;
+    { const L = customLayers(HATS, id); if (L){ drawCustomLayers(c, s, k, L); return; } }
     const top = -s;
     c.save();
     if (id === 'cap'){
@@ -3799,6 +3821,7 @@ function drawHatAcc(c, s, k, id, t){
 
 // ---- face accessories (drawn over the eyes at (±4k, -2k)) ----
 function drawFaceAcc(c, s, k, id){
+    { const L = id && customLayers(FACES, id); if (L){ drawCustomLayers(c, s, k, L); return; } }
     if (!id || id === 'none') return;
     const ey = -2*k;
     c.save();

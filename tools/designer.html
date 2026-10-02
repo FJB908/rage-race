@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cosmetic Designer</title>
+<link rel="stylesheet" href="../game.css">
+<link rel="stylesheet" href="../src/ui/icons.css">
+<style>
+  html, body { overflow:auto !important; height:auto !important; touch-action:auto; user-select:auto; -webkit-user-select:auto; }
+  body { background:#0d1017; color:#eef2f8; font-family:"Space Grotesk","Segoe UI",system-ui,sans-serif; margin:0; }
+  .app { display:grid; grid-template-columns:260px minmax(340px,1fr) 360px; gap:14px; padding:14px; min-height:100vh; align-items:start; }
+  @media (max-width:1000px){ .app { grid-template-columns:1fr; } }
+  .panel { background:#141925; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px; }
+  h1 { font-size:18px; margin:0 0 4px; letter-spacing:.04em; } h2 { font-size:12px; letter-spacing:.14em; color:#8b95a7; margin:16px 0 8px; }
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
+  .tab, .btn2 { border:1px solid rgba(255,255,255,.14); background:#1b2231; color:#eef2f8; border-radius:10px; padding:8px 12px; font-weight:700; font-size:13px; cursor:pointer; }
+  .tab.on { background:#35e0c8; color:#06231e; border-color:#35e0c8; }
+  .btn2.pri { background:#35e0c8; color:#06231e; border-color:#35e0c8; } .btn2.warn { color:#ff7a8f; }
+  .btn2:disabled { opacity:.4; cursor:default; }
+  .list { display:flex; flex-direction:column; gap:6px; max-height:56vh; overflow:auto; }
+  .item { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.08); background:#10151f; cursor:pointer; font-size:13px; }
+  .item.on { border-color:#35e0c8; } .item small { color:#8b95a7; margin-left:auto; }
+  .item .dot { width:10px; height:10px; border-radius:50%; flex:none; }
+  .stage { position:relative; display:grid; place-items:center; border-radius:16px; min-height:420px;
+    background:radial-gradient(circle at 50% 45%, var(--bgc,#20283a), #0d1017 70%); }
+  canvas#pv { width:100%; max-width:420px; height:auto; aspect-ratio:1/1; touch-action:none; cursor:crosshair; }
+  .bgs { display:flex; gap:6px; justify-content:center; margin-top:8px; }
+  .bgs i { width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,.3); cursor:pointer; }
+  label { display:block; font-size:12px; color:#8b95a7; margin:10px 0 4px; }
+  input, select { width:100%; background:#0d1017; color:#eef2f8; border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:8px; font:inherit; font-size:14px; }
+  input[type=color] { padding:2px; height:36px; } input[type=range] { padding:0; }
+  .row { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; } .row3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .layer { border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:8px; margin-top:8px; background:#10151f; }
+  .layer.on { border-color:#35e0c8; } .layer .hd { display:flex; gap:6px; align-items:center; font-size:13px; font-weight:700; cursor:pointer; }
+  .layer .hd span { flex:1; } .layer .hd button { padding:4px 8px; }
+  .status { font-size:12px; color:#8b95a7; margin-top:8px; line-height:1.5; white-space:pre-wrap; }
+  .status b { color:#35e0c8; } .ok { color:#7ee787; } .bad { color:#ff7a8f; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  details { margin-top:12px; } summary { cursor:pointer; color:#8b95a7; font-size:12px; letter-spacing:.1em; }
+  #game { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; border:0; }
+  .trail-wrap { margin-top:8px; display:flex; justify-content:center; }
+  .help { font-size:12px; color:#8b95a7; line-height:1.5; }
+</style>
+</head>
+<body>
+<iframe id="game" src="../index.html" title="game"></iframe>
+<div class="app">
+  <!-- LEFT: list -->
+  <div class="panel">
+    <h1>Cosmetic Designer</h1>
+    <div class="help">Uses the real game drawing code, so what you see is what ships.</div>
+    <div class="tabs" id="tabs"></div>
+    <div class="actions" style="margin:0 0 10px"><button class="btn2 pri" id="new">+ New</button><button class="btn2" id="dup">Duplicate</button></div>
+    <h2>YOUR DESIGNS</h2><div class="list" id="mine"></div>
+    <h2>BUILT-IN (duplicate to remix)</h2><div class="list" id="builtin"></div>
+  </div>
+  <!-- MIDDLE: preview -->
+  <div class="panel">
+    <div class="stage" id="stage"><canvas id="pv" width="480" height="480"></canvas></div>
+    <div class="bgs" id="bgs"></div>
+    <div class="trail-wrap" id="trailwrap"></div>
+    <div class="help" id="hint" style="text-align:center;margin-top:8px"></div>
+  </div>
+  <!-- RIGHT: editor + save -->
+  <div class="panel">
+    <div id="editor"></div>
+    <h2>SAVE &amp; PUBLISH</h2>
+    <div class="actions">
+      <button class="btn2 pri" id="save">Save to project</button>
+      <button class="btn2" id="push">Push to GitHub</button>
+      <button class="btn2" id="download">Download file</button>
+    </div>
+    <div class="status" id="status"></div>
+    <details><summary>GITHUB SETTINGS (for Push)</summary>
+      <label>Repository (owner/name)</label><input id="gh-repo" value="FJB908/rage-race">
+      <label>Branch</label><input id="gh-branch" value="claude/affectionate-brown-5d6ma7">
+      <label>Personal access token (repo scope). Stays only in this browser.</label><input id="gh-token" type="password" placeholder="ghp_...">
+    </details>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const KINDS = { skin:'skins', hat:'hats', face:'faces', trail:'trails' };
+const GAME_ARR = { skin:'SKINS', hat:'HATS', face:'FACES', trail:'TRAILS' };
+const RARITIES = ['common','rare','epic','legendary'];
+const FILE_PATH = 'src/data/custom-cosmetics.js';
+const PATTERNS = { solid:['a'], grad:['a','b'], stripes:['a','b'], dots:['a','b'], checker:['a','b'], tiger:['a','b'], camo:['a','b','c'] };
+const TRAIL_STYLES = ['soft','spark','star','prism','nebula','frost','blueprint','ember','comet','ribbon','glitch'];
+const PRICE = { common:250, rare:700, epic:1500, legendary:3000 };
+const $ = s => document.querySelector(s);
+const el = (t, p, h) => { const e = document.createElement(t); if (p) Object.assign(e, p); if (h !== undefined) e.innerHTML = h; return e; };
+const clone = o => JSON.parse(JSON.stringify(o));
+const slug = s => (s || 'item').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'item';
+
+let W = null;                        // game window (iframe)
+let db = { skins:[], hats:[], faces:[], trails:[] };
+let kind = 'skin', sel = -1, layerSel = 0, bg = '#20283a', dirHandle = null, dirty = false;
+const gameArr = k => W.eval(GAME_ARR[k]);
+
+// ---------- game sync ----------
+function syncGame() {
+  for (const k of Object.keys(KINDS)) {
+    const arr = gameArr(k);
+    for (let i = arr.length - 1; i >= 0; i--) if (arr[i].custom) arr.splice(i, 1);
+    for (const it of db[KINDS[k]]) arr.push(Object.assign({ custom:true }, clone(it)));
+  }
+  try { const tb = W.eval('TRAIL_BY_ID'); for (const t of gameArr('trail')) tb[t.id] = t; } catch (e) {}
+}
+const cur = () => db[KINDS[kind]][sel] || null;
+
+// ---------- preview ----------
+const pv = $('#pv'), SCALE = .27, CY = .62;
+function render() {
+  if (!W) return;
+  syncGame();
+  const it = cur();
+  const look = { skin:'classic', hat:'none', face:'none', trail:'none' };
+  if (it) look[kind] = it.id;
+  try { W.renderLook(pv, look, { scale:SCALE, cy:CY }); } catch (e) { console.error(e); }
+  // selected layer outline
+  if (it && it.layers && it.layers[layerSel]) {
+    const L = it.layers[layerSel], k = (pv.width * SCALE) / 12, g = pv.getContext('2d');
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.translate(pv.width / 2, pv.height * CY); g.strokeStyle = '#35e0c8'; g.lineWidth = 1.5; g.setLineDash([5, 4]);
+    g.beginPath();
+    if (L.t === 'rect') g.rect((L.x - L.w / 2) * k, (L.y - L.h / 2) * k, L.w * k, L.h * k);
+    else if (L.t === 'ellipse') g.ellipse(L.x * k, L.y * k, L.rx * k, L.ry * k, (L.rot || 0) * Math.PI / 180, 0, 7);
+    else if (L.t === 'poly') L.pts.forEach(([x, y], i) => i ? g.lineTo(x * k, y * k) : g.moveTo(x * k, y * k));
+    g.stroke(); g.restore();
+  }
+  const tw = $('#trailwrap'); tw.innerHTML = '';
+  if (kind === 'trail' && it) tw.innerHTML = `<span class="trail-sample trail-${it.style}" style="--trail-color:${it.color}"><i></i><i></i><i></i></span>`;
+  $('#hint').textContent = it && it.layers ? 'Drag on the preview to move the selected layer.' : '';
+}
+// dragging layers on the preview
+let drag = null;
+const toUnits = e => { const r = pv.getBoundingClientRect(), k = (pv.width * SCALE) / 12, f = pv.width / r.width;
+  return { x:((e.clientX - r.left) * f - pv.width / 2) / k, y:((e.clientY - r.top) * f - pv.height * CY) / k }; };
+pv.addEventListener('pointerdown', e => { const it = cur(); if (!it || !it.layers || !it.layers[layerSel]) return; const u = toUnits(e), L = it.layers[layerSel];
+  drag = { dx:u.x - (L.x || 0), dy:u.y - (L.y || 0) }; pv.setPointerCapture(e.pointerId); });
+pv.addEventListener('pointermove', e => { if (!drag) return; const it = cur(), L = it.layers[layerSel], u = toUnits(e);
+  const nx = Math.round((u.x - drag.dx) * 2) / 2, ny = Math.round((u.y - drag.dy) * 2) / 2;
+  if (L.t === 'poly') { const ox = nx - (L.cx || 0), oy = ny - (L.cy || 0); L.pts = L.pts.map(([x, y]) => [x + ox, y + oy]); L.cx = nx; L.cy = ny; }
+  else { L.x = nx; L.y = ny; }
+  markDirty(); render(); buildEditor(true); });
+pv.addEventListener('pointerup', () => { drag = null; });
+
+// ---------- lists ----------
+function drawThumb(cv, k, it) {
+  const look = { skin:'classic', hat:'none', face:'none', trail:'none' }; look[k] = it.id;
+  try { W.renderLook(cv, look, { scale:.24, cy:.62 }); } catch (e) {}
+}
+function renderLists() {
+  const tabs = $('#tabs'); tabs.innerHTML = '';
+  for (const k of Object.keys(KINDS)) tabs.appendChild(el('button', { className:'tab' + (k === kind ? ' on' : ''), onclick:() => { kind = k; sel = db[KINDS[k]].length ? 0 : -1; layerSel = 0; renderAll(); } }, k[0].toUpperCase() + k.slice(1) + 's'));
+  const mine = $('#mine'); mine.innerHTML = '';
+  db[KINDS[kind]].forEach((it, i) => {
+    const row = el('div', { className:'item' + (i === sel ? ' on' : ''), onclick:() => { sel = i; layerSel = 0; renderAll(); } });
+    const cv = el('canvas', { width:72, height:72 }); cv.style.cssText = 'width:36px;height:36px';
+    row.appendChild(cv); row.appendChild(el('span', {}, it.name)); row.appendChild(el('small', {}, it.rarity));
+    mine.appendChild(row); drawThumb(cv, kind, it);
+  });
+  if (!db[KINDS[kind]].length) mine.appendChild(el('div', { className:'help' }, 'Nothing yet. Press + New or duplicate a built-in.'));
+  const bi = $('#builtin'); bi.innerHTML = '';
+  for (const it of gameArr(kind)) {
+    if (it.custom || it.id === 'none' || it.id === 'classic') continue;
+    const row = el('div', { className:'item', onclick:() => duplicateFrom(it) });
+    const cv = el('canvas', { width:72, height:72 }); cv.style.cssText = 'width:36px;height:36px';
+    row.appendChild(cv); row.appendChild(el('span', {}, it.name)); row.appendChild(el('small', {}, it.rarity));
+    bi.appendChild(row); drawThumb(cv, kind, it);
+  }
+}
+
+// ---------- create / duplicate ----------
+function uniqueId(name) { const all = new Set(Object.keys(KINDS).flatMap(k => gameArr(k).map(x => x.id)).concat(Object.values(db).flat().map(x => x.id))); let b = 'c-' + slug(name), id = b, n = 2; while (all.has(id)) id = b + '-' + n++; return id; }
+function blank() {
+  const name = 'New ' + kind;
+  if (kind === 'skin') return { id:uniqueId(name), name, color:'#35e0c8', price:PRICE.common, rarity:'common', pat:{ k:'grad', a:'#35e0c8', b:'#7c6bff' } };
+  if (kind === 'trail') return { id:uniqueId(name), name, color:'#ff71d2', price:PRICE.rare, rarity:'rare', style:'soft' };
+  return { id:uniqueId(name), name, price:PRICE.rare, rarity:'rare', layers:[ { t:'ellipse', x:0, y:-12, rx:8, ry:4, fill:'#ff5470', stroke:'#1a1208', sw:1.2 } ] };
+}
+function addItem(it) { db[KINDS[kind]].push(it); sel = db[KINDS[kind]].length - 1; layerSel = 0; markDirty(); renderAll(); }
+function duplicateFrom(src) {
+  const it = clone(src); delete it.custom; it.name = src.name + ' Remix'; it.id = uniqueId(it.name);
+  if (kind === 'hat' || kind === 'face') { if (!it.layers) { it.layers = [ { t:'ellipse', x:0, y:-12, rx:8, ry:4, fill:'#ff5470', stroke:'#1a1208', sw:1.2 } ]; $('#hint').textContent = 'Built-in hats/faces are code-drawn, so the remix starts from a blank shape layer.'; } }
+  addItem(it);
+}
+$('#new').onclick = () => addItem(blank());
+$('#dup').onclick = () => { const it = cur(); if (!it) return; const c = clone(it); c.name += ' Copy'; c.id = uniqueId(c.name); addItem(c); };
+
+// ---------- editor ----------
+function field(label, input) { const w = el('div'); w.appendChild(el('label', {}, label)); w.appendChild(input); return w; }
+function inp(obj, key, type, onchg, opts) {
+  const i = el('input', Object.assign({ type }, opts || {})); i.value = obj[key] === undefined ? '' : obj[key];
+  i.oninput = () => { obj[key] = type === 'number' || type === 'range' ? +i.value : i.value; markDirty(); if (onchg) onchg(); render(); renderListsSoft(); };
+  return i;
+}
+function num(obj, key, label, step) { return field(label, inp(obj, key, 'number', null, { step:step || .5 })); }
+let softT = 0; function renderListsSoft() { clearTimeout(softT); softT = setTimeout(renderLists, 250); }
+
+function buildEditor(keepFocus) {
+  const box = $('#editor'); const it = cur();
+  if (keepFocus && document.activeElement && box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' && document.activeElement.type !== 'range') { /* leave inputs being typed in */ if (!drag) return; }
+  box.innerHTML = '<h1>Editor</h1>';
+  if (!it) { box.appendChild(el('div', { className:'help' }, 'Select or create a design.')); return; }
+  const top = el('div', { className:'row' });
+  top.appendChild(field('Name', inp(it, 'name', 'text', () => {})));
+  const rs = el('select'); RARITIES.forEach(r => rs.appendChild(el('option', { value:r, selected:r === it.rarity }, r)));
+  rs.onchange = () => { it.rarity = rs.value; it.price = PRICE[it.rarity]; markDirty(); buildEditor(); render(); renderLists(); };
+  top.appendChild(field('Rarity', rs)); box.appendChild(top);
+  box.appendChild(field('Price (coins)', inp(it, 'price', 'number', null, { step:50 })));
+  box.appendChild(el('div', { className:'help' }, 'Id: ' + it.id));
+
+  if (kind === 'skin') {
+    const ps = el('select'); Object.keys(PATTERNS).forEach(p => ps.appendChild(el('option', { value:p, selected:p === it.pat.k }, p)));
+    ps.onchange = () => { const old = it.pat; it.pat = { k:ps.value }; PATTERNS[ps.value].forEach((c, i) => it.pat[c] = old[c] || ['#35e0c8', '#7c6bff', '#ffcf3f'][i]); it.color = it.pat.a; markDirty(); buildEditor(); render(); renderLists(); };
+    box.appendChild(field('Pattern', ps));
+    const row = el('div', { className:'row3' });
+    PATTERNS[it.pat.k].forEach(c => { const i = inp(it.pat, c, 'color', () => { if (c === 'a') it.color = it.pat.a; }); row.appendChild(field('Color ' + c.toUpperCase(), i)); });
+    box.appendChild(row);
+  } else if (kind === 'trail') {
+    box.appendChild(field('Color', inp(it, 'color', 'color')));
+    const ss = el('select'); TRAIL_STYLES.forEach(s => ss.appendChild(el('option', { value:s, selected:s === it.style }, s)));
+    ss.onchange = () => { it.style = ss.value; markDirty(); render(); renderLists(); }; box.appendChild(field('Style', ss));
+  } else {
+    box.appendChild(el('h2', {}, 'LAYERS (bottom to top)'));
+    const bar = el('div', { className:'actions', style:'margin:0' });
+    [['rect', 'Rect'], ['ellipse', 'Ellipse'], ['poly', 'Polygon']].forEach(([t, n]) => bar.appendChild(el('button', { className:'btn2', onclick:() => {
+      const base = { fill:'#ffcf3f', stroke:'#1a1208', sw:1.2 };
+      it.layers.push(t === 'rect' ? Object.assign({ t, x:0, y:-12, w:10, h:5, r:1.5 }, base) : t === 'ellipse' ? Object.assign({ t, x:0, y:-12, rx:6, ry:4 }, base) : Object.assign({ t, pts:[[-5, -10], [0, -20], [5, -10]], cx:0, cy:0 }, base));
+      layerSel = it.layers.length - 1; markDirty(); buildEditor(); render(); } }, '+ ' + n)));
+    box.appendChild(bar);
+    it.layers.forEach((L, i) => {
+      const card = el('div', { className:'layer' + (i === layerSel ? ' on' : '') });
+      const hd = el('div', { className:'hd', onclick:() => { layerSel = i; buildEditor(); render(); } });
+      hd.appendChild(el('span', {}, (i + 1) + '. ' + L.t));
+      const mv = (d) => el('button', { className:'btn2', onclick:ev => { ev.stopPropagation(); const j = i + d; if (j < 0 || j >= it.layers.length) return; [it.layers[i], it.layers[j]] = [it.layers[j], it.layers[i]]; layerSel = j; markDirty(); buildEditor(); render(); } }, d < 0 ? 'Up' : 'Down');
+      hd.appendChild(mv(-1)); hd.appendChild(mv(1));
+      hd.appendChild(el('button', { className:'btn2', onclick:ev => { ev.stopPropagation(); it.layers.splice(i + 1, 0, clone(L)); layerSel = i + 1; markDirty(); buildEditor(); render(); } }, 'Copy'));
+      hd.appendChild(el('button', { className:'btn2 warn', onclick:ev => { ev.stopPropagation(); it.layers.splice(i, 1); layerSel = Math.max(0, i - 1); markDirty(); buildEditor(); render(); } }, 'Del'));
+      card.appendChild(hd);
+      if (i === layerSel) {
+        const r1 = el('div', { className:'row3' });
+        if (L.t === 'rect') { ['x', 'y', 'w', 'h', 'r'].forEach(k => r1.appendChild(num(L, k, k.toUpperCase()))); }
+        else if (L.t === 'ellipse') { ['x', 'y', 'rx', 'ry', 'rot'].forEach(k => r1.appendChild(num(L, k, k.toUpperCase(), k === 'rot' ? 5 : .5))); }
+        else { const pi = el('input', { type:'text' }); pi.value = L.pts.map(p => p.join(',')).join(' ');
+          pi.oninput = () => { const pts = pi.value.trim().split(/\s+/).map(s => s.split(',').map(Number)).filter(p => p.length === 2 && p.every(isFinite)); if (pts.length > 2) { L.pts = pts; L.cx = 0; L.cy = 0; markDirty(); render(); } };
+          card.appendChild(field('Points "x,y x,y x,y"', pi)); }
+        card.appendChild(r1);
+        const r2 = el('div', { className:'row3' });
+        const fi = inp(L, 'fill', 'color'); r2.appendChild(field('Fill', fi));
+        const si = el('input', { type:'color' }); si.value = L.stroke || '#1a1208'; si.oninput = () => { L.stroke = si.value; markDirty(); render(); }; r2.appendChild(field('Outline', si));
+        r2.appendChild(num(L, 'sw', 'Outline W', .1));
+        card.appendChild(r2);
+        card.appendChild(field('Opacity', inp(L, 'alpha', 'range', null, { min:0, max:1, step:.05 })));
+        if (L.alpha === undefined) card.lastChild.querySelector('input').value = 1;
+        const nb = el('button', { className:'btn2', style:'margin-top:8px', onclick:() => { delete L.stroke; markDirty(); buildEditor(); render(); } }, 'No outline'); card.appendChild(nb);
+      }
+      box.appendChild(card);
+    });
+    box.appendChild(el('div', { className:'actions' }, '')).appendChild(el('button', { className:'btn2 warn', onclick:() => { if (confirm('Delete this design?')) del(); } }, 'Delete design'));
+    return;
+  }
+  box.appendChild(el('div', { className:'actions' })).appendChild(el('button', { className:'btn2 warn', onclick:() => { if (confirm('Delete this design?')) del(); } }, 'Delete design'));
+}
+function del() { db[KINDS[kind]].splice(sel, 1); sel = Math.min(sel, db[KINDS[kind]].length - 1); layerSel = 0; markDirty(); renderAll(); }
+
+// ---------- save / publish ----------
+function fileText() { const out = {}; for (const k of Object.keys(db)) out[k] = db[k].map(it => { const c = clone(it); delete c.custom; if (c.layers) c.layers.forEach(L => { delete L.cx; delete L.cy; }); return c; });
+  return '// Cosmetics made with tools/designer.html. Edit them in the tool; this file is rewritten when you press Save.\nconst CUSTOM_COSMETICS = ' + JSON.stringify(out, null, 2) + ';\n'; }
+function setStatus(html) { $('#status').innerHTML = html; }
+function markDirty() { dirty = true; setStatus('<b>Unsaved changes.</b> Press "Save to project" to put them in the game.'); }
+
+const idb = { open: () => new Promise((res, rej) => { const r = indexedDB.open('designer', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = rej; }),
+  async get(k) { const d = await this.open(); return new Promise(res => { const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); },
+  async set(k, v) { const d = await this.open(); return new Promise(res => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; }); } };
+
+async function ensureDir(ask) {
+  if (!window.showDirectoryPicker) throw new Error('This browser cannot write files directly. Use Chrome or Edge, or "Download file".');
+  if (!dirHandle) dirHandle = await idb.get('dir');
+  if (dirHandle) { let p = await dirHandle.queryPermission({ mode:'readwrite' }); if (p !== 'granted' && ask) p = await dirHandle.requestPermission({ mode:'readwrite' }); if (p === 'granted') return dirHandle; }
+  if (!ask) return null;
+  dirHandle = await showDirectoryPicker({ mode:'readwrite', id:'rage-race-project' }); await idb.set('dir', dirHandle); return dirHandle;
+}
+async function fileHandle(root, create) { const parts = FILE_PATH.split('/'); let d = root; for (const p of parts.slice(0, -1)) d = await d.getDirectoryHandle(p); return d.getFileHandle(parts.at(-1), { create }); }
+$('#save').onclick = async () => {
+  try {
+    const root = await ensureDir(true);
+    try { await root.getDirectoryHandle('src'); } catch (e) { throw new Error('Pick the project root folder (the one that contains index.html and src/).'); }
+    const fh = await fileHandle(root, true), w = await fh.createWritable(); await w.write(fileText()); await w.close();
+    dirty = false; setStatus('<span class="ok">Saved to ' + FILE_PATH + '.</span> Reload the game to see it. Next: Push to GitHub, or commit in VS Code.');
+  } catch (e) { setStatus('<span class="bad">' + e.message + '</span>'); }
+};
+$('#download').onclick = () => { const a = el('a', { href:URL.createObjectURL(new Blob([fileText()], { type:'text/javascript' })), download:'custom-cosmetics.js' }); a.click(); setStatus('Downloaded. Put it at <b>' + FILE_PATH + '</b> in the project.'); };
+const ghKey = k => 'designer_' + k;
+['repo', 'branch', 'token'].forEach(k => { const i = $('#gh-' + k); const v = localStorage.getItem(ghKey(k)); if (v) i.value = v; i.oninput = () => localStorage.setItem(ghKey(k), i.value.trim()); });
+$('#push').onclick = async () => {
+  const repo = $('#gh-repo').value.trim(), branch = $('#gh-branch').value.trim(), token = $('#gh-token').value.trim();
+  if (!token) { $('details').open = true; setStatus('<span class="bad">Add a GitHub token under GitHub settings first (Settings > Developer settings > Personal access tokens, repo scope).</span>'); return; }
+  try {
+    setStatus('Pushing...');
+    const url = `https://api.github.com/repos/${repo}/contents/${FILE_PATH}`, H = { Authorization:'Bearer ' + token, Accept:'application/vnd.github+json' };
+    const g = await fetch(url + '?ref=' + encodeURIComponent(branch), { headers:H }); let sha; if (g.ok) sha = (await g.json()).sha; else if (g.status !== 404) throw new Error('GitHub says ' + g.status + ' (check repo, branch and token).');
+    const body = { message:'Update custom cosmetics from designer', branch, content:btoa(unescape(encodeURIComponent(fileText()))) }; if (sha) body.sha = sha;
+    const p = await fetch(url, { method:'PUT', headers:Object.assign({ 'Content-Type':'application/json' }, H), body:JSON.stringify(body) });
+    if (!p.ok) throw new Error('Push failed: ' + p.status + ' ' + ((await p.json()).message || ''));
+    dirty = false; setStatus('<span class="ok">Pushed to ' + repo + ' (' + branch + ').</span> Pull in VS Code to get it locally.');
+  } catch (e) { setStatus('<span class="bad">' + e.message + '</span>'); }
+};
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+// ---------- background swatches ----------
+['#20283a', '#0d1017', '#ffffff', '#35e0c8', '#ff5470', '#7c6bff'].forEach(c => { const b = el('i'); b.style.background = c; b.onclick = () => { $('#stage').style.setProperty('--bgc', c); }; $('#bgs').appendChild(b); });
+
+// ---------- boot ----------
+function renderAll() { renderLists(); buildEditor(); render(); }
+async function loadExisting() {
+  try { const root = await ensureDir(false); if (root) { const f = await (await fileHandle(root, false)).getFile(); const t = await f.text(); const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)); for (const k of Object.keys(db)) db[k] = j[k] || []; setStatus('Loaded ' + FILE_PATH + ' from your project folder.'); return; } } catch (e) {}
+  // fall back to what the game already loaded
+  try { const c = W.eval('typeof CUSTOM_COSMETICS !== "undefined" ? JSON.stringify(CUSTOM_COSMETICS) : "{}"'); const j = JSON.parse(c); for (const k of Object.keys(db)) db[k] = j[k] || []; } catch (e) {}
+  setStatus('Tip: press "Save to project" once and pick your project folder. After that, saving is one click.');
+}
+$('#game').addEventListener('load', async () => {
+  W = $('#game').contentWindow;
+  await new Promise(r => setTimeout(r, 400));
+  for (const k of Object.keys(db)) db[k].forEach(it => delete it.custom);
+  await loadExisting();
+  sel = db.skins.length ? 0 : -1; renderAll();
+});
+})();
+</script>
+</body>
+</html>
