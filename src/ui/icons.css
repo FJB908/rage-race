@@ -3,7 +3,7 @@
 .rwd { display:inline-flex; align-items:center; gap:.3em; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .rwd b { font-weight:800; }
 .rwd + .rwd { margin-left:.7em; }
-.rwd-coin b { color:#ffcf3f; } .rwd-xp b { color:#5df0da; } .rwd-pass b { color:#b3a9ff; }
+.rwd-coin b { color:#ffcf3f; } .rwd-xp b { color:#7cc8ff; } .rwd-pass b { color:#b3a9ff; }
 .m-coins .ico, .esc-pill .ico { width:20px; height:20px; vertical-align:middle; }
 .resource-balance .ico { width:20px; height:20px; vertical-align:middle; }
 .m-stat small .ico, .stat .k .ico, .pass-screen-balance .ico { width:18px; height:18px; vertical-align:middle; }

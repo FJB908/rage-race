@@ -25,6 +25,7 @@
         '<path d="M34 54 Q60 38 100 38" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="5" stroke-linecap="round"/>' +
         '<rect x="86" y="62" width="28" height="26" rx="6" fill="var(--c)" stroke="#0d1017" stroke-width="3"/><circle cx="100" cy="73" r="4" fill="#0d1017"/><rect x="98" y="73" width="4" height="9" rx="2" fill="#0d1017"/></g></svg>'
     );
+    window.LB_CHEST_SVG = CHEST_SVG;
     const sfx = (n, a) => { try { SFX.play(n, a); } catch (e) {} };
     const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
     const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -144,7 +145,7 @@
             const head = document.createElement('div'); head.className = 'lb-head'; head.textContent = 'REWARDS'; rewards.appendChild(head);
             void head.offsetWidth; head.classList.add('show'); await sleep(250);
             if (drop.coins) await addCard('coin', drop.coins, '#ffcf3f');
-            if (drop.xp) await addCard('xp', drop.xp, '#35e0c8');
+            if (drop.xp) await addCard('xp', drop.xp, '#6cc4ff');
             if (drop.passPoints) await addCard('pass', drop.passPoints, '#b3a9ff');
             await sleep(700);
             if (cos) { skipBtn.classList.remove('show'); await revealItem(); }

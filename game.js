@@ -3528,11 +3528,6 @@ const RESOURCE_PACKS = [
     { id:'supply-cache', name:'Supply Cache', price:240, xp:160, passPoints:120 },
     { id:'season-crate', name:'Season Crate', price:600, xp:450, passPoints:360 },
 ];
-const PASS_REWARDS = [
-    { category:'skin', id:'violet', cost:100 },
-    { category:'trail', id:'afterglow', cost:180 },
-    { category:'hat', id:'crown', cost:300 },
-];
 const OUT = 'rgba(13,16,23,0.85)';
 
 function rrPath(c, x, y, w, h, r){
@@ -3905,6 +3900,7 @@ function prog(){
     if (!Number.isFinite(d.passPoints)) d.passPoints = 0;
     if (!Number.isFinite(d.passPointsEarned)) d.passPointsEarned = d.passPoints;
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
+    if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
     if (!Array.isArray(d.owned)) d.owned = ['classic'];
     if (!d.owned.includes('classic')) d.owned.push('classic');
     if (!d.trail || !TRAILS.some(trail => trail.id === d.trail)) d.trail = 'none';
@@ -4057,69 +4053,6 @@ function renderResourceShop(){
         });
         grid.appendChild(button);
     }
-    renderPassRewards();
-}
-function passProgressState(profile){
-    const claimed = PASS_REWARDS.filter(reward => profile.owned.includes(reward.id)).length;
-    const nextIndex = PASS_REWARDS.findIndex(reward => !profile.owned.includes(reward.id));
-    if (nextIndex < 0) return {claimed,next:null,progress:1,earnedInTier:0};
-    const threshold = PASS_REWARDS.slice(0,nextIndex).reduce((sum,reward)=>sum+reward.cost,0);
-    const next = PASS_REWARDS[nextIndex];
-    const earnedInTier = Math.max(0,Math.min(next.cost,profile.passPointsEarned-threshold));
-    return {claimed,next,progress:earnedInTier/next.cost,earnedInTier};
-}
-function renderPassHome(profile){
-    const progress = passProgressState(profile);
-    document.getElementById('m-pass-progress').innerHTML = progress.next
-        ? `${progress.claimed} / ${PASS_REWARDS.length} claimed · ${R('pass', profile.passPoints)} available`
-        : 'All Season 01 rewards claimed';
-    document.getElementById('m-pass-meter-fill').style.width = (progress.progress*100)+'%';
-}
-function claimPassReward(reward){
-    const profile = prog();
-    if (profile.owned.includes(reward.id) || profile.passPoints < reward.cost) return false;
-    const passScreenOpen = getComputedStyle(S.pass).display !== 'none';
-    const resourceShopOpen = getComputedStyle(document.getElementById('m-resource-shop')).display !== 'none';
-    profile.passPoints -= reward.cost;
-    profile.owned.push(reward.id);
-    saveProg(profile); SFX.play('pickup'); refreshMenu();
-    if (passScreenOpen) renderPassScreen();
-    if (resourceShopOpen) renderShop('resources');
-    return true;
-}
-function renderPassScreen(){
-    const profile = prog(), progress = passProgressState(profile);
-    document.getElementById('pass-screen-balance').textContent = profile.passPoints.toLocaleString('en-US');
-    document.getElementById('pass-screen-claimed').textContent = `${progress.claimed} / ${PASS_REWARDS.length} REWARDS CLAIMED`;
-    document.getElementById('pass-screen-next').innerHTML = progress.next
-        ? `${R('pass', progress.earnedInTier + ' / ' + progress.next.cost)} · ${R('pass', profile.passPoints)} to redeem · NEXT: ${COS_BY[progress.next.category].find(item=>item.id===progress.next.id).name}`
-        : 'Season 01 complete · every reward claimed';
-    document.getElementById('pass-screen-meter').style.width = (progress.progress*100)+'%';
-    const grid = document.getElementById('pass-screen-rewards'); grid.innerHTML = '';
-    PASS_REWARDS.forEach((reward,index)=>{
-        const item = COS_BY[reward.category].find(cosmetic=>cosmetic.id===reward.id);
-        const owned = profile.owned.includes(reward.id);
-        const button = document.createElement('button');
-        button.type='button'; button.className='pass-screen-reward'+(owned?' claimed':'')+(profile.passPoints>=reward.cost&&!owned?' ready':'');
-        button.disabled=owned||profile.passPoints<reward.cost;
-        button.innerHTML=`<span class="pass-step">${String(index+1).padStart(2,'0')}</span><span class="pass-item-art" style="--pass-item-color:${item.color||RARITY[item.rarity].color}">${reward.category==='trail'?'〰':reward.category==='hat'?'♛':'◆'}</span><small>${reward.category.toUpperCase()} · ${RARITY[item.rarity].label}</small><strong>${item.name}</strong><span class="pass-cost">${owned?'CLAIMED':profile.passPoints>=reward.cost?'READY TO CLAIM':`${R('pass', reward.cost-profile.passPoints)} TO GO`}</span>`;
-        button.addEventListener('click',()=>claimPassReward(reward));
-        grid.appendChild(button);
-    });
-}
-function renderPassRewards(){
-    const profile = prog(), grid = document.getElementById('pass-reward-grid');
-    grid.innerHTML = '';
-    PASS_REWARDS.forEach((reward, index) => {
-        const item = COS_BY[reward.category].find(cosmetic => cosmetic.id === reward.id);
-        const owned = profile.owned.includes(reward.id);
-        const button = document.createElement('button');
-        button.type = 'button'; button.className = 'pass-reward' + (owned ? ' owned' : '');
-        button.disabled = owned || profile.passPoints < reward.cost;
-        button.innerHTML = `<small>TIER ${index+1} · ${reward.category.toUpperCase()}</small><strong>${item.name}</strong><span style="color:${RARITY[item.rarity].color}">${RARITY[item.rarity].label}</span><b>${owned ? 'CLAIMED' : R('pass', reward.cost) + ' · REDEEM'}</b>`;
-        button.addEventListener('click', () => claimPassReward(reward));
-        grid.appendChild(button);
-    });
 }
 function renderShop(cat){
     const grid = document.getElementById('m-skins'), resources = document.getElementById('m-resource-shop');
@@ -4242,7 +4175,8 @@ document.getElementById('btn-home-play').addEventListener('click', () => {
     const m = prog().lastMode;
     if (m === 'escape') startEscape(); else if (m === 'parkour') openLevels(); else startMatchmaking();
 });
-document.getElementById('btn-pass-open').addEventListener('click', () => { renderPassScreen(); showScreen('pass'); });
+document.getElementById('btn-pass-open').addEventListener('click', openPass);
+document.getElementById('pz-claimall').addEventListener('click', claimAllPass);
 document.getElementById('btn-pass-back').addEventListener('click', () => showScreen('start'));
 document.getElementById('btn-find').addEventListener('click', () => setLastMode('race'));
 document.getElementById('btn-escape').addEventListener('click', () => setLastMode('escape'));

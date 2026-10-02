@@ -6,10 +6,8 @@
         // --- COIN: bevelled gold disc with an embossed double chevron (the climb) ---
         '<linearGradient id="gcR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe9a0"/><stop offset=".5" stop-color="#f7b326"/><stop offset="1" stop-color="#b8690a"/></linearGradient>' +
         '<linearGradient id="gcF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd25a"/><stop offset="1" stop-color="#e8921a"/></linearGradient>' +
-        // --- XP: faceted teal gem, same teal as the player cube ---
-        '<linearGradient id="gxT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8fff2"/><stop offset="1" stop-color="#35e0c8"/></linearGradient>' +
-        '<linearGradient id="gxL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#35e0c8"/><stop offset="1" stop-color="#139c8a"/></linearGradient>' +
-        '<linearGradient id="gxR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1fb8a3"/><stop offset="1" stop-color="#0b6d62"/></linearGradient>' +
+        // --- XP: electric bolt ---
+        '<linearGradient id="gxB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset=".45" stop-color="#4fb4ff"/><stop offset="1" stop-color="#2459e0"/></linearGradient>' +
         // --- PASS: violet ticket with notches, perforation and a star ---
         '<linearGradient id="gpB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b3a9ff"/><stop offset=".55" stop-color="#7c6bff"/><stop offset="1" stop-color="#4a38c4"/></linearGradient>' +
         '<symbol id="ico-coin" viewBox="0 0 64 64">' +
@@ -21,14 +19,9 @@
           '<path d="M13 24 A22 22 0 0 1 28 11" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="3" stroke-linecap="round"/>' +
         '</symbol>' +
         '<symbol id="ico-xp" viewBox="0 0 64 64">' +
-          '<path d="M32 60 L4 30 L16 8 H48 L60 30 Z" fill="#06403a" opacity=".35" transform="translate(0 2)"/>' +
-          '<path d="M16 8 H48 L60 28 L32 60 L4 28 Z" fill="url(#gxL)" stroke="#06403a" stroke-width="3" stroke-linejoin="round"/>' +
-          '<path d="M16 8 H48 L42 28 H22 Z" fill="url(#gxT)"/>' +
-          '<path d="M4 28 L22 28 L32 60 Z" fill="url(#gxL)"/>' +
-          '<path d="M60 28 L42 28 L32 60 Z" fill="url(#gxR)"/>' +
-          '<path d="M22 28 H42 L32 60 Z" fill="#35e0c8"/>' +
-          '<path d="M4 28 H60 M16 8 L22 28 M48 8 L42 28 M22 28 L32 60 M42 28 L32 60" fill="none" stroke="#06403a" stroke-opacity=".55" stroke-width="1.5" stroke-linejoin="round"/>' +
-          '<path d="M19 12 H31" stroke="#fff" stroke-opacity=".85" stroke-width="3" stroke-linecap="round"/>' +
+          '<path d="M40 5 L11 37 H27 L21 61 L53 25 H36 L45 5 Z" fill="#0b2a73" opacity=".4" transform="translate(0 3)"/>' +
+          '<path d="M40 5 L11 37 H27 L21 61 L53 25 H36 L45 5 Z" fill="url(#gxB)" stroke="#0b2a73" stroke-width="3.5" stroke-linejoin="round"/>' +
+          '<path d="M39 11 L20 33 M33 25 H44" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="2.6" stroke-linecap="round"/>' +
         '</symbol>' +
         '<symbol id="ico-pass" viewBox="0 0 64 64">' +
           '<path d="M6 11 H58 V24 A7 7 0 0 0 58 40 V53 H6 V40 A7 7 0 0 0 6 24 Z" fill="#1c1450" opacity=".4" transform="translate(0 3)"/>' +
