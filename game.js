@@ -3564,7 +3564,7 @@ function drawSkinBody(c, s, k, def){
     else c.fillStyle = P.a || def.color;
     c.fill();
     c.shadowBlur = 0;
-    if (P.k === 'solid' || P.k === 'grad') return;
+    if (P.k === 'solid' || P.k === 'grad'){ skinDecals(c, s, k, def); return; }
     c.save(); rrPath(c, -s, -s, s*2, s*2, 4*k); c.clip();
     if (P.k === 'stripes'){ c.fillStyle = P.b; for (let x = -s*3; x < s*3; x += 7*k){ c.beginPath(); c.moveTo(x, -s); c.lineTo(x + 3.5*k, -s); c.lineTo(x + 3.5*k - s*2, s); c.lineTo(x - s*2, s); c.closePath(); c.fill(); } }
     if (P.k === 'dots'){ c.fillStyle = P.b; for (let y = -s + 3*k, r = 0; y < s; y += 6*k, r++) for (let x = -s + (r%2 ? 6 : 3)*k; x < s; x += 6*k){ c.beginPath(); c.arc(x, y, 1.5*k, 0, 7); c.fill(); } }
@@ -3577,21 +3577,53 @@ function drawSkinBody(c, s, k, def){
     if (P.k === 'lava'){ for (const [x, y, r] of [[-6,-5,2.4],[5,-2,3],[-2,6,2.6],[8,7,1.8],[-9,4,1.6],[2,-9,1.6]]){ const g = c.createRadialGradient(x*k, y*k, 0, x*k, y*k, r*k); g.addColorStop(0, '#ffe38a'); g.addColorStop(0.5, '#ff8a2a'); g.addColorStop(1, 'rgba(255,90,40,0)'); c.fillStyle = g; c.beginPath(); c.arc(x*k, y*k, r*k, 0, 7); c.fill(); } }
     if (P.k === 'metal'){ c.globalAlpha = 0.55; c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(-s, -s*0.2); c.lineTo(-s*0.2, -s); c.lineTo(s*0.15, -s); c.lineTo(-s, s*0.15); c.closePath(); c.fill(); c.globalAlpha = 1; }
     c.restore();
+    skinDecals(c, s, k, def);
+}
+function skinDecals(c, s, k, def){
+    if (!def.layers || !def.layers.length) return;
+    c.save(); rrPath(c, -s, -s, s*2, s*2, 4*k); c.clip(); drawCustomLayers(c, s, k, def.layers); c.restore();
 }
 
 // ---- headwear ----
-// Shape-layer cosmetics (hats/faces from the designer). Units: the body spans -12..12, y up is negative.
+// Shape-layer cosmetics from the designer (hats, faces, skin decals). Units: the body spans -12..12, y up is negative.
+// Layer: {t:'rect'|'ellipse'|'poly', x,y, w,h,r | rx,ry | pts, rot, fill, fill2 (vertical gradient), stroke, sw, alpha, smooth, open, hidden}
+function polyPath(c, pts, k, smooth, open){
+    const P = pts.map(([x, y]) => [x*k, y*k]), n = P.length;
+    if (!smooth || n < 3){ P.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); if (!open) c.closePath(); return; }
+    const mid = (a, b) => [(a[0] + b[0])/2, (a[1] + b[1])/2];
+    if (open){
+        c.moveTo(P[0][0], P[0][1]);
+        for (let i = 1; i < n - 1; i++){ const m = mid(P[i], P[i+1]); c.quadraticCurveTo(P[i][0], P[i][1], m[0], m[1]); }
+        c.lineTo(P[n-1][0], P[n-1][1]); return;
+    }
+    const s0 = mid(P[n-1], P[0]); c.moveTo(s0[0], s0[1]);
+    for (let i = 0; i < n; i++){ const m = mid(P[i], P[(i+1) % n]); c.quadraticCurveTo(P[i][0], P[i][1], m[0], m[1]); }
+    c.closePath();
+}
 function drawCustomLayers(c, s, k, layers){
     c.save();
     for (const L of layers){
+        if (L.hidden) continue;
+        c.save();
         c.globalAlpha = L.alpha === undefined ? 1 : L.alpha;
         c.beginPath();
-        if (L.t === 'rect') rrPathAdd(c, (L.x - L.w/2)*k, (L.y - L.h/2)*k, L.w*k, L.h*k, Math.min(L.r || 0, L.w/2, L.h/2)*k);
-        else if (L.t === 'ellipse') c.ellipse(L.x*k, L.y*k, Math.max(.1, L.rx)*k, Math.max(.1, L.ry)*k, (L.rot || 0)*Math.PI/180, 0, 7);
-        else if (L.t === 'poly' && L.pts && L.pts.length > 2){ L.pts.forEach(([x, y], i) => i ? c.lineTo(x*k, y*k) : c.moveTo(x*k, y*k)); c.closePath(); }
-        else continue;
-        if (L.fill && L.fill !== 'none'){ c.fillStyle = L.fill; c.fill(); }
+        let y0 = -1, y1 = 1;
+        if (L.t === 'rect'){
+            c.translate(L.x*k, L.y*k); c.rotate((L.rot || 0)*Math.PI/180);
+            rrPathAdd(c, -L.w/2*k, -L.h/2*k, L.w*k, L.h*k, Math.min(L.r || 0, L.w/2, L.h/2)*k); y0 = -L.h/2; y1 = L.h/2;
+        } else if (L.t === 'ellipse'){
+            c.translate(L.x*k, L.y*k); c.rotate((L.rot || 0)*Math.PI/180);
+            c.ellipse(0, 0, Math.max(.1, L.rx)*k, Math.max(.1, L.ry)*k, 0, 0, 7); y0 = -L.ry; y1 = L.ry;
+        } else if (L.t === 'poly' && L.pts && L.pts.length > 2){
+            polyPath(c, L.pts, k, L.smooth, L.open); y0 = Math.min(...L.pts.map(p => p[1])); y1 = Math.max(...L.pts.map(p => p[1]));
+        } else { c.restore(); continue; }
+        if (!L.open && L.fill && L.fill !== 'none'){
+            if (L.fill2){ const g = c.createLinearGradient(0, y0*k, 0, y1*k); g.addColorStop(0, L.fill); g.addColorStop(1, L.fill2); c.fillStyle = g; }
+            else c.fillStyle = L.fill;
+            c.fill();
+        }
         if (L.stroke){ c.strokeStyle = L.stroke; c.lineWidth = (L.sw || 1)*k; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(); }
+        c.restore();
     }
     c.restore();
 }

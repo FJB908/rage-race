@@ -7,69 +7,87 @@
 <link rel="stylesheet" href="../game.css">
 <link rel="stylesheet" href="../src/ui/icons.css">
 <style>
-  html, body { overflow:auto !important; height:auto !important; touch-action:auto; user-select:auto; -webkit-user-select:auto; }
+  html, body { overflow:auto !important; height:auto !important; touch-action:auto; user-select:none; -webkit-user-select:none; }
   body { background:#0d1017; color:#eef2f8; font-family:"Space Grotesk","Segoe UI",system-ui,sans-serif; margin:0; }
-  .app { display:grid; grid-template-columns:260px minmax(340px,1fr) 360px; gap:14px; padding:14px; min-height:100vh; align-items:start; }
-  @media (max-width:1000px){ .app { grid-template-columns:1fr; } }
-  .panel { background:#141925; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px; }
-  h1 { font-size:18px; margin:0 0 4px; letter-spacing:.04em; } h2 { font-size:12px; letter-spacing:.14em; color:#8b95a7; margin:16px 0 8px; }
+  .app { display:grid; grid-template-columns:230px minmax(360px,1fr) 340px; gap:12px; padding:12px; min-height:100vh; align-items:start; }
+  @media (max-width:1100px){ .app { grid-template-columns:1fr; } }
+  .panel { background:#141925; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px; }
+  h1 { font-size:17px; margin:0 0 4px; letter-spacing:.04em; } h2 { font-size:11px; letter-spacing:.14em; color:#8b95a7; margin:14px 0 6px; }
   .tabs { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
-  .tab, .btn2 { border:1px solid rgba(255,255,255,.14); background:#1b2231; color:#eef2f8; border-radius:10px; padding:8px 12px; font-weight:700; font-size:13px; cursor:pointer; }
-  .tab.on { background:#35e0c8; color:#06231e; border-color:#35e0c8; }
-  .btn2.pri { background:#35e0c8; color:#06231e; border-color:#35e0c8; } .btn2.warn { color:#ff7a8f; }
-  .btn2:disabled { opacity:.4; cursor:default; }
-  .list { display:flex; flex-direction:column; gap:6px; max-height:56vh; overflow:auto; }
-  .item { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,.08); background:#10151f; cursor:pointer; font-size:13px; }
+  .tab, .b { border:1px solid rgba(255,255,255,.14); background:#1b2231; color:#eef2f8; border-radius:9px; padding:7px 11px; font-weight:700; font-size:13px; cursor:pointer; font-family:inherit; }
+  .tab.on, .b.on { background:#35e0c8; color:#06231e; border-color:#35e0c8; }
+  .b.pri { background:#35e0c8; color:#06231e; border-color:#35e0c8; } .b.warn { color:#ff7a8f; } .b.sm { padding:4px 8px; font-size:12px; }
+  .b:disabled { opacity:.35; cursor:default; }
+  .list { display:flex; flex-direction:column; gap:6px; max-height:34vh; overflow:auto; }
+  .item { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; border:1px solid rgba(255,255,255,.08); background:#10151f; cursor:pointer; font-size:13px; }
   .item.on { border-color:#35e0c8; } .item small { color:#8b95a7; margin-left:auto; }
-  .item .dot { width:10px; height:10px; border-radius:50%; flex:none; }
-  .stage { position:relative; display:grid; place-items:center; border-radius:16px; min-height:420px;
-    background:radial-gradient(circle at 50% 45%, var(--bgc,#20283a), #0d1017 70%); }
-  canvas#pv { width:100%; max-width:420px; height:auto; aspect-ratio:1/1; touch-action:none; cursor:crosshair; }
-  .bgs { display:flex; gap:6px; justify-content:center; margin-top:8px; }
-  .bgs i { width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,.3); cursor:pointer; }
-  label { display:block; font-size:12px; color:#8b95a7; margin:10px 0 4px; }
-  input, select { width:100%; background:#0d1017; color:#eef2f8; border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:8px; font:inherit; font-size:14px; }
-  input[type=color] { padding:2px; height:36px; } input[type=range] { padding:0; }
+  .toolbar { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+  .toolbar .sep { width:1px; height:26px; background:rgba(255,255,255,.12); margin:0 4px; }
+  .toolbar .ctl { display:flex; align-items:center; gap:6px; font-size:12px; color:#8b95a7; white-space:nowrap; flex-wrap:wrap; }
+  .toolbar input[type=color] { width:34px; height:30px; padding:1px; }
+  .stage { position:relative; border-radius:14px; background:#0b0e15; line-height:0; }
+  canvas#pv { width:100%; height:auto; aspect-ratio:1/1; touch-action:none; cursor:default; border-radius:14px; display:block; }
+  label { display:block; font-size:12px; color:#8b95a7; margin:8px 0 3px; }
+  input:not([type=checkbox]), select { width:100%; background:#0d1017; color:#eef2f8; border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:7px; font:inherit; font-size:13px; user-select:text; -webkit-user-select:text; box-sizing:border-box; }
+  input[type=color] { padding:2px; height:32px; } input[type=range] { padding:0; }
   .row { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; } .row3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-  .layer { border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:8px; margin-top:8px; background:#10151f; }
-  .layer.on { border-color:#35e0c8; } .layer .hd { display:flex; gap:6px; align-items:center; font-size:13px; font-weight:700; cursor:pointer; }
-  .layer .hd span { flex:1; } .layer .hd button { padding:4px 8px; }
-  .status { font-size:12px; color:#8b95a7; margin-top:8px; line-height:1.5; white-space:pre-wrap; }
+  .layer { display:flex; align-items:center; gap:6px; padding:6px 8px; border:1px solid rgba(255,255,255,.1); border-radius:10px; margin-top:5px; background:#10151f; cursor:pointer; font-size:13px; }
+  .layer.on { border-color:#35e0c8; background:#13221f; } .layer.hid { opacity:.45; }
+  .layer .sw { width:16px; height:16px; border-radius:5px; border:1px solid rgba(255,255,255,.3); flex:none; } .layer span { flex:1; }
+  .status { font-size:12px; color:#8b95a7; margin-top:8px; line-height:1.5; white-space:pre-wrap; user-select:text; }
   .status b { color:#35e0c8; } .ok { color:#7ee787; } .bad { color:#ff7a8f; }
-  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-  details { margin-top:12px; } summary { cursor:pointer; color:#8b95a7; font-size:12px; letter-spacing:.1em; }
+  .actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  details { margin-top:10px; } summary { cursor:pointer; color:#8b95a7; font-size:12px; letter-spacing:.1em; }
   #game { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; border:0; }
-  .trail-wrap { margin-top:8px; display:flex; justify-content:center; }
   .help { font-size:12px; color:#8b95a7; line-height:1.5; }
+  .pal { display:grid; grid-template-columns:repeat(10,1fr); gap:4px; margin-top:6px; }
+  .pal i { aspect-ratio:1; border-radius:6px; border:1px solid rgba(255,255,255,.25); cursor:pointer; }
+  .stamps { display:flex; flex-wrap:wrap; gap:6px; }
+  .chk { display:flex; align-items:center; gap:6px; font-size:13px; color:#eef2f8; margin:8px 0 0; }
+  .chk input { width:auto; }
+  .trail-wrap { margin-top:8px; display:flex; justify-content:center; }
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; place-items:center; z-index:50; } .modal.on { display:grid; }
+  .modal .box { width:min(560px,92vw); background:#141925; border-radius:14px; padding:14px; border:1px solid rgba(255,255,255,.14); }
+  .modal textarea { width:100%; height:260px; background:#0d1017; color:#eef2f8; border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:8px; font:12px ui-monospace,monospace; box-sizing:border-box; user-select:text; -webkit-user-select:text; }
 </style>
 </head>
 <body>
 <iframe id="game" src="../index.html" title="game"></iframe>
 <div class="app">
-  <!-- LEFT: list -->
+  <!-- LEFT -->
   <div class="panel">
     <h1>Cosmetic Designer</h1>
-    <div class="help">Uses the real game drawing code, so what you see is what ships.</div>
+    <div class="help">Real game drawing code: what you see is what ships.</div>
     <div class="tabs" id="tabs"></div>
-    <div class="actions" style="margin:0 0 10px"><button class="btn2 pri" id="new">+ New</button><button class="btn2" id="dup">Duplicate</button></div>
+    <div class="actions" style="margin:0 0 8px"><button class="b pri" id="new">+ New</button><button class="b" id="dup">Duplicate</button></div>
     <h2>YOUR DESIGNS</h2><div class="list" id="mine"></div>
-    <h2>BUILT-IN (duplicate to remix)</h2><div class="list" id="builtin"></div>
+    <h2>BUILT-IN (copy to remix)</h2><div class="list" id="builtin"></div>
   </div>
-  <!-- MIDDLE: preview -->
+
+  <!-- MIDDLE -->
   <div class="panel">
-    <div class="stage" id="stage"><canvas id="pv" width="480" height="480"></canvas></div>
-    <div class="bgs" id="bgs"></div>
+    <div class="toolbar" id="tools"></div>
+    <div class="stage"><canvas id="pv" width="900" height="900"></canvas></div>
+    <div class="toolbar" style="margin-top:8px">
+      <div class="ctl">Zoom <input type="range" id="zoom" min="18" max="50" value="30" style="width:110px"></div>
+      <div class="ctl" id="tryon"></div>
+    </div>
     <div class="trail-wrap" id="trailwrap"></div>
-    <div class="help" id="hint" style="text-align:center;margin-top:8px"></div>
+    <div class="help" id="hint" style="margin-top:6px"></div>
+    <h2 id="stamph">STAMPS (click to add)</h2><div class="stamps" id="stamps"></div>
   </div>
-  <!-- RIGHT: editor + save -->
+
+  <!-- RIGHT -->
   <div class="panel">
     <div id="editor"></div>
     <h2>SAVE &amp; PUBLISH</h2>
     <div class="actions">
-      <button class="btn2 pri" id="save">Save to project</button>
-      <button class="btn2" id="push">Push to GitHub</button>
-      <button class="btn2" id="download">Download file</button>
+      <button class="b pri" id="save">Save to project</button>
+      <button class="b" id="push">Push to GitHub</button>
+      <button class="b" id="download">Download</button>
+    </div>
+    <div class="actions">
+      <button class="b sm" id="copyj">Copy design JSON</button><button class="b sm" id="pastej">Paste design JSON</button>
     </div>
     <div class="status" id="status"></div>
     <details><summary>GITHUB SETTINGS (for Push)</summary>
@@ -79,6 +97,7 @@
     </details>
   </div>
 </div>
+<div class="modal" id="modal"><div class="box"><div id="modal-t" class="help" style="margin-bottom:6px"></div><textarea id="modal-ta"></textarea><div class="actions"><button class="b pri" id="modal-ok">OK</button><button class="b" id="modal-x">Close</button></div></div></div>
 
 <script>
 (() => {
@@ -90,17 +109,35 @@ const FILE_PATH = 'src/data/custom-cosmetics.js';
 const PATTERNS = { solid:['a'], grad:['a','b'], stripes:['a','b'], dots:['a','b'], checker:['a','b'], tiger:['a','b'], camo:['a','b','c'] };
 const TRAIL_STYLES = ['soft','spark','star','prism','nebula','frost','blueprint','ember','comet','ribbon','glitch'];
 const PRICE = { common:250, rare:700, epic:1500, legendary:3000 };
+const SWATCHES = ['#ffffff','#e8ecf2','#9aa3b5','#3a4152','#1a1208','#ff5470','#ff7a3d','#ffcf3f','#9be15d','#35e0c8','#5b8def','#7c6bff','#ff71d2','#8a4b2a','#f5d7b0','#c9d1e3','#ffe27a','#b3a9ff','#127b6c','#a8203a'];
 const $ = s => document.querySelector(s);
 const el = (t, p, h) => { const e = document.createElement(t); if (p) Object.assign(e, p); if (h !== undefined) e.innerHTML = h; return e; };
 const clone = o => JSON.parse(JSON.stringify(o));
 const slug = s => (s || 'item').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'item';
+const r1 = v => Math.round(v * 100) / 100;
 
-let W = null;                        // game window (iframe)
+let W = null;
 let db = { skins:[], hats:[], faces:[], trails:[] };
-let kind = 'skin', sel = -1, layerSel = 0, bg = '#20283a', dirHandle = null, dirty = false;
+let kind = 'skin', sel = -1, ls = -1, tool = 'select', sym = true, snap = true, showGrid = true;
+let curFill = '#ffcf3f', curStroke = '#1a1208', curSw = 1.2;
+let dirHandle = null, dirty = false;
+let tryOn = { skin:'classic', hat:'none', face:'none' };
+let ZOOM = .30, CY = .62;
 const gameArr = k => W.eval(GAME_ARR[k]);
+const cur = () => db[KINDS[kind]][sel] || null;
+const hasLayers = () => kind !== 'trail';
+const curLayer = () => { const it = cur(); return it && it.layers ? it.layers[ls] || null : null; };
 
-// ---------- game sync ----------
+// ============ history ============
+let hist = [], hpos = -1, commitT = 0;
+const snapshot = () => JSON.stringify({ db, sel, ls, kind });
+function commitNow() { clearTimeout(commitT); const s = snapshot(); if (hist[hpos] === s) return; hist = hist.slice(0, hpos + 1); hist.push(s); if (hist.length > 100) hist.shift(); hpos = hist.length - 1; try { localStorage.setItem('designer_draft', JSON.stringify(db)); localStorage.setItem('designer_dirty', dirty ? '1' : '0'); } catch (e) {} }
+function commitSoon() { clearTimeout(commitT); commitT = setTimeout(commitNow, 450); }
+function restore(s) { const o = JSON.parse(s); db = o.db; kind = o.kind; sel = o.sel; ls = o.ls; markDirty(true); renderAll(); }
+function undo() { commitNow(); if (hpos > 0) { hpos--; restore(hist[hpos]); } }
+function redo() { if (hpos < hist.length - 1) { hpos++; restore(hist[hpos]); } }
+
+// ============ game sync ============
 function syncGame() {
   for (const k of Object.keys(KINDS)) {
     const arr = gameArr(k);
@@ -109,225 +146,415 @@ function syncGame() {
   }
   try { const tb = W.eval('TRAIL_BY_ID'); for (const t of gameArr('trail')) tb[t.id] = t; } catch (e) {}
 }
-const cur = () => db[KINDS[kind]][sel] || null;
 
-// ---------- preview ----------
-const pv = $('#pv'), SCALE = .27, CY = .62;
+// ============ geometry ============
+const pv = $('#pv'), g2 = pv.getContext('2d'), off = document.createElement('canvas'); off.width = pv.width; off.height = pv.height;
+const K = () => pv.width * ZOOM / 12, CX = () => pv.width / 2, CYP = () => pv.height * CY;
+const u2p = (x, y) => [CX() + x * K(), CYP() + y * K()];
+const sn = v => snap ? Math.round(v * 2) / 2 : r1(v);
+const rad = d => (d || 0) * Math.PI / 180;
+function toLocal(L, ux, uy) { const a = -rad(L.rot), dx = ux - L.x, dy = uy - L.y; return [dx * Math.cos(a) - dy * Math.sin(a), dx * Math.sin(a) + dy * Math.cos(a)]; }
+function fromLocal(L, lx, ly) { const a = rad(L.rot); return [L.x + lx * Math.cos(a) - ly * Math.sin(a), L.y + lx * Math.sin(a) + ly * Math.cos(a)]; }
+const centroid = L => { let x = 0, y = 0; L.pts.forEach(p => { x += p[0]; y += p[1]; }); return [x / L.pts.length, y / L.pts.length]; };
+function segDist(px, py, a, b) { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy || 1e-9; let t = ((px - a[0]) * dx + (py - a[1]) * dy) / l; t = Math.max(0, Math.min(1, t)); return Math.hypot(px - (a[0] + t * dx), py - (a[1] + t * dy)); }
+function inPoly(px, py, pts) { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { if (((pts[i][1] > py) !== (pts[j][1] > py)) && (px < (pts[j][0] - pts[i][0]) * (py - pts[i][1]) / (pts[j][1] - pts[i][1]) + pts[i][0])) c = !c; } return c; }
+function hit(L, ux, uy) {
+  if (L.hidden) return false;
+  const tol = 6 / K();
+  if (L.t === 'rect') { const [lx, ly] = toLocal(L, ux, uy); return Math.abs(lx) <= L.w / 2 + tol && Math.abs(ly) <= L.h / 2 + tol; }
+  if (L.t === 'ellipse') { const [lx, ly] = toLocal(L, ux, uy); return (lx / (L.rx + tol)) ** 2 + (ly / (L.ry + tol)) ** 2 <= 1; }
+  if (L.open) { for (let i = 0; i < L.pts.length - 1; i++) if (segDist(ux, uy, L.pts[i], L.pts[i + 1]) < Math.max(tol, (L.sw || 1) / 2 + tol)) return true; return false; }
+  if (inPoly(ux, uy, L.pts)) return true;
+  for (let i = 0; i < L.pts.length; i++) if (segDist(ux, uy, L.pts[i], L.pts[(i + 1) % L.pts.length]) < tol) return true;
+  return false;
+}
+function handlesOf(L) {
+  const H = [], up = 30 / K();
+  if (L.t === 'rect' || L.t === 'ellipse') {
+    const hw = L.t === 'rect' ? L.w / 2 : L.rx, hh = L.t === 'rect' ? L.h / 2 : L.ry;
+    [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]].forEach((c, i) => { const p = fromLocal(L, c[0], c[1]); H.push({ id:'c' + i, x:p[0], y:p[1] }); });
+    const r = fromLocal(L, 0, -hh - up); H.push({ id:'rot', x:r[0], y:r[1] });
+  } else {
+    L.pts.forEach((p, i) => H.push({ id:'v' + i, x:p[0], y:p[1] }));
+    const n = L.pts.length, lim = L.open ? n - 1 : n;
+    for (let i = 0; i < lim; i++) { const a = L.pts[i], b = L.pts[(i + 1) % n]; H.push({ id:'m' + i, x:(a[0] + b[0]) / 2, y:(a[1] + b[1]) / 2, mid:true }); }
+    const c = centroid(L), minY = Math.min(...L.pts.map(p => p[1])); H.push({ id:'rot', x:c[0], y:minY - up });
+  }
+  return H;
+}
+
+// ============ render ============
+let draft = null;   // in-progress drawing
 function render() {
   if (!W) return;
   syncGame();
   const it = cur();
-  const look = { skin:'classic', hat:'none', face:'none', trail:'none' };
+  const look = { skin:tryOn.skin, hat:tryOn.hat, face:tryOn.face, trail:'none' };
   if (it) look[kind] = it.id;
-  try { W.renderLook(pv, look, { scale:SCALE, cy:CY }); } catch (e) { console.error(e); }
-  // selected layer outline
-  if (it && it.layers && it.layers[layerSel]) {
-    const L = it.layers[layerSel], k = (pv.width * SCALE) / 12, g = pv.getContext('2d');
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.translate(pv.width / 2, pv.height * CY); g.strokeStyle = '#35e0c8'; g.lineWidth = 1.5; g.setLineDash([5, 4]);
-    g.beginPath();
-    if (L.t === 'rect') g.rect((L.x - L.w / 2) * k, (L.y - L.h / 2) * k, L.w * k, L.h * k);
-    else if (L.t === 'ellipse') g.ellipse(L.x * k, L.y * k, L.rx * k, L.ry * k, (L.rot || 0) * Math.PI / 180, 0, 7);
-    else if (L.t === 'poly') L.pts.forEach(([x, y], i) => i ? g.lineTo(x * k, y * k) : g.moveTo(x * k, y * k));
-    g.stroke(); g.restore();
+  try { W.renderLook(off, look, { scale:ZOOM, cy:CY }); } catch (e) { console.error(e); }
+  const g = g2; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, pv.width, pv.height);
+  g.fillStyle = '#10151f'; g.fillRect(0, 0, pv.width, pv.height);
+  if (showGrid) {
+    const k = K(); g.lineWidth = 1;
+    for (let u = -30; u <= 30; u++) { g.strokeStyle = u % 4 === 0 ? 'rgba(255,255,255,.09)' : 'rgba(255,255,255,.035)';
+      const x = CX() + u * k, y = CYP() + u * k; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, pv.height); g.stroke(); g.beginPath(); g.moveTo(0, y); g.lineTo(pv.width, y); g.stroke(); }
+    g.strokeStyle = 'rgba(53,224,200,.45)'; g.setLineDash([6, 6]); g.beginPath(); g.moveTo(CX(), 0); g.lineTo(CX(), pv.height); g.stroke(); g.setLineDash([]);
   }
+  g.drawImage(off, 0, 0);
+  const L = hasLayers() && it && it.layers ? it.layers[ls] : null;
+  if (L && !L.hidden) drawHandles(g, L);
+  if (draft) drawDraft(g);
   const tw = $('#trailwrap'); tw.innerHTML = '';
   if (kind === 'trail' && it) tw.innerHTML = `<span class="trail-sample trail-${it.style}" style="--trail-color:${it.color}"><i></i><i></i><i></i></span>`;
-  $('#hint').textContent = it && it.layers ? 'Drag on the preview to move the selected layer.' : '';
+  $('#stamps').style.display = $('#stamph').style.display = hasLayers() ? '' : 'none';
+  $('#tools').style.display = hasLayers() ? '' : 'none';
 }
-// dragging layers on the preview
-let drag = null;
-const toUnits = e => { const r = pv.getBoundingClientRect(), k = (pv.width * SCALE) / 12, f = pv.width / r.width;
-  return { x:((e.clientX - r.left) * f - pv.width / 2) / k, y:((e.clientY - r.top) * f - pv.height * CY) / k }; };
-pv.addEventListener('pointerdown', e => { const it = cur(); if (!it || !it.layers || !it.layers[layerSel]) return; const u = toUnits(e), L = it.layers[layerSel];
-  drag = { dx:u.x - (L.x || 0), dy:u.y - (L.y || 0) }; pv.setPointerCapture(e.pointerId); });
-pv.addEventListener('pointermove', e => { if (!drag) return; const it = cur(), L = it.layers[layerSel], u = toUnits(e);
-  const nx = Math.round((u.x - drag.dx) * 2) / 2, ny = Math.round((u.y - drag.dy) * 2) / 2;
-  if (L.t === 'poly') { const ox = nx - (L.cx || 0), oy = ny - (L.cy || 0); L.pts = L.pts.map(([x, y]) => [x + ox, y + oy]); L.cx = nx; L.cy = ny; }
-  else { L.x = nx; L.y = ny; }
-  markDirty(); render(); buildEditor(true); });
-pv.addEventListener('pointerup', () => { drag = null; });
+function drawHandles(g, L) {
+  g.save(); g.strokeStyle = '#35e0c8'; g.fillStyle = '#0d1017'; g.lineWidth = 1.6; g.setLineDash([6, 4]);
+  if (L.t === 'rect' || L.t === 'ellipse') {
+    const hw = L.t === 'rect' ? L.w / 2 : L.rx, hh = L.t === 'rect' ? L.h / 2 : L.ry;
+    g.beginPath(); [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]].forEach((c, i) => { const p = u2p(...fromLocal(L, c[0], c[1])); i ? g.lineTo(...p) : g.moveTo(...p); }); g.closePath(); g.stroke();
+  } else {
+    g.beginPath(); L.pts.forEach((p, i) => { const q = u2p(p[0], p[1]); i ? g.lineTo(...q) : g.moveTo(...q); }); if (!L.open) g.closePath(); g.stroke();
+  }
+  g.setLineDash([]);
+  for (const h of handlesOf(L)) {
+    const [x, y] = u2p(h.x, h.y); g.beginPath();
+    if (h.id === 'rot') { g.fillStyle = '#35e0c8'; g.arc(x, y, 7, 0, 7); g.fill(); g.strokeStyle = '#0d1017'; g.stroke(); continue; }
+    if (h.mid) { g.fillStyle = 'rgba(53,224,200,.25)'; g.arc(x, y, 4.5, 0, 7); g.fill(); g.strokeStyle = '#35e0c8'; g.stroke(); continue; }
+    g.fillStyle = '#fff'; g.rect(x - 6, y - 6, 12, 12); g.fill(); g.strokeStyle = '#35e0c8'; g.stroke();
+  }
+  g.restore();
+}
+function drawDraft(g) {
+  g.save(); g.strokeStyle = '#ffcf3f'; g.fillStyle = 'rgba(255,207,63,.15)'; g.lineWidth = 2; g.setLineDash([6, 4]);
+  if (draft.type === 'box') {
+    const a = u2p(draft.a[0], draft.a[1]), b = u2p(draft.b[0], draft.b[1]);
+    g.beginPath(); if (draft.shape === 'rect') g.rect(a[0], a[1], b[0] - a[0], b[1] - a[1]); else g.ellipse((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.abs(b[0] - a[0]) / 2, Math.abs(b[1] - a[1]) / 2, 0, 0, 7);
+    g.fill(); g.stroke();
+  } else {
+    g.beginPath(); draft.pts.forEach((p, i) => { const q = u2p(p[0], p[1]); i ? g.lineTo(...q) : g.moveTo(...q); }); if (draft.hover) g.lineTo(...u2p(draft.hover[0], draft.hover[1])); g.stroke();
+    draft.pts.forEach((p, i) => { const q = u2p(p[0], p[1]); g.beginPath(); g.arc(q[0], q[1], i === 0 ? 7 : 4, 0, 7); g.fillStyle = i === 0 ? '#ffcf3f' : '#fff'; g.fill(); });
+    if (draft.mirror) { g.globalAlpha = .4; g.beginPath(); draft.pts.forEach((p, i) => { const q = u2p(-p[0], p[1]); i ? g.lineTo(...q) : g.moveTo(...q); }); g.stroke(); }
+  }
+  g.restore();
+}
 
-// ---------- lists ----------
-function drawThumb(cv, k, it) {
-  const look = { skin:'classic', hat:'none', face:'none', trail:'none' }; look[k] = it.id;
-  try { W.renderLook(cv, look, { scale:.24, cy:.62 }); } catch (e) {}
+// ============ layers: create / edit ============
+function newLayer(t, geom) { return Object.assign({ t, fill:curFill, stroke:curStroke, sw:curSw }, geom); }
+function mirrorOf(L) { const c = clone(L); if (c.t === 'poly') c.pts = c.pts.map(([x, y]) => [-x, y]); else { c.x = -c.x; c.rot = -(c.rot || 0); } return c; }
+function addLayers(list) {
+  const it = cur(); if (!it) return;
+  if (!it.layers) it.layers = [];
+  list.forEach(L => it.layers.push(L)); ls = it.layers.length - 1;
+  setTool('select'); changed(true);
 }
+function addWithSym(L) { const list = [L]; if (sym) { const cx = L.t === 'poly' ? centroid(L)[0] : L.x; if (Math.abs(cx) > .4) list.push(mirrorOf(L)); } addLayers(list); }
+function finishPoly() {
+  if (!draft || draft.type !== 'poly') return;
+  const pts = draft.pts; draft = null;
+  if (pts.length < 3) { render(); return; }
+  addWithSym(newLayer('poly', { pts }));
+}
+function simplify(pts, eps) {
+  if (pts.length < 3) return pts;
+  let dmax = 0, idx = 0; const a = pts[0], b = pts[pts.length - 1];
+  for (let i = 1; i < pts.length - 1; i++) { const d = segDist(pts[i][0], pts[i][1], a, b); if (d > dmax) { dmax = d; idx = i; } }
+  if (dmax > eps) { const l = simplify(pts.slice(0, idx + 1), eps), r = simplify(pts.slice(idx), eps); return l.slice(0, -1).concat(r); }
+  return [a, b];
+}
+const HINTS = { select:'Click a shape to select it. Drag to move, drag the white squares to resize or reshape, the green dot rotates. Click a small circle on an edge to add a corner. Double-click a corner to delete it. Arrow keys nudge, Delete removes, Ctrl+Z undoes.',
+  rect:'Drag to draw a rectangle.', ellipse:'Drag to draw an ellipse.', poly:'Click to place corners. Click the yellow first point, double-click, or press Enter to close. Esc cancels.', pen:'Hold and draw freely. Close the loop for a filled shape, or leave it open for a line. It is smoothed automatically.' };
+function setTool(t) { tool = t; draft = null; act = null; buildTools(); render(); pv.style.cursor = t === 'select' ? 'default' : 'crosshair'; $('#hint').textContent = HINTS[t] || ''; }
+
+// ============ pointer interaction ============
+let act = null;
+const ptr = e => { const r = pv.getBoundingClientRect(), f = pv.width / r.width, px = (e.clientX - r.left) * f, py = (e.clientY - r.top) * f; return { px, py, u:[(px - CX()) / K(), (py - CYP()) / K()] }; };
+function pickHandle(L, px, py) { let best = null, bd = 16 * (pv.width / pv.getBoundingClientRect().width); for (const h of handlesOf(L)) { const [x, y] = u2p(h.x, h.y), d = Math.hypot(px - x, py - y); if (d < bd) { bd = d; best = h; } } return best; }
+pv.addEventListener('pointerdown', e => {
+  if (!hasLayers() || !cur()) return;
+  const p = ptr(e); pv.setPointerCapture(e.pointerId);
+  const it = cur(); if (!it.layers) it.layers = [];
+  if (tool === 'rect' || tool === 'ellipse') { const a = [sn(p.u[0]), sn(p.u[1])]; draft = { type:'box', shape:tool, a, b:a }; act = { kind:'box' }; return; }
+  if (tool === 'poly') {
+    const q = [sn(p.u[0]), sn(p.u[1])];
+    if (!draft) draft = { type:'poly', pts:[], mirror:sym };
+    if (draft.pts.length > 2) { const f = u2p(...draft.pts[0]); if (Math.hypot(p.px - f[0], p.py - f[1]) < 14) { finishPoly(); return; } }
+    draft.pts.push(q); render(); return;
+  }
+  if (tool === 'pen') { draft = { type:'poly', pts:[[p.u[0], p.u[1]]], mirror:sym }; act = { kind:'pen' }; return; }
+  const L = it.layers[ls];
+  if (L && !L.hidden) { const h = pickHandle(L, p.px, p.py);
+    if (h) {
+      if (h.mid) { const i = +h.id.slice(1); L.pts.splice(i + 1, 0, [sn(h.x), sn(h.y)]); act = { kind:'vertex', i:i + 1 }; return; }
+      if (h.id === 'rot') { const c = L.t === 'poly' ? centroid(L) : [L.x, L.y]; act = { kind:'rot', c, last:Math.atan2(p.u[1] - c[1], p.u[0] - c[0]) }; return; }
+      if (h.id[0] === 'v') { act = { kind:'vertex', i:+h.id.slice(1) }; return; }
+      if (h.id[0] === 'c') { act = { kind:'size' }; return; }
+    } }
+  for (let i = it.layers.length - 1; i >= 0; i--) if (hit(it.layers[i], p.u[0], p.u[1])) { ls = i; act = { kind:'move', last:p.u }; buildEditor(); render(); return; }
+  ls = -1; act = null; buildEditor(); render();
+});
+pv.addEventListener('pointermove', e => {
+  const p = ptr(e);
+  if (tool === 'poly' && draft) { draft.hover = [sn(p.u[0]), sn(p.u[1])]; render(); return; }
+  if (!act) return;
+  const it = cur(), L = it.layers[ls];
+  if (act.kind === 'box') { draft.b = [sn(p.u[0]), sn(p.u[1])]; render(); return; }
+  if (act.kind === 'pen') { const last = draft.pts[draft.pts.length - 1]; if (Math.hypot(p.u[0] - last[0], p.u[1] - last[1]) > .25) { draft.pts.push([p.u[0], p.u[1]]); render(); } return; }
+  if (!L) return;
+  if (act.kind === 'move') { const dx = p.u[0] - act.last[0], dy = p.u[1] - act.last[1];
+    if (L.t === 'poly') L.pts = L.pts.map(([x, y]) => [r1(x + dx), r1(y + dy)]); else { L.x = r1(L.x + dx); L.y = r1(L.y + dy); }
+    act.last = p.u; }
+  else if (act.kind === 'vertex') L.pts[act.i] = [sn(p.u[0]), sn(p.u[1])];
+  else if (act.kind === 'size') { const [lx, ly] = toLocal(L, p.u[0], p.u[1]);
+    if (L.t === 'rect') { L.w = Math.max(.5, sn(Math.abs(lx) * 2)); L.h = Math.max(.5, sn(Math.abs(ly) * 2)); } else { L.rx = Math.max(.25, sn(Math.abs(lx))); L.ry = Math.max(.25, sn(Math.abs(ly))); } }
+  else if (act.kind === 'rot') { const a = Math.atan2(p.u[1] - act.c[1], p.u[0] - act.c[0]);
+    if (L.t === 'poly') { const d = a - act.last, c = act.c, co = Math.cos(d), si = Math.sin(d); L.pts = L.pts.map(([x, y]) => [r1(c[0] + (x - c[0]) * co - (y - c[1]) * si), r1(c[1] + (x - c[0]) * si + (y - c[1]) * co)]); act.last = a; }
+    else { let deg = a * 180 / Math.PI + 90; if (snap) deg = Math.round(deg / 5) * 5; deg = ((deg % 360) + 360) % 360; L.rot = deg > 180 ? deg - 360 : deg; } }
+  markDirty(); render();
+});
+pv.addEventListener('pointerup', () => {
+  if (act && act.kind === 'box' && draft) {
+    const a = draft.a, b = draft.b, w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]), cx = (a[0] + b[0]) / 2, cy = (a[1] + b[1]) / 2, shape = draft.shape; draft = null; act = null;
+    if (w < .5 || h < .5) { render(); return; }
+    addWithSym(shape === 'rect' ? newLayer('rect', { x:cx, y:cy, w, h, r:Math.min(1.5, w / 2, h / 2) }) : newLayer('ellipse', { x:cx, y:cy, rx:w / 2, ry:h / 2 })); return;
+  }
+  if (act && act.kind === 'pen' && draft) {
+    let pts = draft.pts; draft = null; act = null;
+    if (pts.length < 3) { render(); return; }
+    const closed = Math.hypot(pts[0][0] - pts[pts.length - 1][0], pts[0][1] - pts[pts.length - 1][1]) < 2.5 && pts.length > 8;
+    pts = simplify(pts, .3).map(([x, y]) => [r1(x), r1(y)]);
+    if (closed && pts.length > 3) pts.pop();
+    addWithSym(closed ? newLayer('poly', { pts, smooth:true }) : newLayer('poly', { pts, open:true, smooth:true, fill:'none', stroke:curFill, sw:1.6 })); return;
+  }
+  if (act) { act = null; changed(true); }
+});
+pv.addEventListener('dblclick', e => {
+  if (tool === 'poly') { finishPoly(); return; }
+  const L = curLayer(); if (!L || L.t !== 'poly' || tool !== 'select') return;
+  const p = ptr(e), h = pickHandle(L, p.px, p.py);
+  if (h && h.id[0] === 'v' && L.pts.length > (L.open ? 2 : 3)) { L.pts.splice(+h.id.slice(1), 1); changed(true); }
+});
+window.addEventListener('keydown', e => {
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+  if (e.key === 'Escape') { setTool('select'); return; }
+  if (e.key === 'Enter' && draft && draft.type === 'poly') { finishPoly(); return; }
+  const L = curLayer(); if (!L) return;
+  if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); dupLayer(); return; }
+  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); delLayer(); return; }
+  const st = e.shiftKey ? 2 : .5, d = { ArrowLeft:[-st, 0], ArrowRight:[st, 0], ArrowUp:[0, -st], ArrowDown:[0, st] }[e.key];
+  if (d) { e.preventDefault(); if (L.t === 'poly') L.pts = L.pts.map(([x, y]) => [r1(x + d[0]), r1(y + d[1])]); else { L.x = r1(L.x + d[0]); L.y = r1(L.y + d[1]); } changed(); }
+});
+
+// ============ layer ops ============
+function dupLayer() { const it = cur(), L = curLayer(); if (!L) return; const c = clone(L); if (c.t === 'poly') c.pts = c.pts.map(([x, y]) => [x + 1, y + 1]); else { c.x += 1; c.y += 1; } it.layers.splice(ls + 1, 0, c); ls++; changed(true); }
+function delLayer() { const it = cur(); if (!curLayer()) return; it.layers.splice(ls, 1); ls = Math.min(ls, it.layers.length - 1); changed(true); }
+function moveLayer(d) { const it = cur(), j = ls + d; if (!curLayer() || j < 0 || j >= it.layers.length) return; [it.layers[ls], it.layers[j]] = [it.layers[j], it.layers[ls]]; ls = j; changed(true); }
+function mirrorLayer() { const it = cur(), L = curLayer(); if (!L) return; it.layers.splice(ls + 1, 0, mirrorOf(L)); ls++; changed(true); }
+function flipLayer() { const L = curLayer(); if (!L) return; if (L.t === 'poly') L.pts = L.pts.map(([x, y]) => [-x, y]); else { L.x = -L.x; L.rot = -(L.rot || 0); } changed(true); }
+function changed(now) { markDirty(); render(); now ? commitNow() : commitSoon(); if (now) buildEditor(); renderListsSoft(); }
+
+// ============ stamps ============
+const STAMPS = {
+  Star:{ smooth:false, pts:(() => { const p = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 2.4 : 5.5; p.push([r1(Math.cos(a) * r), r1(Math.sin(a) * r)]); } return p; })() },
+  Heart:{ smooth:true, pts:[[0, 4.5], [-3.2, 1.6], [-4.8, -1.4], [-3, -4], [-0.2, -2.8], [0.2, -2.8], [3, -4], [4.8, -1.4], [3.2, 1.6]] },
+  Bolt:{ smooth:false, pts:[[1.5, -6], [-3.5, 0.5], [-0.5, 0.5], [-2, 6], [3.5, -1], [0.5, -1], [3, -6]] },
+  Spike:{ smooth:false, pts:[[-3, 2], [0, -6], [3, 2]] },
+  Horn:{ smooth:true, pts:[[-3, 2], [-3.4, -2], [-1.5, -5], [1.5, -7], [0.2, -3.5], [2.5, 2]] },
+  Leaf:{ smooth:true, pts:[[0, 5], [-3.4, 0], [0, -5.5], [3.4, 0]] },
+  Crown:{ smooth:false, pts:[[-6, 3], [-6.5, -4], [-3.2, -0.5], [0, -5.5], [3.2, -0.5], [6.5, -4], [6, 3]] },
+  Cloud:{ smooth:true, pts:[[-5, 2], [-5.5, -1], [-3, -3], [-1, -4.4], [1.6, -3.6], [3.6, -3], [5.6, -0.6], [5, 2]] },
+  Drop:{ smooth:true, pts:[[0, -6], [-1.6, -2], [-3.6, 1.4], [-2, 4.4], [0, 5], [2, 4.4], [3.6, 1.4], [1.6, -2]] },
+  Moon:{ smooth:true, pts:[[1.6, -5.4], [-2.6, -3.6], [-4.4, 0.4], [-2.4, 4.4], [1.8, 5.4], [-0.8, 2.4], [-1, -1.6]] },
+};
+function buildStamps() { const box = $('#stamps'); box.innerHTML = '';
+  for (const [n, s] of Object.entries(STAMPS)) box.appendChild(el('button', { className:'b sm', onclick:() => { if (!cur()) return; const dy = kind === 'hat' ? -14 : 0; addWithSym(newLayer('poly', { pts:s.pts.map(p => [p[0], r1(p[1] + dy)]), smooth:s.smooth })); } }, n)); }
+
+// ============ lists ============
+function drawThumb(cv, k, it) { const look = { skin:'classic', hat:'none', face:'none', trail:'none' }; look[k] = it.id; try { W.renderLook(cv, look, { scale:.24, cy:.62 }); } catch (e) {} }
+let softT = 0; function renderListsSoft() { clearTimeout(softT); softT = setTimeout(renderLists, 300); }
 function renderLists() {
+  syncGame();
   const tabs = $('#tabs'); tabs.innerHTML = '';
-  for (const k of Object.keys(KINDS)) tabs.appendChild(el('button', { className:'tab' + (k === kind ? ' on' : ''), onclick:() => { kind = k; sel = db[KINDS[k]].length ? 0 : -1; layerSel = 0; renderAll(); } }, k[0].toUpperCase() + k.slice(1) + 's'));
+  for (const k of Object.keys(KINDS)) tabs.appendChild(el('button', { className:'tab' + (k === kind ? ' on' : ''), onclick:() => { kind = k; sel = db[KINDS[k]].length ? 0 : -1; ls = -1; setTool('select'); renderAll(); } }, k[0].toUpperCase() + k.slice(1) + 's'));
   const mine = $('#mine'); mine.innerHTML = '';
   db[KINDS[kind]].forEach((it, i) => {
-    const row = el('div', { className:'item' + (i === sel ? ' on' : ''), onclick:() => { sel = i; layerSel = 0; renderAll(); } });
+    const row = el('div', { className:'item' + (i === sel ? ' on' : ''), onclick:() => { sel = i; ls = -1; renderAll(); } });
     const cv = el('canvas', { width:72, height:72 }); cv.style.cssText = 'width:36px;height:36px';
-    row.appendChild(cv); row.appendChild(el('span', {}, it.name)); row.appendChild(el('small', {}, it.rarity));
-    mine.appendChild(row); drawThumb(cv, kind, it);
+    row.appendChild(cv); row.appendChild(el('span', {}, it.name)); row.appendChild(el('small', {}, it.rarity)); mine.appendChild(row); drawThumb(cv, kind, it);
   });
-  if (!db[KINDS[kind]].length) mine.appendChild(el('div', { className:'help' }, 'Nothing yet. Press + New or duplicate a built-in.'));
+  if (!db[KINDS[kind]].length) mine.appendChild(el('div', { className:'help' }, 'Nothing yet. Press + New or copy a built-in.'));
   const bi = $('#builtin'); bi.innerHTML = '';
   for (const it of gameArr(kind)) {
     if (it.custom || it.id === 'none' || it.id === 'classic') continue;
     const row = el('div', { className:'item', onclick:() => duplicateFrom(it) });
     const cv = el('canvas', { width:72, height:72 }); cv.style.cssText = 'width:36px;height:36px';
-    row.appendChild(cv); row.appendChild(el('span', {}, it.name)); row.appendChild(el('small', {}, it.rarity));
-    bi.appendChild(row); drawThumb(cv, kind, it);
+    row.appendChild(cv); row.appendChild(el('span', {}, it.name)); row.appendChild(el('small', {}, it.rarity)); bi.appendChild(row); drawThumb(cv, kind, it);
   }
 }
 
-// ---------- create / duplicate ----------
+// ============ create / duplicate ============
 function uniqueId(name) { const all = new Set(Object.keys(KINDS).flatMap(k => gameArr(k).map(x => x.id)).concat(Object.values(db).flat().map(x => x.id))); let b = 'c-' + slug(name), id = b, n = 2; while (all.has(id)) id = b + '-' + n++; return id; }
 function blank() {
   const name = 'New ' + kind;
-  if (kind === 'skin') return { id:uniqueId(name), name, color:'#35e0c8', price:PRICE.common, rarity:'common', pat:{ k:'grad', a:'#35e0c8', b:'#7c6bff' } };
+  if (kind === 'skin') return { id:uniqueId(name), name, color:'#35e0c8', price:PRICE.common, rarity:'common', pat:{ k:'grad', a:'#35e0c8', b:'#7c6bff' }, layers:[] };
   if (kind === 'trail') return { id:uniqueId(name), name, color:'#ff71d2', price:PRICE.rare, rarity:'rare', style:'soft' };
-  return { id:uniqueId(name), name, price:PRICE.rare, rarity:'rare', layers:[ { t:'ellipse', x:0, y:-12, rx:8, ry:4, fill:'#ff5470', stroke:'#1a1208', sw:1.2 } ] };
+  return { id:uniqueId(name), name, price:PRICE.rare, rarity:'rare', layers:[] };
 }
-function addItem(it) { db[KINDS[kind]].push(it); sel = db[KINDS[kind]].length - 1; layerSel = 0; markDirty(); renderAll(); }
-function duplicateFrom(src) {
-  const it = clone(src); delete it.custom; it.name = src.name + ' Remix'; it.id = uniqueId(it.name);
-  if (kind === 'hat' || kind === 'face') { if (!it.layers) { it.layers = [ { t:'ellipse', x:0, y:-12, rx:8, ry:4, fill:'#ff5470', stroke:'#1a1208', sw:1.2 } ]; $('#hint').textContent = 'Built-in hats/faces are code-drawn, so the remix starts from a blank shape layer.'; } }
-  addItem(it);
-}
+function addItem(it) { db[KINDS[kind]].push(it); sel = db[KINDS[kind]].length - 1; ls = it.layers && it.layers.length ? 0 : -1; changed(true); renderAll(); }
+function duplicateFrom(src) { const it = clone(src); delete it.custom; it.name = src.name + ' Remix'; it.id = uniqueId(it.name); if (kind !== 'trail' && !it.layers) it.layers = []; addItem(it); if (kind === 'hat' || kind === 'face') $('#hint').textContent = 'Built-in hats/faces are code-drawn, so the copy starts empty. Draw your own on top.'; }
 $('#new').onclick = () => addItem(blank());
 $('#dup').onclick = () => { const it = cur(); if (!it) return; const c = clone(it); c.name += ' Copy'; c.id = uniqueId(c.name); addItem(c); };
 
-// ---------- editor ----------
-function field(label, input) { const w = el('div'); w.appendChild(el('label', {}, label)); w.appendChild(input); return w; }
-function inp(obj, key, type, onchg, opts) {
-  const i = el('input', Object.assign({ type }, opts || {})); i.value = obj[key] === undefined ? '' : obj[key];
-  i.oninput = () => { obj[key] = type === 'number' || type === 'range' ? +i.value : i.value; markDirty(); if (onchg) onchg(); render(); renderListsSoft(); };
-  return i;
+// ============ toolbar ============
+function buildTools() {
+  const box = $('#tools'); box.innerHTML = '';
+  [['select', 'Select'], ['rect', 'Rectangle'], ['ellipse', 'Ellipse'], ['poly', 'Polygon'], ['pen', 'Pen']].forEach(([t, n]) => box.appendChild(el('button', { className:'b' + (tool === t ? ' on' : ''), onclick:() => setTool(t) }, n)));
+  box.appendChild(el('div', { className:'sep' }));
+  const fc = el('input', { type:'color', value:curFill, title:'Fill for new shapes (and the selected shape)', oninput:e => { curFill = e.target.value; const L = curLayer(); if (L && tool === 'select') { if (L.open) L.stroke = curFill; else L.fill = curFill; changed(); } } });
+  const sc = el('input', { type:'color', value:curStroke, title:'Outline for new shapes', oninput:e => { curStroke = e.target.value; } });
+  const a = el('div', { className:'ctl' }, 'Fill'); a.appendChild(fc); box.appendChild(a); const b = el('div', { className:'ctl' }, 'Outline'); b.appendChild(sc); box.appendChild(b);
+  box.appendChild(el('div', { className:'sep' }));
+  const mk = (label, get, set) => { const l = el('label', { className:'chk' }); l.style.margin = 0; l.appendChild(el('input', { type:'checkbox', checked:get(), onchange:e => { set(e.target.checked); render(); } })); l.appendChild(document.createTextNode(label)); box.appendChild(l); };
+  mk('Mirror draw', () => sym, v => sym = v); mk('Snap', () => snap, v => snap = v); mk('Grid', () => showGrid, v => showGrid = v);
+  box.appendChild(el('div', { className:'sep' }));
+  box.appendChild(el('button', { className:'b sm', onclick:undo, title:'Ctrl+Z' }, 'Undo')); box.appendChild(el('button', { className:'b sm', onclick:redo, title:'Ctrl+Y' }, 'Redo'));
 }
-function num(obj, key, label, step) { return field(label, inp(obj, key, 'number', null, { step:step || .5 })); }
-let softT = 0; function renderListsSoft() { clearTimeout(softT); softT = setTimeout(renderLists, 250); }
+function buildTryOn() {
+  const box = $('#tryon'); box.innerHTML = 'Try on: ';
+  const mk = (slot, label) => { const s = el('select'); s.style.width = '105px'; gameArr(slot).forEach(x => s.appendChild(el('option', { value:x.id, selected:x.id === tryOn[slot] }, x.name))); s.onchange = () => { tryOn[slot] = s.value; render(); }; box.appendChild(document.createTextNode(' ' + label + ' ')); box.appendChild(s); };
+  mk('skin', 'skin'); mk('hat', 'hat'); mk('face', 'face');
+}
 
-function buildEditor(keepFocus) {
-  const box = $('#editor'); const it = cur();
-  if (keepFocus && document.activeElement && box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' && document.activeElement.type !== 'range') { /* leave inputs being typed in */ if (!drag) return; }
-  box.innerHTML = '<h1>Editor</h1>';
+// ============ right editor ============
+const F = (label, input) => { const w = el('div'); w.appendChild(el('label', {}, label)); w.appendChild(input); return w; };
+function bind(obj, key, type, opts) { const i = el('input', Object.assign({ type }, opts || {})); i.value = obj[key] === undefined ? '' : obj[key];
+  i.oninput = () => { obj[key] = type === 'number' || type === 'range' ? +i.value : i.value; changed(); }; return i; }
+function shade(hex) { const n = parseInt(String(hex).replace('#', '').slice(0, 6), 16) || 0; const f = v => Math.max(0, Math.round(v * .55)); return '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(f).map(v => v.toString(16).padStart(2, '0')).join(''); }
+function buildEditor() {
+  const box = $('#editor'); const it = cur(); box.innerHTML = '<h1>Editor</h1>';
   if (!it) { box.appendChild(el('div', { className:'help' }, 'Select or create a design.')); return; }
-  const top = el('div', { className:'row' });
-  top.appendChild(field('Name', inp(it, 'name', 'text', () => {})));
+  const top = el('div', { className:'row' }); top.appendChild(F('Name', bind(it, 'name', 'text')));
   const rs = el('select'); RARITIES.forEach(r => rs.appendChild(el('option', { value:r, selected:r === it.rarity }, r)));
-  rs.onchange = () => { it.rarity = rs.value; it.price = PRICE[it.rarity]; markDirty(); buildEditor(); render(); renderLists(); };
-  top.appendChild(field('Rarity', rs)); box.appendChild(top);
-  box.appendChild(field('Price (coins)', inp(it, 'price', 'number', null, { step:50 })));
-  box.appendChild(el('div', { className:'help' }, 'Id: ' + it.id));
-
+  rs.onchange = () => { it.rarity = rs.value; it.price = PRICE[it.rarity]; changed(true); }; top.appendChild(F('Rarity', rs)); box.appendChild(top);
+  box.appendChild(F('Price (coins)', bind(it, 'price', 'number', { step:50 })));
   if (kind === 'skin') {
     const ps = el('select'); Object.keys(PATTERNS).forEach(p => ps.appendChild(el('option', { value:p, selected:p === it.pat.k }, p)));
-    ps.onchange = () => { const old = it.pat; it.pat = { k:ps.value }; PATTERNS[ps.value].forEach((c, i) => it.pat[c] = old[c] || ['#35e0c8', '#7c6bff', '#ffcf3f'][i]); it.color = it.pat.a; markDirty(); buildEditor(); render(); renderLists(); };
-    box.appendChild(field('Pattern', ps));
-    const row = el('div', { className:'row3' });
-    PATTERNS[it.pat.k].forEach(c => { const i = inp(it.pat, c, 'color', () => { if (c === 'a') it.color = it.pat.a; }); row.appendChild(field('Color ' + c.toUpperCase(), i)); });
-    box.appendChild(row);
-  } else if (kind === 'trail') {
-    box.appendChild(field('Color', inp(it, 'color', 'color')));
-    const ss = el('select'); TRAIL_STYLES.forEach(s => ss.appendChild(el('option', { value:s, selected:s === it.style }, s)));
-    ss.onchange = () => { it.style = ss.value; markDirty(); render(); renderLists(); }; box.appendChild(field('Style', ss));
-  } else {
-    box.appendChild(el('h2', {}, 'LAYERS (bottom to top)'));
-    const bar = el('div', { className:'actions', style:'margin:0' });
-    [['rect', 'Rect'], ['ellipse', 'Ellipse'], ['poly', 'Polygon']].forEach(([t, n]) => bar.appendChild(el('button', { className:'btn2', onclick:() => {
-      const base = { fill:'#ffcf3f', stroke:'#1a1208', sw:1.2 };
-      it.layers.push(t === 'rect' ? Object.assign({ t, x:0, y:-12, w:10, h:5, r:1.5 }, base) : t === 'ellipse' ? Object.assign({ t, x:0, y:-12, rx:6, ry:4 }, base) : Object.assign({ t, pts:[[-5, -10], [0, -20], [5, -10]], cx:0, cy:0 }, base));
-      layerSel = it.layers.length - 1; markDirty(); buildEditor(); render(); } }, '+ ' + n)));
-    box.appendChild(bar);
-    it.layers.forEach((L, i) => {
-      const card = el('div', { className:'layer' + (i === layerSel ? ' on' : '') });
-      const hd = el('div', { className:'hd', onclick:() => { layerSel = i; buildEditor(); render(); } });
-      hd.appendChild(el('span', {}, (i + 1) + '. ' + L.t));
-      const mv = (d) => el('button', { className:'btn2', onclick:ev => { ev.stopPropagation(); const j = i + d; if (j < 0 || j >= it.layers.length) return; [it.layers[i], it.layers[j]] = [it.layers[j], it.layers[i]]; layerSel = j; markDirty(); buildEditor(); render(); } }, d < 0 ? 'Up' : 'Down');
-      hd.appendChild(mv(-1)); hd.appendChild(mv(1));
-      hd.appendChild(el('button', { className:'btn2', onclick:ev => { ev.stopPropagation(); it.layers.splice(i + 1, 0, clone(L)); layerSel = i + 1; markDirty(); buildEditor(); render(); } }, 'Copy'));
-      hd.appendChild(el('button', { className:'btn2 warn', onclick:ev => { ev.stopPropagation(); it.layers.splice(i, 1); layerSel = Math.max(0, i - 1); markDirty(); buildEditor(); render(); } }, 'Del'));
-      card.appendChild(hd);
-      if (i === layerSel) {
-        const r1 = el('div', { className:'row3' });
-        if (L.t === 'rect') { ['x', 'y', 'w', 'h', 'r'].forEach(k => r1.appendChild(num(L, k, k.toUpperCase()))); }
-        else if (L.t === 'ellipse') { ['x', 'y', 'rx', 'ry', 'rot'].forEach(k => r1.appendChild(num(L, k, k.toUpperCase(), k === 'rot' ? 5 : .5))); }
-        else { const pi = el('input', { type:'text' }); pi.value = L.pts.map(p => p.join(',')).join(' ');
-          pi.oninput = () => { const pts = pi.value.trim().split(/\s+/).map(s => s.split(',').map(Number)).filter(p => p.length === 2 && p.every(isFinite)); if (pts.length > 2) { L.pts = pts; L.cx = 0; L.cy = 0; markDirty(); render(); } };
-          card.appendChild(field('Points "x,y x,y x,y"', pi)); }
-        card.appendChild(r1);
-        const r2 = el('div', { className:'row3' });
-        const fi = inp(L, 'fill', 'color'); r2.appendChild(field('Fill', fi));
-        const si = el('input', { type:'color' }); si.value = L.stroke || '#1a1208'; si.oninput = () => { L.stroke = si.value; markDirty(); render(); }; r2.appendChild(field('Outline', si));
-        r2.appendChild(num(L, 'sw', 'Outline W', .1));
-        card.appendChild(r2);
-        card.appendChild(field('Opacity', inp(L, 'alpha', 'range', null, { min:0, max:1, step:.05 })));
-        if (L.alpha === undefined) card.lastChild.querySelector('input').value = 1;
-        const nb = el('button', { className:'btn2', style:'margin-top:8px', onclick:() => { delete L.stroke; markDirty(); buildEditor(); render(); } }, 'No outline'); card.appendChild(nb);
-      }
-      box.appendChild(card);
-    });
-    box.appendChild(el('div', { className:'actions' }, '')).appendChild(el('button', { className:'btn2 warn', onclick:() => { if (confirm('Delete this design?')) del(); } }, 'Delete design'));
-    return;
+    ps.onchange = () => { const old = it.pat; it.pat = { k:ps.value }; PATTERNS[ps.value].forEach((c, i) => it.pat[c] = old[c] || ['#35e0c8', '#7c6bff', '#ffcf3f'][i]); it.color = it.pat.a; changed(true); };
+    box.appendChild(F('Base pattern', ps));
+    const row = el('div', { className:'row3' }); PATTERNS[it.pat.k].forEach(c => { const i = el('input', { type:'color', value:it.pat[c] || '#ffffff' }); i.oninput = () => { it.pat[c] = i.value; if (c === 'a') it.color = i.value; changed(); }; row.appendChild(F('Color ' + c.toUpperCase(), i)); }); box.appendChild(row);
   }
-  box.appendChild(el('div', { className:'actions' })).appendChild(el('button', { className:'btn2 warn', onclick:() => { if (confirm('Delete this design?')) del(); } }, 'Delete design'));
+  if (kind === 'trail') {
+    box.appendChild(F('Color', bind(it, 'color', 'color')));
+    const ss = el('select'); TRAIL_STYLES.forEach(s => ss.appendChild(el('option', { value:s, selected:s === it.style }, s))); ss.onchange = () => { it.style = ss.value; changed(true); }; box.appendChild(F('Style', ss));
+    box.appendChild(el('div', { className:'actions' })).appendChild(el('button', { className:'b warn', onclick:() => { if (confirm('Delete this design?')) del(); } }, 'Delete design')); return;
+  }
+  box.appendChild(el('h2', {}, kind === 'skin' ? 'DECAL LAYERS (clipped to the body)' : 'LAYERS (top is front)'));
+  const lbar = el('div', { className:'actions', style:'margin:0' });
+  [['Up', () => moveLayer(1)], ['Down', () => moveLayer(-1)], ['Copy', dupLayer], ['Mirror copy', mirrorLayer], ['Flip', flipLayer], ['Delete', delLayer]].forEach(([n, f]) => lbar.appendChild(el('button', { className:'b sm' + (n === 'Delete' ? ' warn' : ''), onclick:f, disabled:!curLayer() }, n)));
+  box.appendChild(lbar);
+  const lst = el('div'); (it.layers || []).map((L, i) => i).reverse().forEach(i => { const L = it.layers[i];
+    const row = el('div', { className:'layer' + (i === ls ? ' on' : '') + (L.hidden ? ' hid' : ''), onclick:() => { ls = i; buildEditor(); render(); } });
+    const sw = el('div', { className:'sw' }); sw.style.background = L.open ? 'transparent' : (L.fill2 ? `linear-gradient(${L.fill},${L.fill2})` : L.fill || 'transparent'); if (L.open) sw.style.borderColor = L.stroke || '#fff';
+    row.appendChild(sw); row.appendChild(el('span', {}, (L.open ? 'line' : L.t) + ' ' + (i + 1)));
+    row.appendChild(el('button', { className:'b sm', onclick:e => { e.stopPropagation(); L.hidden = !L.hidden; changed(true); } }, L.hidden ? 'Show' : 'Hide'));
+    lst.appendChild(row); });
+  if (!(it.layers || []).length) lst.appendChild(el('div', { className:'help' }, 'No layers yet. Pick a tool above and draw on the canvas, or add a stamp.'));
+  box.appendChild(lst);
+  const L = curLayer();
+  if (L) {
+    box.appendChild(el('h2', {}, 'SELECTED SHAPE'));
+    const pal = el('div', { className:'pal' }); SWATCHES.forEach(c => { const s = el('i'); s.style.background = c; s.title = 'Click: fill. Shift+click: outline'; s.onclick = e => { if (e.shiftKey) L.stroke = c; else if (L.open) L.stroke = c; else L.fill = c; changed(true); }; pal.appendChild(s); }); box.appendChild(pal);
+    const row = el('div', { className:'row3' });
+    if (!L.open) { const fi = el('input', { type:'color', value:L.fill && L.fill !== 'none' ? L.fill : '#ffffff' }); fi.oninput = () => { L.fill = fi.value; changed(); }; row.appendChild(F('Fill', fi)); }
+    const si = el('input', { type:'color', value:L.stroke || '#1a1208' }); si.oninput = () => { L.stroke = si.value; changed(); }; row.appendChild(F('Outline', si));
+    row.appendChild(F('Width', bind(L, 'sw', 'number', { step:.1, min:0 }))); box.appendChild(row);
+    if (!L.open) {
+      const gl = el('label', { className:'chk' }); gl.appendChild(el('input', { type:'checkbox', checked:!!L.fill2, onchange:e => { if (e.target.checked) L.fill2 = shade(L.fill); else delete L.fill2; changed(true); } })); gl.appendChild(document.createTextNode('Gradient (top to bottom)')); box.appendChild(gl);
+      if (L.fill2) { const g2i = el('input', { type:'color', value:L.fill2 }); g2i.oninput = () => { L.fill2 = g2i.value; changed(); }; box.appendChild(F('Gradient end color', g2i)); }
+    }
+    const nl = el('label', { className:'chk' }); nl.appendChild(el('input', { type:'checkbox', checked:!L.stroke, onchange:e => { if (e.target.checked) delete L.stroke; else L.stroke = curStroke; changed(true); } })); nl.appendChild(document.createTextNode('No outline')); box.appendChild(nl);
+    if (L.alpha === undefined) L.alpha = 1;
+    box.appendChild(F('Opacity', bind(L, 'alpha', 'range', { min:0, max:1, step:.05 })));
+    if (L.t === 'poly') { const sl = el('label', { className:'chk' }); sl.appendChild(el('input', { type:'checkbox', checked:!!L.smooth, onchange:e => { L.smooth = e.target.checked; changed(true); } })); sl.appendChild(document.createTextNode('Smooth curves')); box.appendChild(sl); }
+    const det = el('details'); det.appendChild(el('summary', {}, 'EXACT NUMBERS'));
+    const nr = el('div', { className:'row3' });
+    if (L.t === 'rect') ['x', 'y', 'w', 'h', 'r', 'rot'].forEach(k => nr.appendChild(F(k, bind(L, k, 'number', { step:.5 }))));
+    else if (L.t === 'ellipse') ['x', 'y', 'rx', 'ry', 'rot'].forEach(k => nr.appendChild(F(k, bind(L, k, 'number', { step:.5 }))));
+    det.appendChild(nr);
+    if (L.t === 'poly') { const pi = el('input', { type:'text' }); pi.value = L.pts.map(p => p.join(',')).join(' '); pi.oninput = () => { const pts = pi.value.trim().split(/\s+/).map(s => s.split(',').map(Number)).filter(p => p.length === 2 && p.every(isFinite)); if (pts.length > 2) { L.pts = pts; changed(); } }; det.appendChild(F('Points "x,y x,y ..."', pi)); }
+    box.appendChild(det);
+  }
+  box.appendChild(el('div', { className:'actions' })).appendChild(el('button', { className:'b warn', onclick:() => { if (confirm('Delete this whole design?')) del(); } }, 'Delete design'));
 }
-function del() { db[KINDS[kind]].splice(sel, 1); sel = Math.min(sel, db[KINDS[kind]].length - 1); layerSel = 0; markDirty(); renderAll(); }
+function del() { db[KINDS[kind]].splice(sel, 1); sel = Math.min(sel, db[KINDS[kind]].length - 1); ls = -1; changed(true); renderAll(); }
 
-// ---------- save / publish ----------
-function fileText() { const out = {}; for (const k of Object.keys(db)) out[k] = db[k].map(it => { const c = clone(it); delete c.custom; if (c.layers) c.layers.forEach(L => { delete L.cx; delete L.cy; }); return c; });
+// ============ save / publish ============
+function cleanItem(it) { const c = clone(it); delete c.custom; if (c.layers) { c.layers.forEach(L => { delete L.cx; delete L.cy; if (L.alpha === 1) delete L.alpha; }); if (!c.layers.length) delete c.layers; } return c; }
+function fileText() { const out = {}; for (const k of Object.keys(db)) out[k] = db[k].map(cleanItem);
   return '// Cosmetics made with tools/designer.html. Edit them in the tool; this file is rewritten when you press Save.\nconst CUSTOM_COSMETICS = ' + JSON.stringify(out, null, 2) + ';\n'; }
 function setStatus(html) { $('#status').innerHTML = html; }
-function markDirty() { dirty = true; setStatus('<b>Unsaved changes.</b> Press "Save to project" to put them in the game.'); }
-
+function markDirty(silent) { dirty = true; if (!silent) setStatus('<b>Unsaved changes.</b> Press "Save to project" to put them in the game.'); }
 const idb = { open: () => new Promise((res, rej) => { const r = indexedDB.open('designer', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = rej; }),
   async get(k) { const d = await this.open(); return new Promise(res => { const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); },
   async set(k, v) { const d = await this.open(); return new Promise(res => { const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; }); } };
-
 async function ensureDir(ask) {
-  if (!window.showDirectoryPicker) throw new Error('This browser cannot write files directly. Use Chrome or Edge, or "Download file".');
+  if (!window.showDirectoryPicker) throw new Error('This browser cannot write files directly. Use Chrome or Edge, or Download.');
   if (!dirHandle) dirHandle = await idb.get('dir');
   if (dirHandle) { let p = await dirHandle.queryPermission({ mode:'readwrite' }); if (p !== 'granted' && ask) p = await dirHandle.requestPermission({ mode:'readwrite' }); if (p === 'granted') return dirHandle; }
   if (!ask) return null;
   dirHandle = await showDirectoryPicker({ mode:'readwrite', id:'rage-race-project' }); await idb.set('dir', dirHandle); return dirHandle;
 }
-async function fileHandle(root, create) { const parts = FILE_PATH.split('/'); let d = root; for (const p of parts.slice(0, -1)) d = await d.getDirectoryHandle(p); return d.getFileHandle(parts.at(-1), { create }); }
+async function fileHandle(root, create) { const parts = FILE_PATH.split('/'); let d = root; for (const p of parts.slice(0, -1)) d = await d.getDirectoryHandle(p); return d.getFileHandle(parts[parts.length - 1], { create }); }
 $('#save').onclick = async () => {
   try {
-    const root = await ensureDir(true);
+    commitNow(); const root = await ensureDir(true);
     try { await root.getDirectoryHandle('src'); } catch (e) { throw new Error('Pick the project root folder (the one that contains index.html and src/).'); }
     const fh = await fileHandle(root, true), w = await fh.createWritable(); await w.write(fileText()); await w.close();
-    dirty = false; setStatus('<span class="ok">Saved to ' + FILE_PATH + '.</span> Reload the game to see it. Next: Push to GitHub, or commit in VS Code.');
+    dirty = false; localStorage.setItem('designer_dirty', '0'); setStatus('<span class="ok">Saved to ' + FILE_PATH + '.</span> Reload the game to see it. Next: Push to GitHub, or commit in VS Code.');
   } catch (e) { setStatus('<span class="bad">' + e.message + '</span>'); }
 };
-$('#download').onclick = () => { const a = el('a', { href:URL.createObjectURL(new Blob([fileText()], { type:'text/javascript' })), download:'custom-cosmetics.js' }); a.click(); setStatus('Downloaded. Put it at <b>' + FILE_PATH + '</b> in the project.'); };
+$('#download').onclick = () => { el('a', { href:URL.createObjectURL(new Blob([fileText()], { type:'text/javascript' })), download:'custom-cosmetics.js' }).click(); setStatus('Downloaded. Put it at <b>' + FILE_PATH + '</b> in the project.'); };
 const ghKey = k => 'designer_' + k;
 ['repo', 'branch', 'token'].forEach(k => { const i = $('#gh-' + k); const v = localStorage.getItem(ghKey(k)); if (v) i.value = v; i.oninput = () => localStorage.setItem(ghKey(k), i.value.trim()); });
 $('#push').onclick = async () => {
   const repo = $('#gh-repo').value.trim(), branch = $('#gh-branch').value.trim(), token = $('#gh-token').value.trim();
-  if (!token) { $('details').open = true; setStatus('<span class="bad">Add a GitHub token under GitHub settings first (Settings > Developer settings > Personal access tokens, repo scope).</span>'); return; }
+  if (!token) { document.querySelector('details:last-of-type').open = true; setStatus('<span class="bad">Add a GitHub token under GitHub settings first.</span>'); return; }
   try {
-    setStatus('Pushing...');
+    commitNow(); setStatus('Pushing...');
     const url = `https://api.github.com/repos/${repo}/contents/${FILE_PATH}`, H = { Authorization:'Bearer ' + token, Accept:'application/vnd.github+json' };
     const g = await fetch(url + '?ref=' + encodeURIComponent(branch), { headers:H }); let sha; if (g.ok) sha = (await g.json()).sha; else if (g.status !== 404) throw new Error('GitHub says ' + g.status + ' (check repo, branch and token).');
     const body = { message:'Update custom cosmetics from designer', branch, content:btoa(unescape(encodeURIComponent(fileText()))) }; if (sha) body.sha = sha;
     const p = await fetch(url, { method:'PUT', headers:Object.assign({ 'Content-Type':'application/json' }, H), body:JSON.stringify(body) });
     if (!p.ok) throw new Error('Push failed: ' + p.status + ' ' + ((await p.json()).message || ''));
-    dirty = false; setStatus('<span class="ok">Pushed to ' + repo + ' (' + branch + ').</span> Pull in VS Code to get it locally.');
+    dirty = false; localStorage.setItem('designer_dirty', '0'); setStatus('<span class="ok">Pushed to ' + repo + ' (' + branch + ').</span> Pull in VS Code to get it locally.');
   } catch (e) { setStatus('<span class="bad">' + e.message + '</span>'); }
 };
 window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 
-// ---------- background swatches ----------
-['#20283a', '#0d1017', '#ffffff', '#35e0c8', '#ff5470', '#7c6bff'].forEach(c => { const b = el('i'); b.style.background = c; b.onclick = () => { $('#stage').style.setProperty('--bgc', c); }; $('#bgs').appendChild(b); });
+// share one design as JSON
+const modal = $('#modal');
+function openModal(title, text, ok) { $('#modal-t').textContent = title; $('#modal-ta').value = text; modal.classList.add('on'); $('#modal-ok').onclick = () => { try { if (ok) ok($('#modal-ta').value); modal.classList.remove('on'); } catch (e) { $('#modal-t').textContent = 'Error: ' + e.message; } }; }
+$('#modal-x').onclick = () => modal.classList.remove('on');
+$('#copyj').onclick = () => { const it = cur(); if (!it) return; const t = JSON.stringify({ kind, item:cleanItem(it) }, null, 1); try { navigator.clipboard.writeText(t); } catch (e) {} openModal('Design JSON (copied to clipboard). Paste it to share.', t, null); };
+$('#pastej').onclick = () => openModal('Paste a design JSON here, then press OK.', '', t => { const o = JSON.parse(t); if (!KINDS[o.kind] || !o.item) throw new Error('Not a design JSON.'); kind = o.kind; o.item.id = uniqueId(o.item.name || 'import'); addItem(o.item); });
 
-// ---------- boot ----------
-function renderAll() { renderLists(); buildEditor(); render(); }
+// ============ boot ============
+function renderAll() { buildTools(); buildTryOn(); renderLists(); buildEditor(); render(); }
 async function loadExisting() {
   try { const root = await ensureDir(false); if (root) { const f = await (await fileHandle(root, false)).getFile(); const t = await f.text(); const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)); for (const k of Object.keys(db)) db[k] = j[k] || []; setStatus('Loaded ' + FILE_PATH + ' from your project folder.'); return; } } catch (e) {}
-  // fall back to what the game already loaded
-  try { const c = W.eval('typeof CUSTOM_COSMETICS !== "undefined" ? JSON.stringify(CUSTOM_COSMETICS) : "{}"'); const j = JSON.parse(c); for (const k of Object.keys(db)) db[k] = j[k] || []; } catch (e) {}
+  try { const c = W.eval('typeof CUSTOM_COSMETICS !== "undefined" ? JSON.stringify(CUSTOM_COSMETICS) : "{}"'); const j = JSON.parse(c); for (const k of Object.keys(db)) db[k] = (j[k] || []).map(it => { delete it.custom; return it; }); } catch (e) {}
   setStatus('Tip: press "Save to project" once and pick your project folder. After that, saving is one click.');
 }
+$('#zoom').oninput = e => { ZOOM = +e.target.value / 100; render(); };
 $('#game').addEventListener('load', async () => {
-  W = $('#game').contentWindow;
-  await new Promise(r => setTimeout(r, 400));
-  for (const k of Object.keys(db)) db[k].forEach(it => delete it.custom);
+  W = $('#game').contentWindow; await new Promise(r => setTimeout(r, 400));
   await loadExisting();
-  sel = db.skins.length ? 0 : -1; renderAll();
+  try { if (localStorage.getItem('designer_dirty') === '1') { const d = JSON.parse(localStorage.getItem('designer_draft')); if (d && JSON.stringify(d) !== JSON.stringify(db)) { db = d; dirty = true; setStatus('<b>Restored your unsaved draft.</b> Press Save to put it in the game.'); } } } catch (e) {}
+  buildStamps(); sel = db.skins.length ? 0 : -1; renderAll(); commitNow(); setTool('select');
 });
 })();
 </script>
