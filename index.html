@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="src/ui/lootbox.css">
 <link rel="stylesheet" href="src/ui/pass.css">
 <link rel="stylesheet" href="src/tutorial/tutorial.css">
+<link rel="stylesheet" href="src/ui/streak.css">
 </head>
 <body>
 
@@ -26,6 +27,7 @@
         <button class="m-avatar" type="button" data-go="profile" aria-label="Open profile"><i></i><i></i><span class="m-lvl" id="m-lvl">1</span></button>
         <div class="m-who"><div class="m-name" id="m-name">Player</div><div class="m-xpbar"><div id="m-xpfill"></div></div></div>
         <button class="m-coins" type="button" data-go="shop" aria-label="Coins, open the shop"><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg><span id="wallet-num">0</span><span class="m-plus">+</span></button>
+        <button class="m-gems" type="button" id="btn-gems" aria-label="Gems, open the gem shop"><svg class="ico ico-gem" aria-hidden="true"><use href="#ico-gem"/></svg><span id="gem-num">0</span><span class="m-plus">+</span></button>
         <button class="m-gear" type="button" id="btn-settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
     </header>
 
@@ -43,6 +45,7 @@
             </div>
             <button class="m-row" type="button" data-go="play"><span><span class="m-kick">MODE</span><span class="m-row-t" id="m-mode">Race · Quick match</span></span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
             <button class="m-play" type="button" id="btn-home-play">PLAY</button>
+            <button class="m-streak" type="button" id="btn-streak-open"><svg class="ico ico-flame" aria-hidden="true"><use href="#ico-flame"/></svg><span class="ms-text"><small>DAILY REWARDS</small><strong class="ms-day">Day 1</strong></span><i class="ms-dot"></i></button>
             <button class="m-pass-entry" type="button" id="btn-pass-open">
                 <span class="m-pass-art" aria-hidden="true">01</span>
                 <span class="m-pass-copy"><small>FREE SEASON PASS</small><strong>Season 01 · Afterglow</strong><span id="m-pass-progress">Tier 0 / 30</span><i class="m-pass-meter"><b id="m-pass-meter-fill"></b></i></span>
@@ -86,7 +89,7 @@
                 <button class="m-pill" type="button" data-cat="hat">Headwear</button>
                 <button class="m-pill" type="button" data-cat="face">Face</button>
                 <button class="m-pill" type="button" data-cat="trail">Trails</button>
-                <button class="m-pill" type="button" data-cat="resources">Resources</button>
+                <button class="m-pill" type="button" data-cat="resources"><svg class="ico ico-gem" aria-hidden="true"><use href="#ico-gem"/></svg> Gems</button>
             </div>
             <div class="m-grid" id="m-skins"></div>
             <div class="m-resource-shop" id="m-resource-shop" hidden></div>
@@ -336,13 +339,17 @@
 <script src="src/ui/icons.js"></script>
 <script src="src/ui/trail-fx.js"></script>
 <script src="src/data/pass.js"></script>
+<script src="src/data/gems.js"></script>
+<script src="src/data/streak.js"></script>
 <script src="src/data/skin-styles.js"></script>
 <script src="src/data/trail-styles.js"></script>
 <script src="src/data/accessory-styles.js"></script>
 <script src="src/data/custom-cosmetics.js"></script>
+<script src="src/data/premium-cosmetics.js"></script>
 <script src="src/ui/pass.js"></script>
 <script src="game.js"></script>
 <script src="src/ui/lootbox.js"></script>
 <script src="src/tutorial/tutorial.js"></script>
+<script src="src/ui/streak.js"></script>
 </body>
 </html>

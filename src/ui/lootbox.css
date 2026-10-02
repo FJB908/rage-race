@@ -89,3 +89,5 @@
 .lb-itempop .rar { position:relative; font-weight:900; letter-spacing:.24em; font-size:13px; color:var(--ic); text-shadow:0 2px 0 rgba(0,0,0,.5); }
 .lb-itempop .nm { position:relative; font:900 30px/1.1 "Bricolage Grotesque","Space Grotesk",system-ui,sans-serif; text-align:center; text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 20px color-mix(in srgb,var(--ic) 60%,transparent); }
 .lb-itempop .new { position:relative; margin-top:6px; padding:3px 12px; border-radius:99px; background:var(--ic); color:#0d1017; font-weight:900; font-size:11px; letter-spacing:.16em; }
+.pop-gem b { color:#ff9be8; }
+.lb-itempop .rar .ico { width:14px; height:14px; vertical-align:-2px; }

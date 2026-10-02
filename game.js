@@ -106,7 +106,7 @@ function showScreen(name) {
     if (typeof SFX !== 'undefined' && SFX.music){
         if (name === 'start') SFX.music.set('menu');
     }
-    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings'].forEach(k => {
+    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings','streak'].forEach(k => {
         const el = S[k];
         if (k === name) {
             el.style.display = 'flex';
@@ -2784,6 +2784,7 @@ let settingsReturn = 'start';
 function openSettings(from){ settingsReturn = from || 'start'; syncSettingsUI(); showScreen('settings'); }
 document.getElementById('btn-settings').addEventListener('click', () => openSettings('start'));
 document.getElementById('set-close').addEventListener('click', () => showScreen(settingsReturn));
+document.getElementById('btn-gems').addEventListener('click', () => { menuTab('shop'); renderShop('resources'); SFX.play('count'); });
 document.getElementById('set-haptics').addEventListener('click', () => {
     hapticsOn = !hapticsOn; try { localStorage.setItem('rr_haptics', hapticsOn ? '1' : '0'); } catch(e){}
     document.getElementById('set-haptics').classList.toggle('on', hapticsOn); if (hapticsOn) haptic(30);
@@ -3567,6 +3568,10 @@ for (const arr of [SKINS, HATS, FACES, TRAILS]){
         });
     }
 }
+if (typeof PREMIUM_COSMETICS !== 'undefined'){
+    for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
+        for (const it of (PREMIUM_COSMETICS[key] || [])) if (!arr.some(x => x.id === it.id)) arr.push(Object.assign({ premium:true, rarity:'legendary' }, it));
+}
 const TRAIL_BY_ID = Object.fromEntries(TRAILS.map(trail => [trail.id, trail]));
 const COS_BY = { skin: SKINS, hat: HATS, face: FACES, trail: TRAILS };
 const RESOURCE_PACKS = [
@@ -3635,29 +3640,43 @@ function polyPath(c, pts, k, smooth, open){
     for (let i = 0; i < n; i++){ const m = mid(P[i], P[(i+1) % n]); c.quadraticCurveTo(P[i][0], P[i][1], m[0], m[1]); }
     c.closePath();
 }
+function layerCentre(L){ if (L.t !== 'poly') return [L.x, L.y]; if (!L._c){ let x = 0, y = 0; for (const p of L.pts){ x += p[0]; y += p[1]; } L._c = [x / L.pts.length, y / L.pts.length]; } return L._c; }
+// Animation fields (premium cosmetics): spin (deg/s about the shape's centre), orbit (deg/s about pivot [px,py], default origin),
+// bob {x,y,f,p} (sine drift), pulse {a,f,p} (opacity breathing), rainbow (hue cycle speed).
 function drawCustomLayers(c, s, k, layers){
+    const T = performance.now() / 1000;
     c.save();
     for (const L of layers){
         if (L.hidden) continue;
         c.save();
-        c.globalAlpha = L.alpha === undefined ? 1 : L.alpha;
+        let al = L.alpha === undefined ? 1 : L.alpha;
+        if (L.orbit){ const pv = L.pivot || [0, 0]; c.translate(pv[0]*k, pv[1]*k); c.rotate(L.orbit * T * Math.PI / 180); c.translate(-pv[0]*k, -pv[1]*k); }
+        if (L.bob){ const f = (L.bob.f || 1) * 6.2832, ph = L.bob.p || 0; c.translate(Math.sin(T*f + ph) * (L.bob.x || 0) * k, Math.sin(T*f + ph + 1.5708) * (L.bob.y || 0) * k); }
+        if (L.pulse) al *= 1 - (L.pulse.a === undefined ? .3 : L.pulse.a) * (.5 + .5 * Math.sin(T * (L.pulse.f || 1) * 6.2832 + (L.pulse.p || 0)));
+        c.globalAlpha = al;
+        const spinRot = L.spin ? L.spin * T : 0;
         c.beginPath();
         let y0 = -1, y1 = 1;
         if (L.t === 'rect'){
-            c.translate(L.x*k, L.y*k); c.rotate((L.rot || 0)*Math.PI/180);
+            c.translate(L.x*k, L.y*k); c.rotate(((L.rot || 0) + spinRot)*Math.PI/180);
             rrPathAdd(c, -L.w/2*k, -L.h/2*k, L.w*k, L.h*k, Math.min(L.r || 0, L.w/2, L.h/2)*k); y0 = -L.h/2; y1 = L.h/2;
         } else if (L.t === 'ellipse'){
-            c.translate(L.x*k, L.y*k); c.rotate((L.rot || 0)*Math.PI/180);
+            c.translate(L.x*k, L.y*k); c.rotate(((L.rot || 0) + spinRot)*Math.PI/180);
             c.ellipse(0, 0, Math.max(.1, L.rx)*k, Math.max(.1, L.ry)*k, 0, 0, 7); y0 = -L.ry; y1 = L.ry;
         } else if (L.t === 'poly' && L.pts && L.pts.length >= (L.open ? 2 : 3)){
-            polyPath(c, L.pts, k, L.smooth, L.open); y0 = Math.min(...L.pts.map(p => p[1])); y1 = Math.max(...L.pts.map(p => p[1]));
+            if (spinRot){ const cc = layerCentre(L); c.translate(cc[0]*k, cc[1]*k); c.rotate(spinRot*Math.PI/180); c.translate(-cc[0]*k, -cc[1]*k); }
+            polyPath(c, L.pts, k, L.smooth, L.open);
+            if (L._y0 === undefined){ L._y0 = Infinity; L._y1 = -Infinity; for (const p of L.pts){ if (p[1] < L._y0) L._y0 = p[1]; if (p[1] > L._y1) L._y1 = p[1]; } }
+            y0 = L._y0; y1 = L._y1;
         } else { c.restore(); continue; }
-        if (!L.open && L.fill && L.fill !== 'none'){
-            if (L.fill2){ const g = c.createLinearGradient(0, y0*k, 0, y1*k); g.addColorStop(0, L.fill); g.addColorStop(1, L.fill2); c.fillStyle = g; }
-            else c.fillStyle = L.fill;
+        let fill = L.fill, fill2 = L.fill2;
+        if (L.rainbow){ const h = (T * L.rainbow * 60 + (L.hue || 0)) % 360; fill = 'hsl(' + h.toFixed(0) + ',92%,62%)'; if (fill2) fill2 = 'hsl(' + ((h + 50) % 360).toFixed(0) + ',92%,48%)'; }
+        if (!L.open && fill && fill !== 'none'){
+            if (fill2){ const g = c.createLinearGradient(0, y0*k, 0, y1*k); g.addColorStop(0, fill); g.addColorStop(1, fill2); c.fillStyle = g; }
+            else c.fillStyle = fill;
             c.fill();
         }
-        if (L.stroke){ c.strokeStyle = L.stroke; c.lineWidth = (L.sw || 1)*k; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(); }
+        if (L.stroke){ c.strokeStyle = L.rainbow && L.open ? fill : L.stroke; c.lineWidth = (L.sw || 1)*k; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(); }
         c.restore();
     }
     c.restore();
@@ -4006,6 +4025,7 @@ function prog(){
     if (!Number.isFinite(d.passPointsEarned)) d.passPointsEarned = d.passPoints;
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
     if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
+    if (!d.streak || typeof d.streak !== 'object') d.streak = { n:0, last:'' };
     if (!d.pendingDrops || typeof d.pendingDrops !== 'object') d.pendingDrops = {};
     if (!Array.isArray(d.owned)) d.owned = ['classic'];
     if (!d.owned.includes('classic')) d.owned.push('classic');
@@ -4027,6 +4047,8 @@ function skinById(id){ return SKINS.find(s => s.id === id) || SKINS[0]; }
 function myLook(){ const p = prog(); return { skin: p.skin, hat: p.hat, face: p.face, trail:p.trail }; }
 function skinColor(){ return skinById(prog().skin).color; }
 function addXp(n){ const p = prog(); p.xp += Math.max(0, Math.round(n)); saveProg(p); }
+function gemCount(){ return load('rr_gems', 0); }
+function addGems(n){ store('rr_gems', gemCount() + Math.max(0, Math.round(n))); }
 function addCoins(n){ store('rr_coins', load('rr_coins', 0) + Math.max(0, Math.round(n))); }
 function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Math.random().toString(36).slice(2, 9); }
 // ---------- Supply drops ----------
@@ -4050,13 +4072,13 @@ function pickCosmetic(available, tier){
     for (const r of rars){ x -= (W[r] || 1); if (x <= 0) return by[r][Math.floor(Math.random() * by[r].length)]; }
     return available[0];
 }
-function awardLootDrop(id, base){
+function awardLootDrop(id, base, opts){
     const p = prog();
     if (p.lootGrants[id]) return p.lootGrants[id];
     if (p.pendingDrops[id]) return p.pendingDrops[id];
     const r = Math.random();
     const drop = {
-        id, pending:true, tier: r < 0.02 ? 'epic' : r < 0.14 ? 'rare' : 'common',
+        id, pending:true, tier: (opts && opts.tier) || (r < 0.02 ? 'epic' : r < 0.14 ? 'rare' : 'common'),
         base:{ coins:Math.max(0, Math.round(base.coins || 0)), xp:Math.max(0, Math.round(base.xp || 0)), passPoints:Math.max(0, Math.round(base.passPoints || 0)) },
     };
     p.pendingDrops[id] = drop;
@@ -4076,14 +4098,22 @@ function resolveDrop(id, tier){
         passPoints:pend.base.passPoints,
         cosmetic:null,
     };
+    // Gems are very rare: only epic and legendary drops can hold them, and only a legendary one can hold a premium (gem) cosmetic.
+    drop.gems = 0;
+    if (Math.random() < ({ epic:0.012, legendary:0.05 }[tier] || 0)) drop.gems = tier === 'legendary' ? 5 + Math.floor(Math.random() * 16) : 5;
+    if (tier === 'legendary' && Math.random() < 0.004){
+        const prem = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.premium && i.gemPrice && !i.exclusive && !p.owned.includes(i.id));
+        if (prem.length){ drop.cosmetic = prem[Math.floor(Math.random() * prem.length)]; p.owned.push(drop.cosmetic.id); }
+    }
+    if (drop.gems) addGems(drop.gems);
     const available = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(item => item.price > 0 && !p.owned.includes(item.id));
-    if (available.length && (p.cosmeticPity >= 24 || Math.random() < DROP_COSMETIC_CHANCE[tier])){
+    if (!drop.cosmetic && available.length && (p.cosmeticPity >= 24 || Math.random() < DROP_COSMETIC_CHANCE[tier])){
         drop.cosmetic = pickCosmetic(available, tier);
         p.owned.push(drop.cosmetic.id);
         p.cosmeticPity = 0;
-    } else if (available.length){
+    } else if (!drop.cosmetic && available.length){
         p.cosmeticPity++;
-    } else {
+    } else if (!drop.cosmetic){
         drop.coins += 100;
     }
     p.xp += drop.xp;
@@ -4117,6 +4147,7 @@ function renderLootDrop(containerId, drop){
             final = final || drop;
             const chips = [R('coin', final.coins || 0, {plus:true}), R('xp', final.xp || 0, {plus:true})];
             if (final.passPoints) chips.push(R('pass', final.passPoints, {plus:true}));
+            if (final.gems) chips.push(R('gem', final.gems, {plus:true}));
             if (final.cosmetic) chips.push(`<span class="rwd rwd-item" style="color:${RARITY[final.cosmetic.rarity].color}"><b>${final.cosmetic.name}</b></span>`);
             panel.innerHTML = `<div class="loot-crate opened tier-${final.tier || tier}" aria-hidden="true">${icon('check')}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;
             panel.querySelector('.loot-crate').style.setProperty('--ic', TC[final.tier || tier]);
@@ -4172,7 +4203,25 @@ function escGameOver(p){
         showScreen('over');
     }, 1100);
 }
-function renderResourceShop(){ /* Resources tab is intentionally empty */ }
+function toast(msg){
+    let t = document.getElementById('toast'); if (!t){ t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+    t.textContent = msg; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function renderResourceShop(){
+    const box = document.getElementById('m-resource-shop'); box.innerHTML = '';
+    const head = document.createElement('div'); head.className = 'gem-head'; head.innerHTML = `<span>${R('gem', gemCount())}</span>`; box.appendChild(head);
+    const grid = document.createElement('div'); grid.className = 'gem-grid'; box.appendChild(grid);
+    for (const pack of GEM_PACKS){
+        const card = document.createElement('button'); card.type = 'button'; card.className = 'gem-pack';
+        card.innerHTML = `<span class="gp-art">${icon('gem').repeat(pack.icons)}</span><b>${pack.gems.toLocaleString('en-US')}</b><span class="gp-price">${pack.price}</span>`;
+        card.addEventListener('click', () => {
+            if (window.GEM_STORE && typeof window.GEM_STORE.buy === 'function'){ window.GEM_STORE.buy(pack, n => { addGems(n); SFX.play('finish'); refreshMenu(); renderResourceShop(); }); }
+            else { toast('Store not connected yet'); SFX.play('fall'); }
+        });
+        grid.appendChild(card);
+    }
+}
 function renderShop(cat){
     const grid = document.getElementById('m-skins'), resources = document.getElementById('m-resource-shop');
     const current = prog();
@@ -4180,27 +4229,36 @@ function renderShop(cat){
     document.querySelectorAll('.m-pill[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
     if (cat === 'resources'){ renderResourceShop(); return; }
     const rarityOrder = {common:0, rare:1, epic:2, legendary:3};
-    const items = [...(COS_BY[cat] || SKINS)].sort((a,b) => rarityOrder[a.rarity]-rarityOrder[b.rarity] || a.price-b.price || a.name.localeCompare(b.name));
+    const items = [...(COS_BY[cat] || SKINS)].filter(it => !it.exclusive || current.owned.includes(it.id)).sort((a,b) => (b.premium ? 1 : 0) - (a.premium ? 1 : 0) || rarityOrder[a.rarity]-rarityOrder[b.rarity] || (a.price || a.gemPrice || 0)-(b.price || b.gemPrice || 0) || a.name.localeCompare(b.name));
+    const animated = [];
     grid.innerHTML = '';
     for (const it of items){
                 const owned = current.owned.includes(it.id);
                 const eq = current[cat] === it.id;
                 const b = document.createElement('button');
                 b.type = 'button';
-                b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' ? ' leg' : '');
+                b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' ? ' leg' : '') + (it.premium ? ' prem' : '');
                 b.innerHTML = `<span class="m-skin-pv"><canvas width="160" height="160"></canvas></span>` +
                     `<b>${it.name}</b><span class="m-rar" style="color:${RARITY[it.rarity].color}">${RARITY[it.rarity].label}</span>` +
                     (cat === 'trail' ? `<canvas class="tr-pv" width="300" height="100"></canvas>` : '') +
-                    `<span class="m-skin-f"><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : R('coin', it.price)}</span></span>`;
+                    `<span class="m-skin-f"><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.premium ? R('gem', it.gemPrice) : R('coin', it.price)}</span></span>` + (it.premium ? `<span class="prem-tag">${icon('gem')}</span>` : '');
                 const preview = { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail };
                 renderLook(b.querySelector('canvas'), preview, { scale:0.22, cy:0.62 });
                 { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it); }
+                if (it.premium && cat !== 'trail') animated.push([b.querySelector('canvas'), preview]);
                 b.addEventListener('click', () => {
                     const q = prog();
                     const slot = cat;
                     if (owned){
                         if (eq && slot !== 'skin') q[slot] = 'none'; else q[slot] = it.id;
                         saveProg(q); SFX.play('item'); refreshMenu(); renderShop(cat); return;
+                    }
+                    if (it.premium){
+                        const gh = gemCount();
+                        if (gh < it.gemPrice){ b.classList.remove('m-shake'); void b.offsetWidth; b.classList.add('m-shake'); SFX.play('fall'); renderShop('resources'); return; }
+                        store('rr_gems', gh - it.gemPrice);
+                        q.owned.push(it.id); q[slot] = it.id; saveProg(q);
+                        SFX.play('pickup'); SFX.play('finish'); refreshMenu(); renderShop(cat); return;
                     }
                     const have = load('rr_coins', 0);
                     if (have < it.price){ b.classList.remove('m-shake'); void b.offsetWidth; b.classList.add('m-shake'); SFX.play('fall'); return; }
@@ -4211,6 +4269,11 @@ function renderShop(cat){
                 });
                 grid.appendChild(b);
     }
+    clearInterval(renderShop._anim);
+    if (animated.length) renderShop._anim = setInterval(() => {
+        const gr = document.getElementById('m-skins'); if (gr.hidden || !gr.offsetParent){ clearInterval(renderShop._anim); return; }
+        for (const [cv, look] of animated) renderLook(cv, look, { scale:0.22, cy:0.62 });
+    }, 70);
 }
 function menuTab(tab){
     document.querySelectorAll('.m-tab').forEach(el => el.classList.toggle('on', el.dataset.tab === tab));
@@ -4236,6 +4299,7 @@ function refreshMenu(){
     if (document.activeElement !== inp) inp.value = p.name;
     document.getElementById('m-mode').textContent = MODE_LABEL[p.lastMode] || MODE_LABEL.race;
     renderPassHome(p);
+    if (window.Streak) Streak.refreshHome();
     const all = [...SKINS, ...HATS, ...FACES].filter(it => it.id !== 'none' && it.price > 0);
     const next = all.filter(it => !p.owned.includes(it.id)).sort((a,b) => a.price - b.price)[0];
     const coins = load('rr_coins', 0);
@@ -4327,6 +4391,7 @@ function refreshStartMeta(){
     const best = load('rr_esc_best_score', 0), coins = load('rr_coins', 0);
     document.getElementById('start-best').textContent = best > 0 ? 'Best ' + best.toLocaleString('en-US') : '';
     document.getElementById('wallet-num').textContent = coins;
+    document.getElementById('gem-num').textContent = gemCount().toLocaleString('en-US');
     try {
         const tot = dimTotalStars();
         const max = DIMENSIONS.filter(dm => !dm.hidden).reduce((a,dm) => a + dm.levels.length*3, 0);

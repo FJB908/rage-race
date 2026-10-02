@@ -10,6 +10,10 @@
         '<linearGradient id="gxB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset=".45" stop-color="#4fb4ff"/><stop offset="1" stop-color="#2459e0"/></linearGradient>' +
         // --- PASS: violet ticket with notches, perforation and a star ---
         '<linearGradient id="gpB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b3a9ff"/><stop offset=".55" stop-color="#7c6bff"/><stop offset="1" stop-color="#4a38c4"/></linearGradient>' +
+        '<linearGradient id="ggC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe0f8"/><stop offset="1" stop-color="#ff6fd8"/></linearGradient>' +
+        '<linearGradient id="ggL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5fd2"/><stop offset="1" stop-color="#a0128a"/></linearGradient>' +
+        '<linearGradient id="ggR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e63cb8"/><stop offset="1" stop-color="#6a0a5a"/></linearGradient>' +
+        '<linearGradient id="gfl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe45e"/><stop offset=".5" stop-color="#ff9a1f"/><stop offset="1" stop-color="#e0301e"/></linearGradient>' +
         '<symbol id="ico-coin" viewBox="0 0 64 64">' +
           '<circle cx="32" cy="34" r="29" fill="#7a4300" opacity=".35"/>' +
           '<circle cx="32" cy="32" r="29" fill="url(#gcR)" stroke="#7a4300" stroke-width="2.5"/>' +
@@ -40,6 +44,20 @@
           '<path d="M12 21 Q22 13 32 13" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2.4" stroke-linecap="round"/>' +
           '<rect x="26" y="24" width="12" height="11" rx="2.6" style="fill:var(--ic,#35e0c8)" stroke="#0d1017" stroke-width="2.4"/><circle cx="32" cy="29" r="1.8" fill="#0d1017"/><rect x="31" y="29" width="2" height="4" rx="1" fill="#0d1017"/>' +
         '</symbol>' +
+        '<symbol id="ico-gem" viewBox="0 0 64 64">' +
+          '<path d="M18 11 H46 L59 26 L32 58 L5 26 Z" fill="#3a0830" opacity=".4" transform="translate(0 2)"/>' +
+          '<path d="M18 10 H46 L59 26 L32 58 L5 26 Z" fill="url(#ggL)" stroke="#3a0830" stroke-width="3.2" stroke-linejoin="round"/>' +
+          '<path d="M5 26 L18 10 H46 L59 26 Z" fill="url(#ggC)"/>' +
+          '<path d="M5 26 H59 L32 58 Z" fill="url(#ggL)"/>' +
+          '<path d="M32 58 L59 26 H40 Z" fill="url(#ggR)"/>' +
+          '<path d="M5 26 L18 10 M59 26 L46 10 M18 10 L25 26 M46 10 L39 26 M25 26 L32 58 M39 26 L32 58 M25 26 H39" fill="none" stroke="#3a0830" stroke-opacity=".5" stroke-width="1.6" stroke-linejoin="round"/>' +
+          '<path d="M19 13 H30" stroke="#fff" stroke-opacity=".9" stroke-width="3" stroke-linecap="round"/><path d="M10 25 L14 19" stroke="#fff" stroke-opacity=".6" stroke-width="2.4" stroke-linecap="round"/>' +
+        '</symbol>' +
+        '<symbol id="ico-flame" viewBox="0 0 64 64">' +
+          '<path d="M32 4 C36 16 52 22 52 40 C52 52 43 60 32 60 C21 60 12 52 12 40 C12 31 17 27 20 22 C21 28 24 30 27 30 C25 20 28 11 32 4 Z" fill="#7a1408" opacity=".45" transform="translate(0 2)"/>' +
+          '<path d="M32 3 C36 15 52 21 52 39 C52 51 43 59 32 59 C21 59 12 51 12 39 C12 30 17 26 20 21 C21 27 24 29 27 29 C25 19 28 10 32 3 Z" fill="url(#gfl)" stroke="#7a1408" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M32 28 C34 36 42 38 42 47 C42 53 37 57 32 57 C27 57 22 53 22 47 C22 41 27 38 28 33 C30 36 31 35 32 28 Z" fill="#fff4a8" opacity=".95"/>' +
+        '</symbol>' +
         '<symbol id="ico-star" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>' +
         '<symbol id="ico-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>' +
         '<symbol id="ico-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>' +
@@ -55,7 +73,7 @@
 
     window.icon = (name, cls) => '<svg class="ico ico-' + name + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#ico-' + name + '"/></svg>';
     // Icon + number chip. opts.plus adds a leading "+", label is read by screen readers only.
-    const LABEL = { coin:'coins', xp:'XP', pass:'pass points' };
+    const LABEL = { coin:'coins', xp:'XP', pass:'pass points', gem:'gems' };
     window.R = (name, n, opts) => {
         const num = typeof n === 'number' ? n.toLocaleString('en-US') : n;
         return '<span class="rwd rwd-' + name + '" role="img" aria-label="' + ((opts && opts.plus ? '+' : '') + num + ' ' + LABEL[name]) + '">' + icon(name) + '<b>' + (opts && opts.plus ? '+' : '') + num + '</b></span>';

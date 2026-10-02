@@ -77,10 +77,10 @@
     async function revealRewards(o, final, skipped) {
         const pops = o.$('.lb-pops'), sleep = ms => skipped() ? Promise.resolve() : wait(ms);
         const row = document.createElement('div'); row.className = 'lb-row'; pops.appendChild(row);
-        for (const [kind, n] of [['coin', final.coins], ['xp', final.xp], ['pass', final.passPoints]]) {
+        for (const [kind, n] of [['coin', final.coins], ['xp', final.xp], ['pass', final.passPoints], ['gem', final.gems]]) {
             if (!n) continue;
             const d = document.createElement('div'); d.className = 'lb-pop pop-' + kind; d.innerHTML = icon(kind) + '<b>+0</b>'; row.appendChild(d); void d.offsetWidth; d.classList.add('show');
-            sfx('item'); const r = d.getBoundingClientRect(); o.emit(10, { x:r.left + 28, y:r.top + 28, speed:260, size:7, colors:kind === 'coin' ? ['#ffcf3f', '#fff3b0'] : kind === 'xp' ? ['#6cc4ff', '#bfe9ff'] : ['#b3a9ff', '#e4defd'], g:500 });
+            sfx('item'); const r = d.getBoundingClientRect(); o.emit(10, { x:r.left + 28, y:r.top + 28, speed:260, size:7, colors:kind === 'coin' ? ['#ffcf3f', '#fff3b0'] : kind === 'xp' ? ['#6cc4ff', '#bfe9ff'] : kind === 'gem' ? ['#ff6fd8', '#ffe0f8'] : ['#b3a9ff', '#e4defd'], g:500 });
             await countUp(d.querySelector('b'), n, skipped); await sleep(160);
         }
         const cos = final.cosmetic;
@@ -89,7 +89,7 @@
             const slot = slotOf(cos), rc = RARITY[cos.rarity].color, big = cos.rarity === 'legendary' || cos.rarity === 'epic';
             o.el.style.setProperty('--c', rc);
             const it = document.createElement('div'); it.className = 'lb-itempop'; it.style.setProperty('--ic', rc);
-            it.innerHTML = '<i class="glow"></i><canvas width="440" height="440"></canvas><div class="rar">' + RARITY[cos.rarity].label.toUpperCase() + '</div><div class="nm">' + esc(cos.name) + '</div><span class="new">NEW</span>' +
+            it.innerHTML = '<i class="glow"></i><canvas width="440" height="440"></canvas><div class="rar">' + (cos.premium ? icon('gem') + ' PREMIUM' : RARITY[cos.rarity].label.toUpperCase()) + '</div><div class="nm">' + esc(cos.name) + '</div><span class="new">NEW</span>' +
                 (slot === 'trail' ? '<canvas class="trp" width="320" height="100"></canvas>' : '');
             pops.appendChild(it);
             try { renderLook(it.querySelector('canvas'), Object.assign(myLook(), { [slot]:cos.id }), { scale:.3, cy:.6 }); } catch (e) {}
@@ -108,8 +108,8 @@
             if (document.getElementById('lootbox')) return res();
             const tier = opts.tier || 'common', o = makeOverlay(tier, '');
             let skipped = false; const btn = o.$('.lb-btn');
-            const final = { coins:0, xp:0, passPoints:0, cosmetic:null };
-            for (const r of list) { if (r.type === 'coin') final.coins += r.n; else if (r.type === 'xp') final.xp += r.n; else if (r.type === 'pass') final.passPoints += r.n; else if (r.type === 'item') final.cosmetic = r.item; }
+            const final = { coins:0, xp:0, passPoints:0, gems:0, cosmetic:null };
+            for (const r of list) { if (r.type === 'coin') final.coins += r.n; else if (r.type === 'xp') final.xp += r.n; else if (r.type === 'pass') final.passPoints += r.n; else if (r.type === 'gem') final.gems += r.n; else if (r.type === 'item') final.cosmetic = r.item; }
             o.el.classList.add('burst'); o.flash(); sfx('finish');
             revealRewards(o, final, () => skipped).then(() => btn.classList.add('show'));
             o.$('.lb-skip').onclick = () => { skipped = true; };
