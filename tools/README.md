@@ -10,3 +10,6 @@
 4. **Save to project** (Chrome/Edge) writes `src/data/custom-cosmetics.js`. **Push to GitHub** commits it (needs a token under GitHub settings). Or commit in VS Code.
 5. "Copy design JSON" / "Paste design JSON" shares a single design (for example into chat).
 6. Reload the game: new items appear in the shop, drops and the pass.
+
+## Generators (for bulk work)
+`tools/gen_skins.py`, `gen_hats.py`, `gen_faces.py`, `gen_trails.py` regenerate the layered art. Run them from the project root, for example `python3 tools/gen_hats.py`. They write `src/data/skin-styles.js`, `accessory-styles.js`, `trail-styles.js` (restyles of built-ins) and the new items in `src/data/custom-cosmetics.js`. Note: they rewrite their own part of `custom-cosmetics.js`, so save designer work you want to keep as separate items first.

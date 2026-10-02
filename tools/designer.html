@@ -45,7 +45,7 @@
   .stamps { display:flex; flex-wrap:wrap; gap:6px; }
   .chk { display:flex; align-items:center; gap:6px; font-size:13px; color:#eef2f8; margin:8px 0 0; }
   .chk input { width:auto; }
-  .trail-wrap { margin-top:8px; display:flex; justify-content:center; }
+  .trail-wrap { margin-top:8px; display:block; }
   .modal { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; place-items:center; z-index:50; } .modal.on { display:grid; }
   .modal .box { width:min(560px,92vw); background:#141925; border-radius:14px; padding:14px; border:1px solid rgba(255,255,255,.14); }
   .modal textarea { width:100%; height:260px; background:#0d1017; color:#eef2f8; border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:8px; font:12px ui-monospace,monospace; box-sizing:border-box; user-select:text; -webkit-user-select:text; }
@@ -204,8 +204,9 @@ function render() {
   const L = hasLayers() && it && it.layers ? it.layers[ls] : null;
   if (L && !L.hidden) drawHandles(g, L);
   if (draft) drawDraft(g);
-  const tw = $('#trailwrap'); tw.innerHTML = '';
-  if (kind === 'trail' && it) tw.innerHTML = `<span class="trail-sample trail-${it.style}" style="--trail-color:${it.color}"><i></i><i></i><i></i></span>`;
+  const tw = $('#trailwrap'), isTrail = kind === 'trail' && it;
+  document.querySelector('.stage').style.display = kind === 'trail' ? 'none' : ''; if (kind === 'trail') $('#hint').textContent = 'Edit the effect layers on the right. The preview loops live.';
+  if (isTrail) { if (!tw.firstChild) tw.innerHTML = '<canvas id="trailpv" width="900" height="460" style="width:100%;border-radius:14px;background:#10151f;display:block"></canvas>'; startTrailAnim(); } else { tw.innerHTML = ''; stopTrailAnim(); }
   $('#stamps').style.display = $('#stamph').style.display = hasLayers() ? '' : 'none';
   $('#tools').style.display = hasLayers() ? '' : 'none';
 }
@@ -239,6 +240,11 @@ function drawDraft(g) {
   }
   g.restore();
 }
+
+let trailRaf = 0, trailT0 = 0;
+function startTrailAnim() { if (trailRaf) return; trailT0 = performance.now(); const loop = now => { const cv = document.getElementById('trailpv'), it = cur(); if (!cv || kind !== 'trail' || !it) { trailRaf = 0; return; }
+  try { W.drawTrailPreview(cv, it, 1.15 + ((now - trailT0) / 1000) % 6.2); } catch (e) {} trailRaf = requestAnimationFrame(loop); }; trailRaf = requestAnimationFrame(loop); }
+function stopTrailAnim() { cancelAnimationFrame(trailRaf); trailRaf = 0; }
 
 // ============ layers: create / edit ============
 function newLayer(t, geom) { return Object.assign({ t, fill:curFill, stroke:curStroke, sw:curSw }, geom); }
@@ -401,7 +407,7 @@ function uniqueId(name) { const all = new Set(Object.keys(KINDS).flatMap(k => ga
 function blank() {
   const name = 'New ' + kind;
   if (kind === 'skin') return { id:uniqueId(name), name, color:'#35e0c8', price:PRICE.common, rarity:'common', pat:{ k:'grad', a:'#35e0c8', b:'#7c6bff' }, layers:[] };
-  if (kind === 'trail') return { id:uniqueId(name), name, color:'#ff71d2', price:PRICE.rare, rarity:'rare', style:'soft' };
+  if (kind === 'trail') return { id:uniqueId(name), name, color:'#ff71d2', price:PRICE.rare, rarity:'rare', style:'fx', fx:[{ life:.8, rate:.03, max:28, shape:'circle', colors:['#ffd0f0', '#ff71d2', '#7c6bff'], size:[5.5, 1], spread:3, glow:.6, drift:[0, -8] }] };
   return { id:uniqueId(name), name, price:PRICE.rare, rarity:'rare', layers:[] };
 }
 function addItem(it) { db[KINDS[kind]].push(it); sel = db[KINDS[kind]].length - 1; ls = it.layers && it.layers.length ? 0 : -1; changed(true); renderAll(); }
@@ -447,11 +453,7 @@ function buildEditor() {
     box.appendChild(F('Base pattern', ps));
     const row = el('div', { className:'row3' }); PATTERNS[it.pat.k].forEach(c => { const i = el('input', { type:'color', value:it.pat[c] || '#ffffff' }); i.oninput = () => { it.pat[c] = i.value; if (c === 'a') it.color = i.value; changed(); }; row.appendChild(F('Color ' + c.toUpperCase(), i)); }); box.appendChild(row);
   }
-  if (kind === 'trail') {
-    box.appendChild(F('Color', bind(it, 'color', 'color')));
-    const ss = el('select'); TRAIL_STYLES.forEach(s => ss.appendChild(el('option', { value:s, selected:s === it.style }, s))); ss.onchange = () => { it.style = ss.value; changed(true); }; box.appendChild(F('Style', ss));
-    box.appendChild(el('div', { className:'actions' })).appendChild(el('button', { className:'b warn', onclick:() => { if (confirm('Delete this design?')) del(); } }, 'Delete design')); return;
-  }
+  if (kind === 'trail') { buildTrailEditor(box, it); return; }
   box.appendChild(el('h2', {}, kind === 'skin' ? 'DECAL LAYERS (clipped to the body)' : 'LAYERS (top is front)'));
   const lbar = el('div', { className:'actions', style:'margin:0' });
   [['Up', () => moveLayer(1)], ['Down', () => moveLayer(-1)], ['Copy', dupLayer], ['Mirror copy', mirrorLayer], ['Flip', flipLayer], ['Delete', delLayer]].forEach(([n, f]) => lbar.appendChild(el('button', { className:'b sm' + (n === 'Delete' ? ' warn' : ''), onclick:f, disabled:!curLayer() }, n)));
@@ -488,6 +490,40 @@ function buildEditor() {
     if (L.t === 'poly') { const pi = el('input', { type:'text' }); pi.value = L.pts.map(p => p.join(',')).join(' '); pi.oninput = () => { const pts = pi.value.trim().split(/\s+/).map(s => s.split(',').map(Number)).filter(p => p.length === 2 && p.every(isFinite)); if (pts.length > 2) { L.pts = pts; changed(); } }; det.appendChild(F('Points "x,y x,y ..."', pi)); }
     box.appendChild(det);
   }
+  box.appendChild(el('div', { className:'actions' })).appendChild(el('button', { className:'b warn', onclick:() => { if (confirm('Delete this whole design?')) del(); } }, 'Delete design'));
+}
+const SHAPES = ['circle', 'square', 'diamond', 'star', 'star4', 'heart', 'bolt', 'ring', 'snow', 'leaf', 'note', 'drop', 'flame', 'cross', 'tri', 'bubble', 'coin'];
+let tl = 0;
+function buildTrailEditor(box, it) {
+  if (!Array.isArray(it.fx)) { it.fx = it.fx ? [it.fx] : [{ life:.7, rate:.03, max:26, shape:'circle', colors:[it.color || '#ffffff'], size:[5, 1], spread:3 }]; it.style = 'fx'; }
+  if (tl >= it.fx.length) tl = it.fx.length - 1;
+  const bar = el('div', { className:'actions', style:'margin:0' });
+  bar.appendChild(el('button', { className:'b sm', onclick:() => { it.fx.push({ life:.8, rate:.03, max:28, shape:'star4', colors:['#ffffff', '#cfe9ff'], size:[4, .6], spread:6, twinkle:true, glow:.8 }); tl = it.fx.length - 1; changed(true); } }, '+ Particles'));
+  bar.appendChild(el('button', { className:'b sm', onclick:() => { it.fx.push({ life:.8, rate:.03, max:28, ribbon:{ w:7, colors:['#ffffff', '#ff71d2'], alpha:.5 } }); tl = it.fx.length - 1; changed(true); } }, '+ Ribbon'));
+  bar.appendChild(el('button', { className:'b sm', onclick:() => { it.fx.splice(tl + 1, 0, clone(it.fx[tl])); tl++; changed(true); } }, 'Copy'));
+  bar.appendChild(el('button', { className:'b sm warn', onclick:() => { if (it.fx.length > 1) { it.fx.splice(tl, 1); tl = 0; changed(true); } } }, 'Delete layer'));
+  box.appendChild(el('h2', {}, 'EFFECT LAYERS')); box.appendChild(bar);
+  it.fx.forEach((L, i) => { const row = el('div', { className:'layer' + (i === tl ? ' on' : ''), onclick:() => { tl = i; buildEditor(); } });
+    const sw = el('div', { className:'sw' }); sw.style.background = (L.colors || (L.ribbon && L.ribbon.colors) || ['#fff'])[0]; row.appendChild(sw); row.appendChild(el('span', {}, (L.ribbon && !L.shape ? 'ribbon' : L.shape || 'layer') + ' ' + (i + 1))); box.appendChild(row); });
+  const L = it.fx[tl]; if (!L) return;
+  const num = (obj, key, label, step, min) => F(label, bind(obj, key, 'number', { step:step || .1, min:min === undefined ? 0 : min }));
+  const colors = (obj, key, label) => { const i = el('input', { type:'text' }); i.value = (obj[key] || []).join(', '); i.oninput = () => { const c = i.value.split(/[ ,]+/).filter(x => /^#[0-9a-fA-F]{3,6}$/.test(x)); if (c.length) { obj[key] = c; changed(); } }; return F(label + ' (hex, comma separated)', i); };
+  box.appendChild(el('h2', {}, 'SELECTED LAYER'));
+  const timing = el('div', { className:'row3' }); timing.appendChild(num(L, 'life', 'Life (s)', .05, .1)); timing.appendChild(num(L, 'rate', 'Emit every (s)', .005, .01)); timing.appendChild(num(L, 'max', 'Max count', 1, 4)); box.appendChild(timing);
+  if (L.shape !== undefined || !L.ribbon) {
+    const ss = el('select'); SHAPES.forEach(x => ss.appendChild(el('option', { value:x, selected:x === L.shape }, x))); ss.onchange = () => { L.shape = ss.value; changed(true); }; box.appendChild(F('Shape', ss));
+    const ms = el('select'); ['age', 'seed', 'rainbow'].forEach(x => ms.appendChild(el('option', { value:x, selected:x === (L.colorMode || 'age') }, x === 'age' ? 'colors fade over life' : x === 'seed' ? 'random pick per particle' : 'rainbow'))); ms.onchange = () => { L.colorMode = ms.value; changed(true); }; box.appendChild(F('Color mode', ms));
+    box.appendChild(colors(L, 'colors', 'Colors'));
+    if (!L.size) L.size = [5, 1]; if (!L.drift) L.drift = [0, 0];
+    const r1_ = el('div', { className:'row3' }); r1_.appendChild(F('Size start', bind(L.size, 0, 'number', { step:.2, min:.2 }))); r1_.appendChild(F('Size end', bind(L.size, 1, 'number', { step:.2, min:0 }))); r1_.appendChild(num(L, 'spread', 'Spread', .5)); box.appendChild(r1_);
+    const r2_ = el('div', { className:'row3' }); r2_.appendChild(F('Drift X', bind(L.drift, 0, 'number', { step:2 }))); r2_.appendChild(F('Drift Y', bind(L.drift, 1, 'number', { step:2 }))); r2_.appendChild(num(L, 'vx', 'Random sideways', 2)); box.appendChild(r2_);
+    const r3_ = el('div', { className:'row3' }); r3_.appendChild(num(L, 'gravity', 'Gravity', 5, -400)); r3_.appendChild(num(L, 'spin', 'Spin', .5, -20)); r3_.appendChild(num(L, 'glow', 'Glow', .1)); box.appendChild(r3_);
+    box.appendChild(F('Opacity', bind(Object.assign(L, { alpha:L.alpha === undefined ? .9 : L.alpha }), 'alpha', 'range', { min:0, max:1, step:.05 })));
+    const ck = (key, label) => { const l = el('label', { className:'chk' }); l.appendChild(el('input', { type:'checkbox', checked:!!L[key], onchange:e => { L[key] = e.target.checked; changed(true); } })); l.appendChild(document.createTextNode(label)); box.appendChild(l); };
+    ck('twinkle', 'Twinkle'); ck('randRot', 'Random rotation');
+  }
+  const hasR = !!L.ribbon, rl = el('label', { className:'chk' }); rl.appendChild(el('input', { type:'checkbox', checked:hasR, onchange:e => { if (e.target.checked) L.ribbon = { w:6, colors:L.colors ? L.colors.slice(0, 3) : ['#ffffff'], alpha:.5 }; else delete L.ribbon; changed(true); } })); rl.appendChild(document.createTextNode('Ribbon (continuous band)')); box.appendChild(rl);
+  if (L.ribbon) { const R_ = el('div', { className:'row3' }); R_.appendChild(num(L.ribbon, 'w', 'Width', .5, .5)); R_.appendChild(num(L.ribbon, 'alpha', 'Opacity', .05)); R_.appendChild(num(L.ribbon, 'dy', 'Offset', .5, -20)); box.appendChild(R_); box.appendChild(colors(L.ribbon, 'colors', 'Ribbon colors')); }
   box.appendChild(el('div', { className:'actions' })).appendChild(el('button', { className:'b warn', onclick:() => { if (confirm('Delete this whole design?')) del(); } }, 'Delete design'));
 }
 function del() { db[KINDS[kind]].splice(sel, 1); sel = Math.min(sel, db[KINDS[kind]].length - 1); ls = -1; changed(true); renderAll(); }

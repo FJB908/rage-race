@@ -3532,6 +3532,10 @@ const TRAILS = [
 // Layered art for the built-in skins (src/data/skin-styles.js).
 if (typeof SKIN_STYLES !== 'undefined') for (const s of SKINS) if (SKIN_STYLES[s.id]) Object.assign(s, SKIN_STYLES[s.id]);
 if (typeof TRAIL_FX !== 'undefined') for (const t of TRAILS) if (TRAIL_FX[t.id]) t.fx = TRAIL_FX[t.id];
+if (typeof ACCESSORY_STYLES !== 'undefined'){
+    for (const h of HATS) if (ACCESSORY_STYLES.hats[h.id]) Object.assign(h, ACCESSORY_STYLES.hats[h.id]);
+    for (const f of FACES) if (ACCESSORY_STYLES.faces[f.id]) Object.assign(f, ACCESSORY_STYLES.faces[f.id]);
+}
 // Items made in tools/designer.html (src/data/custom-cosmetics.js) join the built-in lists here.
 if (typeof CUSTOM_COSMETICS !== 'undefined'){
     for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
@@ -3619,7 +3623,7 @@ function drawCustomLayers(c, s, k, layers){
         } else if (L.t === 'ellipse'){
             c.translate(L.x*k, L.y*k); c.rotate((L.rot || 0)*Math.PI/180);
             c.ellipse(0, 0, Math.max(.1, L.rx)*k, Math.max(.1, L.ry)*k, 0, 0, 7); y0 = -L.ry; y1 = L.ry;
-        } else if (L.t === 'poly' && L.pts && L.pts.length > 2){
+        } else if (L.t === 'poly' && L.pts && L.pts.length >= (L.open ? 2 : 3)){
             polyPath(c, L.pts, k, L.smooth, L.open); y0 = Math.min(...L.pts.map(p => p[1])); y1 = Math.max(...L.pts.map(p => p[1]));
         } else { c.restore(); continue; }
         if (!L.open && L.fill && L.fill !== 'none'){
@@ -4118,7 +4122,7 @@ function renderShop(cat){
                 b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' ? ' leg' : '');
                 b.innerHTML = `<span class="m-skin-pv"><canvas width="160" height="160"></canvas></span>` +
                     `<b>${it.name}</b><span class="m-rar" style="color:${RARITY[it.rarity].color}">${RARITY[it.rarity].label}</span>` +
-                    (cat === 'trail' ? `<canvas class="tr-pv" width="300" height="80"></canvas>` : '') +
+                    (cat === 'trail' ? `<canvas class="tr-pv" width="300" height="100"></canvas>` : '') +
                     `<span class="m-skin-f"><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : R('coin', it.price)}</span></span>`;
                 const preview = { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail };
                 renderLook(b.querySelector('canvas'), preview, { scale:0.22, cy:0.62 });
