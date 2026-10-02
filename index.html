@@ -11,6 +11,7 @@
 <meta name="darkreader-lock">
 <title>RAGE RACE</title>
 <link rel="stylesheet" href="game.css">
+<link rel="stylesheet" href="src/ui/icons.css">
 <link rel="stylesheet" href="src/ui/lootbox.css">
 </head>
 <body>
@@ -22,7 +23,7 @@
     <header class="m-top">
         <button class="m-avatar" type="button" data-go="profile" aria-label="Open profile"><i></i><i></i><span class="m-lvl" id="m-lvl">1</span></button>
         <div class="m-who"><div class="m-name" id="m-name">Player</div><div class="m-xpbar"><div id="m-xpfill"></div></div></div>
-        <button class="m-coins" type="button" data-go="shop" aria-label="Coins, open the shop"><span class="coin-dot"></span><span id="wallet-num">0</span><span class="m-plus">+</span></button>
+        <button class="m-coins" type="button" data-go="shop" aria-label="Coins, open the shop"><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg><span id="wallet-num">0</span><span class="m-plus">+</span></button>
         <button class="m-gear" type="button" id="btn-settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
     </header>
 
@@ -87,17 +88,17 @@
             </div>
             <div class="m-grid" id="m-skins"></div>
             <div class="m-resource-shop" id="m-resource-shop" hidden>
-                <div class="resource-balance"><span>AVAILABLE</span><strong><i class="coin-dot"></i><b id="resource-coins">0</b> COINS</strong><strong><b id="resource-pass">0</b> PASS POINTS</strong></div>
+                <div class="resource-balance"><span>AVAILABLE</span><strong><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg><b id="resource-coins">0</b></strong><strong><svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg><b id="resource-pass">0</b></strong></div>
                 <div class="resource-grid" id="resource-grid"></div>
                 <section class="pass-track" aria-labelledby="pass-track-title">
-                    <div class="pass-track-head"><strong id="pass-track-title">SEASON 01 REWARDS</strong><span>Redeem Pass Points</span></div>
+                    <div class="pass-track-head"><strong id="pass-track-title">SEASON 01 REWARDS</strong><span>Redeem <svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg></span></div>
                     <div class="pass-reward-grid" id="pass-reward-grid"></div>
                 </section>
                 <button class="resource-locked" type="button" disabled>REWARDED VIDEO · ANDROID BUILD ONLY</button>
                 <button class="resource-locked" type="button" disabled>PLAY STORE PACKS · BILLING NOT CONNECTED</button>
                 <p class="m-note">Video rewards and real-money purchases stay unavailable until their native services are connected.</p>
             </div>
-            <p class="m-note">Earn Coins and Pass Points from reward drops. Redeem Pass Points for Season 01 cosmetics.</p>
+            <p class="m-note">Earn <svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg> and <svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg> from reward drops. Redeem <svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg> for Season 01 cosmetics.</p>
         </section>
 
         <!-- FRIENDS -->
@@ -145,7 +146,7 @@
                 <div class="m-stat"><small>Escape best</small><strong id="m-s-esc">--</strong></div>
                 <div class="m-stat"><small>Parkour</small><strong id="m-s-pk">★ 0</strong></div>
                 <div class="m-stat"><small>Tower best</small><strong id="m-s-tower">--</strong></div>
-                <div class="m-stat"><small>Pass points</small><strong id="m-s-pass">0</strong></div>
+                <div class="m-stat"><small><svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg></small><strong id="m-s-pass">0</strong></div>
             </div>
         </section>
     </div>
@@ -182,7 +183,7 @@
     <div class="over-best" id="over-best">NEW BEST</div>
     <div class="over-stats">
         <div class="stat"><span class="k">Height</span><span class="v" id="over-height">0 m</span></div>
-        <div class="stat"><span class="k">Coins</span><span class="v" id="over-coins">+0</span></div>
+        <div class="stat"><span class="k"><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg></span><span class="v" id="over-coins">+0</span></div>
         <div class="stat"><span class="k">Top combo</span><span class="v" id="over-combo">×1</span></div>
     </div>
     <div class="board" id="esc-board"></div>
@@ -197,10 +198,10 @@
         <header class="pass-screen-header">
             <button class="pass-back" type="button" id="btn-pass-back" aria-label="Back to home">‹</button>
             <div><span class="pass-eyebrow">FREE SEASON PASS</span><h1>AFTERGLOW</h1></div>
-            <div class="pass-screen-balance"><span>YOUR POINTS</span><strong id="pass-screen-balance">0</strong></div>
+            <div class="pass-screen-balance"><span><svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg></span><strong id="pass-screen-balance">0</strong></div>
         </header>
         <div class="pass-progress-panel">
-            <div class="pass-progress-top"><strong id="pass-screen-claimed">0 / 3 REWARDS CLAIMED</strong><span id="pass-screen-next">Earn Pass Points from reward drops</span></div>
+            <div class="pass-progress-top"><strong id="pass-screen-claimed">0 / 3 REWARDS CLAIMED</strong><span id="pass-screen-next">Earn <svg class="ico ico-pass" aria-hidden="true"><use href="#ico-pass"/></svg> from reward drops</span></div>
             <div class="pass-progress-track"><i id="pass-screen-meter"></i></div>
         </div>
         <div class="pass-screen-rewards" id="pass-screen-rewards"></div>
@@ -304,7 +305,7 @@
     <div class="hud-top">
         <div class="place p1" id="pos-pill"><span id="pos-num">1</span><span id="pos-suf">st</span></div>
         <div class="pos-pill esc-pill"><span id="esc-score">0</span></div>
-        <div class="pos-pill esc-pill coin" id="esc-coin-pill"><span class="coin-dot"></span><span id="esc-coins">0</span></div>
+        <div class="pos-pill esc-pill coin" id="esc-coin-pill"><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg><span id="esc-coins">0</span></div>
         <div class="pos-pill lv-pill"><small>LV</small><span id="lv-num-hud">1</span></div>
         <div class="pos-pill lv-pill time"><span id="lv-time">0:00.0</span></div>
         <div class="pos-pill lv-pill falls" id="lv-falls-pill"><span class="fall-ico">↓</span><span id="lv-falls">0</span></div>
@@ -333,6 +334,7 @@
 <script src="src/constants/values.js"></script>
 <script src="src/data/bot-names.js"></script>
 <script src="src/data/items.js"></script>
+<script src="src/ui/icons.js"></script>
 <script src="game.js"></script>
 <script src="src/ui/lootbox.js"></script>
 </body>

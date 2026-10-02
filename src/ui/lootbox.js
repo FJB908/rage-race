@@ -94,7 +94,7 @@
         // ---- reveal helpers ----
         function addCard(label, value, c) {
             const d = document.createElement('div'); d.className = 'lb-card'; d.style.setProperty('--cc', c);
-            d.innerHTML = '<small>' + label + '</small><b>+0</b>'; rewards.appendChild(d);
+            d.innerHTML = icon(label) + '<b>+0</b>'; rewards.appendChild(d);
             void d.offsetWidth; d.classList.add('show');
             const b = d.querySelector('b'), steps = skipped ? 1 : 22; let i = 0;
             return new Promise(res => {
@@ -143,9 +143,9 @@
             await sleep(450);
             const head = document.createElement('div'); head.className = 'lb-head'; head.textContent = 'REWARDS'; rewards.appendChild(head);
             void head.offsetWidth; head.classList.add('show'); await sleep(250);
-            if (drop.coins) await addCard('COINS', drop.coins, '#ffcf3f');
-            if (drop.xp) await addCard('XP', drop.xp, '#35e0c8');
-            if (drop.passPoints) await addCard('PASS POINTS', drop.passPoints, '#b3a9ff');
+            if (drop.coins) await addCard('coin', drop.coins, '#ffcf3f');
+            if (drop.xp) await addCard('xp', drop.xp, '#35e0c8');
+            if (drop.passPoints) await addCard('pass', drop.passPoints, '#b3a9ff');
             await sleep(700);
             if (cos) { skipBtn.classList.remove('show'); await revealItem(); }
             skipBtn.classList.remove('show');

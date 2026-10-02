@@ -1,0 +1,13 @@
+/* Currency icons: sized by font-size, so they scale with whatever text they sit in. */
+.ico { display:inline-block; width:1.15em; height:1.15em; flex:none; vertical-align:-.22em; filter:drop-shadow(0 1px 1px rgba(0,0,0,.45)); }
+.rwd { display:inline-flex; align-items:center; gap:.3em; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.rwd b { font-weight:800; }
+.rwd + .rwd { margin-left:.7em; }
+.rwd-coin b { color:#ffcf3f; } .rwd-xp b { color:#5df0da; } .rwd-pass b { color:#b3a9ff; }
+.m-coins .ico, .esc-pill .ico { width:20px; height:20px; vertical-align:middle; }
+.resource-balance .ico { width:20px; height:20px; vertical-align:middle; }
+.m-stat small .ico, .stat .k .ico, .pass-screen-balance .ico { width:18px; height:18px; vertical-align:middle; }
+.resource-pack small, .resource-pack .pack-cost { display:flex; align-items:center; }
+.loot-copy .rwd { margin-right:.2em; }
+.resource-pack .pack-cost, .pass-reward b { display:flex; align-items:center; gap:.4em; }
+.m-skin-f .price { display:inline-flex; align-items:center; gap:.3em; }

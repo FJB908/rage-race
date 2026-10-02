@@ -2187,7 +2187,7 @@ function showResults() {
     const msgs = ["Unbeatable.","Silver, so close.","Bronze, solid.","Fourth. Rage!"];
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
-    sub.textContent = (msgs[you-1] || "") + `  ·  +${rw.coins} coins  ·  +${rw.xp} XP  ·  +${rw.passPoints} pass`;
+    sub.innerHTML = (msgs[you-1] || "") + `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}`;
     sub.style.color = you===1 ? 'var(--gold)' : 'var(--muted)';
 
     const board = document.getElementById('board');
@@ -3978,12 +3978,12 @@ function renderLootDrop(containerId, drop){
     const tier = drop.tier || (drop.cosmetic ? drop.cosmetic.rarity : 'common');
     const tierName = { common:'SUPPLY DROP', rare:'RARE DROP', epic:'EPIC DROP', legendary:'LEGENDARY DROP' }[tier] || 'SUPPLY DROP';
     panel.classList.remove('opening');
-    panel.innerHTML = `<div class="loot-crate tier-${tier}" aria-hidden="true"><span class="loot-box-art"></span></div><div class="loot-info"><strong class="loot-title">${tierName} READY</strong><span class="loot-copy">Guaranteed Coins, XP and Pass Points. Cosmetic chance: 3.5%.</span><button class="loot-open" type="button">OPEN DROP</button></div>`;
+    panel.innerHTML = `<div class="loot-crate tier-${tier}" aria-hidden="true"><span class="loot-box-art"></span></div><div class="loot-info"><strong class="loot-title">${tierName} READY</strong><span class="loot-copy">${icon('coin')}${icon('xp')}${icon('pass')} guaranteed · cosmetic chance 3.5%</span><button class="loot-open" type="button">OPEN DROP</button></div>`;
     panel.querySelector('.loot-open').addEventListener('click', event => {
         const button = event.currentTarget;
         button.disabled = true;
         openLootbox(drop, { onDone: () => {
-            const rewards = [`+${drop.coins} Coins`, `+${drop.xp} XP`, `+${drop.passPoints} Pass Points`];
+            const rewards = [R('coin', drop.coins, {plus:true}), R('xp', drop.xp, {plus:true}), R('pass', drop.passPoints, {plus:true})].map(x => x.replace('class="rwd ', 'class="loot-item rwd '));
             if (drop.cosmetic) rewards.push(`<span class="loot-item cosmetic" style="--loot-color:${drop.cosmetic.color || RARITY[drop.cosmetic.rarity].color}">${drop.cosmetic.rarity.toUpperCase()} · ${drop.cosmetic.name} added</span>`);
             else rewards.push(`<span class="loot-item">Cosmetic pity ${drop.pity}/25</span>`);
             panel.innerHTML = `<div class="loot-crate opened tier-${tier}" aria-hidden="true">✓</div><div class="loot-info"><strong class="loot-title">DROP OPENED</strong><div class="loot-items">${rewards.map(reward => reward.startsWith('<span') ? reward : `<span class="loot-item">${reward}</span>`).join('')}</div></div>`;
@@ -4046,7 +4046,7 @@ function renderResourceShop(){
     for (const pack of RESOURCE_PACKS){
         const button = document.createElement('button');
         button.type = 'button'; button.className = 'resource-pack';
-        button.innerHTML = `<b>${pack.name}</b><small>+${pack.xp} XP</small><small>+${pack.passPoints} Pass Points</small><span class="pack-cost">${pack.price} COINS · BUY</span>`;
+        button.innerHTML = `<b>${pack.name}</b><small>${R('xp', pack.xp, {plus:true})}</small><small>${R('pass', pack.passPoints, {plus:true})}</small><span class="pack-cost">${R('coin', pack.price)} · BUY</span>`;
         button.addEventListener('click', () => {
             const coins = load('rr_coins', 0);
             if (coins < pack.price){ button.animate([{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}], {duration:220}); return; }
@@ -4070,8 +4070,8 @@ function passProgressState(profile){
 }
 function renderPassHome(profile){
     const progress = passProgressState(profile);
-    document.getElementById('m-pass-progress').textContent = progress.next
-        ? `${progress.claimed} / ${PASS_REWARDS.length} claimed · ${profile.passPoints.toLocaleString('en-US')} pts available`
+    document.getElementById('m-pass-progress').innerHTML = progress.next
+        ? `${progress.claimed} / ${PASS_REWARDS.length} claimed · ${R('pass', profile.passPoints)} available`
         : 'All Season 01 rewards claimed';
     document.getElementById('m-pass-meter-fill').style.width = (progress.progress*100)+'%';
 }
@@ -4091,8 +4091,8 @@ function renderPassScreen(){
     const profile = prog(), progress = passProgressState(profile);
     document.getElementById('pass-screen-balance').textContent = profile.passPoints.toLocaleString('en-US');
     document.getElementById('pass-screen-claimed').textContent = `${progress.claimed} / ${PASS_REWARDS.length} REWARDS CLAIMED`;
-    document.getElementById('pass-screen-next').textContent = progress.next
-        ? `${progress.earnedInTier} / ${progress.next.cost} lifetime points · ${profile.passPoints} available to redeem · NEXT: ${COS_BY[progress.next.category].find(item=>item.id===progress.next.id).name}`
+    document.getElementById('pass-screen-next').innerHTML = progress.next
+        ? `${R('pass', progress.earnedInTier + ' / ' + progress.next.cost)} · ${R('pass', profile.passPoints)} to redeem · NEXT: ${COS_BY[progress.next.category].find(item=>item.id===progress.next.id).name}`
         : 'Season 01 complete · every reward claimed';
     document.getElementById('pass-screen-meter').style.width = (progress.progress*100)+'%';
     const grid = document.getElementById('pass-screen-rewards'); grid.innerHTML = '';
@@ -4102,7 +4102,7 @@ function renderPassScreen(){
         const button = document.createElement('button');
         button.type='button'; button.className='pass-screen-reward'+(owned?' claimed':'')+(profile.passPoints>=reward.cost&&!owned?' ready':'');
         button.disabled=owned||profile.passPoints<reward.cost;
-        button.innerHTML=`<span class="pass-step">${String(index+1).padStart(2,'0')}</span><span class="pass-item-art" style="--pass-item-color:${item.color||RARITY[item.rarity].color}">${reward.category==='trail'?'〰':reward.category==='hat'?'♛':'◆'}</span><small>${reward.category.toUpperCase()} · ${RARITY[item.rarity].label}</small><strong>${item.name}</strong><span class="pass-cost">${owned?'CLAIMED':profile.passPoints>=reward.cost?'READY TO CLAIM':`${reward.cost-profile.passPoints} POINTS TO GO`}</span>`;
+        button.innerHTML=`<span class="pass-step">${String(index+1).padStart(2,'0')}</span><span class="pass-item-art" style="--pass-item-color:${item.color||RARITY[item.rarity].color}">${reward.category==='trail'?'〰':reward.category==='hat'?'♛':'◆'}</span><small>${reward.category.toUpperCase()} · ${RARITY[item.rarity].label}</small><strong>${item.name}</strong><span class="pass-cost">${owned?'CLAIMED':profile.passPoints>=reward.cost?'READY TO CLAIM':`${R('pass', reward.cost-profile.passPoints)} TO GO`}</span>`;
         button.addEventListener('click',()=>claimPassReward(reward));
         grid.appendChild(button);
     });
@@ -4116,7 +4116,7 @@ function renderPassRewards(){
         const button = document.createElement('button');
         button.type = 'button'; button.className = 'pass-reward' + (owned ? ' owned' : '');
         button.disabled = owned || profile.passPoints < reward.cost;
-        button.innerHTML = `<small>TIER ${index+1} · ${reward.category.toUpperCase()}</small><strong>${item.name}</strong><span style="color:${RARITY[item.rarity].color}">${RARITY[item.rarity].label}</span><b>${owned ? 'CLAIMED' : reward.cost + ' PASS POINTS · REDEEM'}</b>`;
+        button.innerHTML = `<small>TIER ${index+1} · ${reward.category.toUpperCase()}</small><strong>${item.name}</strong><span style="color:${RARITY[item.rarity].color}">${RARITY[item.rarity].label}</span><b>${owned ? 'CLAIMED' : R('pass', reward.cost) + ' · REDEEM'}</b>`;
         button.addEventListener('click', () => claimPassReward(reward));
         grid.appendChild(button);
     });
@@ -4139,7 +4139,7 @@ function renderShop(cat){
                 b.innerHTML = `<span class="m-skin-pv"><canvas width="160" height="160"></canvas></span>` +
                     `<b>${it.name}</b><span class="m-rar" style="color:${RARITY[it.rarity].color}">${RARITY[it.rarity].label}</span>` +
                     (cat === 'trail' ? `<span class="trail-sample trail-${it.style}" style="--trail-color:${it.color}"><i></i><i></i><i></i></span>` : '') +
-                    `<span class="m-skin-f"><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.price + ' coins'}</span></span>`;
+                    `<span class="m-skin-f"><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : R('coin', it.price)}</span></span>`;
                 const preview = { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail };
                 renderLook(b.querySelector('canvas'), preview, { scale:0.22, cy:0.62 });
                 b.addEventListener('click', () => {
@@ -4178,7 +4178,7 @@ function refreshMenu(){
     document.getElementById('m-name').textContent = p.name;
     document.getElementById('m-xpfill').style.width = (100*L.into/L.need).toFixed(1) + '%';
     document.getElementById('m-xpfill2').style.width = (100*L.into/L.need).toFixed(1) + '%';
-    document.getElementById('m-plvl').textContent = `Level ${L.lvl} · ${L.into} / ${L.need} XP`;
+    document.getElementById('m-plvl').innerHTML = `Level ${L.lvl} · ${R('xp', L.into + ' / ' + L.need)}`;
     const inp = document.getElementById('m-name-input');
     if (document.activeElement !== inp) inp.value = p.name;
     document.getElementById('m-mode').textContent = MODE_LABEL[p.lastMode] || MODE_LABEL.race;
@@ -4186,8 +4186,8 @@ function refreshMenu(){
     const all = [...SKINS, ...HATS, ...FACES].filter(it => it.id !== 'none' && it.price > 0);
     const next = all.filter(it => !p.owned.includes(it.id)).sort((a,b) => a.price - b.price)[0];
     const coins = load('rr_coins', 0);
-    document.getElementById('m-next').textContent = next
-        ? (coins >= next.price ? `${next.name}: ready to buy` : `${next.name} · ${(next.price-coins).toLocaleString('en-US')} coins to go`)
+    document.getElementById('m-next').innerHTML = next
+        ? (coins >= next.price ? `${next.name}: ready to buy` : `${next.name} · ${R('coin', next.price-coins)} to go`)
         : 'You own every skin';
     document.getElementById('m-next-sw').style.background = next ? (next.color || RARITY[next.rarity].color) : '#232a37';
     renderLook(document.getElementById('m-hero'), myLook(), { scale:0.22, cy:0.62 });

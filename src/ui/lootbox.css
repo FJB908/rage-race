@@ -50,7 +50,7 @@
   background:linear-gradient(135deg,color-mix(in srgb,var(--cc,#35e0c8) 16%,#141925),#141925 70%); font-weight:800; opacity:0; transform:translateY(24px) scale(.9);
   transition:all .42s cubic-bezier(.2,1.5,.4,1); }
 .lb-card.show { opacity:1; transform:none; }
-.lb-card small { color:#8b95a7; font-size:11px; letter-spacing:.12em; }
+.lb-card .ico { width:34px; height:34px; }
 .lb-card b { font-size:22px; color:var(--cc); font-variant-numeric:tabular-nums; }
 .lb-item { width:min(80vw,320px); padding:22px 18px 18px; border-radius:22px; text-align:center; border:2px solid var(--ic); opacity:0; transform:scale(.3) rotate(-6deg);
   background:radial-gradient(100% 80% at 50% 0%,color-mix(in srgb,var(--ic) 30%,#141925),#141925 72%); box-shadow:0 0 60px color-mix(in srgb,var(--ic) 55%,transparent), inset 0 0 40px color-mix(in srgb,var(--ic) 14%,transparent);
