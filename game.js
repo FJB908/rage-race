@@ -2220,7 +2220,7 @@ function drawCosmeticTrails(viewTop, viewBottom){
             } else if (trail.style === 'glitch'){
                 const jitter=((Math.floor(sample.age*90)+p.id)%3-1)*size*.65;ctx.fillRect(sample.x+jitter-size*.55,sample.y-size*.25,size*1.1,size*.5);
             } else if (trail.style === 'orbit'){
-                ctx.beginPath();ctx.ellipse(sample.x,sample.y,size*.8,size*.38,sample.age*7,0,Math.PI*2);ctx.strokeStyle=trail.color;ctx.lineWidth=.8*k;ctx.stroke();
+                ctx.beginPath();ctx.ellipse(sample.x,sample.y,size*.8,size*.38,sample.age*7,0,Math.PI*2);ctx.strokeStyle=trail.color;ctx.lineWidth=.8;ctx.stroke();
                 ctx.beginPath();ctx.arc(sample.x+Math.cos(sample.age*7)*size*.7,sample.y+Math.sin(sample.age*7)*size*.35,size*.2,0,7);ctx.fill();
             } else {
                 ctx.beginPath(); ctx.arc(sample.x,sample.y,size/2,0,Math.PI*2); ctx.fill();
