@@ -23,3 +23,6 @@
 
 .m-gems .ico, .m-streak .ico { width:20px; height:20px; vertical-align:middle; }
 .ico-flame { filter:none; }
+
+.ico-crown, .ico-key, .ico-users { filter:none; }
+.rwd-key b { color:#5eead4; } .rwd-crown b { color:#ffc83a; }

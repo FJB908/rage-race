@@ -16,7 +16,7 @@ const SIDEBAR = 34;                           // right-hand progress rail (scree
 // The WORLD is always WORLD_W wide, on every device — so every track, tower and level is
 // identical for everyone. The view scales it uniformly to fit the screen (capped, and
 // centred on very wide screens) instead of stretching the world to the screen.
-const WORLD_W = 356;
+let WORLD_W = 356;
 let VIEW_K = 1, VIEW_OX = 0, VH = 0;                 // scale, x-offset, visible world height
 
 function resize() {
@@ -121,6 +121,7 @@ function showScreen(name) {
 /* ---------- Particles / floaters ---------- */
 function burst(cx, cy, color, count, speed) {
     if (particles.length > 400) return;
+    if (gameMode === 'gauntlet'){ if (cy < cameraY - 400 || cy > cameraY + VH + 400) return; count = Math.ceil(count * 0.6); }
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const spd = Math.random() * speed;
@@ -585,6 +586,32 @@ function generateLevelTrack() {
     }
 }
 
+// One player object. Shared by the 4-player race and the 32-player Gauntlet.
+function makePlayer(o){
+    const local = !!o.local;
+    return {
+        id:o.id, name:o.name, local,
+        color:o.color,
+        x:o.x, y:o.y,
+        vx:0, vy:0, r:12,
+        mode:'idle', plat: platforms[0],
+        finished:false, finishTime:0,
+        best: START_Y,            // highest point reached (min y)
+        thinkT: o.thinkT === undefined ? 0.2 : o.thinkT,
+        botType:o.botType || null, afk:!!o.afk, afkT: 0,
+        look:o.look,
+        trailSamples:[], trailEmit:0,
+        skill:o.skill,
+        errMul: local ? 0 : 1,
+        hesitating: false, hesitateFor: 0, catchUpNext: false,
+        fumbleBias: rnd(-1, 1),                // human-only: a personal lean (over- or under-shoots)
+        charged:false, squash:1, botBestY:START_Y, stuckCount:0,
+        item:null, itemState:null, itemRoll:0, itemDelay:0, itemHold:0,
+        giantT:0, rv:0, bounceT:0, chainT:0, chainPts:null, chainBy:null, rocketFx:0, rocketTrail:null,
+        quakePending:0, quakeDrop:0, quakeShakeT:0, shieldT:0, windT:0, windSeed:Math.random()*1000, windPushX:0, windDir:1
+    };
+}
+
 function initPlayers() {
     players = []; finishedCount = 0;
     const pw = PLAY_W();
@@ -601,27 +628,14 @@ function initPlayers() {
         const local = i===0;
         const botType = local ? null : (i === humanSlot ? 'human' : 'standard');
         const afk = !local && Math.random() < 0.01;   // 1%: this player just stands there... at first
-        players.push({
+        players.push(makePlayer({
             id:i, name: local?"YOU":names[i-1], local,
             color: local ? skinColor() : (PCOL[i] === skinColor() ? '#35e0c8' : PCOL[i]),
             x: pw/2 + (i-1.5)*46, y: START_Y - 30,
-            vx:0, vy:0, r:12,
-            mode:'idle', plat: platforms[0],
-            finished:false, finishTime:0,
-            best: START_Y,            // highest point reached (min y)
-            thinkT: 0.2,
-            botType, afk, afkT: 0,
+            botType, afk,
             look: local ? myLook() : randomBotLook(),
-            trailSamples:[], trailEmit:0,
             skill: local ? 1 : rnd(0.82, 1.15) * newPlayerEase(),   // per-bot variation, easier for your first races
-            errMul: local ? 0 : 1,
-            hesitating: false, hesitateFor: 0, catchUpNext: false,
-            fumbleBias: rnd(-1, 1),                // human-only: a personal lean (over- or under-shoots)
-            charged:false, squash:1, botBestY:START_Y, stuckCount:0,
-            item:null, itemState:null, itemRoll:0, itemDelay:0, itemHold:0,
-            giantT:0, rv:0, bounceT:0, chainT:0, chainPts:null, chainBy:null, rocketFx:0, rocketTrail:null,
-            quakePending:0, quakeDrop:0, quakeShakeT:0, shieldT:0, windT:0, windSeed:Math.random()*1000, windPushX:0, windDir:1
-        });
+        }));
     }
 }
 
@@ -1577,12 +1591,13 @@ function updateBot(p, dt) {
         if (human && !human.local) { /* sim / spectator: no banding */ }
         else if (human && !human.finished) {
             const lead = human.y - p.y;
+            const bandK = gameMode === 'gauntlet' ? GT_BAND : 1;
             if (lead > 250) {                       // ahead: ease off
-                const k = Math.min(1, (lead - 250) / 900);
+                const k = Math.min(1, (lead - 250) / 900) * bandK;
                 thinkMul = 1 + k * 2.8;             // up to 3.8x longer pauses
                 aimMul   = 1 + k * 1.0;             // up to 2x sloppier aim
             } else if (lead < -250) {               // behind: hurry up
-                const k = Math.min(1, (-lead - 250) / 900);
+                const k = Math.min(1, (-lead - 250) / 900) * bandK;
                 thinkMul = 1 - k * 0.25;            // down to 0.75x pauses (never robotic-fast)
             }
         }
@@ -1617,7 +1632,7 @@ function updateBot(p, dt) {
     // SPRINT: once you've finished, nobody's actually being raced against anymore — so bots
     // stop being cautious and just close the race out quickly and cleanly, rather than
     // dragging on with their usual human-like misses and pauses.
-    const sprintFinish = players[0] && players[0].finished;
+    const sprintFinish = gameMode !== 'gauntlet' && players[0] && players[0].finished;
     const sprintMul = sprintFinish ? 0.35 : 1;
     const sprintThink = sprintFinish ? 0.6 : 1;
 
@@ -1664,6 +1679,7 @@ function landOn(p, pl) {
 function handleFinish(p) {
     if (gameMode === 'parkour'){ pkSummit(p); return; }
     if (gameMode === 'level'){ lvComplete(p); return; }
+    if (gameMode === 'gauntlet'){ gtFinish(p); return; }
     p.finished = true;
     p.finishTime = (Date.now()-matchStart)/1000;
     finishedCount++;
@@ -1831,10 +1847,11 @@ function startUfo(p){
     // Who's the first player above you? (finished players count as sitting at the finish.)
     let above = null;
     for (const o of players){
-        if (o === p) continue;
+        if (o === p || (gameMode === 'gauntlet' && o.gone)) continue;   // Gauntlet: players who left the stage don't count as "above"
         const oy = o.finished ? FINISH_Y - 30 : o.y;
         if (oy < p.y - 60 && (!above || oy > above.y)) above = { y: oy, finished: o.finished };
     }
+    if (gameMode === 'gauntlet' && !above) return;                      // nobody to be set down beside: the item simply fizzles
     const toFinish = !above || above.finished;
     let dropX, dropY;
     if (toFinish){
@@ -2003,7 +2020,7 @@ function resolveBumps() {
             const p2 = players[j];
 
             // Negeer botsingen als een van de spelers dood is of niet botst
-            if (p1.dead || p2.dead) continue;
+            if (p1.dead || p2.dead || p1.gone || p2.gone) continue;
 
             const dx = p2.x - p1.x;
             const dy = p2.y - p1.y;
@@ -2044,6 +2061,7 @@ function updateCosmeticTrails(dt){
     for (const p of players){
         const trail = TRAIL_BY_ID[p.look && p.look.trail];
         const samples = p.trailSamples || (p.trailSamples = []);
+        if (p._lod || p._off){ if (samples.length) samples.length = 0; continue; }   // Gauntlet: nobody sees these
         p.trailEmit -= dt;
         for (const sample of samples) sample.age += dt;
         const tLife = trailLife(trail);
@@ -2057,7 +2075,7 @@ function updateCosmeticTrails(dt){
 function update(dt) {
     // Pausing just puts a menu on screen — the race itself keeps running underneath,
     // exactly like unpaused play, so nothing about the world or your own square freezes.
-    const bgRacing = state === 'paused' && gameMode === 'race';
+    const bgRacing = state === 'paused' && (gameMode === 'race' || gameMode === 'gauntlet');
     if (state !== 'playing' && !bgRacing) return;
 
     // platforms
@@ -2102,12 +2120,13 @@ function update(dt) {
     if (gameMode === 'escape') updateEscape(dt);
     else if (gameMode === 'parkour') updateParkour(dt);
     else if (gameMode === 'level') updateLevel(dt);
+    else if (gameMode === 'gauntlet') updateGauntlet(dt);
 
     // camera — follows you normally, or the player you're spectating after you've finished
     const escapeSpectate = gameMode === 'escape' && players[0].escape.dead
         ? players.reduce((best, p) => !p.escape.dead && (!best || p.y < best.y) ? p : best, null)
         : null;
-    const camP = (spectating && spectateTarget && !spectateTarget.finished) ? spectateTarget : (escapeSpectate || players[0]);
+    const camP = (spectating && spectateTarget && !spectateTarget.finished) ? spectateTarget : (gameMode === 'gauntlet' ? gtCamTarget() : (escapeSpectate || players[0]));
     const targetCam = camP.y - VH*0.62;
     cameraY += (targetCam - cameraY) * Math.min(1, 12*dt);
     if (camShake > 0.1) camShake *= Math.pow(0.001, dt); else camShake = 0;
@@ -2131,7 +2150,7 @@ function update(dt) {
     }
     particles.length = pIdx;
     // Cap live particles (lower on slower quality levels) — the oldest are recycled first.
-    const maxP = [320, 180, 100][qLevel];
+    const maxP = [320, 180, 100][qLevel] * (gameMode === 'gauntlet' ? 0.5 : 1);
     if (particles.length > maxP) { const dead = particles.splice(0, particles.length - maxP); for (const q of dead) particlePool.push(q); }
 
     // floaters
@@ -2187,7 +2206,8 @@ function showResults() {
     const msgs = ["Unbeatable.","Silver, so close.","Bronze, solid.","Fourth. Rage!"];
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
-    sub.innerHTML = (msgs[you-1] || "") + (rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '');
+    sub.innerHTML = (msgs[you-1] || "") + (rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
+    if (rewardRace.keyEarned) toast('Gauntlet key earned');
     sub.style.color = you===1 ? 'var(--gold)' : 'var(--muted)';
 
     const board = document.getElementById('board');
@@ -2208,6 +2228,7 @@ function showResults() {
 /* ---------- Draw ---------- */
 function drawCosmeticTrails(viewTop, viewBottom){
     for (const p of players){
+        if (p._lod || p._off) continue;
         const trail = TRAIL_BY_ID[p.look && p.look.trail];
         const samples = p.trailSamples;
         if (!trail || trail.style === 'none' || !samples || !samples.length) continue;
@@ -2245,11 +2266,12 @@ function drawCosmeticTrails(viewTop, viewBottom){
 }
 
 function draw() {
-    ctx.fillStyle = '#0d1017';
+    ctx.fillStyle = (gameMode === 'gauntlet' && window.GT_BG) || '#0d1017';   // Gauntlet stages tint the floor colour (a cheap sky)
     ctx.fillRect(0,0,CW,CH);
     if (state==='menu') return;
     if (gameMode === 'parkour') drawParkourSky();
     else if (gameMode === 'level') drawLevelSky();
+    else if (gameMode === 'gauntlet') gtDrawSky();
 
     ctx.save();
     const shakeX = (Math.random()-0.5)*camShake;
@@ -2445,6 +2467,7 @@ function draw() {
     drawItemBoxes();
     if (gameMode === 'escape') drawEscapeWorldBack();
     else if (gameMode === 'parkour') drawParkourWorldBack();
+    else if (gameMode === 'gauntlet') gtDrawWorldBack(viewTop, viewBottom);
     drawShockwaves();
     drawChains();
     drawWindFx();
@@ -2475,6 +2498,7 @@ function draw() {
 
     // players
     const nowT = performance.now()/1000;
+    if (gameMode === 'gauntlet') gtPrepareDraw(viewTop, viewBottom);
     for (const p of players){
         if (p.finished) continue;
         
@@ -2515,6 +2539,11 @@ function draw() {
 
         // SQUARE body
         const s = p.r;
+        if (p._lod && p._spr){
+            // Gauntlet crowd: a cached picture of the whole look (body, face, hat) instead of re-drawing every layer
+            const f = s / GT_SPRITE.half;
+            ctx.drawImage(p._spr, -GT_SPRITE.w / 2 * f, -GT_SPRITE.cy * f, GT_SPRITE.w * f, GT_SPRITE.h * f);
+        } else {
         if (p.look && p.look.skin){ drawSkinBody(ctx, s, k, skinById(p.look.skin)); }
         else { ctx.fillStyle = p.color; roundRect(-s, -s, s*2, s*2, 4*k); ctx.fill(); }
         ctx.shadowBlur=0;
@@ -2531,6 +2560,8 @@ function draw() {
             ctx.moveTo(-7*k,-7*k); ctx.lineTo(-2*k,-5.5*k); ctx.moveTo(7*k,-7*k); ctx.lineTo(2*k,-5.5*k); ctx.stroke();
         }
         if (p.look){ drawFaceAcc(ctx, s, k, p.look.face); drawHatAcc(ctx, s, k, p.look.hat, nowT); }
+        }
+        ctx.shadowBlur=0;
         
         // SHIELD
         if (p.shieldT > 0){
@@ -2558,7 +2589,7 @@ function draw() {
             tagY -= 16;
         }
         // name tag
-        if (!p.local){
+        if (!p.local && !p._lod && !p._noName){
             const hatLift = (p.look && p.look.hat && p.look.hat !== 'none') ? 12 * (p.r / 12) : 0;
             ctx.globalAlpha=0.65; ctx.fillStyle='#fff'; ctx.font='700 10px Space Grotesk'; ctx.textAlign='center';
             ctx.fillText(p.name, p.x, tagY - hatLift); ctx.globalAlpha=1;
@@ -2566,6 +2597,7 @@ function draw() {
     }
     drawUfoCraft();
     if (gameMode === 'escape') drawEscapeWorldFront();
+    else if (gameMode === 'gauntlet') gtDrawWorldFront(viewTop, viewBottom);
     ctx.restore();
 
     if (VIEW_OX > 0.5){                              
@@ -2579,6 +2611,7 @@ function draw() {
     if (gameMode === 'escape'){ drawEscapeOverlay(); drawEscapeGauge(); }
     else if (gameMode === 'parkour') drawParkourGauge();
     else if (gameMode === 'level') drawLevelGauge();
+    else if (gameMode === 'gauntlet'){ gtDrawOverlay(); gtDrawGauge(); }
     else drawMinimap();
 }
 
@@ -2754,7 +2787,8 @@ function quitToMenu() {
     state = 'menu'; dragging = false;
     hud.style.display = 'none';
     if (gameMode === 'parkour') pkWriteSave();          // leaving mid-climb keeps your spot
-    gameMode = 'race'; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level'); lv = null;
+    if (gameMode === 'gauntlet') gtLeave(true);
+    gameMode = 'race'; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level', 'mode-gauntlet'); lv = null;
     refreshStartMeta();
     showScreen('start');
 }
@@ -2765,6 +2799,7 @@ function restartRace() {
     if (gameMode === 'escape') startEscape();
     else if (gameMode === 'parkour') { pkClearSave(); pkStart(null); }   // "Restart" = a fresh climb from the ground
     else if (gameMode === 'level') lvStart(lv.idx);
+    else if (gameMode === 'gauntlet') gtForfeit();
     else startMatchmaking();
 }
 function giveUpToResults() {
@@ -2821,6 +2856,7 @@ document.getElementById('set-reset').addEventListener('click', () => {
     try { box.scrollIntoView({ block:'nearest' }); } catch(e){}
 });
 document.getElementById('btn-pause').addEventListener('click', () => {
+    if (gameMode === 'gauntlet'){ gtPauseMenu(); return; }
     openPrompt('PAUSED', 'Catch your breath.', [
         ['Resume', resumeRace],
         ['Settings', () => openSettings('pause'), true],
@@ -4026,6 +4062,9 @@ function prog(){
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
     if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
     if (!d.streak || typeof d.streak !== 'object') d.streak = { n:0, last:'' };
+    d.gt = Object.assign({ runs:0, wins:0, best:0, crowned:false, keys:0, streak:0 }, (d.gt && typeof d.gt === 'object') ? d.gt : {});   // Gauntlet record
+    for (const k of ['runs', 'wins', 'best', 'keys', 'streak']) if (!Number.isFinite(d.gt[k])) d.gt[k] = 0;
+    d.gt.crowned = !!d.gt.crowned;
     if (!d.pendingDrops || typeof d.pendingDrops !== 'object') d.pendingDrops = {};
     if (!Array.isArray(d.owned)) d.owned = ['classic'];
     if (!d.owned.includes('classic')) d.owned.push('classic');
@@ -4306,6 +4345,7 @@ function refreshMenu(){
     document.getElementById('m-mode').textContent = MODE_LABEL[p.lastMode] || MODE_LABEL.race;
     renderPassHome(p);
     if (window.Streak) Streak.refreshHome();
+    if (window.Gauntlet) Gauntlet.refreshHome();
     renderLook(document.getElementById('m-hero'), myLook(), { scale:0.22, cy:0.62 });
     renderLook(document.getElementById('m-hero2'), myLook(), { scale:0.22, cy:0.62 });
     const hat = HATS.find(h => h.id === p.hat) || HATS[0], face = FACES.find(f => f.id === p.face) || FACES[0];
@@ -4328,6 +4368,7 @@ function refreshMenu(){
     document.getElementById('m-eq-skin-n').textContent = sk.name;
     document.getElementById('m-s-races').textContent = p.races;
     document.getElementById('m-s-wins').textContent = p.wins;
+    document.getElementById('m-s-crowns').textContent = p.gt.wins;
     document.getElementById('m-s-rate').textContent = p.races ? Math.round(100*p.wins/p.races) + '%' : '--';
     const esc = load('rr_esc_best_score', 0);
     document.getElementById('m-s-esc').textContent = esc ? esc.toLocaleString('en-US') : '--';
@@ -4352,7 +4393,14 @@ function rewardRace(place, finished, lootId){
         q.lootGrants[id] = { id, tier:'common', coins, xp, passPoints, cosmetic:null, noDrop:true }; saveProg(q); store('rr_coins', load('rr_coins', 0) + coins);
     }
     if (!drop) drop = { noDrop:true, coins, xp, passPoints };
-    if (!alreadyGranted){ const p = prog(); p.races++; if (finished && place === 1) p.wins++; saveProg(p); }
+    rewardRace.keyEarned = false;
+    if (!alreadyGranted){
+        const p = prog(); p.races++; if (finished && place === 1) p.wins++;
+        // three first places in a row earn a Gauntlet key
+        if (finished && place === 1){ p.gt.streak++; if (p.gt.streak >= 3){ p.gt.streak = 0; p.gt.keys++; rewardRace.keyEarned = true; } }
+        else p.gt.streak = 0;
+        saveProg(p);
+    }
     refreshMenu();
     return drop;
 }

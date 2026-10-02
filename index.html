@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="src/ui/pass.css">
 <link rel="stylesheet" href="src/tutorial/tutorial.css">
 <link rel="stylesheet" href="src/ui/streak.css">
+<link rel="stylesheet" href="src/modes/gauntlet.css">
 </head>
 <body>
 
@@ -50,6 +51,12 @@
             <button class="m-play" type="button" id="btn-home-play">PLAY</button>
 
 
+            <button class="m-gauntlet" type="button" id="m-tile-gauntlet">
+                <span class="mg-art" aria-hidden="true"><svg class="ico ico-crown"><use href="#ico-crown"/></svg></span>
+                <span class="mg-copy"><small>32 PLAYERS</small><strong>THE GAUNTLET</strong><em id="m-gt-sub">32 players · 3 stages</em></span>
+                <span class="mg-tag" id="m-gt-tag"></span>
+            </button>
+
             <div class="m-two">
                 <button class="m-tile violet" type="button" data-go="friends"><b>Party</b><span>Race with friends</span></button>
                 <button class="m-tile gold" type="button" id="m-tile-parkour"><b>Parkour</b><span id="m-tile-pk">Levels &amp; the Tower</span></button>
@@ -59,6 +66,8 @@
         <!-- PLAY -->
         <section class="m-tab" data-tab="play">
             <h1 class="m-h1">Play</h1><p class="m-sub">Pick how you want to race.</p>
+            <h2 class="m-h2">TOURNAMENT</h2>
+            <button class="m-card gauntlet" type="button" id="btn-gauntlet"><span class="mg-art" aria-hidden="true"><svg class="ico ico-crown"><use href="#ico-crown"/></svg></span><span class="mc-copy"><b>The Gauntlet</b><span>32 players · 3 stages · 1 crown</span><small id="p-gt-sub"></small></span><em>Enter</em></button>
             <h2 class="m-h2">RACE</h2>
             <button class="m-card teal" type="button" id="btn-find"><span><b>Quick match</b><span>4 players · first to the top</span></span><em>Play</em></button>
             <button class="m-card violet" type="button" data-go="friends"><span><b>Party</b><span>Private room with friends</span></span><em>Soon</em></button>
@@ -137,6 +146,7 @@
                 <div class="m-stat"><small>Races</small><strong id="m-s-races">0</strong></div>
                 <div class="m-stat"><small>Wins</small><strong id="m-s-wins">0</strong></div>
                 <div class="m-stat"><small>Win rate</small><strong id="m-s-rate">--</strong></div>
+                <div class="m-stat"><small><svg class="ico ico-crown" aria-hidden="true"><use href="#ico-crown"/></svg></small><strong id="m-s-crowns">0</strong></div>
                 <div class="m-stat"><small>Escape best</small><strong id="m-s-esc">--</strong></div>
                 <div class="m-stat"><small>Parkour</small><strong id="m-s-pk"><svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg> 0</strong></div>
                 <div class="m-stat"><small>Tower best</small><strong id="m-s-tower">--</strong></div>
@@ -348,6 +358,7 @@
 <script src="src/ui/pass.js"></script>
 <script src="game.js"></script>
 <script src="src/ui/lootbox.js"></script>
+<script src="src/modes/gauntlet.js"></script>
 <script src="src/tutorial/tutorial.js"></script>
 <script src="src/ui/streak.js"></script>
 </body>

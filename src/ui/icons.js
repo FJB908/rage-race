@@ -58,6 +58,37 @@
           '<path d="M32 3 C36 15 52 21 52 39 C52 51 43 59 32 59 C21 59 12 51 12 39 C12 30 17 26 20 21 C21 27 24 29 27 29 C25 19 28 10 32 3 Z" fill="url(#gfl)" stroke="#7a1408" stroke-width="3" stroke-linejoin="round"/>' +
           '<path d="M32 28 C34 36 42 38 42 47 C42 53 37 57 32 57 C27 57 22 53 22 47 C22 41 27 38 28 33 C30 36 31 35 32 28 Z" fill="#fff4a8" opacity=".95"/>' +
         '</symbol>' +
+        '<linearGradient id="gcw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset=".45" stop-color="#ffc83a"/><stop offset="1" stop-color="#c47a10"/></linearGradient>' +
+        '<linearGradient id="gky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e9fffb"/><stop offset=".5" stop-color="#5eead4"/><stop offset="1" stop-color="#0e8f7e"/></linearGradient>' +
+        // --- CROWN: gold, three jewelled peaks (the Gauntlet prize) ---
+        '<symbol id="ico-crown" viewBox="0 0 64 64">' +
+          '<path d="M7 50 L4 20 L19 33 L32 11 L45 33 L60 20 L57 50 Z" fill="#5a3300" opacity=".4" transform="translate(0 3)"/>' +
+          '<path d="M7 50 L4 20 L19 33 L32 11 L45 33 L60 20 L57 50 Z" fill="url(#gcw)" stroke="#6b3d00" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M7 50 H57 V57 Q57 59 55 59 H9 Q7 59 7 57 Z" fill="url(#gcR)" stroke="#6b3d00" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M19 33 L32 22 L45 33" fill="none" stroke="#fff6c4" stroke-opacity=".7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<circle cx="32" cy="11" r="4.2" fill="#ff5470" stroke="#6b3d00" stroke-width="2.2"/><circle cx="4" cy="20" r="3.4" fill="#35e0c8" stroke="#6b3d00" stroke-width="2"/><circle cx="60" cy="20" r="3.4" fill="#7c6bff" stroke="#6b3d00" stroke-width="2"/>' +
+          '<circle cx="32" cy="43" r="4" fill="#ff5470" stroke="#6b3d00" stroke-width="2"/><circle cx="18" cy="43" r="2.8" fill="#35e0c8" stroke="#6b3d00" stroke-width="1.8"/><circle cx="46" cy="43" r="2.8" fill="#35e0c8" stroke="#6b3d00" stroke-width="1.8"/>' +
+          '<path d="M12 53 H30" stroke="#fff" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round"/>' +
+        '</symbol>' +
+        // --- KEY: teal key, the free way into the Gauntlet ---
+        '<symbol id="ico-key" viewBox="0 0 64 64">' +
+          '<circle cx="22" cy="24" r="17" fill="#04332c" opacity=".4" transform="translate(0 3)"/>' +
+          '<path d="M33 35 L56 58 M46 48 L40 54 M53 55 L47 61" stroke="#04332c" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" opacity=".4" fill="none" transform="translate(0 3)"/>' +
+          '<path d="M33 35 L56 58" stroke="#04332c" stroke-width="12" stroke-linecap="round" fill="none"/>' +
+          '<path d="M33 35 L56 58" stroke="url(#gky)" stroke-width="7" stroke-linecap="round" fill="none"/>' +
+          '<path d="M46 48 L52 42 M53 55 L59 49" stroke="#04332c" stroke-width="10" stroke-linecap="round" fill="none"/>' +
+          '<path d="M46 48 L52 42 M53 55 L59 49" stroke="url(#gky)" stroke-width="5" stroke-linecap="round" fill="none"/>' +
+          '<circle cx="22" cy="24" r="17" fill="url(#gky)" stroke="#04332c" stroke-width="3.2"/>' +
+          '<circle cx="22" cy="24" r="7" fill="#0d1017" stroke="#04332c" stroke-width="2.4"/>' +
+          '<path d="M10 17 A14 14 0 0 1 20 10" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="3" stroke-linecap="round"/>' +
+        '</symbol>' +
+        // --- PLAYERS: three of the game's own rounded squares, eyes and all ---
+        '<symbol id="ico-users" viewBox="0 0 64 64">' +
+          '<rect x="5" y="22" width="26" height="26" rx="7" fill="#7c6bff" stroke="#1c1450" stroke-width="3"/><circle cx="14" cy="33" r="2.6" fill="#0d1017"/><circle cx="23" cy="33" r="2.6" fill="#0d1017"/>' +
+          '<rect x="33" y="22" width="26" height="26" rx="7" fill="#ff5470" stroke="#4a0c22" stroke-width="3"/><circle cx="42" cy="33" r="2.6" fill="#0d1017"/><circle cx="51" cy="33" r="2.6" fill="#0d1017"/>' +
+          '<rect x="19" y="10" width="26" height="26" rx="7" fill="#35e0c8" stroke="#04332c" stroke-width="3"/><circle cx="28" cy="21" r="2.6" fill="#0d1017"/><circle cx="37" cy="21" r="2.6" fill="#0d1017"/>' +
+          '<path d="M24 14 Q30 11 36 12" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2.4" stroke-linecap="round"/>' +
+        '</symbol>' +
         '<symbol id="ico-star" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>' +
         '<symbol id="ico-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>' +
         '<symbol id="ico-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>' +
@@ -73,7 +104,7 @@
 
     window.icon = (name, cls) => '<svg class="ico ico-' + name + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#ico-' + name + '"/></svg>';
     // Icon + number chip. opts.plus adds a leading "+", label is read by screen readers only.
-    const LABEL = { coin:'coins', xp:'XP', pass:'pass points', gem:'gems' };
+    const LABEL = { coin:'coins', xp:'XP', pass:'pass points', gem:'gems', key:'keys', crown:'crowns' };
     window.R = (name, n, opts) => {
         const num = typeof n === 'number' ? n.toLocaleString('en-US') : n;
         return '<span class="rwd rwd-' + name + '" role="img" aria-label="' + ((opts && opts.plus ? '+' : '') + num + ' ' + LABEL[name]) + '">' + icon(name) + '<b>' + (opts && opts.plus ? '+' : '') + num + '</b></span>';
