@@ -91,3 +91,9 @@
 .lb-itempop .new { position:relative; margin-top:6px; padding:3px 12px; border-radius:99px; background:var(--ic); color:#0d1017; font-weight:900; font-size:11px; letter-spacing:.16em; }
 .pop-gem b { color:#ff9be8; }
 .lb-itempop .rar .ico { width:14px; height:14px; vertical-align:-2px; }
+
+.lb-equip { position:absolute; z-index:6; bottom:calc(104px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%) translateY(20px); min-width:200px; min-height:46px; padding:0 22px; border:2px solid var(--c); border-radius:14px; background:rgba(13,16,23,.85); color:var(--c); font:900 15px/1 "Space Grotesk",system-ui,sans-serif; letter-spacing:.1em; opacity:0; pointer-events:none; transition:all .35s ease; display:flex; align-items:center; justify-content:center; gap:8px; }
+.lb-equip.show { opacity:1; pointer-events:auto; transform:translateX(-50%); }
+.lb-equip:active { transform:translateX(-50%) translateY(3px); }
+.lb-equip.done { color:#7ee787; border-color:#7ee787; }
+.lb-equip .ico { width:18px; height:18px; }

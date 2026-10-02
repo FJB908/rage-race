@@ -18,7 +18,7 @@
     window.renderPassHome = function (p) {
         const st = state(p), el = document.getElementById('m-pass-progress');
         if (!el) return;
-        el.innerHTML = st.done >= N ? 'Season complete' : 'Tier ' + st.done + ' / ' + N + ' · ' + R('pass', st.into + ' / ' + PASS_TIER_PTS);
+        el.textContent = st.done >= N ? 'Complete' : 'Tier ' + st.done + ' / ' + N;
         document.getElementById('m-pass-meter-fill').style.width = (st.done >= N ? 100 : st.into) + '%';
         const art = document.querySelector('.m-pass-art');
         if (art) { art.textContent = String(st.done).padStart(2, '0'); art.classList.toggle('has-claim', st.claimable.length > 0); }

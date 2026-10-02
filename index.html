@@ -34,10 +34,13 @@
     <div class="m-body" id="m-body">
         <!-- HOME -->
         <section class="m-tab on" data-tab="home">
-            <button class="m-strip" type="button" data-go="shop">
-                <span class="m-strip-l"><span class="m-kick gold">NEXT UNLOCK</span><span class="m-strip-t" id="m-next">Skins in the shop</span></span>
-                <span class="m-strip-sw" id="m-next-sw"></span>
-            </button>
+            <div class="m-split">
+                <button class="m-pass-entry m-half" type="button" id="btn-pass-open">
+                    <span class="m-pass-art" aria-hidden="true">00</span>
+                    <span class="m-pass-copy"><small>SEASON PASS</small><strong id="m-pass-progress">Tier 0</strong><i class="m-pass-meter"><b id="m-pass-meter-fill"></b></i></span>
+                </button>
+                <button class="m-streak m-half" type="button" id="btn-streak-open"><svg class="ico ico-flame" aria-hidden="true"><use href="#ico-flame"/></svg><span class="ms-text"><small>DAILY REWARDS</small><strong class="ms-day">Day 1</strong></span><i class="ms-dot"></i></button>
+            </div>
             <div class="m-stage">
                 <div class="m-halo" id="m-halo"></div>
                 <canvas class="m-hero-c" id="m-hero" width="360" height="360"></canvas>
@@ -45,12 +48,8 @@
             </div>
             <button class="m-row" type="button" data-go="play"><span><span class="m-kick">MODE</span><span class="m-row-t" id="m-mode">Race · Quick match</span></span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
             <button class="m-play" type="button" id="btn-home-play">PLAY</button>
-            <button class="m-streak" type="button" id="btn-streak-open"><svg class="ico ico-flame" aria-hidden="true"><use href="#ico-flame"/></svg><span class="ms-text"><small>DAILY REWARDS</small><strong class="ms-day">Day 1</strong></span><i class="ms-dot"></i></button>
-            <button class="m-pass-entry" type="button" id="btn-pass-open">
-                <span class="m-pass-art" aria-hidden="true">01</span>
-                <span class="m-pass-copy"><small>FREE SEASON PASS</small><strong>Season 01 · Afterglow</strong><span id="m-pass-progress">Tier 0 / 30</span><i class="m-pass-meter"><b id="m-pass-meter-fill"></b></i></span>
-                <span class="m-pass-arrow" aria-hidden="true"><svg class="ico ico-chev-r" aria-hidden="true"><use href="#ico-chev-r"/></svg></span>
-            </button>
+
+
             <div class="m-two">
                 <button class="m-tile violet" type="button" data-go="friends"><b>Party</b><span>Race with friends</span></button>
                 <button class="m-tile gold" type="button" id="m-tile-parkour"><b>Parkour</b><span id="m-tile-pk">Levels &amp; the Tower</span></button>

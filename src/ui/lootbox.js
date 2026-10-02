@@ -101,6 +101,18 @@
         }
     }
 
+    // "Equip now" for a cosmetic you just got
+    function addEquip(o, cos) {
+        const slot = slotOf(cos), b = document.createElement('button');
+        b.type = 'button'; b.className = 'lb-equip'; b.innerHTML = 'EQUIP NOW';
+        o.el.appendChild(b); void b.offsetWidth; b.classList.add('show');
+        b.onclick = () => {
+            const q = prog(); q[slot] = cos.id; saveProg(q); sfx('item'); buzz(25);
+            b.classList.add('done'); b.disabled = true; b.innerHTML = icon('check') + ' EQUIPPED';
+            try { refreshMenu(); } catch (e) {}
+        };
+    }
+
     // Pop-only overlay (pass rewards etc.) -------------------------------------------------------
     window.showRewardPops = function (list, opts) {
         opts = opts || {};
@@ -111,7 +123,7 @@
             const final = { coins:0, xp:0, passPoints:0, gems:0, cosmetic:null };
             for (const r of list) { if (r.type === 'coin') final.coins += r.n; else if (r.type === 'xp') final.xp += r.n; else if (r.type === 'pass') final.passPoints += r.n; else if (r.type === 'gem') final.gems += r.n; else if (r.type === 'item') final.cosmetic = r.item; }
             o.el.classList.add('burst'); o.flash(); sfx('finish');
-            revealRewards(o, final, () => skipped).then(() => btn.classList.add('show'));
+            revealRewards(o, final, () => skipped).then(() => { btn.classList.add('show'); if (final.cosmetic) addEquip(o, final.cosmetic); });
             o.$('.lb-skip').onclick = () => { skipped = true; };
             btn.onclick = () => { sfx('count'); o.close(res); };
         });
@@ -148,7 +160,7 @@
             await wait(skipped ? 100 : 850);
             stage.classList.add('away'); skipBtn.classList.add('show'); await wait(skipped ? 50 : 350);
             await revealRewards(o, final, () => skipped);
-            skipBtn.classList.remove('show'); btn.classList.add('show');
+            skipBtn.classList.remove('show'); btn.classList.add('show'); if (final.cosmetic) addEquip(o, final.cosmetic);
             btn.onclick = () => { sfx('count'); o.close(() => { if (opts.onDone) opts.onDone(final); }); };
         }
         async function tap() {

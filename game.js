@@ -4148,9 +4148,15 @@ function renderLootDrop(containerId, drop){
             const chips = [R('coin', final.coins || 0, {plus:true}), R('xp', final.xp || 0, {plus:true})];
             if (final.passPoints) chips.push(R('pass', final.passPoints, {plus:true}));
             if (final.gems) chips.push(R('gem', final.gems, {plus:true}));
-            if (final.cosmetic) chips.push(`<span class="rwd rwd-item" style="color:${RARITY[final.cosmetic.rarity].color}"><b>${final.cosmetic.name}</b></span>`);
+            if (final.cosmetic) chips.push(`<span class="rwd rwd-item"><canvas class="mini-item" width="112" height="112" style="--rc:${RARITY[final.cosmetic.rarity].color}"></canvas></span>`);
             panel.innerHTML = `<div class="loot-crate opened tier-${final.tier || tier}" aria-hidden="true">${icon('check')}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;
             panel.querySelector('.loot-crate').style.setProperty('--ic', TC[final.tier || tier]);
+            const mc = panel.querySelector('canvas.mini-item');
+            if (mc && final.cosmetic){
+                const slot = ['skin', 'hat', 'face', 'trail'].find(k => COS_BY[k].some(i => i.id === final.cosmetic.id)) || 'skin';
+                if (slot === 'trail'){ mc.width = 180; mc.height = 112; mc.classList.add('wide'); try { drawTrailPreview(mc, final.cosmetic); } catch(e){} }
+                else try { renderLook(mc, Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [slot]:final.cosmetic.id }), { scale:.42, cy:.58 }); } catch(e){}
+            }
             refreshMenu();
         } });
     });
@@ -4300,13 +4306,6 @@ function refreshMenu(){
     document.getElementById('m-mode').textContent = MODE_LABEL[p.lastMode] || MODE_LABEL.race;
     renderPassHome(p);
     if (window.Streak) Streak.refreshHome();
-    const all = [...SKINS, ...HATS, ...FACES].filter(it => it.id !== 'none' && it.price > 0);
-    const next = all.filter(it => !p.owned.includes(it.id)).sort((a,b) => a.price - b.price)[0];
-    const coins = load('rr_coins', 0);
-    document.getElementById('m-next').innerHTML = next
-        ? (coins >= next.price ? `${next.name}: ready to buy` : `${next.name} · ${R('coin', next.price-coins)} to go`)
-        : 'You own every skin';
-    document.getElementById('m-next-sw').style.background = next ? (next.color || RARITY[next.rarity].color) : '#232a37';
     renderLook(document.getElementById('m-hero'), myLook(), { scale:0.22, cy:0.62 });
     renderLook(document.getElementById('m-hero2'), myLook(), { scale:0.22, cy:0.62 });
     const hat = HATS.find(h => h.id === p.hat) || HATS[0], face = FACES.find(f => f.id === p.face) || FACES[0];
