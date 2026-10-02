@@ -21,6 +21,7 @@
         el.textContent = st.done >= N ? 'Complete' : 'Tier ' + st.done + ' / ' + N;
         document.getElementById('m-pass-meter-fill').style.width = (st.done >= N ? 100 : st.into) + '%';
         const art = document.querySelector('.m-pass-art');
+        setBadge(document.getElementById('btn-pass-open'), st.claimable.length);
         if (art) { art.textContent = String(st.done).padStart(2, '0'); art.classList.toggle('has-claim', st.claimable.length > 0); }
     };
 

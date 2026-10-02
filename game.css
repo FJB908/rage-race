@@ -524,3 +524,9 @@
 
 .lv-drop { position:absolute; bottom:8px; right:8px; display:grid; place-items:center; width:30px; height:30px; border-radius:9px; background:rgba(13,16,23,.7); border:1px solid color-mix(in srgb,var(--ic) 55%,transparent); box-shadow:0 0 12px -3px var(--ic); }
 .lv-drop .ico { width:22px; height:22px; filter:none; }
+
+/* red number badge */
+.m-pass-entry, .m-streak, .m-nav button { position:relative; }
+.nbadge { position:absolute; top:-6px; right:-4px; z-index:3; min-width:21px; height:21px; padding:0 5px; border-radius:11px; background:linear-gradient(180deg,#ff6a7a,#e8172f); color:#fff; font:800 12px/21px "Space Grotesk",system-ui,sans-serif; text-align:center; border:2px solid #0d1017; box-shadow:0 2px 8px rgba(255,59,79,.55); pointer-events:none; animation:nbPop .35s cubic-bezier(.3,1.8,.5,1); }
+.m-nav .nbadge { top:2px; right:calc(50% - 26px); }
+@keyframes nbPop { from { transform:scale(.3); } to { transform:scale(1); } }

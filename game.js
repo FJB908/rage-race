@@ -4326,7 +4326,25 @@ function renderShop(cat){
         for (const [cv, look] of animated) renderLook(cv, look, { scale:0.22, cy:0.62 });
     }, 70);
 }
+// Red number badge ("something to claim / new"). n = 0 hides it.
+function setBadge(el, n){
+    if (!el) return;
+    let b = el.querySelector(':scope > .nbadge');
+    if (!n){ if (b) b.remove(); return; }
+    if (!b){ b = document.createElement('b'); b.className = 'nbadge'; el.appendChild(b); }
+    b.textContent = n > 99 ? '99+' : n;
+}
+// Shop items you have not seen yet (new releases). Everything that exists on the first launch counts as seen.
+function shopItems(){ return [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.price > 0 || i.premium); }
+function refreshShopBadge(){
+    const p = prog(), ids = shopItems().map(i => i.id);
+    if (!Array.isArray(p.shopSeen)){ p.shopSeen = ids; saveProg(p); }
+    const fresh = ids.filter(id => !p.shopSeen.includes(id) && !p.owned.includes(id)).length;
+    setBadge(document.querySelector('.m-nav [data-go="shop"]'), fresh);
+}
+function markShopSeen(){ const p = prog(); p.shopSeen = shopItems().map(i => i.id); saveProg(p); refreshShopBadge(); }
 function menuTab(tab){
+    if (tab === 'shop') setTimeout(markShopSeen, 600);
     document.querySelectorAll('.m-tab').forEach(el => el.classList.toggle('on', el.dataset.tab === tab));
     document.querySelectorAll('.m-nav [data-go]').forEach(el => el.classList.toggle('on', el.dataset.go === tab));
     document.getElementById('m-body').scrollTop = 0;
@@ -4354,6 +4372,7 @@ function refreshMenu(){
     renderPassHome(p);
     if (window.Streak) Streak.refreshHome();
     if (window.Gauntlet) Gauntlet.refreshHome();
+    refreshShopBadge();
     renderLook(document.getElementById('m-hero'), myLook(), { scale:0.22, cy:0.62 });
     renderLook(document.getElementById('m-hero2'), myLook(), { scale:0.22, cy:0.62 });
     const hat = HATS.find(h => h.id === p.hat) || HATS[0], face = FACES.find(f => f.id === p.face) || FACES[0];

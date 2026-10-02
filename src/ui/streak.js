@@ -86,7 +86,8 @@
         refreshHome() {
             const st = state(), b = document.getElementById('btn-streak-open'); if (!b) return;
             b.querySelector('.ms-day').textContent = st.canClaim ? 'Day ' + st.nextDay : st.streak + ' day streak';
-            b.querySelector('.ms-dot').hidden = !st.canClaim;
+            b.querySelector('.ms-dot').hidden = true;
+            setBadge(b, st.canClaim ? 1 : 0);
             b.classList.toggle('ready', st.canClaim);
         },
         debugClaimNow: claim,
