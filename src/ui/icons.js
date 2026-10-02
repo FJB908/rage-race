@@ -89,6 +89,29 @@
           '<rect x="19" y="10" width="26" height="26" rx="7" fill="#35e0c8" stroke="#04332c" stroke-width="3"/><circle cx="28" cy="21" r="2.6" fill="#0d1017"/><circle cx="37" cy="21" r="2.6" fill="#0d1017"/>' +
           '<path d="M24 14 Q30 11 36 12" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2.4" stroke-linecap="round"/>' +
         '</symbol>' +
+        // --- MODE ICONS ---
+        '<symbol id="ico-mode-race" viewBox="0 0 64 64">' +
+          '<rect x="11" y="6" width="5" height="52" rx="2.5" fill="#cfd6e6" stroke="#0d1017" stroke-width="2.5"/><ellipse cx="13.5" cy="58" rx="9" ry="3" fill="#0d1017" opacity=".45"/>' +
+          '<path d="M16 9 H55 L49 22 L55 35 H16 Z" fill="#fff" stroke="#0d1017" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M16 9 H55 L49 22 L55 35 H16 Z" fill="#0d1017" opacity=".0"/>' +
+          '<g fill="#0d1017"><rect x="16" y="9" width="10" height="8.7"/><rect x="36" y="9" width="10" height="8.7"/><rect x="26" y="17.7" width="10" height="8.6"/><rect x="46" y="17.7" width="6" height="8.6"/><rect x="16" y="26.3" width="10" height="8.7"/><rect x="36" y="26.3" width="10" height="8.7"/></g>' +
+          '<path d="M16 9 H55 L49 22 L55 35 H16 Z" fill="none" stroke="#0d1017" stroke-width="3" stroke-linejoin="round"/>' +
+          '<circle cx="13.5" cy="6" r="4" fill="#35e0c8" stroke="#0d1017" stroke-width="2.4"/>' +
+        '</symbol>' +
+        '<symbol id="ico-mode-escape" viewBox="0 0 64 64">' +
+          '<path d="M3 47 Q11 41 19 47 T35 47 T51 47 T61 47 V62 H3 Z" fill="#14060c" opacity=".5" transform="translate(0 2)"/>' +
+          '<path d="M3 47 Q11 41 19 47 T35 47 T51 47 T61 47 V62 H3 Z" fill="url(#gfl)" stroke="#7a1408" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M3 47 Q11 41 19 47 T35 47 T51 47 T61 47" fill="none" stroke="#ffe3a0" stroke-opacity=".8" stroke-width="2" stroke-linecap="round"/>' +
+          '<path d="M32 5 L47 22 H38 V40 H26 V22 H17 Z" fill="#fff" stroke="#0d1017" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M32 12 L40 21 M32 12 L24 21" stroke="#35e0c8" stroke-width="2.6" stroke-linecap="round" fill="none"/>' +
+          '<circle cx="9" cy="35" r="2" fill="#ff5470"/><circle cx="56" cy="31" r="2.4" fill="#ff9838"/><circle cx="49" cy="40" r="1.6" fill="#ffd25a"/>' +
+        '</symbol>' +
+        '<symbol id="ico-mode-levels" viewBox="0 0 64 64">' +
+          '<path d="M5 58 V44 H19 V31 H33 V18 H47 V58 Z" fill="#1c1450" opacity=".4" transform="translate(0 3)"/>' +
+          '<path d="M5 58 V44 H19 V31 H33 V18 H47 V58 Z" fill="url(#gpB)" stroke="#1c1450" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M5 44 H19 V31 H33 V18 H47" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2.2" stroke-linejoin="round"/>' +
+          '<path d="M52 4 L55.3 11.2 L63 12 L57.2 17.3 L58.9 25 L52 21 L45.1 25 L46.8 17.3 L41 12 L48.7 11.2 Z" fill="url(#gcw)" stroke="#6b3d00" stroke-width="2.4" stroke-linejoin="round"/>' +
+        '</symbol>' +
         '<symbol id="ico-star" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>' +
         '<symbol id="ico-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>' +
         '<symbol id="ico-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>' +

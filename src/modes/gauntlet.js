@@ -36,7 +36,8 @@
           types:d => [['boost', .08 + d*.03], ['fragile', .18 + d*.10], ['moving', .26 + d*.10], ['ice', .16 + d*.06]] },
     ];
 
-    const ENTRY = { coins:500, wagers:[{ stake:1000, mult:1.5 }, { stake:2500, mult:2.5 }, { stake:5000, mult:4 }] };
+    const ENTRY = { coins:0,   // 0 while testing (was 500)
+         wagers:[{ stake:1000, mult:1.5 }, { stake:2500, mult:2.5 }, { stake:5000, mult:4 }] };
     // index = how far you got: 0 out in stage 1, 1 out in stage 2, 2 out in the Duel, 3 crown
     const PRIZES = [
         { coins:120, xp:45,  pass:35,  tier:null },
@@ -107,7 +108,7 @@
         const opt = (type, cls, inner) => '<button class="gt-opt ' + cls + (sel.type === type ? ' on' : '') + '" type="button" data-type="' + type + '">' + inner + '</button>';
         const node = (n, label, i) => '<div class="gt-node s' + i + '"><b>' + n + '</b><small>' + label + '</small></div>';
         const prize = (i, title, body, tierKey) => '<div class="gt-prize"><span class="gt-pico" style="--ic:' + (TIER_COLOR[tierKey] || '#8b95a7') + '">' + (i === 3 ? icon('crown') : (tierKey ? icon('drop') : icon('coin'))) + '</span><span class="gt-ptxt"><b>' + title + '</b><small>' + body + '</small></span></div>';
-        const ctaLabel = sel.type === 'key' ? icon('key') + '<b>1</b>' : icon('coin') + '<b>' + costOf(sel).coins.toLocaleString('en-US') + '</b>';
+        const ctaLabel = sel.type === 'key' ? icon('key') + '<b>1</b>' : (costOf(sel).coins ? icon('coin') + '<b>' + costOf(sel).coins.toLocaleString('en-US') + '</b>' : '<b>FREE</b>');
         $('gt-entry').innerHTML =
             '<div class="gt-top"><button class="gt-back" type="button" id="gt-back" aria-label="Back">' + icon('chev-l') + '</button>' +
               '<div class="gt-wallet"><span class="gt-w coin">' + icon('coin') + '<b>' + bal.toLocaleString('en-US') + '</b></span><span class="gt-w key">' + icon('key') + '<b>' + g.keys + '</b></span></div></div>' +
@@ -126,7 +127,7 @@
               '</div>' +
               '<h2 class="gt-h2">ENTRY</h2>' +
               '<div class="gt-opts">' +
-                opt('coins', 'coin', '<span class="gt-oi">' + icon('coin') + '</span><span class="gt-ot"><b>' + ENTRY.coins + '</b><small>Open to everyone</small></span>') +
+                opt('coins', 'coin', '<span class="gt-oi">' + icon('coin') + '</span><span class="gt-ot"><b>' + (ENTRY.coins || 'Free') + '</b><small>' + (ENTRY.coins ? 'Open to everyone' : 'Free while we test') + '</small></span>') +
                 opt('key', 'key' + (g.keys < 1 ? ' dim' : ''), '<span class="gt-oi">' + icon('key') + '</span><span class="gt-ot"><b>Key <em>x' + g.keys + '</em></b><small>Win 3 Quick matches in a row · ' + g.streak + ' / 3</small></span>') +
                 opt('wager', 'wager', '<span class="gt-oi">' + icon('coin') + icon('coin') + '</span><span class="gt-ot"><b>Wager</b><small>Bigger stake, bigger coin prizes</small></span>') +
               '</div>' +
@@ -816,7 +817,6 @@
         if (tag) { tag.innerHTML = g.keys > 0 ? icon('key') + '<b>' + g.keys + '</b>' : (g.crowned ? icon('crown') : icon('users')); }
         if (pcard) pcard.textContent = g.keys > 0 ? 'Keys: ' + g.keys : 'Win 3 races in a row for a key: ' + g.streak + ' / 3';
     };
-    for (const id of ['btn-gauntlet', 'm-tile-gauntlet', 'btn-gauntlet-play']) { const b = $(id); if (b) b.addEventListener('click', () => { SFX.play('count'); openEntry(); }); }
     GT.refreshHome();
 
     // test hooks (used by the QA scripts, harmless in play)

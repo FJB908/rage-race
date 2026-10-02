@@ -2936,7 +2936,6 @@ function maybePromptBotsDone() {
     ]), 900);
 }
 
-document.getElementById('btn-find').addEventListener('click', startMatchmaking);
 document.getElementById('btn-again').addEventListener('click', startMatchmaking);
 document.getElementById('btn-results-menu').addEventListener('click', () => {
     state = 'menu'; gameMode = 'race'; hud.style.display = 'none';
@@ -4050,7 +4049,8 @@ function randomBotLook(){
     };
 }
 
-const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Parkour · Levels' };
+const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'The Gauntlet · 32 players' };
+const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown' };
 function prog(){
     let d = {}; try { d = JSON.parse(localStorage.getItem('rr_profile')) || {}; } catch(e){}
     if (!d.name) d.name = 'Player';
@@ -4073,7 +4073,7 @@ function prog(){
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
     if (!d.hat || !HATS.some(h => h.id === d.hat)) d.hat = 'none';
     if (!d.face || !FACES.some(f => f.id === d.face)) d.face = 'none';
-    if (!['race', 'escape', 'parkour'].includes(d.lastMode)) d.lastMode = 'race';
+    if (!['race', 'escape', 'parkour', 'gauntlet'].includes(d.lastMode)) d.lastMode = 'race';
     return d;
 }
 function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} }
@@ -4343,6 +4343,8 @@ function refreshMenu(){
     const inp = document.getElementById('m-name-input');
     if (document.activeElement !== inp) inp.value = p.name;
     document.getElementById('m-mode').textContent = MODE_LABEL[p.lastMode] || MODE_LABEL.race;
+    document.getElementById('m-mode-ico').innerHTML = icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
+    document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));
     renderPassHome(p);
     if (window.Streak) Streak.refreshHome();
     if (window.Gauntlet) Gauntlet.refreshHome();
@@ -4409,16 +4411,23 @@ function rewardRace(place, finished, lootId){
 document.querySelectorAll('#s-start [data-go]').forEach(b => b.addEventListener('click', () => { menuTab(b.dataset.go); SFX.play('count'); }));
 document.querySelectorAll('#s-start .m-pill[data-cat]').forEach(b => b.addEventListener('click', () => { renderShop(b.dataset.cat); SFX.play('count'); }));
 document.querySelectorAll('#s-start [data-shop]').forEach(b => b.addEventListener('click', () => { menuTab('shop'); renderShop(b.dataset.shop); }));
-document.getElementById('btn-home-play').addEventListener('click', () => {
+// Tap a mode on the Play tab to select it (it shows on the home screen), then press PLAY there.
+function selectMode(mode){
+    const p = prog(); p.lastMode = mode; saveProg(p);
+    refreshMenu(); menuTab('home'); SFX.play('count');
+}
+function playSelected(){
     const m = prog().lastMode;
-    if (m === 'escape') startEscape(); else if (m === 'parkour') openLevels(); else startMatchmaking();
-});
+    if (m === 'escape') startEscape();
+    else if (m === 'parkour') openLevels();
+    else if (m === 'gauntlet') Gauntlet.open();
+    else startMatchmaking();
+}
+document.getElementById('btn-home-play').addEventListener('click', playSelected);
 document.getElementById('btn-pass-open').addEventListener('click', openPass);
 document.getElementById('pz-claimall').addEventListener('click', claimAllPass);
 document.getElementById('btn-pass-back').addEventListener('click', () => showScreen('start'));
-document.getElementById('btn-find').addEventListener('click', () => setLastMode('race'));
-document.getElementById('btn-escape').addEventListener('click', () => setLastMode('escape'));
-document.getElementById('btn-parkour').addEventListener('click', () => setLastMode('parkour'));
+document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.addEventListener('click', () => selectMode(c.dataset.mode)));
 document.getElementById('m-tile-parkour').addEventListener('click', () => { setLastMode('parkour'); openLevels(); });
 document.getElementById('m-friends-race').addEventListener('click', () => { setLastMode('race'); startMatchmaking(); });
 {
@@ -4770,7 +4779,6 @@ const pkHeightEl = document.getElementById('pk-height');
 const pkFallsEl = document.getElementById('pk-falls');
 const pkFallsPill = document.getElementById('pk-falls-pill');
 const pkTimeEl = document.getElementById('pk-time');
-document.getElementById('btn-parkour').addEventListener('click', () => openLevels());
 document.getElementById('btn-pk-continue').addEventListener('click', () => pkStart(pkLoadSave()));
 document.getElementById('btn-pk-new').addEventListener('click', () => { pkClearSave(); pkStart(null); });
 document.getElementById('btn-pk-back').addEventListener('click', () => openLevels());
@@ -5040,7 +5048,23 @@ function lvComplete(p){
     if (isBest) d.best[i] = +t.toFixed(2);
     const gainedStars = Math.max(0, stars - d.stars[i]);
     d.stars[i] = Math.max(d.stars[i], stars);
-    const loot = awardLootDrop(lv.lootId, {coins:gainedStars * 20, xp:25, passPoints:20 + stars * 10});
+    // Three stars earn a supply drop whose starting rarity follows the level's difficulty (and the dimension);
+    // anything less pays the base rewards straight away.
+    let loot;
+    if (stars >= 3){
+        const n = DIMENSIONS[curDim].levels.length, f = i / Math.max(1, n - 1);
+        const tier = curDim === 0 ? (f < 0.4 ? 'common' : f < 0.8 ? 'rare' : 'epic') : (f < 0.35 ? 'rare' : f < 0.7 ? 'epic' : 'legendary');
+        const coins = curDim === 0 ? Math.round(40 + f * 60) : Math.round(90 + f * 120);
+        loot = awardLootDrop(lv.lootId, {coins, xp:25 + Math.round(f * 25), passPoints:50}, {tier});
+    } else {
+        const coins = gainedStars * 20, xp = 25, pp = 20 + stars * 10, q = prog();
+        if (!q.lootGrants[lv.lootId] && !q.pendingDrops[lv.lootId]){
+            q.xp += xp; q.passPoints += pp; q.passPointsEarned += pp;
+            q.lootGrants[lv.lootId] = { id:lv.lootId, tier:'common', coins, xp, passPoints:pp, cosmetic:null, noDrop:true }; saveProg(q);
+            store('rr_coins', load('rr_coins', 0) + coins);
+        }
+        loot = { noDrop:true, coins, xp, passPoints:pp };
+    }
     lvSave(d);
     const L = DIMENSIONS[curDim].levels[i];
     setTimeout(() => {
@@ -5055,7 +5079,8 @@ function lvComplete(p){
         document.getElementById('lvd-falls').textContent = lv.falls;
         document.getElementById('lvd-targets').innerHTML = `${icon('star')}${icon('star')}${icon('star')} ${lvFmt(L.par3)} &nbsp;·&nbsp; ${icon('star')}${icon('star')} ${lvFmt(L.par2)}`;
         document.getElementById('btn-lvd-next').style.display = i < DIMENSIONS[curDim].levels.length - 1 ? '' : 'none';
-        renderLootDrop('loot-level', loot);
+        if (loot.noDrop) document.getElementById('loot-level').innerHTML = `<div class="loot-items">${R('coin', loot.coins, {plus:true})}${R('xp', loot.xp, {plus:true})}${R('pass', loot.passPoints, {plus:true})}</div>`;
+        else renderLootDrop('loot-level', loot);
         showScreen('lvdone');
         refreshStartMeta();
     }, 1300);
