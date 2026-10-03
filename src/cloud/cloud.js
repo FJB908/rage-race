@@ -205,6 +205,18 @@
         }
         user = fb.au.currentUser; C.email = user.email || ''; C.anon = false; emit('ok'); ready = true; touch(); push();
     }
+    // Sign out: everything must be in the cloud first, then this phone is cleared so the next account never inherits it.
+    const KEEP_KEYS = ['rr_mute', 'rr_sfxvol', 'rr_musvol', 'rr_music', 'rr_haptics'];
+    async function signOut() {
+        if (!fb || !user) throw new Error('not-ready');
+        if (user.isAnonymous) throw new Error('anonymous');
+        const m = getMeta();
+        if (m.dirty || m.force) { clearTimeout(timer); ready = true; await push(); if (getMeta().dirty) throw new Error('sync-failed'); }
+        const keys = []; try { for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i)); } catch (e) {}
+        keys.filter(k => k && k.startsWith('rr_') && !KEEP_KEYS.includes(k)).forEach(k => lsSet(k, null));
+        await fb.auth.signOut(fb.au);
+        location.reload();
+    }
     function afterReset() {                      // Settings > Reset: the empty state must replace the cloud copy too
         const m = getMeta(); m.force = true; m.dirty = true; m.localTs = Date.now(); setMeta(m);
         if (ready) push();
@@ -222,7 +234,7 @@
 
     Object.assign(C, {
         config: FIREBASE_CONFIG, sdk: SDK,
-        touch, afterReset, api: () => (fb && user) ? { fb, user } : null, signInGoogle, sync: () => { ready = false; return sync(); },
+        touch, afterReset, signOut, api: () => (fb && user) ? { fb, user } : null, signInGoogle, sync: () => { ready = false; return sync(); },
         on: f => C.listeners.push(f),
         _merge:merge, _snapshot:snapshot,
     });

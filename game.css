@@ -548,3 +548,7 @@
 .m-avatar canvas { width: 48px; height: 48px; flex: none; border-radius: 14px; display: block; }
 
 body.online-race #btn-pause { display: none; }
+
+/* gem items keep their purple frame */
+#m-skins .m-skin.prem { border-color: rgba(255,138,230,.6); border-top-color: rgba(255,138,230,.9); background: linear-gradient(160deg, rgba(255,138,230,.14), rgba(124,107,255,.08) 55%, #141925); box-shadow: 0 0 14px rgba(255,138,230,.16); }
+#m-skins .m-skin.prem.eq { border-color: var(--accent); border-top-color: var(--accent); }

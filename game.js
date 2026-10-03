@@ -4337,7 +4337,9 @@ function renderShop(cat){
     document.querySelectorAll('.m-pill[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
     if (cat === 'resources'){ renderResourceShop(); return; }
     const rarityOrder = {common:0, rare:1, epic:2, legendary:3};
-    const items = [...(COS_BY[cat] || SKINS)].filter(it => !it.exclusive || current.owned.includes(it.id)).sort((a,b) => (b.premium ? 1 : 0) - (a.premium ? 1 : 0) || rarityOrder[a.rarity]-rarityOrder[b.rarity] || (a.price || a.gemPrice || 0)-(b.price || b.gemPrice || 0) || a.name.localeCompare(b.name));
+    // order: gem items first (they stay on top, owned or not), then everything you own, then what is still for sale
+    const grp = it => it.premium ? 0 : current.owned.includes(it.id) ? 1 : 2;
+    const items = [...(COS_BY[cat] || SKINS)].filter(it => !it.exclusive || current.owned.includes(it.id)).sort((a,b) => grp(a) - grp(b) || (grp(a) === 1 ? current.owned.indexOf(b.id) - current.owned.indexOf(a.id) : 0) || rarityOrder[a.rarity]-rarityOrder[b.rarity] || (a.price || a.gemPrice || 0)-(b.price || b.gemPrice || 0) || a.name.localeCompare(b.name));
     const animated = [];
     grid.innerHTML = '';
     for (const it of items){

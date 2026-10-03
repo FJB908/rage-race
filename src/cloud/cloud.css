@@ -9,3 +9,10 @@
 .m-acct button { flex:none; padding:10px 14px; border-radius:12px; border:0; font:inherit; font-weight:800; font-size:12px; letter-spacing:.4px; color:#06201b; background:#31e0c4; }
 .m-acct button[hidden] { display:none; }
 .m-acct button:disabled { opacity:.5; }
+
+#acct-choose { position: fixed; inset: 0; z-index: 20000; background: #0d1017; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.ac-card { width: min(100%, 340px); display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.ac-card h1 { margin: 0 0 6px; font-size: 40px; letter-spacing: -.02em; } .ac-card p { margin: 0 0 12px; color: #8b95a7; }
+.ac-card button { padding: 16px; border-radius: 14px; border: 0; font: inherit; font-weight: 800; font-size: 15px; letter-spacing: .04em; }
+.ac-new { background: #35e0c8; color: #06201b; } .ac-g { background: #fff; color: #1b1f2a; } .ac-card button:disabled { opacity: .45; }
+.ac-note { color: #8b95a7; font-size: 12px; margin-top: 4px; }
