@@ -546,3 +546,5 @@
 
 .m-avatar { background: #1d2330; }
 .m-avatar canvas { width: 48px; height: 48px; flex: none; border-radius: 14px; display: block; }
+
+body.online-race #btn-pause { display: none; }

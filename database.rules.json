@@ -6,9 +6,17 @@
       "$code": {
         "$token": {
           ".read": "auth != null",
-          "$uid": {
-            ".write": "auth != null && auth.uid === $uid",
-            ".validate": "newData.hasChildren(['x', 'y']) && newData.child('x').isNumber() && newData.child('y').isNumber()"
+          "p": {
+            "$uid": {
+              ".write": "auth != null && ($uid === auth.uid || $uid.beginsWith('bot_'))",
+              ".validate": "newData.hasChildren(['x', 'y']) && newData.child('x').isNumber() && newData.child('y').isNumber()"
+            }
+          },
+          "ev": {
+            "$id": {
+              ".write": "auth != null",
+              ".validate": "newData.hasChildren(['k', 'by'])"
+            }
           }
         }
       }

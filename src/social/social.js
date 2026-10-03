@@ -147,10 +147,13 @@
         const p = S.party; if (!p || p.host !== S.uid) return;
         const rt = await loadRt().catch(() => null);
         const startAt = rt ? Date.now() + rt.offset + 5000 : 0;                 // shared start moment on the Realtime Database clock
-        try { await fs().updateDoc(dref('parties', p.code), { status:'racing', seed:(Math.random() * 4294967296) >>> 0, token:Date.now(), startAt, live:!!rt }); } catch (e) { say('Could not start'); }
+        const fill = rt && window.BotRoster ? BotRoster.pick(Math.max(0, 4 - S.members.length), { mmr:Math.max(1000, prog().rk.mmr), spread:160 }) : [];   // the bots everyone sees
+        try { await fs().updateDoc(dref('parties', p.code), { status:'racing', seed:(Math.random() * 4294967296) >>> 0, token:Date.now(), startAt, live:!!rt, fill: JSON.parse(JSON.stringify(fill)) }); } catch (e) { say('Could not start'); }
     }
 
     /* --------------------------------------------------- live positions (Realtime Database) ---- */
+    // Every phone simulates its own player. Friends appear as `remote` players moved from their samples; bots in a party race are simulated
+    // by ONE phone (the lowest uid) and shown on the others the same way. Item pickups and attacks travel as events that every phone replays.
     let RT = null, LIVE = null;
     async function loadRt() {
         if (RT) return RT;
@@ -160,53 +163,108 @@
         m.onValue(m.ref(db, '.info/serverTimeOffset'), s => { r.offset = s.val() || 0; });
         RT = r; return r;
     }
-    function liveStart(d) {                          // after startGame(): turn friends' slots into remote players, start sending
+    const uidOf = p => p.local ? S.uid : p.uid;
+    const sampleOf = p => ({
+        x:Math.round(p.x * 10) / 10, y:Math.round(p.y * 10) / 10, vy:Math.round(p.vy), f:p.finished ? p.finishTime : 0,
+        gt:Math.round(Math.max(0, p.giantT || 0) * 10) / 10, st:Math.round(Math.max(0, p.shieldT || 0) * 10) / 10, bt:Math.round(Math.max(0, p.bounceT || 0) * 10) / 10,
+        rf:Math.round(Math.max(0, p.rocketFx || 0) * 10) / 10, pi:p.mode === 'idle' && p.plat ? platforms.indexOf(p.plat) : -1,
+    });
+    function liveStart(d) {                          // after startGame(): friends and shared bots become remote players
         const rt = RT, m = rt.m, base = 'rooms/' + S.party.code + '/' + d.token + '/';
-        const others = S.members.filter(x => x.uid !== S.uid).slice(0, 3);
-        LIVE = { base, subs:[], timer:0, remotes:[], t0:Date.now() };
-        others.forEach((mem, k) => {
+        const humans = S.members.slice(0, 4), others = humans.filter(x => x.uid !== S.uid);
+        const minUid = humans.map(x => x.uid).sort()[0];
+        LIVE = { base, subs:[], timer:0, remotes:[], hosted:[], t0:Date.now() };
+        document.body.classList.add('online-race');
+        const fill = d.fill || [];
+        const slots = others.map(mem => ({ uid:mem.uid, name:mem.name, look:mem.look, human:true }))
+            .concat(fill.map((b, k) => ({ uid:'f' + k, name:b.name, look:b.look, human:false, rb:b })));
+        slots.slice(0, 3).forEach((sl, k) => {
             const p = players[k + 1]; if (!p) return;
-            const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, mem.look || {});
-            p.remote = true; p.uid = mem.uid; p.name = mem.name; p.look = look; p.afk = false; p.botType = null;
-            p.color = skinById(look.skin).color; p.samples = []; p.rkColor = null;
+            const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, sl.look || {});
+            Object.assign(p, { remote:true, uid:sl.uid, name:sl.name, look, afk:false, botType:null, color:skinById(look.skin).color, samples:[], rkColor:null, human:sl.human, lastT:performance.now(), rb:sl.rb });
             LIVE.remotes.push(p);
-            LIVE.subs.push(m.onValue(m.ref(rt.db, base + mem.uid), snap => {
+            const feed = path => m.onValue(m.ref(rt.db, base + path), snap => {
                 const v = snap.val();
-                if (!v) { if (Date.now() - LIVE.t0 > 4000) p.left = true; return; }
-                p.left = false; p.samples.push({ t:performance.now(), x:v.x, y:v.y, vy:v.vy || 0, f:v.f || 0 });
+                if (!v) { if (sl.human && path === 'p/' + sl.uid && Date.now() - LIVE.t0 > 4000) p.left = true; return; }
+                p.lastT = performance.now(); p.samples.push({ t:p.lastT, x:v.x, y:v.y, vy:v.vy || 0, f:v.f || 0, gt:v.gt || 0, st:v.st || 0, bt:v.bt || 0, rf:v.rf || 0, pi:v.pi === undefined ? -1 : v.pi });
                 if (p.samples.length > 20) p.samples.shift();
-            }));
+                if (path !== 'p/' + sl.uid) p.botFed = true;
+            });
+            LIVE.subs.push(feed('p/' + sl.uid), feed('p/bot_' + sl.uid));
+            if (!sl.human && minUid === S.uid) takeOver(p);                      // the lowest uid simulates the filler bots from the start
         });
-        const mine = m.ref(rt.db, base + S.uid);
+        LIVE.subs.push(m.onChildAdded(m.ref(rt.db, base + 'ev'), snap => applyEvent(snap.val())));
+        const mine = m.ref(rt.db, base + 'p/' + S.uid);
         try { m.onDisconnect(mine).remove(); } catch (e) {}
         LIVE.timer = setInterval(() => {
             const me = players[0]; if (!me) return;
-            m.set(mine, { x:Math.round(me.x * 10) / 10, y:Math.round(me.y * 10) / 10, vy:Math.round(me.vy), f:me.finished ? me.finishTime : 0 }).catch(() => {});
+            m.set(mine, sampleOf(me)).catch(() => {});
+            for (const h of LIVE.hosted) m.set(m.ref(rt.db, base + 'p/bot_' + h.uid), sampleOf(h)).catch(() => {});
+            electCheck();
             if (state === 'menu') liveStop();
         }, 100);
+    }
+    function takeOver(p) {                           // this phone now simulates this player as a bot
+        if (!LIVE || p.hostedBot) return;
+        const remote = p.remote;
+        p.remote = false; p.local = false; p.hostedBot = true; p.botType = 'standard'; p.left = false;
+        p.skill = 1; p.errMul = 1; p.thinkT = 0.3; p.mode = p.mode === 'idle' ? 'idle' : 'air';
+        if (p.rb && window.BotRoster) BotRoster.applyTo([p], [p.rb]);        // the roster skill of a filler bot
+        if (remote && p.samples && p.samples.length) { const l = p.samples[p.samples.length - 1]; p.x = l.x; p.y = l.y; p.mode = 'air'; p.plat = null; p.vx = 0; p.vy = 0; }
+        LIVE.hosted.push(p);
+        try { RT.m.onDisconnect(RT.m.ref(RT.db, LIVE.base + 'p/bot_' + p.uid)).remove(); } catch (e) {}
+    }
+    function electCheck() {                          // a human left or the phone simulating a bot went away: pick a new one
+        if (!LIVE) return;
+        const present = [S.uid].concat(LIVE.remotes.filter(p => p.human && !p.left && !p.hostedBot).map(p => p.uid)).sort();
+        for (const p of LIVE.remotes) {
+            if (p.hostedBot || p.finished) continue;
+            const orphan = (p.human && p.left) || (!p.human && performance.now() - p.lastT > 2500);
+            if (orphan && present[0] === S.uid && (!p.human || !p.botFed || performance.now() - p.lastT > 2500)) takeOver(p);
+        }
     }
     function liveStop() {
         if (!LIVE) return;
         clearInterval(LIVE.timer); LIVE.subs.forEach(f => { try { f(); } catch (e) {} });
-        try { RT.m.remove(RT.m.ref(RT.db, LIVE.base + S.uid)); } catch (e) {}
-        LIVE = null; window.partyMatch = null; window.RACE_BAND = undefined; window.matchBots = null;
+        try { RT.m.remove(RT.m.ref(RT.db, LIVE.base + 'p/' + S.uid)); LIVE.hosted.forEach(h => RT.m.remove(RT.m.ref(RT.db, LIVE.base + 'p/bot_' + h.uid))); } catch (e) {}
+        LIVE = null; window.partyMatch = null; window.RACE_BAND = undefined; window.matchBots = null; document.body.classList.remove('online-race');
         if (S.party && S.party.host === S.uid) fs().updateDoc(dref('parties', S.party.code), { status:'lobby' }).catch(() => {});
     }
-    function stepRemote(p, dt) {                     // smooth the friend's 10 Hz samples, shown about 150 ms in the past
+    function emit(ev) { if (!LIVE) return; try { RT.m.push(RT.m.ref(RT.db, LIVE.base + 'ev'), Object.assign({ t:Date.now() }, ev)); } catch (e) {} }
+    function emitItem(p, it, extra, target) { emit(Object.assign({ k:'item', by:uidOf(p), it, tgt:target ? uidOf(target) : '' }, extra)); }
+    function emitBox(i) { emit({ k:'box', by:S.uid, i }); }
+    const byUid = u => u === S.uid ? players[0] : players.find(p => p.uid === u);
+    function applyEvent(ev) {                        // replay something a friend (or the phone simulating a bot) did
+        if (!ev || !LIVE || Date.now() - ev.t > 20000) return;
+        if (ev.by === S.uid || LIVE.hosted.some(h => h.uid === ev.by)) return;           // our own
+        if (ev.k === 'box') { const b = itemBoxes[ev.i]; if (b && b.alive) { b.alive = false; b.respawn = 9; ring(b.x, b.y, '#ffffff', 40); } return; }
+        if (ev.k !== 'item') return;
+        const src = byUid(ev.by); if (!src || !src.remote) return;
+        if (ev.it === 'wind') startWind(src, ev.dir);
+        else if (ev.it === 'quake') startQuake(src);
+        else if (ev.it === 'chain') { const to = byUid(ev.tgt); if (to) fireChain(src, to); }
+    }
+    function stepRemote(p, dt) {                     // smooth the 10 Hz samples, shown about 120 ms in the past
+        tickAbilities(p, dt);
         if (p.finished) return;
         const s = p.samples;
-        if (p.left && !p.finished) { p.finished = true; p.finishTime = 9999; finishedCount++; return; }
         if (!s || !s.length) return;
-        const t = performance.now() - 150;
+        const t = performance.now() - 120;
         let a = s[0], b = s[s.length - 1];
         for (let i = s.length - 1; i > 0; i--) if (s[i - 1].t <= t) { a = s[i - 1]; b = s[i]; break; }
         const k = b.t > a.t ? Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t))) : 1, px = p.x, py = p.y;
         p.x = a.x + (b.x - a.x) * k; p.y = a.y + (b.y - a.y) * k;
         p.vx = dt > 0 ? (p.x - px) / dt : 0; p.vy = dt > 0 ? (p.y - py) / dt : 0;
-        p.mode = Math.abs(p.vy) > 40 ? 'air' : 'idle';
+        const pl = b.pi >= 0 ? platforms[b.pi] : null;
+        p.plat = pl; p.mode = pl ? 'idle' : 'air';
+        if (pl && pl.type === 'fragile' && !pl.breaking) { pl.breaking = true; pl.breakT = 0.9; }
+        if (b !== p.lastS) {                                          // ability timers come from the owner's phone
+            p.lastS = b;
+            if (b.gt > 0 && !(p.giantT > 0)) p.giantT = b.gt; if (!(b.gt > 0)) p.giantT = 0;
+            p.shieldT = b.st; p.bounceT = b.bt; if (b.rf > 0 && !(p.rocketFx > 0)) p.rocketFx = b.rf;
+        }
         if (p.y < p.best) p.best = p.y;
-        const last = s[s.length - 1];
-        if (last.f > 0 && !p.finished) { p.finished = true; p.finishTime = last.f; finishedCount++; p.x = last.x; p.y = last.y; if (typeof burst === 'function') burst(p.x, p.y, p.color, 24, 240); checkEnd(); }
+        if (b.f > 0 && !p.finished) { p.finished = true; p.finishTime = b.f; finishedCount++; p.x = b.x; p.y = b.y; burst(p.x, p.y, p.color, 24, 240); checkEnd(); }
     }
 
     /* ------------------------------------------------------------------- racing ---- */
@@ -215,7 +273,7 @@
         S.boardDone = false;
         window.partyMatch = { code:S.party.code, token:d.token, seed:d.seed, n:S.members.length, live:!!(d.live && RT) };
         window.rankedMatch = false; window.RACE_BAND = 0;
-        window.matchBots = window.BotRoster ? BotRoster.pick(3, { mmr:Math.max(1000, prog().rk.mmr), spread:160 }) : null;
+        window.matchBots = window.partyMatch.live ? null : (window.BotRoster ? BotRoster.pick(3, { mmr:Math.max(1000, prog().rk.mmr), spread:160 }) : null);
         matchSeed = d.seed; matchLootId = newLootId('party'); matchBotNames = window.matchBots ? window.matchBots.map(b => b.name) : matchBotNames; matchHumanSlot = 0;
         const live = window.partyMatch.live, wait = live ? d.startAt - (Date.now() + RT.offset) - 2400 : 0;   // the game's countdown takes 2.4 s to GO
         const go = () => {
@@ -324,5 +382,5 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden && S.api) publish(true); });
     ensure();
 
-    window.Social = { stepRemote, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
+    window.Social = { stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
 })();

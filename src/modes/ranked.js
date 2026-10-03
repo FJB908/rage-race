@@ -157,6 +157,7 @@
     function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
     function startMatch(chosen) {
+        document.body.classList.add('online-race');
         window.rankedMatch = true; window.RACE_BAND = 0; window.matchBots = chosen;
         matchLootId = newLootId('rk'); matchSeed = (Math.random() * 4294967296) >>> 0; matchHumanSlot = 0; matchBotNames = chosen.map(b => b.name);
         cur = { id:matchLootId, chosen, done:false, t0:Date.now() };
@@ -188,7 +189,7 @@
         hud.style.display = 'none'; showFinishMenu(false);
         renderResult(res, order);
     }
-    function clearMatchFlags() { window.rankedMatch = false; window.RACE_BAND = undefined; window.matchBots = null; }
+    function clearMatchFlags() { document.body.classList.remove('online-race'); window.rankedMatch = false; window.RACE_BAND = undefined; window.matchBots = null; }
 
     window.Ranked = {
         emblem, seasonNow, state:rkState, claimable, daysLeft,

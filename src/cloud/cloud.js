@@ -10,7 +10,7 @@
         storageBucket: 'rage-race.firebasestorage.app',
         messagingSenderId: '889174064806',
         appId: '1:889174064806:web:735614767e97b65cd3fe67',
-        databaseURL: '',               // Realtime Database URL for live party races; empty = the default (US) URL
+        databaseURL: 'https://rage-race-default-rtdb.europe-west1.firebasedatabase.app',   // Realtime Database (live party races)
     };
     const SDK = 'https://www.gstatic.com/firebasejs/10.14.1/';
     const META_KEY = 'rr_cloud_meta';

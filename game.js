@@ -842,9 +842,10 @@ function updateItemBoxes(dt){
         if (!b.alive){ b.respawn -= dt; if (b.respawn <= 0){ b.alive = true; b.appear = 0; } continue; }
         if (b.appear < 1) b.appear = Math.min(1, b.appear + dt*2.5);
         for (const p of players){
-            if (p.finished || p.itemState || p.itemCool > 0) continue;   // one item at a time + short cooldown
+            if (p.finished || p.remote || p.itemState || p.itemCool > 0) continue;   // one item at a time + short cooldown (a friend's pickup arrives as an event)
             if (Math.abs(p.x - b.x) < p.r + 15 && Math.abs(p.y - b.y) < p.r + 15){
                 b.alive = false; b.respawn = 9;
+                if (window.partyMatch && partyMatch.live && (p.local || p.hostedBot)) Social.emitBox(itemBoxes.indexOf(b));
                 p.item = rollItem(p); p.itemState = 'rolling'; p.itemRoll = ROLL_TIME;
                 if (p.local) SFX.play('pickup');
                 for (let i=0;i<14;i++) burst(b.x, b.y, `hsl(${(i*26)%360},90%,65%)`, 1, 230);
@@ -926,7 +927,7 @@ function tickAbilities(p, dt){
         }
     } else if (p.itemState === 'ready'){
         p.itemHold += dt;
-        if (!p.local){ p.itemDelay -= dt; if (p.itemDelay <= 0 && botWantsItem(p)) activateItem(p); }
+        if (!p.local && !p.remote){ p.itemDelay -= dt; if (p.itemDelay <= 0 && botWantsItem(p)) activateItem(p); }
     }
     // GIANT: springy grow/shrink, feet stay planted on the platform
     if (p.giantT > 0){
@@ -989,6 +990,7 @@ function activateItem(p){
         const chainTarget = it === 'chain' ? pickChainTarget(p) : null;
     if (it === 'chain' && !chainTarget) return false;
     p.item = null; p.itemState = null; p.itemCool = 4;
+    const evx = {};
     if (p.local) SFX.play({rocket:'rocket', shield:'shield', wind:'wind', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce'}[it] || 'item');
     if (it === 'rocket') startRocket(p);
     else if (it === 'giant'){
@@ -1015,8 +1017,9 @@ function activateItem(p){
         if (p.chainT > 0) releaseChain(p);
         ring(p.x, p.y, ITEMS.shield.color, 50);
     } else if (it === 'wind'){
-        startWind(p);
+        evx.dir = startWind(p);
     }
+    if (window.partyMatch && partyMatch.live && (p.local || p.hostedBot)) Social.emitItem(p, it, evx, chainTarget);   // party race: tell the other phones
     if (p.local) itemHUD.key = '';           // force a HUD refresh
     return true;
 }
@@ -1033,9 +1036,9 @@ const SHIELD_TIME = 6;   // a full protective bubble for its whole duration, so 
 const WIND_TIME = 6, WIND_FORCE = 380, WIND_AIM_ERR = 85;   // a light, readable crosswind — nudges your jump, never wrecks it
 // WIND: everyone EXCEPT the caster gets buffeted — their aim goes slightly random and
 // they drift sideways while airborne, like an actual gust of crosswind. A shield blocks it.
-function startWind(p){
+function startWind(p, forcedDir){
     let hit = 0;
-    const dir = Math.random() < 0.5 ? -1 : 1;      // one real crosswind direction, shared by everyone it hits
+    const dir = forcedDir || (Math.random() < 0.5 ? -1 : 1);      // one real crosswind direction, shared by everyone it hits
     for (const o of players){
         if (o === p || o.finished) continue;
         if (shieldBlocks(o)){ if (p.local) floatText(o.x, o.y - o.r - 18, 'BLOCKED!', ITEMS.shield.color); continue; }
@@ -1048,6 +1051,7 @@ function startWind(p){
     burst(p.x, p.y, ITEMS.wind.color, 16, 200);
     if (p.local) camShake = Math.max(camShake, 3);
     if (p.local && !hit) floatText(p.x, p.y - p.r - 18, 'NO TARGETS', ITEMS.wind.color);
+    return dir;
 }
 function startQuake(p){
     const alive = players.filter(o => !o.finished);
@@ -1699,7 +1703,7 @@ function handleFinish(p) {
 }
 
 function stepPlayer(p, dt) {
-    if (p.remote){ Social.stepRemote(p, dt); return; }      // party race: a friend's phone drives this player
+    if (p.remote){ Social.stepRemote(p, dt); return; }
     if (p.finished) return;
     if (p.ufoHold) return;                         // being carried: the UFO owns your position
     if (p.dropT > 0) p.dropT -= dt;                // briefly ignores the platform it was stomped through
@@ -2036,10 +2040,10 @@ function resolveBumps() {
     bumpTick++;
     for (let i = 0; i < players.length; i++) {
         const p1 = players[i];
-        if (p1.dead || p1.gone || p1.remote || p1.finished || p1.ufoHold) continue;
+        if (p1.dead || p1.gone || p1.finished || p1.ufoHold) continue;
         for (let j = i + 1; j < players.length; j++) {
             const p2 = players[j];
-            if (p2.dead || p2.gone || p2.remote || p2.finished || p2.ufoHold) continue;
+            if (p2.dead || p2.gone || p2.finished || p2.ufoHold) continue;
             const dx = p2.x - p1.x, dy = p2.y - p1.y, rs = p1.r + p2.r;
             const distSq = dx * dx + dy * dy;
             if (distSq >= rs * rs || distSq === 0) continue;
