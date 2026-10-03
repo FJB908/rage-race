@@ -7,6 +7,7 @@
     const ALPHA = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
     const ONLINE_MS = 6 * 60 * 1000, INVITE_MS = 30 * 60 * 1000, PARTY_MAX = 4;
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+    const PARTY_ENABLED = false;                    // parties are parked until the server version: everything below stays, only the entry points are closed
     const root = $('soc-root');
     if (!root) return;
 
@@ -269,6 +270,7 @@
 
     /* ------------------------------------------------------------------- racing ---- */
     function startRace(d) {
+        if (!PARTY_ENABLED) return;
         if (typeof state !== 'undefined' && state !== 'menu') return;
         S.boardDone = false;
         window.partyMatch = { code:S.party.code, token:d.token, seed:d.seed, n:S.members.length, live:!!(d.live && RT) };
@@ -316,14 +318,15 @@
         cardCode.innerHTML = '<small>YOUR FRIEND CODE</small><strong>' + pretty(S.code) + '</strong><span><button type="button" data-a="copy">COPY</button><button type="button" data-a="share">SHARE</button></span>';
 
         const inv = $('soc-inv');
-        inv.innerHTML = S.invites.map(i => '<div class="so-banner"><span><b>' + esc(i.fromName) + '</b> invited you to a party</span><button type="button" data-a="join-inv" data-id="' + esc(i.id) + '" data-code="' + esc(i.code) + '">JOIN</button><button type="button" class="ghost" data-a="del-inv" data-id="' + esc(i.id) + '">X</button></div>').join('');
+        inv.innerHTML = !PARTY_ENABLED ? '' : S.invites.map(i => '<div class="so-banner"><span><b>' + esc(i.fromName) + '</b> invited you to a party</span><button type="button" data-a="join-inv" data-id="' + esc(i.id) + '" data-code="' + esc(i.code) + '">JOIN</button><button type="button" class="ghost" data-a="del-inv" data-id="' + esc(i.id) + '">X</button></div>').join('');
 
         const req = [...S.friends].filter(([, v]) => v.status === 'pending' && v.requester !== S.uid);
         $('soc-req').innerHTML = req.length ? '<h2 class="m-h2">REQUESTS</h2>' + req.map(([u, v]) => { const d = (S.profiles.get(u) || {}).d || {}; return '<div class="so-row">' + avatar(d.look) + '<span class="so-n"><b>' + esc(d.name || 'Player') + '</b><small>Lv ' + (d.lvl || 1) + '</small></span><button type="button" data-a="ok" data-id="' + v.fid + '">ACCEPT</button><button type="button" class="ghost" data-a="no" data-id="' + v.fid + '">X</button></div>'; }).join('') : '';
 
         const P = S.party, host = P && P.host === S.uid;
         let pc;
-        if (!P) pc = '<div class="so-party-h"><b>Party</b></div><p class="so-p">Make a party and share the code. Everyone races the same track at the same time and compares times.</p><button type="button" class="so-big" data-a="create">CREATE PARTY</button>';
+        if (!PARTY_ENABLED) pc = '<div class="so-party-h"><b>Party</b><span>Coming soon</span></div><p class="so-p">Races with friends arrive with online play.</p>';
+        else if (!P) pc = '<div class="so-party-h"><b>Party</b></div><p class="so-p">Make a party and share the code. Everyone races the same track at the same time and compares times.</p><button type="button" class="so-big" data-a="create">CREATE PARTY</button>';
         else {
             const slots = [];
             for (let i = 0; i < PARTY_MAX; i++) {
@@ -343,7 +346,7 @@
         $('soc-list').innerHTML = '<h2 class="m-h2">FRIENDS ' + acc.length + '</h2>' + (acc.length ? acc.map(([u, v]) => {
             const d = (S.profiles.get(u) || {}).d || {}, on = online(d), inParty = S.members.some(m => m.uid === u);
             return '<div class="so-row">' + avatar(d.look) + '<span class="so-n"><b><i class="dot' + (on ? ' on' : '') + '"></i>' + esc(d.name || 'Player') + '</b><small>Lv ' + (d.lvl || 1) + (d.rk ? ' · ' + esc(d.rk) : '') + '</small></span>' +
-                (P && !inParty ? '<button type="button" data-a="invite" data-id="' + u + '">INVITE</button>' : '') + '<button type="button" class="ghost" data-a="rm" data-id="' + v.fid + '" title="Remove">...</button></div>';
+                (PARTY_ENABLED && P && !inParty ? '<button type="button" data-a="invite" data-id="' + u + '">INVITE</button>' : '') + '<button type="button" class="ghost" data-a="rm" data-id="' + v.fid + '" title="Remove">...</button></div>';
         }).join('') : '<p class="so-p">No friends yet. Share your code or enter a friend\'s code above.</p>') +
             (pend.length ? '<p class="so-p">' + pend.length + ' request' + (pend.length > 1 ? 's' : '') + ' waiting for an answer</p>' : '');
         paintAvatars(root);
@@ -365,6 +368,7 @@
         else if (a === 'rm') { if (t.dataset.sure) answer(id, false); else { t.dataset.sure = '1'; t.textContent = 'REMOVE?'; setTimeout(() => { t.dataset.sure = ''; t.textContent = '...'; }, 2500); } }
     });
     $('soc-add-go').onclick = () => { const i = $('soc-add'); addByCode(i.value).then(() => { i.value = ''; }); };
+    if (!PARTY_ENABLED) $('soc-join').parentNode.style.display = 'none';
     $('soc-join-go').onclick = () => { const i = $('soc-join'); joinParty(i.value).then(() => { i.value = ''; }); };
 
     /* ------------------------------------------------------------------ lifecycle ---- */

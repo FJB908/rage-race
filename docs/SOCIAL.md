@@ -1,3 +1,5 @@
+> Parties are parked (`PARTY_ENABLED = false` in social.js, shown as Coming soon). Friends stay active. The party and live-race code below is kept for the server version.
+
 # Friends and party (no game server)
 
 `src/social/social.js` + `social.css`, rules in `firestore.rules`. Needs the cloud account (`cloud.js`), anonymous accounts work.
