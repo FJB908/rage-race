@@ -88,17 +88,17 @@
         setBadge(b, w > 0 ? 0 : left);
     };
     A.renderShop = function (box) {
-        const sec = document.createElement('div'); sec.className = 'ad-sec';
-        const mk = (kind, title, sub, fn) => {
-            const left = A.left(kind), w = A.wait(kind), b = document.createElement('button'); b.type = 'button'; b.className = 'ad-card'; b.dataset.kind = kind; b.disabled = left <= 0 || w > 0; b.classList.toggle('cool', w > 0 && left > 0);
-            b.innerHTML = '<span class="ad-ic">' + (kind === 'coin' ? icon('coin') : icon('drop')) + '</span><span class="ad-tx"><b>' + title + '</b><small>' + sub + '</small></span>' +
-                '<span class="ad-go">' + (left <= 0 ? 'DONE' : w > 0 ? mmss(w) : 'WATCH') + '</span><em>' + left + ' left today</em>';
+        const sec = document.createElement('div'); sec.className = 'ad-row';
+        const mk = (kind, art, label, fn) => {
+            const left = A.left(kind), w = A.wait(kind), b = document.createElement('button'); b.type = 'button'; b.className = 'ad-chip'; b.dataset.kind = kind;
+            b.disabled = left <= 0 || w > 0; b.classList.toggle('cool', w > 0 && left > 0);
+            b.innerHTML = '<span class="ad-art">' + art + icon('video', 'ad-play') + '</span><b class="ad-lbl">' + (left <= 0 ? 'Done' : w > 0 ? mmss(w) : label) + '</b><small>' + left + ' left today</small>';
             b.onclick = async () => { b.disabled = true; await fn(); renderResourceShop(); };
             return b;
         };
         A.refreshHome();
-        sec.appendChild(mk('coin', '+' + CFG.coin.amount + ' coins', 'Watch a short video', A.watchCoins));
-        sec.appendChild(mk('drop', 'Free supply drop', 'Watch a short video', A.watchDrop));
+        sec.appendChild(mk('coin', icon('coin'), '+' + CFG.coin.amount, A.watchCoins));
+        sec.appendChild(mk('drop', icon('drop-common'), 'Free drop', A.watchDrop));
         box.prepend(sec);
     };
 
@@ -136,9 +136,10 @@
     // live countdown on the home button and the shop cards
     setInterval(() => {
         A.refreshHome();
-        document.querySelectorAll('.ad-card').forEach(b => {
-            const kind = b.dataset.kind, left = A.left(kind), w = A.wait(kind), go = b.querySelector('.ad-go');
-            b.disabled = left <= 0 || w > 0; b.classList.toggle('cool', w > 0 && left > 0); if (go) go.textContent = left <= 0 ? 'DONE' : w > 0 ? mmss(w) : 'WATCH';
+        document.querySelectorAll('.ad-chip').forEach(b => {
+            const kind = b.dataset.kind, left = A.left(kind), w = A.wait(kind), lb = b.querySelector('.ad-lbl');
+            b.disabled = left <= 0 || w > 0; b.classList.toggle('cool', w > 0 && left > 0);
+            if (lb) lb.textContent = left <= 0 ? 'Done' : w > 0 ? mmss(w) : (kind === 'coin' ? '+' + CFG.coin.amount : 'Free drop');
         });
     }, 1000);
 })();

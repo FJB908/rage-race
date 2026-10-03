@@ -21,7 +21,7 @@
         if (r.t === 'xp') return icon('xp');
         if (r.t === 'pass') return icon('pass');
         if (r.t === 'boost') return Boost.art(r);
-        if (r.t === 'drop') return '<span class="sk-chest" style="--ic:' + TC[r.tier] + '">' + icon('drop') + '</span>';
+        if (r.t === 'drop') return '<span class="sk-chest" style="--ic:' + TC[r.tier] + '">' + icon('drop-' + r.tier) + '</span>';
         return '<canvas width="120" height="120" data-i="' + i + '"></canvas>';
     }
     function amount(r) {

@@ -108,7 +108,7 @@
         const afford = canAfford(sel);
         const opt = (type, cls, inner) => '<button class="gt-opt ' + cls + (sel.type === type ? ' on' : '') + '" type="button" data-type="' + type + '">' + inner + '</button>';
         const node = (n, label, i) => '<div class="gt-node s' + i + '"><b>' + n + '</b><small>' + label + '</small></div>';
-        const prize = (i, title, body, tierKey) => '<div class="gt-prize"><span class="gt-pico" style="--ic:' + (TIER_COLOR[tierKey] || '#8b95a7') + '">' + (i === 3 ? icon('crown') : (tierKey ? icon('drop') : icon('coin'))) + '</span><span class="gt-ptxt"><b>' + title + '</b><small>' + body + '</small></span></div>';
+        const prize = (i, title, body, tierKey) => '<div class="gt-prize"><span class="gt-pico" style="--ic:' + (TIER_COLOR[tierKey] || '#8b95a7') + '">' + (i === 3 ? icon('crown') : (tierKey ? icon('drop-' + tierKey) : icon('coin'))) + '</span><span class="gt-ptxt"><b>' + title + '</b><small>' + body + '</small></span></div>';
         const ctaLabel = sel.type === 'key' ? icon('key') + '<b>1</b>' : (costOf(sel).coins ? icon('coin') + '<b>' + costOf(sel).coins.toLocaleString('en-US') + '</b>' : '<b>FREE</b>');
         $('gt-entry').innerHTML =
             '<div class="gt-top"><button class="gt-back" type="button" id="gt-back" aria-label="Back">' + icon('chev-l') + '</button>' +

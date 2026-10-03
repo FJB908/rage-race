@@ -34,20 +34,7 @@
           '<path d="M24 22 L27.2 29 L35 29.9 L29.2 35 L30.9 42.5 L24 38.6 L17.1 42.5 L18.8 35 L13 29.9 L20.8 29 Z" fill="#fff" stroke="#1c1450" stroke-width="2" stroke-linejoin="round" transform="translate(32 32) scale(1.2) translate(-24 -32) translate(1 1)"/>' +
           '<path d="M10 16 H30" stroke="#fff" stroke-opacity=".5" stroke-width="2.5" stroke-linecap="round"/>' +
         '</symbol>' +
-        '<linearGradient id="gdb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46526f"/><stop offset=".5" stop-color="#2a3350"/><stop offset="1" stop-color="#151a2b"/></linearGradient>' +
-        '<linearGradient id="gdl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7ba3"/><stop offset="1" stop-color="#2f3a56"/></linearGradient>' +
-        '<symbol id="ico-drop" viewBox="0 0 64 64">' +
-          '<ellipse cx="32" cy="59" rx="24" ry="3" fill="#000" opacity=".3"/>' +
-          '<rect x="8" y="28" width="48" height="29" rx="7" fill="url(#gdb)" stroke="#0b0e16" stroke-width="2.6"/>' +
-          '<rect x="15" y="28" width="6" height="28" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="1.6"/><rect x="43" y="28" width="6" height="28" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="1.6"/>' +
-          '<path d="M25 47 L32 40 L39 47 M25 53 L32 46 L39 53" fill="none" stroke="#0b0e16" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -2)"/>' +
-          '<path d="M25 47 L32 40 L39 47 M25 53 L32 46 L39 53" fill="none" style="stroke:var(--ic,#35e0c8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -2)"/>' +
-          '<rect x="5" y="12" width="54" height="19" rx="9" fill="url(#gdl)" stroke="#0b0e16" stroke-width="2.6"/>' +
-          '<rect x="15" y="12" width="6" height="19" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="1.6"/><rect x="43" y="12" width="6" height="19" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="1.6"/>' +
-          '<rect x="7" y="25" width="50" height="3.2" rx="1.6" style="fill:var(--ic,#35e0c8)"/>' +
-          '<circle cx="32" cy="21" r="4.4" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="2"/><circle cx="30.6" cy="19.6" r="1.3" fill="#fff"/>' +
-          '<path d="M11 18 Q15 15 22 15" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/>' +
-        '</symbol>' +
+
         '<symbol id="ico-gem" viewBox="0 0 64 64">' +
           '<path d="M18 11 H46 L59 26 L32 58 L5 26 Z" fill="#3a0830" opacity=".4" transform="translate(0 2)"/>' +
           '<path d="M18 10 H46 L59 26 L32 58 L5 26 Z" fill="url(#ggL)" stroke="#3a0830" stroke-width="3.2" stroke-linejoin="round"/>' +
@@ -141,7 +128,33 @@
         '<symbol id="ico-home" viewBox="0 0 24 24"><path d="M3.5 11.5L12 4l8.5 7.5M6 10v9.5h4.5v-5h3v5H18V10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>' +
         '</defs></svg>';
 
-    const mount = () => { if (!document.getElementById('ico-sprite')) { const d = document.createElement('div'); d.id = 'ico-sprite'; d.innerHTML = SPRITE; document.body.prepend(d); } };
+
+    // Supply crate icons, one per rarity (same design language as the big crate in lootbox.js: more detail for rarer crates).
+    const dropSymbols = () => {
+        const D = '#0b0e16', IC = 'style="fill:var(--ic,#35e0c8)"', ST = 'style="stroke:var(--ic,#35e0c8)"';
+        const one = (id, T) => {
+            const crown = T === 3 ? '<path d="M14 14 L17 5 L24 11 L32 2 L40 11 L47 5 L50 14 Z" ' + IC + ' stroke="' + D + '" stroke-width="2" stroke-linejoin="round"/>' : '';
+            const caps = T >= 2 ? '<path d="M8 38 V35 Q8 31 12 31 H15 M56 38 V35 Q56 31 52 31 H49 M8 48 V51 Q8 57 14 57 H17 M56 48 V51 Q56 57 50 57 H47" fill="none" ' + ST + ' stroke-width="2.6" stroke-linecap="round"/>' : '';
+            const lock = T === 0 ? '<circle cx="32" cy="21" r="3.4" fill="#5c6a8c" stroke="' + D + '" stroke-width="2"/>'
+                : T === 1 ? '<circle cx="32" cy="21" r="4.4" ' + IC + ' stroke="' + D + '" stroke-width="2"/><circle cx="30.6" cy="19.6" r="1.3" fill="#fff"/>'
+                : '<path d="M32 15 L38.5 21.5 L32 28 L25.5 21.5 Z" ' + IC + ' stroke="' + (T === 3 ? '#fff' : D) + '" stroke-width="2" stroke-linejoin="round"/><path d="M29 20 L32 17.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>';
+            const rim = T === 3 ? '<rect x="8" y="28" width="48" height="29" rx="7" fill="none" ' + ST + ' stroke-width="1.2" opacity=".9"/>' : '';
+            return '<symbol id="' + id + '" viewBox="0 0 64 64">' + crown +
+              '<ellipse cx="32" cy="60" rx="24" ry="3" fill="#000" opacity=".3"/>' +
+              '<rect x="8" y="28" width="48" height="29" rx="7" fill="url(#gdb)" stroke="' + D + '" stroke-width="2.6"/>' + rim + caps +
+              '<rect x="15" y="28" width="6" height="28" ' + IC + ' stroke="' + D + '" stroke-width="1.6"/><rect x="43" y="28" width="6" height="28" ' + IC + ' stroke="' + D + '" stroke-width="1.6"/>' +
+              '<path d="M25 47 L32 40 L39 47 M25 53 L32 46 L39 53" fill="none" stroke="' + D + '" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -2)"/>' +
+              '<path d="M25 47 L32 40 L39 47 M25 53 L32 46 L39 53" fill="none" ' + ST + ' stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -2)"/>' +
+              '<rect x="5" y="12" width="54" height="19" rx="9" fill="url(#gdl)" stroke="' + D + '" stroke-width="2.6"/>' +
+              '<rect x="15" y="12" width="6" height="19" ' + IC + ' stroke="' + D + '" stroke-width="1.6"/><rect x="43" y="12" width="6" height="19" ' + IC + ' stroke="' + D + '" stroke-width="1.6"/>' +
+              '<rect x="7" y="25" width="50" height="3.2" rx="1.6" ' + IC + '/>' + lock +
+              '<path d="M11 18 Q15 15 22 15" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/></symbol>';
+        };
+        return '<linearGradient id="gdb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46526f"/><stop offset=".5" stop-color="#2a3350"/><stop offset="1" stop-color="#151a2b"/></linearGradient>' +
+            '<linearGradient id="gdl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7ba3"/><stop offset="1" stop-color="#2f3a56"/></linearGradient>' +
+            one('ico-drop', 0) + one('ico-drop-common', 0) + one('ico-drop-rare', 1) + one('ico-drop-epic', 2) + one('ico-drop-legendary', 3);
+    };
+    const mount = () => { if (!document.getElementById('ico-sprite')) { const d = document.createElement('div'); d.id = 'ico-sprite'; d.innerHTML = SPRITE.replace('</defs></svg>', dropSymbols() + '</defs></svg>'); document.body.prepend(d); } };
     if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
 
     window.icon = (name, cls) => '<svg class="ico ico-' + name + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#ico-' + name + '"/></svg>';

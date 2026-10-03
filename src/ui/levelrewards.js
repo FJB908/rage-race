@@ -14,7 +14,7 @@
     function color(r) { return r.t === 'drop' ? TC[r.tier] : r.t === 'boost' ? Boost.KINDS[r.kind].color : r.t === 'gem' ? '#ff8ae6' : r.t === 'item' ? RARITY[itemOf(r).rarity].color : '#ffcf3f'; }
     function art(r, l) {
         if (r.t === 'coin') return icon('coin'); if (r.t === 'gem') return icon('gem');
-        if (r.t === 'drop') return '<span class="lr-crate" style="--ic:' + TC[r.tier] + '">' + icon('drop') + '</span>';
+        if (r.t === 'drop') return '<span class="lr-crate" style="--ic:' + TC[r.tier] + '">' + icon('drop-' + r.tier) + '</span>';
         if (r.t === 'boost') return Boost.art(r);
         return '<canvas width="120" height="120" data-l="' + l + '"></canvas>';
     }

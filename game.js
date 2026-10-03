@@ -4257,7 +4257,7 @@ function renderLootDrop(containerId, drop){
     const tier = drop.tier || 'common';
     const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
     panel.classList.remove('opening'); panel.classList.add('big');
-    panel.innerHTML = `<button class="loot-big tier-${tier}" type="button" aria-label="Open the supply drop"><span class="lb-crate">${LB_CHEST('p' + Math.random().toString(36).slice(2, 6))}</span><span class="lb-tap">TAP TO OPEN</span></button>`;
+    panel.innerHTML = `<button class="loot-big tier-${tier}" type="button" aria-label="Open the supply drop"><span class="lb-crate">${LB_CHEST('p' + Math.random().toString(36).slice(2, 6), tier)}</span><span class="lb-tap">TAP TO OPEN</span></button>`;
     panel.querySelector('.loot-big').addEventListener('click', event => {
         const button = event.currentTarget;
         if (button.disabled) return;
@@ -5080,7 +5080,7 @@ function openLevels(gotoDim){
         b.style.setProperty('--lv', L.color);
         const stars = [0,1,2].map(k => `<span class="s${k < d.stars[i] ? ' on' : ''}">${icon('star')}</span>`).join('');
         const tc = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' }[lvDropTier(curDim, i)];
-        const chest = d.stars[i] >= 3 ? '' : `<span class="lv-drop" title="3 stars: supply drop" style="--ic:${tc}">${icon('drop')}</span>`;   // shown until you have earned it, also on locked levels
+        const chest = d.stars[i] >= 3 ? '' : `<span class="lv-drop" title="3 stars: supply drop" style="--ic:${tc}">${icon('drop-' + lvDropTier(curDim, i))}</span>`;   // shown until you have earned it, also on locked levels
         b.innerHTML = chest + `<span class="lv-num">${i+1}</span><span class="lv-name">${L.name}</span>` +
                       (open ? `<span class="lv-stars">${stars}</span>` : `<span class="lv-lock">${LOCK_SVG}</span>`);
         b.addEventListener('click', () => {
