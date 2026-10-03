@@ -1,0 +1,15 @@
+.ad-test { position: fixed; inset: 0; z-index: 9999; background: #05070b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
+.ad-box { width: min(86vw, 340px); aspect-ratio: 9 / 12; border-radius: 16px; background: #141a26; border: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.ad-box small { font-size: 11px; letter-spacing: .12em; color: #8b95a7; } .ad-box b { font-size: 18px; }
+.ad-bar { width: 70%; height: 5px; border-radius: 9px; background: rgba(255,255,255,.1); overflow: hidden; } .ad-bar i { display: block; height: 100%; width: 0; background: #35e0c8; }
+.ad-x { min-width: 150px; padding: 13px 20px; border-radius: 14px; border: 0; background: #232a37; color: #8b95a7; font: inherit; font-weight: 800; font-size: 14px; }
+.ad-x.go { background: #35e0c8; color: #06201b; }
+.ad-cancel { border: 0; background: none; color: #8b95a7; font: inherit; font-size: 13px; text-decoration: underline; padding: 8px; }
+.ad-sec { display: flex; flex-direction: column; gap: 10px; margin: 0 0 18px; }
+.ad-card { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 14px 22px; border-radius: 16px; border: 1px solid rgba(53,224,200,.35); background: #141c26; color: inherit; font: inherit; text-align: left; }
+.ad-card:disabled { opacity: .5; }
+.ad-ic { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,.06); } .ad-ic svg { width: 26px; height: 26px; }
+.ad-tx { flex: 1; display: flex; flex-direction: column; gap: 2px; } .ad-tx b { font-size: 16px; } .ad-tx small { font-size: 12px; color: #8b95a7; }
+.ad-go { padding: 9px 14px; border-radius: 11px; background: #35e0c8; color: #06201b; font-weight: 800; font-size: 12px; letter-spacing: .04em; }
+.ad-card:disabled .ad-go { background: #2a3140; color: #8b95a7; }
+.ad-card em { position: absolute; left: 14px; bottom: 6px; font-style: normal; font-size: 10px; color: #8b95a7; }

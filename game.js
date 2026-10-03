@@ -4121,6 +4121,7 @@ function prog(){
     d.rk = Object.assign({ mmr:1000, rp:0, placed:0, peak:0, season:0, hist:[], claimed:[], protect:0, streak:0, matches:0, wins:0, dropDay:'', dropN:0, sm:0, lastPlayed:-1, seasons:[] }, (d.rk && typeof d.rk === 'object') ? d.rk : {});   // Ranked record
     if (!Array.isArray(d.rk.hist)) d.rk.hist = []; if (!Array.isArray(d.rk.claimed)) d.rk.claimed = [];
     if (!d.pendingDrops || typeof d.pendingDrops !== 'object') d.pendingDrops = {};
+    d.ads = Object.assign({ day:'', coin:0, drop:0, last:0, since:0 }, (d.ads && typeof d.ads === 'object') ? d.ads : {});
     if (!Array.isArray(d.owned)) d.owned = ['classic'];
     if (!d.owned.includes('classic')) d.owned.push('classic');
     if (!d.trail || !TRAILS.some(trail => trail.id === d.trail)) d.trail = 'none';
@@ -4321,6 +4322,7 @@ function renderResourceShop(){
         });
         grid.appendChild(card);
     }
+    if (window.Ads) Ads.renderShop(box);
 }
 function renderShop(cat){
     const grid = document.getElementById('m-skins'), resources = document.getElementById('m-resource-shop');
@@ -4425,7 +4427,7 @@ function refreshMenu(){
     refreshShopBadge();
     renderLook(document.getElementById('m-hero'), myLook(), { scale:0.22, cy:0.62 });
     renderLook(document.getElementById('m-hero2'), myLook(), { scale:0.22, cy:0.62 });
-    renderLook(document.getElementById('m-av'), myLook(), { scale:0.2, cy:0.66 });
+    renderLook(document.getElementById('m-av'), myLook(), { scale:0.25, cy:0.68 });
     const hat = HATS.find(h => h.id === p.hat) || HATS[0], face = FACES.find(f => f.id === p.face) || FACES[0];
     const trail = TRAIL_BY_ID[p.trail] || TRAILS[0];
     document.getElementById('m-eq-hat-n').textContent = hat.name;

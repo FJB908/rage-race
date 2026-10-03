@@ -7,7 +7,7 @@
     const TIER_NAME = { common:'SUPPLY DROP', rare:'RARE DROP', epic:'EPIC DROP', legendary:'LEGENDARY DROP' };
     const TIER_COLOR = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
     // Tap odds: the level-up chance shrinks with every tap, the open chance grows, so a drop always opens within a handful of taps.
-    const UP0 = 0.5, UP_DECAY = 0.62, OPEN0 = 0.16, OPEN_STEP = 0.12;
+    const UP0 = 0.45, UP_DECAY = 0.58, UP_TIER = [1, 0.8, 0.5], OPEN0 = 0.16, OPEN_STEP = 0.12;
     const CHEST_SVG = (
         '<svg viewBox="0 0 200 170" aria-hidden="true"><defs>' +
         '<linearGradient id="lbBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3142"/><stop offset="1" stop-color="#151a26"/></linearGradient>' +
@@ -137,16 +137,15 @@
         const pending = !!drop.pending;
         const o = makeOverlay(tier,
             '<div class="lb-stage"><div class="lb-title"></div><div class="lb-chest">' + CHEST_SVG + '<div class="lb-ring"></div></div>' +
-            '<div class="lb-pips">' + TIERS.map(() => '<i></i>').join('') + '</div><div class="lb-luck"><i></i></div><div class="lb-hint">TAP</div></div>');
-        const el = o.el, chest = o.$('.lb-chest'), stage = o.$('.lb-stage'), title = o.$('.lb-title'), pips = [...el.querySelectorAll('.lb-pips i')], luck = o.$('.lb-luck i'), btn = o.$('.lb-btn'), skipBtn = o.$('.lb-skip');
+            '<div class="lb-pips">' + TIERS.map(() => '<i></i>').join('') + '</div><div class="lb-hint">TAP</div></div>');
+        const el = o.el, chest = o.$('.lb-chest'), stage = o.$('.lb-stage'), title = o.$('.lb-title'), pips = [...el.querySelectorAll('.lb-pips i')], btn = o.$('.lb-btn'), skipBtn = o.$('.lb-skip');
         let taps = 0, busy = true, opened = false, skipped = false;
         const chestPos = () => { const r = chest.getBoundingClientRect(); return { x:r.left + r.width / 2, y:r.top + r.height * .42 }; };
-        const upChance = () => tier === 'legendary' ? 0 : UP0 * Math.pow(UP_DECAY, taps);
+        const upChance = n => tier === 'legendary' ? 0 : UP0 * UP_TIER[TIERS.indexOf(tier)] * Math.pow(UP_DECAY, n);
         const paint = () => {
             TIERS.forEach(t => el.classList.remove('tier-' + t)); el.classList.add('tier-' + tier);
             title.textContent = TIER_NAME[tier];
             pips.forEach((p, i) => { p.className = i <= TIERS.indexOf(tier) ? 'on' : ''; p.style.setProperty('--pc', TIER_COLOR[TIERS[i]]); });
-            luck.style.width = Math.round(upChance() / UP0 * 100) + '%'; luck.parentNode.style.opacity = tier === 'legendary' ? 0 : 1;
         };
         paint();
 
@@ -172,7 +171,7 @@
             sfx('count'); buzz(18 + n * 6);
             const p = chestPos(); o.emit(6, { x:p.x, y:p.y, speed:240, size:6, colors:[TIER_COLOR[tier], '#fff'], g:300 });
             await wait(300); chest.classList.remove('tap');
-            const up = tier !== 'legendary' && Math.random() < UP0 * Math.pow(UP_DECAY, n);
+            const up = tier !== 'legendary' && Math.random() < upChance(n);
             if (up) {
                 tier = TIERS[TIERS.indexOf(tier) + 1]; paint();
                 o.flash(); o.shake(); buzz([30, 30, 50]); sfx('boost'); sfx('finish');
@@ -182,7 +181,6 @@
                 await wait(420); busy = false; return;
             }
             if (Math.random() < Math.min(1, OPEN0 + OPEN_STEP * n)) { await open(); return; }
-            luck.style.width = Math.round(upChance() / UP0 * 100) + '%';
             busy = false;
         }
         chest.addEventListener('pointerdown', tap);

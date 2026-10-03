@@ -68,9 +68,6 @@
 .lb.ready .lb-pips { opacity:1; }
 .lb-pips i { width:14px; height:14px; transform:rotate(45deg); border-radius:3px; background:#232a3b; border:2px solid #0d1017; transition:all .3s; }
 .lb-pips i.on { background:var(--pc); box-shadow:0 0 12px var(--pc); }
-.lb-luck { width:min(46vw,190px); height:7px; border-radius:99px; background:rgba(255,255,255,.1); overflow:hidden; opacity:0; transition:opacity .3s; }
-.lb.ready .lb-luck { opacity:1; }
-.lb-luck i { display:block; height:100%; width:100%; border-radius:99px; background:var(--c); box-shadow:0 0 10px var(--c); transition:width .4s ease; }
 .lb-hint { letter-spacing:.3em; }
 
 /* reward pops: icon + amount, no windows */
