@@ -55,6 +55,41 @@
         '<g clip-path="url(#lbClip' + k + ')"><rect class="lb-shine" x="-70" y="30" width="46" height="150" fill="url(#lbShine' + k + ')" transform="skewX(-18)"/></g>' + sparks + '</svg>'
         );
     };
+    // The gem chest: a faceted crystal case with spikes on the lid, a prism jewel and gems orbiting it. Nothing else looks like it.
+    const buildGemChest = uid => {
+        const k = uid || '', D = '#2a0c3a';
+        const spikes = [[44, 62, 26, 66, 50, 18], [66, 58, 56, 52, 82, 10], [100, 56, 84, 52, 116, 2], [134, 58, 118, 52, 144, 10], [156, 62, 150, 66, 170, 18]];
+        const orbit = [0, 120, 240].map((a, i) => '<g transform="rotate(' + a + ' 100 100)"><path class="gem-o" style="animation-delay:-' + i * .9 + 's" d="M100 6 L108 16 L100 28 L92 16 Z" fill="' + ['#ffd6f7', '#c9f0ff', '#e3d6ff'][i] + '" stroke="' + D + '" stroke-width="2" stroke-linejoin="round"/></g>').join('');
+        return (
+        '<svg viewBox="0 0 200 180" aria-hidden="true"><defs>' +
+        '<linearGradient id="gcB' + k + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9ae8"/><stop offset=".45" stop-color="#9a5cf0"/><stop offset="1" stop-color="#3b1a8c"/></linearGradient>' +
+        '<linearGradient id="gcL' + k + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd6f7"/><stop offset=".5" stop-color="#c58cff"/><stop offset="1" stop-color="#6a3fd0"/></linearGradient>' +
+        '<linearGradient id="gcS' + k + '" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#7d4cf0"/><stop offset="1" stop-color="#d8f4ff"/></linearGradient>' +
+        '<linearGradient id="gcR' + k + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6fd8"/><stop offset=".33" stop-color="#ffe45e"/><stop offset=".66" stop-color="#5eead4"/><stop offset="1" stop-color="#7c6bff"/></linearGradient>' +
+        '<radialGradient id="gcG' + k + '"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#ff8ae6"/><stop offset="1" stop-color="#ff8ae6" stop-opacity="0"/></radialGradient>' +
+        '<linearGradient id="lbShine' + k + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+        '<clipPath id="lbClip' + k + '"><rect x="22" y="86" width="156" height="80" rx="20"/><rect x="16" y="46" width="168" height="48" rx="22"/></clipPath></defs>' +
+        '<ellipse class="gc-aura" cx="100" cy="96" rx="96" ry="70" fill="url(#gcG' + k + ')" opacity=".45"/>' +
+        '<ellipse cx="100" cy="170" rx="80" ry="7" fill="#000" opacity=".4"/>' +
+        '<ellipse class="lb-inner" cx="100" cy="80" rx="70" ry="38" fill="url(#gcG' + k + ')"/>' +
+        '<rect x="22" y="86" width="156" height="80" rx="20" fill="url(#gcB' + k + ')" stroke="' + D + '" stroke-width="3.5"/>' +
+        '<g fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.6" stroke-linejoin="round"><path d="M22 126 L100 86 L178 126 M22 126 L100 166 L178 126 M62 106 L62 146 M138 106 L138 146 M100 86 L100 166"/></g>' +
+        '<path d="M30 100 Q30 90 42 90 H158 Q170 90 170 100" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="3" stroke-linecap="round"/>' +
+        '<rect x="22" y="150" width="156" height="16" rx="10" fill="' + D + '" opacity=".3"/>' +
+        '<path d="M100 104 L128 132 L100 160 L72 132 Z" fill="url(#gcR' + k + ')" stroke="' + D + '" stroke-width="3" stroke-linejoin="round"/><path d="M100 104 L100 160 M72 132 L128 132" stroke="#fff" stroke-opacity=".5" stroke-width="1.6"/><path d="M84 124 L100 110" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-opacity=".9"/>' +
+        '<rect class="lb-leak" x="26" y="84" width="148" height="9" rx="4.5" fill="#fff"/>' +
+        '<g class="lb-lid">' + spikes.map((s, i) => '<path d="M' + (s[0] - 14) + ' 62 L' + s[4] + ' ' + (s[5] + 14) + ' L' + s[0] + ' ' + s[3] + ' L' + (s[0] + 14) + ' 62 Z" transform="translate(0 ' + (i === 2 ? -4 : 0) + ')" fill="url(#gcS' + k + ')" stroke="' + D + '" stroke-width="3" stroke-linejoin="round"/>').join('') +
+        '<rect x="16" y="46" width="168" height="48" rx="22" fill="url(#gcL' + k + ')" stroke="' + D + '" stroke-width="3.5"/>' +
+        '<g fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.6"><path d="M16 70 L100 46 L184 70 M60 46 L60 94 M140 46 L140 94"/></g>' +
+        '<path d="M32 62 Q48 52 90 52" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="5" stroke-linecap="round"/>' +
+        '<rect x="20" y="82" width="160" height="8" rx="4" fill="#fff" opacity=".8"/>' +
+        '<path d="M100 56 L116 72 L100 88 L84 72 Z" fill="url(#gcR' + k + ')" stroke="' + D + '" stroke-width="3" stroke-linejoin="round"/><circle cx="95" cy="66" r="3" fill="#fff"/></g>' +
+        '<g clip-path="url(#lbClip' + k + ')"><rect class="lb-shine" x="-70" y="30" width="46" height="150" fill="url(#lbShine' + k + ')" transform="skewX(-18)"/></g>' +
+        '<g class="gem-orbit">' + orbit + '</g>' +
+        '<g class="lb-sparks" fill="#fff"><path class="sp s1" d="M20 40 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z"/><path class="sp s2" d="M182 36 l1.6 5 5 1.6 -5 1.6 -1.6 5 -1.6 -5 -5 -1.6 5 -1.6z"/><path class="sp s3" d="M10 120 l1.4 4 4 1.4 -4 1.4 -1.4 4 -1.4 -4 -4 -1.4 4 -1.4z"/><path class="sp s2" d="M188 124 l1.4 4 4 1.4 -4 1.4 -1.4 4 -1.4 -4 -4 -1.4 4 -1.4z"/></g></svg>'
+        );
+    };
+    window.LB_GEMCHEST = buildGemChest;
     const CHEST_SVG = buildChest('', 'common');
     window.LB_CHEST = buildChest;
     window.LB_CHEST_SVG = CHEST_SVG;
@@ -183,7 +218,7 @@
         let tier = TIERS.includes(drop.tier) ? drop.tier : 'common';
         const pending = !!drop.pending;
         const o = makeOverlay(tier,
-            '<div class="lb-stage"><div class="lb-title"></div><div class="lb-chest">' + buildChest('o', tier) + '<div class="lb-ring"></div></div>' +
+            '<div class="lb-stage"><div class="lb-title"></div><div class="lb-chest">' + (opts.variant === 'gem' ? buildGemChest('og') : buildChest('o', tier)) + '<div class="lb-ring"></div></div>' +
             '<div class="lb-pips">' + TIERS.map(() => '<i></i>').join('') + '</div><div class="lb-hint">TAP</div></div>');
         const el = o.el, chest = o.$('.lb-chest'), stage = o.$('.lb-stage'), title = o.$('.lb-title'), pips = [...el.querySelectorAll('.lb-pips i')], btn = o.$('.lb-btn'), skipBtn = o.$('.lb-skip');
         let taps = 0, busy = true, opened = false, skipped = false;
@@ -191,8 +226,8 @@
         const upChance = n => tier === 'legendary' ? 0 : UP0 * UP_TIER[TIERS.indexOf(tier)] * Math.pow(UP_DECAY, n);
         const paint = () => {
             TIERS.forEach(t => el.classList.remove('tier-' + t)); el.classList.add('tier-' + tier);
-            if (chest.dataset.tier !== tier) { chest.dataset.tier = tier; const old = chest.querySelector('svg'); if (old) old.outerHTML = buildChest('o', tier); }   // rarer crate = more detail
-            title.textContent = TIER_NAME[tier];
+            if (opts.variant !== 'gem' && chest.dataset.tier !== tier) { chest.dataset.tier = tier; const old = chest.querySelector('svg'); if (old) old.outerHTML = buildChest('o', tier); }   // rarer crate = more detail
+            title.textContent = opts.variant === 'gem' ? 'GEM CHEST' : TIER_NAME[tier]; if (opts.variant === 'gem') el.classList.add('variant-gem');
             pips.forEach((p, i) => { p.className = i <= TIERS.indexOf(tier) ? 'on' : ''; p.style.setProperty('--pc', TIER_COLOR[TIERS[i]]); });
         };
         paint();

@@ -123,3 +123,9 @@
 .lb-pop.pop-boost { flex-direction: row; gap: 8px; } .lb-pop.pop-boost b { font-size: 14px; font-weight: 800; text-align: left; line-height: 1.15; max-width: 120px; }
 .lb-pop.pop-boost .bo-art { width: 40px; height: 40px; } .lb-pop.pop-boost .bo-art b { position: absolute; max-width: none; font-size: 11px; }
 .lb.dense .lb-itempop canvas { width: 150px; height: 150px; } .lb.dense .lb-itempop .nm { font-size: 24px; }
+
+.lb.variant-gem, .lb.variant-gem.tier-common, .lb.variant-gem.tier-rare, .lb.variant-gem.tier-epic, .lb.variant-gem.tier-legendary { --c: #ff8ae6; --c2: #a0128a; }
+.gem-orbit { transform-box: view-box; transform-origin: 100px 100px; animation: gemOrbit 7s linear infinite; }
+.gem-o { animation: gemTw 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes gemOrbit { to { transform: rotate(360deg); } } @keyframes gemTw { 50% { transform: scale(1.35); } }
+.gc-aura { animation: gcAura 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; } @keyframes gcAura { 50% { opacity: .75; transform: scale(1.06); } }
