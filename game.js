@@ -2019,44 +2019,39 @@ function drawUfoCraft(){
     }
 }
 
+// Only a GIANT bumps people. Ordinary players pass straight through each other, so landing on someone can never
+// push them through a platform. A giant that runs into a player knocks them away sideways with a hop; two giants
+// knock each other. Shields block the hit, and a player in a rocket boost is too fast to be shoved.
+let bumpTick = 0;
 function resolveBumps() {
+    bumpTick++;
     for (let i = 0; i < players.length; i++) {
-        for (let j = i + 1; j < players.length; j++) {
-            const p1 = players[i];
-            const p2 = players[j];
-
-            // Negeer botsingen als een van de spelers dood is of niet botst
-            if (p1.dead || p2.dead || p1.gone || p2.gone) continue;
-
-            const dx = p2.x - p1.x;
-            const dy = p2.y - p1.y;
-            
-            // OPTIMALISATIE: Gebruik (dx*dx + dy*dy) in plaats van Math.sqrt
-            const distSq = dx * dx + dy * dy;
-            const radiusSom = p1.r + p2.r;
-            const radiusSomSq = radiusSom * radiusSom;
-
-            // Pas als de gekwadrateerde afstand kleiner is dan de gekwadrateerde radius, 
-            // is er een botsing en rekenen we de echte afstand uit om ze te corrigeren.
-            if (distSq < radiusSomSq && distSq > 0) {
-                const dist = Math.sqrt(distSq); 
-                const overlap = radiusSom - dist;
-                
-                // Normaliseer vectoren en duw ze uit elkaar
-                const nx = dx / dist;
-                const ny = dy / dist;
-                
-                p1.x -= nx * overlap * 0.5;
-                p1.y -= ny * overlap * 0.5;
-                p2.x += nx * overlap * 0.5;
-                p2.y += ny * overlap * 0.5;
-                
-                // Simpele bounce toevoegen aan snelheid (vx)
-                p1.vx -= nx * 0.5;
-                p2.vx += nx * 0.5;
-            }
+        const a = players[i];
+        if (!(a.giantT > 0) || a.dead || a.gone || a.finished || a.ufoHold) continue;
+        for (let j = 0; j < players.length; j++) {
+            if (j === i) continue;
+            const v = players[j];
+            if (v.dead || v.gone || v.finished || v.ufoHold || v.giantT > 0 && j < i) continue;   // giant pairs are handled once
+            if (v._knockTick && bumpTick - v._knockTick < 24) continue;                          // short immunity after a hit
+            const dx = v.x - a.x, dy = v.y - a.y, rs = a.r + v.r;
+            if (dx * dx + dy * dy >= rs * rs) continue;
+            if (shieldBlocks(v) || p_isRocket(v)) continue;
+            const speed = Math.hypot(a.vx, a.vy);
+            const dir = Math.abs(dx) > 4 ? Math.sign(dx) : (a.vx !== 0 ? Math.sign(a.vx) : (Math.random() < 0.5 ? -1 : 1));
+            knockAway(v, dir, speed, a);
+            if (v.giantT > 0) knockAway(a, -dir, speed, v);        // giant against giant: both go flying
         }
     }
+}
+function knockAway(v, dir, srcSpeed, src) {
+    v._knockTick = bumpTick;
+    v.vx = dir * (520 + Math.min(900, srcSpeed * 0.9)) * (v.giantT > 0 ? 0.55 : 1);
+    v.vy = -(430 + Math.min(420, srcSpeed * 0.3));
+    v.mode = 'air'; v.plat = null; v.charged = false; v.squash = 1.3;
+    if (v.chainT > 0) releaseChain(v);
+    burst(v.x, v.y, src.color, 14, 260); ring(v.x, v.y, '#ffffff', 60);
+    if (v.local) { SFX.play('stumble'); haptic([40, 30, 60]); camShake = Math.max(camShake, 8); }
+    else if (src.local) { SFX.play('shatter'); haptic(25); camShake = Math.max(camShake, 4); }
 }
 
 function p_isRocket(p){ return (p.rocketFx||0) > 0.4; }   // mid-boost: too fast to be knocked off course
