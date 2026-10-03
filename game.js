@@ -169,10 +169,10 @@ const SFX = (() => {
             // Master chain with ZERO added latency: a static gain into a soft clipper that only rounds off
             // the very loudest peaks. (A DynamicsCompressor here added ~9 ms of built-in lookahead delay to
             // every single sound, which is exactly the "sound comes a beat late" feeling.)
-            comp = ac.createGain(); comp.gain.value = 1.6;
+            comp = ac.createGain(); comp.gain.value = 1.35;
             try {
                 const shaper = ac.createWaveShaper(), cv = new Float32Array(4096);
-                for (let i = 0; i < 4096; i++){ const x = i/2047.5 - 1, a = Math.abs(x); cv[i] = a < 0.6 ? x : Math.sign(x) * (0.6 + 0.4*Math.tanh((a - 0.6)/0.4)); }
+                for (let i = 0; i < 4096; i++){ const x = i/2047.5 - 1; cv[i] = Math.tanh(x * 1.2) / Math.tanh(1.2); }   // smooth saturation over the whole range: piled-up sounds round off instead of clipping with a crackle
                 shaper.curve = cv; shaper.oversample = 'none';
                 const out = ac.createGain(); out.gain.value = 0.95; comp.connect(shaper); shaper.connect(out); out.connect(ac.destination);
             } catch(e){ comp.connect(ac.destination); }
@@ -399,9 +399,9 @@ const SFX = (() => {
 
     return {
         play(name, arg){ try {
-            const now = performance.now(), cd = COOLDOWN[name] || 0;
+            const now = performance.now(), cd = COOLDOWN[name] !== undefined ? COOLDOWN[name] : (CRITICAL.has(name) ? 0 : 45);   // the same sound never restarts within 45 ms: spammed taps used to stack into a crackle
             if (cd && now - (lastPlay[name] || -1e9) < cd) return;
-            if (active > 36 && !CRITICAL.has(name)) return;
+            if (active > 26 && !CRITICAL.has(name)) return;
             lastPlay[name] = now;
             if (P[name]) P[name](arg);
         } catch(e){} },
@@ -4124,6 +4124,11 @@ function randomBotLook(){
 
 const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'The Gauntlet · 32 players', ranked:'Ranked · Season race' };
 const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked' };
+let _freeIds = null;
+function freeItemIds(){
+    if (!_freeIds) _freeIds = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.price === 0 && !i.premium && !i.exclusive && !i.priceLock).map(i => i.id);
+    return _freeIds;
+}
 function prog(){
     let d = {}; try { d = JSON.parse(localStorage.getItem('rr_profile')) || {}; } catch(e){}
     if (!d.name) d.name = 'Player';
@@ -4145,6 +4150,7 @@ function prog(){
     d.ads = Object.assign({ day:'', coin:0, drop:0, last:0, since:0, lastCoin:0, lastDrop:0 }, (d.ads && typeof d.ads === 'object') ? d.ads : {});
     if (!Array.isArray(d.owned)) d.owned = ['classic'];
     if (!d.owned.includes('classic')) d.owned.push('classic');
+    for (const id of freeItemIds()) if (!d.owned.includes(id)) d.owned.push(id);              // everything that costs 0 coins is yours from the start
     if (!d.trail || !TRAILS.some(trail => trail.id === d.trail)) d.trail = 'none';
     if (!d.lootGrants || typeof d.lootGrants !== 'object') d.lootGrants = {};
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
@@ -4370,7 +4376,7 @@ function renderShop(cat){
                 b.innerHTML = `<span class="m-skin-pv"><canvas width="160" height="160"></canvas></span>` +
                     `<b>${it.name}</b>` +
                     (cat === 'trail' ? `<canvas class="tr-pv" width="300" height="100"></canvas>` : '') +
-                    `<span class="m-skin-f"><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.premium ? R('gem', it.gemPrice) : R('coin', it.price)}</span></span>` + (it.premium ? `<span class="prem-tag">${icon('gem')}</span>` : '');
+                    `<span class="m-skin-f"><span class="buy-hint">Tap again</span><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.premium ? R('gem', it.gemPrice) : R('coin', it.price)}</span></span>` + (it.premium ? `<span class="prem-tag">${icon('gem')}</span>` : '');
                 const preview = { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail };
                 renderLook(b.querySelector('canvas'), preview, { scale:0.22, cy:0.62 });
                 { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it); }
@@ -4381,6 +4387,14 @@ function renderShop(cat){
                     if (owned){
                         if (eq && slot !== 'skin') q[slot] = 'none'; else q[slot] = it.id;
                         saveProg(q); SFX.play('item'); refreshMenu(); renderShop(cat); return;
+                    }
+                    // buying takes two taps: the first one arms the item (quiet highlight, "Tap again"), the second confirms
+                    const afford = it.premium ? gemCount() >= it.gemPrice : load('rr_coins', 0) >= it.price;
+                    if (afford && !b.classList.contains('arm')) {
+                        grid.querySelectorAll('.m-skin.arm').forEach(x => x.classList.remove('arm'));
+                        b.classList.add('arm'); SFX.play('count');
+                        clearTimeout(renderShop._armT); renderShop._armT = setTimeout(() => b.classList.remove('arm'), 2600);
+                        return;
                     }
                     if (it.premium){
                         const gh = gemCount();

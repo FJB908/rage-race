@@ -37,7 +37,7 @@
     }
     // a profile nobody has played on (the game creates one with the name "Player" on first start): it must never beat a real save
     function blank(p) {
-        return !p || (!num(p.xp) && !num(p.races) && !num(p.passPointsEarned) && (p.owned || []).length <= 1 && !num((p.rk || {}).matches) && !num((p.gt || {}).runs));
+        return !p || (!num(p.xp) && !num(p.races) && !num(p.passPointsEarned) && (p.owned || []).filter(x => x !== 'classic' && x !== 'none').length === 0 && !num((p.rk || {}).matches) && !num((p.gt || {}).runs));
     }
     function pristine(s) {
         return blank(s.d.profile) && !Object.values(s.d.nums).some(Boolean) && !s.d.time && !Object.keys(s.d.dims).length;

@@ -578,3 +578,12 @@ body.online-race #btn-pause { display: none; }
 .pf-rec { display: flex; flex-direction: column; gap: 8px; }
 .pf-r { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 14px; background: #161b24; border: 1px solid rgba(255,255,255,.07); }
 .pf-r .ico { width: 24px; height: 24px; flex: none; } .pf-r span { flex: 1; color: var(--muted); font-size: 14px; } .pf-r b { font-size: 15px; }
+
+/* two-tap buying: the first tap quietly arms the item */
+.m-skin-f { position: relative; }
+.buy-hint { position: absolute; left: 0; top: 50%; transform: translateY(-50%); opacity: 0; font-size: 11px; font-weight: 800; color: var(--accent); pointer-events: none; transition: opacity .15s; white-space: nowrap; }
+.m-skin.arm .buy-hint { opacity: 1; } .m-skin.arm .price { opacity: 0; }
+#m-skins .m-skin.arm { border-color: var(--accent); border-top-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset, 0 0 14px -4px var(--accent); transform: translateY(-1px); }
+.m-body { touch-action: pan-y; } .m-body * { touch-action: manipulation; } .m-body .m-pills, .m-body .m-pills * { touch-action: pan-x pan-y; }
+#m-skins .m-skin.leg.prem, #m-skins .m-skin.prem { border-top-color: rgba(255,138,230,.9); }
+#m-skins .m-skin.leg.prem.eq, #m-skins .m-skin.prem.eq { border-top-color: var(--accent); }

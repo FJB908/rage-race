@@ -4,7 +4,7 @@
 .sk-title { text-align:left; }
 .sk-eyebrow { display:block; font-size:11px; font-weight:800; letter-spacing:.05em; color:#ffb347; }
 .sk-title h1 { margin:2px 0 0; display:flex; align-items:center; gap:8px; font:900 28px/1 "Bricolage Grotesque","Space Grotesk",system-ui,sans-serif; color:#fff; }
-.sk-title h1 .ico { width:30px; height:30px; } .sk-title h1 b { color:#ffcf3f; } .sk-title h1 span { font-size:14px; letter-spacing:.05em; color:#8b95a7; }
+.sk-title h1 .ico { width:30px; height:30px; } .sk-title h1 b { color:#ffcf3f; } .sk-title h1 .sk-lbl { font-size:14px; color:#8b95a7; } .sk-flame { display:inline-flex; } .sk-flame[hidden] { display:none; } .sk-title h1 .sk-flame .ico { width:26px; height:26px; margin:0 -2px 0 -4px; }
 .sk-grid { flex:1; min-height:0; overflow-y:auto; display:grid; grid-template-columns:repeat(5,1fr); gap:8px; align-content:start; padding:4px 2px 8px; scrollbar-width:none; }
 .sk-grid::-webkit-scrollbar { display:none; }
 .sk-tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:space-between; gap:3px; min-height:92px; padding:5px 3px 6px; border-radius:14px; border:1px solid rgba(255,255,255,.1); background:linear-gradient(170deg,#1a2030,#121723); box-shadow:0 4px 0 #0a0d14; }
@@ -33,3 +33,5 @@
 .m-streak small { font-size:10px; font-weight:800; letter-spacing:.05em; color:#ffb347; } .m-streak strong { font-size:15px; }
 .m-streak .ms-dot { width:12px; height:12px; border-radius:50%; background:#ff3b4f; box-shadow:0 0 10px #ff3b4f; animation:skGlow 1.2s infinite; } .m-streak .ms-dot[hidden] { display:none; }
 .m-streak.ready { border-color:#ffcf3f; }
+
+.ms-day .ms-fire { width:15px !important; height:15px !important; vertical-align:-2px; margin-right:1px; }

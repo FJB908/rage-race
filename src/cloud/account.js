@@ -31,7 +31,7 @@
 
     /* First open: a new player or an existing account. Players who already have progress skip this. */
     const CHOICE = 'rr_acct_choice';
-    const hasProgress = () => { try { const q = JSON.parse(localStorage.getItem('rr_profile') || 'null'); return !!(q && (q.xp > 0 || q.races > 0 || q.passPointsEarned > 0 || (q.owned || []).length > 1)) || +localStorage.getItem('rr_coins') > 0; } catch (e) { return false; } };   // the game itself writes an empty profile on first start
+    const hasProgress = () => { try { const q = JSON.parse(localStorage.getItem('rr_profile') || 'null'); return !!(q && (q.xp > 0 || q.races > 0 || q.passPointsEarned > 0 || (q.owned || []).filter(x => x !== 'classic' && x !== 'none').length > 0)) || +localStorage.getItem('rr_coins') > 0; } catch (e) { return false; } };   // the game itself writes an empty profile on first start
     let chosen = null; try { chosen = localStorage.getItem(CHOICE); if (!chosen && hasProgress()) { localStorage.setItem(CHOICE, 'existing'); chosen = 'existing'; } } catch (e) {}
     if (!chosen) {
         const el = document.createElement('div'); el.id = 'acct-choose';

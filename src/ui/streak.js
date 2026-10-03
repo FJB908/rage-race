@@ -34,13 +34,13 @@
     // ---- screen ----
     const el = document.createElement('div');
     el.id = 's-streak'; el.className = 'screen streak-screen'; el.style.cssText = 'display:none;opacity:0';
-    el.innerHTML = '<section class="sk-shell"><header class="sk-top"><button class="pass-back" type="button" id="sk-back" aria-label="Back to home">' + icon('chev-l') + '</button><div class="sk-title"><span class="sk-eyebrow">DAILY REWARDS</span><h1>' + icon('calendar') + '<b id="sk-days">0</b><span>DAY STREAK</span></h1></div></header><div class="sk-grid" id="sk-grid"></div><footer class="sk-foot"><button class="sk-claim" id="sk-claim" type="button"></button></footer></section>';
+    el.innerHTML = '<section class="sk-shell"><header class="sk-top"><button class="pass-back" type="button" id="sk-back" aria-label="Back to home">' + icon('chev-l') + '</button><div class="sk-title"><span class="sk-eyebrow">DAILY REWARDS</span><h1>' + icon('calendar') + '<b id="sk-days">0</b><span id="sk-flame" class="sk-flame" hidden>' + icon('flame') + '</span><span class="sk-lbl">day streak</span></h1></div></header><div class="sk-grid" id="sk-grid"></div><footer class="sk-foot"><button class="sk-claim" id="sk-claim" type="button"></button></footer></section>';
     document.body.appendChild(el);
     S.streak = el;
     const grid = el.querySelector('#sk-grid'), claimBtn = el.querySelector('#sk-claim');
 
     function render() {
-        const st = state(); el.querySelector('#sk-days').textContent = st.streak;
+        const st = state(); el.querySelector('#sk-days').textContent = st.streak; el.querySelector('#sk-flame').hidden = st.streak < 1;
         grid.innerHTML = '';
         STREAK_REWARDS.forEach((r, i) => {
             const day = i + 1, claimed = day <= st.shown, isToday = st.canClaim && day === st.nextDay, milestone = r.t === 'prem' || r.t === 'item' || (r.t === 'drop' && r.tier === 'legendary');
@@ -88,7 +88,7 @@
         open() { render(); showScreen('streak'); setTimeout(scrollToToday, 80); },
         refreshHome() {
             const st = state(), b = document.getElementById('btn-streak-open'); if (!b) return;
-            b.querySelector('.ms-day').textContent = st.canClaim ? 'Day ' + st.nextDay : st.streak + ' day streak';
+            b.querySelector('.ms-day').innerHTML = (st.streak > 0 ? icon('flame', 'ms-fire') + ' ' : '') + (st.canClaim ? 'Day ' + st.nextDay : st.streak + ' day streak');
             b.querySelector('.ms-dot').hidden = true;
             setBadge(b, st.canClaim ? 1 : 0);
             b.classList.toggle('ready', st.canClaim);

@@ -34,7 +34,7 @@
             const parts = [];
             for (const kind of ['coin', 'chest']) {
                 const a = B.active(kind); if (!a) continue;
-                parts.push('<span class="bo-pill" style="--bc:' + KINDS[kind].color + '">' + icon(kind === 'coin' ? 'coin' : 'drop') + '<b>x' + a.mult + '</b><small>' + a.total + (kind === 'coin' ? (a.total === 1 ? ' match' : ' matches') : (a.total === 1 ? ' chest' : ' chests')) + '</small></span>');
+                parts.push('<span class="bo-pill" style="--bc:' + KINDS[kind].color + '">' + icon(kind === 'coin' ? 'coin' : 'drop') + '<b>x' + a.mult + '</b><small>' + a.total + (kind === 'coin' ? '' : '') + '</small></span>');
             }
             el.innerHTML = parts.join(''); el.hidden = !parts.length;
         },

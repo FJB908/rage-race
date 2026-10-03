@@ -13,6 +13,7 @@
     const today = () => new Date().toISOString().slice(0, 10);
     const st = () => {
         const p = prog(), a = p.ads = Object.assign({ day:'', coin:0, drop:0, last:0, since:0, lastCoin:0, lastDrop:0 }, p.ads || {});
+        if (a.v !== 2) { a.v = 2; a.coin = 0; a.drop = 0; a.last = a.lastCoin = a.lastDrop = 0; }   // one-time reset of the ad counters (testing)
         if (a.day !== today()) { a.day = today(); a.coin = 0; a.drop = 0; }
         return { p, a };
     };
