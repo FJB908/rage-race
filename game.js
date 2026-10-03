@@ -2019,29 +2019,57 @@ function drawUfoCraft(){
     }
 }
 
-// Only a GIANT bumps people. Ordinary players pass straight through each other, so landing on someone can never
-// push them through a platform. A giant that runs into a player knocks them away sideways with a hop; two giants
-// knock each other. Shields block the hit, and a player in a rocket boost is too fast to be shoved.
+// Player-vs-player bumping.
+//  - Ordinary players still shove each other apart (heavier ones, e.g. in a rocket boost, move less).
+//  - A player standing on a platform is never pushed up or down, so someone landing on top of them cannot press them
+//    through the platform: the lander is deflected sideways and slides off.
+//  - A GIANT dominates: it is never moved by ordinary players, and anyone it hits is thrown away with a hop. A giant is
+//    only pushed back by another giant or by a shield.
 let bumpTick = 0;
 function resolveBumps() {
     bumpTick++;
     for (let i = 0; i < players.length; i++) {
-        const a = players[i];
-        if (!(a.giantT > 0) || a.dead || a.gone || a.finished || a.ufoHold) continue;
-        for (let j = 0; j < players.length; j++) {
-            if (j === i) continue;
-            const v = players[j];
-            if (v.dead || v.gone || v.finished || v.ufoHold || v.giantT > 0 && j < i) continue;   // giant pairs are handled once
-            if (v._knockTick && bumpTick - v._knockTick < 24) continue;                          // short immunity after a hit
-            const dx = v.x - a.x, dy = v.y - a.y, rs = a.r + v.r;
-            if (dx * dx + dy * dy >= rs * rs) continue;
-            if (shieldBlocks(v) || p_isRocket(v)) continue;
-            const speed = Math.hypot(a.vx, a.vy);
-            const dir = Math.abs(dx) > 4 ? Math.sign(dx) : (a.vx !== 0 ? Math.sign(a.vx) : (Math.random() < 0.5 ? -1 : 1));
-            knockAway(v, dir, speed, a);
-            if (v.giantT > 0) knockAway(a, -dir, speed, v);        // giant against giant: both go flying
+        const p1 = players[i];
+        if (p1.dead || p1.gone || p1.finished || p1.ufoHold) continue;
+        for (let j = i + 1; j < players.length; j++) {
+            const p2 = players[j];
+            if (p2.dead || p2.gone || p2.finished || p2.ufoHold) continue;
+            const dx = p2.x - p1.x, dy = p2.y - p1.y, rs = p1.r + p2.r;
+            const distSq = dx * dx + dy * dy;
+            if (distSq >= rs * rs || distSq === 0) continue;
+            if (p1.giantT > 0 || p2.giantT > 0) { giantHit(p1, p2, dx); continue; }
+            const dist = Math.sqrt(distSq), overlap = rs - dist;
+            const idle1 = p1.mode === 'idle', idle2 = p2.mode === 'idle';
+            if (idle1 && idle2) {                         // two standing players: nudge apart sideways only
+                const s = dx !== 0 ? Math.sign(dx) : (Math.random() < 0.5 ? -1 : 1), push = Math.min(overlap, rs - Math.abs(dx)) * 0.5;
+                p1.x -= s * push; p2.x += s * push; p1.vx -= s * 0.5; p2.vx += s * 0.5;
+            } else if (idle1 !== idle2) {                 // one stands, one is in the air: only the flyer gives way
+                const S = idle1 ? p1 : p2, F = idle1 ? p2 : p1;
+                const side = F.x !== S.x ? Math.sign(F.x - S.x) : (Math.random() < 0.5 ? -1 : 1);
+                const need = Math.sqrt(Math.max(0, rs * rs - (F.y - S.y) * (F.y - S.y))) + 0.5;   // sideways distance that clears the overlap
+                F.x = S.x + side * Math.max(need, Math.abs(F.x - S.x));
+                F.vx += side * 80;
+                if (F.vy > 0) F.vy *= 0.5;                // soften the fall onto the person below
+            } else {                                      // both airborne: classic mass-weighted shove
+                const m1 = massOf(p1), m2 = massOf(p2), w1 = m2 / (m1 + m2), w2 = m1 / (m1 + m2);
+                const nx = dx / dist, ny = dy / dist;
+                p1.x -= nx * overlap * w1; p1.y -= ny * overlap * w1;
+                p2.x += nx * overlap * w2; p2.y += ny * overlap * w2;
+                p1.vx -= nx * 0.5 * w1 * 2; p2.vx += nx * 0.5 * w2 * 2;
+            }
         }
     }
+}
+function giantHit(p1, p2, dx) {
+    const a = p1.giantT > 0 ? p1 : p2, v = a === p1 ? p2 : p1;
+    if (v._knockTick && bumpTick - v._knockTick < 24 && !(v.giantT > 0)) return;
+    if (a._knockTick && bumpTick - a._knockTick < 24 && v.giantT > 0) return;
+    const speed = Math.hypot(a.vx, a.vy);
+    const dir = Math.abs(dx) > 4 ? Math.sign(v.x - a.x) : (a.vx !== 0 ? Math.sign(a.vx) : (Math.random() < 0.5 ? -1 : 1));
+    if (v.giantT > 0) { knockAway(v, dir, speed, a); knockAway(a, -dir, speed, v); return; }   // giant against giant: both fly
+    if (shieldBlocks(v)) { a._knockTick = bumpTick; knockAway(a, -dir, speed * 0.6, v); return; }   // a shield bounces the giant back
+    if (p_isRocket(v)) return;                                                                 // too fast to be shoved
+    knockAway(v, dir, speed, a);
 }
 function knockAway(v, dir, srcSpeed, src) {
     v._knockTick = bumpTick;
