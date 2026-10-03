@@ -1690,6 +1690,7 @@ function handleFinish(p) {
     p.finished = true;
     p.finishTime = (Date.now()-matchStart)/1000;
     finishedCount++;
+    if (p.local && window.partyMatch && window.Social) Social.onPartyFinish(p.finishTime, finishedCount);
     burst(p.x, p.y, p.color, 30, 260);
     if (p.local){ SFX.play('finish'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
     if (window.rankedMatch){ if (p.local) Ranked.onLocalFinish(finishedCount); return; }   // Ranked ends the moment YOU cross the line: nobody after you can pass you
@@ -2998,7 +2999,7 @@ let matchBotNames = [];   // the 3 bot names for THIS match (index 1..3)
 let matchHumanSlot = 0;    // 0 = no human-profile bot this race; 1-3 = which slot has one
 
 function startMatchmaking() {
-    window.rankedMatch = false; window.RACE_BAND = undefined; window.matchBots = null;   // a normal quick match
+    window.rankedMatch = false; window.RACE_BAND = undefined; window.matchBots = null; window.partyMatch = null;   // a normal quick match
     matchLootId = newLootId('race');
     // Decide ONCE, before the lobby even builds, whether this match has a "human" bot and
     // who it is — so the name shown in the lobby always matches who behaves that way in
@@ -4508,7 +4509,6 @@ document.getElementById('pz-claimall').addEventListener('click', claimAllPass);
 document.getElementById('btn-pass-back').addEventListener('click', () => showScreen('start'));
 document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.addEventListener('click', () => selectMode(c.dataset.mode)));
 document.getElementById('m-tile-parkour').addEventListener('click', () => { setLastMode('parkour'); openLevels(); });
-document.getElementById('m-friends-race').addEventListener('click', () => { setLastMode('race'); startMatchmaking(); });
 {
     const inp = document.getElementById('m-name-input');
     const commit = () => {

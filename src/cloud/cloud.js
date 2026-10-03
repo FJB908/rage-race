@@ -107,6 +107,7 @@
     function touch() {                           // called by saveProg / store / dimSave after a local change
         const m = getMeta(); m.dirty = true; m.localTs = Date.now(); setMeta(m);
         if (ready) { clearTimeout(timer); timer = setTimeout(push, PUSH_DELAY); }
+        if (window.Social) Social.touch();
     }
 
     async function loadSdk() {
@@ -219,7 +220,7 @@
     }
 
     Object.assign(C, {
-        touch, afterReset, signInGoogle, sync: () => { ready = false; return sync(); },
+        touch, afterReset, api: () => (fb && user) ? { fb, user } : null, signInGoogle, sync: () => { ready = false; return sync(); },
         on: f => C.listeners.push(f),
         _merge:merge, _snapshot:snapshot,
     });

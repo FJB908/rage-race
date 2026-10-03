@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="src/modes/ranked.css">
 <link rel="stylesheet" href="src/cloud/cloud.css">
 <link rel="stylesheet" href="src/ads/ads.css">
+<link rel="stylesheet" href="src/social/social.css">
 </head>
 <body>
 
@@ -97,19 +98,15 @@
         <!-- FRIENDS -->
         <section class="m-tab" data-tab="friends">
             <h1 class="m-h1">Friends</h1>
-            <div class="m-party">
-                <div class="m-party-h"><b>Your party</b><span>1 / 4</span></div>
-                <div class="m-slots">
-                    <div class="m-slot you"><span class="m-slot-av" id="m-party-av"><i></i><i></i></span><strong>You</strong><small>HOST</small></div>
-                    <div class="m-slot empty">Invite</div><div class="m-slot empty">Invite</div><div class="m-slot empty">Invite</div>
-                </div>
-                <div class="m-code"><span>Room code</span><strong>· · · · ·</strong></div>
-                <button class="m-party-go" type="button" disabled>PARTY RACES COMING SOON</button>
-            </div>
-            <div class="m-empty">
-                <b>Online play is on its way</b>
-                <span>Party rooms and a friends list arrive with online races. Until then, jump into a Quick match.</span>
-                <button class="m-link" type="button" id="m-friends-race">Play a Quick match</button>
+            <div id="soc-root" class="off">
+                <div id="soc-status">Connecting...</div>
+                <div id="soc-code"></div>
+                <div id="soc-inv"></div>
+                <div class="so-inline"><input id="soc-add" maxlength="9" placeholder="Friend code" autocomplete="off" spellcheck="false"><button type="button" id="soc-add-go">ADD</button></div>
+                <div id="soc-req"></div>
+                <div id="soc-party"></div>
+                <div class="so-inline"><input id="soc-join" maxlength="5" placeholder="Party code" autocomplete="off" spellcheck="false"><button type="button" id="soc-join-go">JOIN</button></div>
+                <div id="soc-list"></div>
             </div>
         </section>
 
@@ -358,6 +355,7 @@
 <script src="src/modes/ranked.js"></script>
 <script src="src/ads/ads.js"></script>
 <script src="src/cloud/cloud.js"></script>
+<script src="src/social/social.js"></script>
 <script src="src/cloud/account.js"></script>
 <script src="src/tutorial/tutorial.js"></script>
 <script src="src/ui/streak.js"></script>

@@ -1,0 +1,33 @@
+#soc-root { display:flex; flex-direction:column; gap:12px; }
+#soc-root.off > :not(#soc-status) { display:none; }
+#soc-status:empty { display:none; } #soc-status { color:#8b95a7; font-size:14px; padding:20px 4px; }
+#soc-code { display:grid; grid-template-columns:1fr auto; align-items:center; gap:2px 12px; padding:14px 16px; border-radius:18px; background:#161b24; border:1px solid rgba(255,255,255,.08); }
+#soc-code small { grid-column:1; font-size:11px; letter-spacing:.1em; color:#8b95a7; font-weight:700; }
+#soc-code strong { grid-column:1; font-size:23px; letter-spacing:.08em; white-space:nowrap; font-family:ui-monospace,Menlo,Consolas,monospace; color:#35e0c8; }
+#soc-code span { grid-column:2; grid-row:1 / span 2; display:flex; gap:8px; }
+#soc-root button { border:0; border-radius:11px; padding:10px 14px; font:inherit; font-weight:800; font-size:12px; letter-spacing:.04em; color:#06201b; background:#35e0c8; }
+#soc-root button.ghost, #soc-root button.so-link { background:#232a37; color:#c4ccda; }
+#soc-root .so-link { background:none; text-decoration:underline; padding:6px; align-self:center; font-weight:600; }
+#soc-root button.so-big { padding:15px; font-size:14px; border-radius:14px; width:100%; }
+.so-inline { display:flex; gap:8px; }
+.so-inline input { flex:1; min-width:0; border-radius:12px; border:1px solid rgba(255,255,255,.1); background:#0d1017; color:#fff; padding:12px 14px; font:inherit; font-size:15px; letter-spacing:.08em; text-transform:uppercase; }
+.so-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:14px; background:#161b24; border:1px solid rgba(255,255,255,.06); margin-bottom:8px; }
+.so-av { width:44px; height:44px; flex:none; border-radius:12px; background:#1d2330; }
+.so-n { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; } .so-n b { font-size:15px; display:flex; align-items:center; gap:7px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .so-n small { font-size:12px; color:#8b95a7; }
+.dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#3a4254; flex:none; } .dot.on { background:#3ee08a; box-shadow:0 0 6px #3ee08a; }
+.so-banner { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:14px; background:#1b2a2b; border:1px solid rgba(53,224,200,.4); } .so-banner span { flex:1; font-size:14px; }
+#soc-party { padding:14px 16px; border-radius:18px; background:#161b24; border:1px solid rgba(255,255,255,.08); display:flex; flex-direction:column; gap:12px; }
+.so-party-h { display:flex; justify-content:space-between; align-items:center; } .so-party-h b { font-size:16px; } .so-party-h span { color:#8b95a7; font-size:13px; }
+.so-p { margin:0; font-size:13px; color:#8b95a7; line-height:1.45; }
+.so-slots { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; }
+.so-slot { display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 4px; border-radius:12px; background:#1d2330; min-width:0; }
+.so-slot.empty { justify-content:center; color:#566074; font-size:12px; min-height:92px; border:1px dashed rgba(255,255,255,.12); background:none; }
+.so-slot strong { font-size:12px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .so-slot small { font-size:10px; color:#8b95a7; letter-spacing:.06em; } .so-slot small a { color:#ff7d8c; }
+.so-pcode { display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#8b95a7; } .so-pcode strong { font-size:22px; letter-spacing:.2em; color:#fff; font-family:ui-monospace,Menlo,Consolas,monospace; }
+.so-wait { text-align:center; color:#8b95a7; font-size:13px; padding:6px; }
+#soc-board { position:fixed; inset:0; z-index:9000; background:rgba(5,7,11,.82); display:flex; align-items:center; justify-content:center; padding:20px; }
+.sb-card { width:min(92vw,360px); background:#161b24; border:1px solid rgba(255,255,255,.1); border-radius:20px; padding:20px; display:flex; flex-direction:column; gap:12px; }
+.sb-card h2 { margin:0; font-size:22px; } .sb-card p { margin:0; font-size:13px; color:#8b95a7; }
+.sb-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:#1d2330; } .sb-row.me { outline:2px solid #35e0c8; }
+.sb-row b { width:18px; color:#ffcf3f; } .sb-row span { flex:1; font-weight:700; overflow:hidden; text-overflow:ellipsis; } .sb-row em { font-style:normal; color:#8b95a7; font-variant-numeric:tabular-nums; }
+.sb-card button { border:0; border-radius:14px; padding:14px; font:inherit; font-weight:800; background:#35e0c8; color:#06201b; }
