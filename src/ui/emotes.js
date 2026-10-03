@@ -8,28 +8,18 @@
         { id: 'gg',    text: 'GG',          col: GOLD,   price: 0 },
         { id: 'gl',    text: 'GOOD LUCK',   col: TEAL,   price: 0 },
         { id: 'wp',    text: 'WELL PLAYED', col: SILVER, price: 0 },
-        { id: 'oops',  text: 'OOPS',        col: ORANGE, price: 0 },
-        { id: 'nice',  text: 'NICE ONE',    col: GOLD,   gems: 30, glyph: 'star' },
-        { id: 'close', text: 'SO CLOSE',    col: BLUE,   gems: 30, glyph: 'bolt' },
-        { id: 'rage',  text: 'RAGE!',       col: RED,    gems: 40, glyph: 'flame' },
-        { id: 'wow',   text: 'WOW',         col: PINK,   gems: 40, glyph: 'burst' },
-        { id: 'cool',  text: 'COOL',        col: BLUE,   gems: 40, glyph: 'snow' },
-        { id: 'boom',  text: 'BOOM',        col: ORANGE, gems: 50, glyph: 'burst' },
-        { id: 'king',  text: 'KING',        col: PURPLE, gems: 60, glyph: 'crown' },
+        { id: 'oops',  text: 'OOPS',        col: ORANGE, price: 0, fx: 'wobble' },
+        { id: 'nice',  text: 'NICE ONE',    col: GOLD,   gems: 30, fx: 'pulse' },
+        { id: 'close', text: 'SO CLOSE',    col: BLUE,   gems: 30, fx: 'shake', amp: 1.3 },
+        { id: 'rage',  text: 'RAGE!',       col: RED,    gems: 40, fx: 'shake', amp: 3, big: 1.25, heat: true },
+        { id: 'wow',   text: 'WOW',         col: PINK,   gems: 40, fx: 'jelly', big: 1.2 },
+        { id: 'cool',  text: 'COOL',        col: BLUE,   gems: 40, fx: 'shine', frost: true },
+        { id: 'boom',  text: 'BOOM',        col: ORANGE, gems: 50, fx: 'boom', big: 1.3 },
+        { id: 'king',  text: 'KING',        col: PURPLE, gems: 60, fx: 'shine', sparkle: true, big: 1.2 },
     ];
     const BY = Object.fromEntries(EMOTES.map(e => [e.id, e]));
     const FAMILY = '"Bricolage Grotesque","Arial Rounded MT Bold","Segoe UI",system-ui,sans-serif';
     const COOLDOWN = 2500, LIFE = 2.3, MAX_SLOTS = 4;
-
-    /* ----------------------------------------------------------- glyphs (canvas paths, centred on 0,0 in a 1x1 box) ---- */
-    const GLYPH = {
-        star(c, s) { c.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? s * .22 : s * .5, a = -Math.PI / 2 + i * Math.PI / 5; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); },
-        bolt(c, s) { c.beginPath(); c.moveTo(s * .12, -s * .5); c.lineTo(-s * .3, s * .08); c.lineTo(-s * .02, s * .08); c.lineTo(-s * .14, s * .5); c.lineTo(s * .32, -s * .12); c.lineTo(s * .04, -s * .12); c.closePath(); },
-        flame(c, s) { c.beginPath(); c.moveTo(0, -s * .52); c.bezierCurveTo(s * .1, -s * .25, s * .42, -s * .12, s * .38, s * .16); c.bezierCurveTo(s * .36, s * .38, s * .18, s * .5, 0, s * .5); c.bezierCurveTo(-s * .18, s * .5, -s * .38, s * .38, -s * .38, s * .12); c.bezierCurveTo(-s * .38, -s * .02, -s * .24, -s * .1, -s * .16, -s * .2); c.bezierCurveTo(-s * .12, -s * .06, -s * .06, -s * .02, -s * .02, -s * .02); c.bezierCurveTo(-s * .06, -s * .26, -s * .06, -s * .4, 0, -s * .52); c.closePath(); },
-        burst(c, s) { c.beginPath(); for (let i = 0; i < 16; i++) { const r = i % 2 ? s * .26 : s * .52, a = i * Math.PI / 8; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); },
-        snow(c, s) { c.beginPath(); for (let i = 0; i < 3; i++) { const a = i * Math.PI / 3; c.moveTo(Math.cos(a) * s * .5, Math.sin(a) * s * .5); c.lineTo(-Math.cos(a) * s * .5, -Math.sin(a) * s * .5); } },
-        crown(c, s) { c.beginPath(); c.moveTo(-s * .5, s * .36); c.lineTo(-s * .5, -s * .22); c.lineTo(-s * .24, 0); c.lineTo(0, -s * .38); c.lineTo(s * .24, 0); c.lineTo(s * .5, -s * .22); c.lineTo(s * .5, s * .36); c.closePath(); },
-    };
 
     /* ----------------------------------------------------------------------- in-world bubbles ---- */
     const active = [];     // { p, e, t0 }
@@ -37,28 +27,41 @@
         const e = BY[id]; if (!e || !p) return;
         for (let i = active.length - 1; i >= 0; i--) if (active[i].p === p) active.splice(i, 1);     // one bubble per player
         active.push({ p, e, t0: performance.now() });
+        if (e.fx === 'boom' && typeof burst === 'function') { burst(p.x, p.y - p.r - 40, e.col[1], 16, 260); ring(p.x, p.y - p.r - 40, e.col[0], 60); }
+        if (e.heat && typeof burst === 'function') burst(p.x, p.y - p.r - 30, '#ff7a3d', 10, 160);
     }
     function draw(ctx) {
         const now = performance.now();
         for (let i = active.length - 1; i >= 0; i--) {
-            const a = active[i], age = (now - a.t0) / 1000;
-            if (age > LIFE || !players.includes(a.p)) { active.splice(i, 1); continue; }
-            const p = a.p, e = a.e, pop = age < .22 ? 1 + 1.6 * Math.pow(1 - age / .22, 2) * Math.sin(age / .22 * Math.PI * .5 + 1.2) * .4 : 1, fade = age > LIFE - .4 ? (LIFE - age) / .4 : 1;
-            const hatLift = p.look && p.look.hat && p.look.hat !== 'none' ? 14 : 0, rise = Math.min(age, .5) * 26 + age * 5;
-            const x = p.x, y = p.y - p.r - 46 - hatLift - rise, size = 17;
-            ctx.save(); ctx.translate(x, y); ctx.scale(pop, pop); ctx.globalAlpha = Math.max(0, Math.min(1, fade)); ctx.transform(1, 0, -0.14, 1, 0, 0);
-            ctx.font = 'italic 800 ' + size + 'px ' + FAMILY; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            const tw = ctx.measureText(e.text).width, gs = e.glyph ? size * 1.15 : 0, total = tw + (gs ? gs + 4 : 0), x0 = -total / 2;
+            const a = active[i], t = (now - a.t0) / 1000;
+            if (t > LIFE || !players.includes(a.p)) { active.splice(i, 1); continue; }
+            const p = a.p, e = a.e, fade = t > LIFE - .4 ? (LIFE - t) / .4 : 1;
+            const hatLift = p.look && p.look.hat && p.look.hat !== 'none' ? 14 : 0, rise = Math.min(t, .5) * 26 + t * 5;
+            let sx = 1, sy = 1, dx = 0, dy = 0;
+            const pop = t < .22 ? 1 + 0.5 * Math.pow(1 - t / .22, 2) : 1; sx = sy = pop;
+            if (e.fx === 'pulse') { const k = 1 + .07 * Math.sin(t * 14); sx *= k; sy *= k; }
+            else if (e.fx === 'shake') { dx = Math.sin(t * 70) * (e.amp || 2) * Math.min(1, t * 6) * Math.max(0, 1 - t / 1.6); dy = Math.cos(t * 83) * (e.amp || 2) * .4 * Math.max(0, 1 - t / 1.6); }
+            else if (e.fx === 'jelly') { const k = .16 * Math.sin(t * 18) * Math.exp(-t * 1.4); sx *= 1 + k; sy *= 1 - k; }
+            else if (e.fx === 'wobble') { dy = Math.sin(t * 16) * 2.2 * Math.exp(-t * 1.6); }
+            else if (e.fx === 'boom') { const k = t < .3 ? 1 + 1.3 * Math.pow(1 - t / .3, 2) : 1; sx = sy = k; dx = Math.sin(t * 90) * 2 * Math.max(0, 1 - t / .5); }
+            const size = 17 * (e.big || 1), x = p.x + dx, y = p.y - p.r - 46 - hatLift - rise + dy;
+            ctx.save(); ctx.translate(x, y); ctx.scale(sx, sy); ctx.globalAlpha = Math.max(0, Math.min(1, fade)); ctx.transform(1, 0, -0.14, 1, 0, 0);
+            ctx.font = 'italic 800 ' + size + 'px ' + FAMILY; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            const tw = ctx.measureText(e.text).width;
             const g = ctx.createLinearGradient(0, -size / 2, 0, size / 2); g.addColorStop(0, e.col[0]); g.addColorStop(.48, e.col[1]); g.addColorStop(1, e.col[2]);
-            ctx.shadowColor = e.col[1]; ctx.shadowBlur = 10;
-            if (gs) {
-                ctx.save(); ctx.translate(x0 + gs / 2, 0); GLYPH[e.glyph](ctx, gs);
-                ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = '#0d1017'; ctx.stroke(); ctx.fillStyle = g; if (e.glyph !== 'snow') ctx.fill();
-                if (e.glyph === 'snow') { ctx.lineWidth = 2.4; ctx.strokeStyle = e.col[0]; ctx.stroke(); }
-                ctx.restore();
+            ctx.shadowColor = e.col[1]; ctx.shadowBlur = e.heat ? 12 + 8 * Math.sin(t * 22) : 10;
+            ctx.lineJoin = 'round'; ctx.lineWidth = 5; ctx.strokeStyle = '#0d1017'; ctx.strokeText(e.text, 0, 0);
+            ctx.fillStyle = g; ctx.fillText(e.text, 0, 0);
+            ctx.shadowBlur = 0;
+            if (e.fx === 'shine') {                                   // a bright band glides across the letters
+                const ph = ((t * .9) % 1.4) - .2, cx0 = -tw / 2 + ph * tw * 1.4 - tw * .2, sg = ctx.createLinearGradient(cx0 - size * .8, -size, cx0 + size * .8, size);
+                sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(255,255,255,.95)'); sg.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = sg; ctx.fillText(e.text, 0, 0);
             }
-            ctx.lineJoin = 'round'; ctx.lineWidth = 5; ctx.strokeStyle = '#0d1017'; ctx.strokeText(e.text, x0 + (gs ? gs + 4 : 0), 0);
-            ctx.fillStyle = g; ctx.fillText(e.text, x0 + (gs ? gs + 4 : 0), 0);
+            if (e.sparkle) {                                          // small four-point sparks twinkling around the word
+                ctx.fillStyle = '#fff';
+                for (let k = 0; k < 4; k++) { const ph = (t * 1.6 + k * .27) % 1, px = (-.5 + ((k * .37 + .1) % 1)) * tw, py = (k % 2 ? -1 : 1) * size * .75, r = Math.sin(ph * Math.PI) * 4.2; if (r > .3) { ctx.beginPath(); ctx.moveTo(px, py - r); ctx.lineTo(px + r * .3, py - r * .3); ctx.lineTo(px + r, py); ctx.lineTo(px + r * .3, py + r * .3); ctx.lineTo(px, py + r); ctx.lineTo(px - r * .3, py + r * .3); ctx.lineTo(px - r, py); ctx.lineTo(px - r * .3, py - r * .3); ctx.closePath(); ctx.fill(); } }
+            }
             ctx.restore();
         }
     }
@@ -84,18 +87,9 @@
     /* ---------------------------------------------------------------- DOM chip (same look) ---- */
     function chipHTML(e) {
         const style = '--a:' + e.col[0] + ';--b:' + e.col[1] + ';--c:' + e.col[2];
-        return '<span class="em-chip" style="' + style + '"><i class="em-gl" data-g="' + (e.glyph || '') + '"></i><b>' + e.text + '</b></span>';
+        return '<span class="em-chip fx-' + (e.fx || 'none') + '" style="' + style + '"><b>' + e.text + '</b></span>';
     }
-    function paintGlyphs(root) {
-        root.querySelectorAll('.em-gl').forEach(el => {
-            const g = el.dataset.g; if (!g) { el.remove(); return; }
-            const cv = document.createElement('canvas'); cv.width = cv.height = 48; el.appendChild(cv);
-            const c = cv.getContext('2d'), st = getComputedStyle(el.parentNode), a = st.getPropertyValue('--a'), b = st.getPropertyValue('--b'), cc = st.getPropertyValue('--c');
-            c.translate(24, 24); GLYPH[g](c, 36); c.lineJoin = 'round'; c.lineWidth = 5; c.strokeStyle = '#0d1017'; c.stroke();
-            const gr = c.createLinearGradient(0, -18, 0, 18); gr.addColorStop(0, a); gr.addColorStop(.5, b); gr.addColorStop(1, cc);
-            if (g === 'snow') { c.lineWidth = 3; c.strokeStyle = a; c.stroke(); } else { c.fillStyle = gr; c.fill(); }
-        });
-    }
+    const paintGlyphs = () => {};
 
     /* ------------------------------------------------------------------------- race button ---- */
     const btn = document.createElement('button'); btn.id = 'emote-btn'; btn.type = 'button'; btn.hidden = true; btn.setAttribute('aria-label', 'Emotes');
