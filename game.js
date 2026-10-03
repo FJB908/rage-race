@@ -4160,6 +4160,8 @@ function prog(){
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
     if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
     if (!Array.isArray(d.lvClaimed)) d.lvClaimed = [];
+    if (!Array.isArray(d.rageClaimed)) d.rageClaimed = [];
+    d.rage = !!d.rage;
     if (!Array.isArray(d.emotes)) d.emotes = ['gg', 'gl', 'wp', 'oops'];
     if (!Array.isArray(d.emoteLoadout)) d.emoteLoadout = ['gg', 'gl', 'wp', 'oops'];
     if (typeof d.finisher !== 'string') d.finisher = 'f-none';
