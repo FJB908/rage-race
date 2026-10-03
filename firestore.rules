@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Every player may read and write only their own save document, with a fixed shape and a size cap.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['v', 'ts', 'blob', 'name', 'xp', 'mmr', 'rp', 'season', 'updatedAt'])
+        && request.resource.data.blob is string && request.resource.data.blob.size() < 300000
+        && request.resource.data.name is string && request.resource.data.name.size() <= 16;
+      allow delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

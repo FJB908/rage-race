@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="src/ui/streak.css">
 <link rel="stylesheet" href="src/modes/gauntlet.css">
 <link rel="stylesheet" href="src/modes/ranked.css">
+<link rel="stylesheet" href="src/cloud/cloud.css">
 </head>
 <body>
 
@@ -121,6 +122,11 @@
                     <span class="m-plvl" id="m-plvl">Level 1 · 0 / 120 XP</span>
                     <div class="m-xpbar"><div id="m-xpfill2"></div></div>
                 </div>
+            </div>
+            <div class="m-acct" id="m-acct">
+                <span class="ma-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.75 4.75 0 0 1 .5 9.5z"/></svg></span>
+                <span class="ma-txt"><b id="ma-title">Cloud save</b><span id="ma-sub">Connecting...</span></span>
+                <button type="button" id="ma-btn" hidden>SIGN IN</button>
             </div>
             <h2 class="m-h2">EQUIPPED</h2>
             <div class="m-two">
@@ -349,6 +355,8 @@
 <script src="src/modes/roster.js"></script>
 <script src="src/modes/gauntlet.js"></script>
 <script src="src/modes/ranked.js"></script>
+<script src="src/cloud/cloud.js"></script>
+<script src="src/cloud/account.js"></script>
 <script src="src/tutorial/tutorial.js"></script>
 <script src="src/ui/streak.js"></script>
 </body>

@@ -2896,6 +2896,7 @@ document.getElementById('set-reset').addEventListener('click', () => {
     const no = document.createElement('button'); no.className = 'btn ghost'; no.style.marginTop = '10px'; no.textContent = 'Cancel';
     yes.addEventListener('click', () => {
         ['rr_coins','rr_profile','rr_esc_best_score','rr_pk_best','rr_pk_best_time','rr_pk_save_v1','rr_pk_levels_v1','rr_pk_levels_v2'].forEach(k => { try { localStorage.removeItem(k); } catch(e){} });
+        if (window.Cloud) Cloud.afterReset();
         refreshStartMeta(); showScreen('start');
     });
     no.addEventListener('click', () => box.remove());
@@ -3059,7 +3060,7 @@ const ESC_PICKUPS = { rocket:0.40, shield:0.32, giant:0.28 };   // no Super Boun
 const ESC_WIDTH_MUL = 1.3;      // wider platforms than the race
 const ESC_METERS = 10;          // px per displayed meter
 
-function store(k, v){ try { localStorage.setItem(k, String(v)); } catch(e){} }
+function store(k, v){ try { localStorage.setItem(k, String(v)); } catch(e){} if (window.Cloud) Cloud.touch(); }
 function load(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : Number(v); } catch(e){ return d; } }
 
 // Canvas-ready copies of the item icons, so power-ups on the map use the exact same art as the HUD
@@ -4130,7 +4131,7 @@ function prog(){
     if (!['race', 'escape', 'parkour', 'gauntlet', 'ranked'].includes(d.lastMode)) d.lastMode = 'race';
     return d;
 }
-function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} }
+function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} if (window.Cloud) Cloud.touch(); }
 function levelInfo(xp){
     let lvl = 1, need = 120, into = Math.max(0, xp);
     while (into >= need){ into -= need; lvl++; need = 120 + (lvl-1)*40; }
@@ -4925,7 +4926,7 @@ function dimLoad(dm){
     try { const d = JSON.parse(localStorage.getItem(dm.key)); if (d && Array.isArray(d.stars)) return d; } catch(e){}
     return { stars: dm.levels.map(() => 0), best: dm.levels.map(() => 0) };
 }
-function dimSave(dm, d){ try { localStorage.setItem(dm.key, JSON.stringify(d)); } catch(e){} }
+function dimSave(dm, d){ try { localStorage.setItem(dm.key, JSON.stringify(d)); } catch(e){} if (window.Cloud) Cloud.touch(); }
 
 
 function lvReach(ax, aw, ay, bx, bw, by, mult){
