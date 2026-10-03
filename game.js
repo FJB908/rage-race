@@ -106,8 +106,8 @@ function showScreen(name) {
     if (typeof SFX !== 'undefined' && SFX.music){
         if (name === 'start') SFX.music.set('menu');
     }
-    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings','streak'].forEach(k => {
-        const el = S[k];
+    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings','streak','lvr'].forEach(k => {
+        const el = S[k]; if (!el) return;
         if (k === name) {
             el.style.display = 'flex';
             requestAnimationFrame(() => { el.style.opacity = 1; });
@@ -4120,6 +4120,7 @@ function prog(){
     if (!Number.isFinite(d.passPointsEarned)) d.passPointsEarned = d.passPoints;
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
     if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
+    if (!Array.isArray(d.lvClaimed)) d.lvClaimed = [];
     if (!d.streak || typeof d.streak !== 'object') d.streak = { n:0, last:'' };
     d.gt = Object.assign({ runs:0, wins:0, best:0, crowned:false, keys:0, streak:0 }, (d.gt && typeof d.gt === 'object') ? d.gt : {});   // Gauntlet record
     for (const k of ['runs', 'wins', 'best', 'keys', 'streak']) if (!Number.isFinite(d.gt[k])) d.gt[k] = 0;
@@ -4434,6 +4435,7 @@ function refreshMenu(){
     document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));
     renderPassHome(p);
     if (window.Boost) Boost.refreshHome();
+    if (window.LevelRewards) LevelRewards.refreshHome();
     if (window.Streak) Streak.refreshHome();
     if (window.Gauntlet) Gauntlet.refreshHome();
     refreshShopBadge();

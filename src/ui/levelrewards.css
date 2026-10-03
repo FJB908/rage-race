@@ -1,0 +1,33 @@
+.lr-shell { width: 100%; height: 100%; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top) + 14px) 0 0; box-sizing: border-box; background: #0d1017; }
+.lr-top { display: flex; align-items: center; gap: 12px; padding: 0 16px 10px; }
+.lr-title small { display: block; font-size: 11px; letter-spacing: .14em; color: #8b95a7; font-weight: 800; } .lr-title h1 { margin: 2px 0 0; font-size: 24px; }
+.lr-hero { display: flex; align-items: center; gap: 14px; margin: 4px 16px 12px; padding: 14px; border-radius: 20px; background: #161b24; border: 1px solid rgba(255,255,255,.08); }
+.lr-ring { --pct: 0; position: relative; width: 74px; height: 74px; flex: none; border-radius: 50%; background: conic-gradient(var(--accent) calc(var(--pct) * 1%), rgba(255,255,255,.1) 0); display: grid; place-items: center; }
+.lr-ring::before { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: #161b24; }
+.lr-ring span { position: relative; font-size: 30px; font-weight: 900; }
+.lr-herotxt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; } .lr-herotxt b { font-size: 12px; letter-spacing: .1em; color: #8b95a7; }
+.lr-bar { height: 8px; border-radius: 5px; background: rgba(255,255,255,.1); overflow: hidden; } .lr-bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 5px; transition: width .4s; }
+.lr-herotxt small { font-size: 12px; }
+.lr-all { flex: none; border: 0; border-radius: 12px; padding: 11px 12px; background: var(--accent); color: #06201b; font: inherit; font-weight: 900; font-size: 12px; } .lr-all b { margin-left: 4px; }
+.lr-list { flex: 1; overflow-y: auto; padding: 4px 16px calc(env(safe-area-inset-bottom) + 24px); position: relative; -webkit-overflow-scrolling: touch; }
+.lr-row { position: relative; display: flex; align-items: center; gap: 12px; padding: 5px 0; }
+.lr-row::before { content: ''; position: absolute; left: 19px; top: 0; bottom: 0; width: 3px; background: rgba(255,255,255,.1); }
+.lr-row.claimed::before { background: var(--accent); }
+.lr-node { position: relative; z-index: 1; flex: none; width: 41px; height: 41px; border-radius: 50%; display: grid; place-items: center; background: #1d2330; border: 2px solid rgba(255,255,255,.14); font-weight: 900; font-size: 15px; color: #8b95a7; }
+.lr-node svg { width: 18px; height: 18px; }
+.lr-row.ready .lr-node { background: var(--rc); border-color: #fff; color: #12161f; box-shadow: 0 0 14px var(--rc); }
+.lr-row.claimed .lr-node { background: var(--accent); border-color: var(--accent); color: #06201b; }
+.lr-row.next .lr-node { border-color: var(--accent); color: #fff; }
+.lr-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; background: #161b24; border: 1px solid rgba(255,255,255,.07); border-left: 4px solid var(--rc); }
+.lr-row.locked .lr-card { opacity: .62; } .lr-row.ready .lr-card { border-color: var(--rc); box-shadow: 0 0 16px color-mix(in srgb, var(--rc) 30%, transparent); }
+.lr-row.mile .lr-card { background: linear-gradient(100deg, color-mix(in srgb, var(--rc) 14%, #161b24), #161b24 60%); }
+.lr-art { flex: none; width: 52px; height: 52px; display: grid; place-items: center; } .lr-art svg, .lr-art canvas { width: 100%; height: 100%; } .lr-art .bo-art svg { width: 100%; }
+.lr-crate { display: block; width: 100%; height: 100%; } .lr-crate svg { display: block; width: 100%; height: 100%; }
+.lr-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; } .lr-name b { font-size: 16px; } .lr-name small { font-size: 12px; color: #8b95a7; }
+.lr-claim { flex: none; border: 0; border-radius: 11px; padding: 10px 14px; background: var(--rc); color: #12161f; font: inherit; font-weight: 900; font-size: 12px; }
+.lr-state { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: #8b95a7; display: inline-flex; align-items: center; gap: 4px; } .lr-state svg { width: 12px; height: 12px; }
+#m-plvl.has-claim::after { content: ''; display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: #ff3b52; }
+
+.lvr-screen { justify-content: flex-start; align-items: stretch; padding: 0; overflow: hidden; text-align: left; background: #0d1017; }
+.lr-name { text-align: left; }
+.m-lvl .nbadge { top: -13px; right: -12px; min-width: 18px; height: 18px; font-size: 11px; padding: 0 4px; }
