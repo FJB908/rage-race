@@ -4418,6 +4418,36 @@ function setLastMode(mode){
     else if (mode === 'parkour') openLevels();
     else startMatchmaking();
 }
+// ---- Profile tab ----
+function renderProfile(p, L, stars){
+    const slotCanvas = (id, look, scale) => { const cv = document.getElementById(id); if (cv) renderLook(cv, look, { scale:scale || 0.3, cy:0.62 }); };
+    const base = { skin:'classic', hat:'none', face:'none', trail:'none' };
+    slotCanvas('pf-c-skin', Object.assign({}, base, { skin:p.skin }));
+    slotCanvas('pf-c-hat', Object.assign({}, base, { hat:p.hat }), 0.26);
+    slotCanvas('pf-c-face', Object.assign({}, base, { face:p.face }));
+    const trail = TRAIL_BY_ID[p.trail] || TRAILS[0], tc = document.getElementById('pf-c-trail');
+    if (tc){ const g = tc.getContext('2d'); g.clearRect(0, 0, tc.width, tc.height); if (trail.id !== 'none'){ try { drawTrailPreview(tc, trail); } catch(e){} } }
+    document.getElementById('pf-n-skin').textContent = skinById(p.skin).name;
+    document.getElementById('pf-n-hat').textContent = (HATS.find(h => h.id === p.hat) || HATS[0]).name;
+    document.getElementById('pf-n-face').textContent = (FACES.find(f => f.id === p.face) || FACES[0]).name;
+    document.getElementById('pf-n-trail').textContent = trail.name;
+    document.getElementById('pf-lv-n').textContent = L.lvl;
+    document.getElementById('pf-lv-xp').innerHTML = R('xp', L.into + ' / ' + L.need);
+    if (window.LevelRewards) setBadge(document.getElementById('pf-lv-n'), LevelRewards.claimable().length);
+    // rank chip
+    const rkEl = document.getElementById('pf-rank');
+    if (rkEl && window.Ranked){ const s = Ranked.state(); rkEl.innerHTML = s.placed ? Ranked.emblem(s.tier, 22) + '<b>' + s.rank.label + '</b><small>' + s.rk.rp + ' RP</small>' : '<small>Unranked</small>'; }
+    // records
+    const bestT = load('rr_pk_best_time', 0), bestM = load('rr_pk_best', 0), esc = load('rr_esc_best_score', 0), passTier = Math.min(30, Math.floor((p.passPointsEarned || 0) / 100));
+    const rows = [
+        ['crown', 'Gauntlet crowns', p.gt.wins],
+        ['mode-escape', 'Escape best', esc ? esc.toLocaleString('en-US') : '--'],
+        ['star', 'Level stars', stars + ' / 60'],
+        ['mode-levels', 'Tower best', bestT ? pkFmtTime(bestT) : bestM ? bestM + ' m' : '--'],
+        ['pass', 'Season pass', 'Tier ' + passTier + ' / 30'],
+    ];
+    document.getElementById('pf-rec').innerHTML = rows.map(r => '<div class="pf-r">' + icon(r[0]) + '<span>' + r[1] + '</span><b>' + r[2] + '</b></div>').join('');
+}
 function refreshMenu(){
     const p = prog(), L = levelInfo(prog().xp), sk = skinById(p.skin);
     const root = document.getElementById('s-start');
@@ -4426,7 +4456,7 @@ function refreshMenu(){
     document.getElementById('m-name').textContent = p.name;
     document.getElementById('m-xpfill').style.width = (100*L.into/L.need).toFixed(1) + '%';
     document.getElementById('m-xpfill2').style.width = (100*L.into/L.need).toFixed(1) + '%';
-    document.getElementById('m-plvl').innerHTML = `Level ${L.lvl} · ${R('xp', L.into + ' / ' + L.need)}`;
+    document.getElementById('m-plvl').textContent = 'Level ' + L.lvl;
     const inp = document.getElementById('m-name-input');
     if (document.activeElement !== inp) inp.value = p.name;
     document.getElementById('m-mode').textContent = MODE_LABEL[p.lastMode] || MODE_LABEL.race;
@@ -4436,20 +4466,13 @@ function refreshMenu(){
     renderPassHome(p);
     if (window.Boost) Boost.refreshHome();
     if (window.LevelRewards) LevelRewards.refreshHome();
+    if (window.Ads) Ads.refreshHome();
     if (window.Streak) Streak.refreshHome();
     if (window.Gauntlet) Gauntlet.refreshHome();
     refreshShopBadge();
     renderLook(document.getElementById('m-hero'), myLook(), { scale:0.22, cy:0.62 });
     renderLook(document.getElementById('m-hero2'), myLook(), { scale:0.22, cy:0.62 });
     renderLook(document.getElementById('m-av'), myLook(), { scale:0.25, cy:0.68 });
-    const hat = HATS.find(h => h.id === p.hat) || HATS[0], face = FACES.find(f => f.id === p.face) || FACES[0];
-    const trail = TRAIL_BY_ID[p.trail] || TRAILS[0];
-    document.getElementById('m-eq-hat-n').textContent = hat.name;
-    document.getElementById('m-eq-face-n').textContent = face.name;
-    document.getElementById('m-eq-hat').style.background = hat.id === 'none' ? '#232a37' : RARITY[hat.rarity].color;
-    document.getElementById('m-eq-face').style.background = face.id === 'none' ? '#232a37' : RARITY[face.rarity].color;
-    document.getElementById('m-eq-trail-n').textContent = trail.name;
-    document.getElementById('m-eq-trail').style.background = trail.color;
     let d1 = 0, d2 = 0;
     try { d1 = dimLoad(DIMENSIONS[0]).stars.reduce((a,b) => a+b, 0); d2 = dimLoad(DIMENSIONS[1]).stars.reduce((a,b) => a+b, 0); } catch(e){}
     document.getElementById('m-d1').innerHTML = `${icon('star')} ${d1}/30`;
@@ -4458,17 +4481,10 @@ function refreshMenu(){
     document.getElementById('m-tile-pk').innerHTML = `${icon('star')} ${d1+d2} / 60`;
     const save = pkLoadSave(), bestM = load('rr_pk_best', 0), bestT = load('rr_pk_best_time', 0);
     document.getElementById('m-tower').textContent = bestT ? pkFmtTime(bestT) : save ? `${save.m || 0} m` : bestM ? `${bestM} m` : '--';
-    document.getElementById('m-eq-skin').style.background = sk.color;
-    document.getElementById('m-eq-skin-n').textContent = sk.name;
     document.getElementById('m-s-races').textContent = p.races;
     document.getElementById('m-s-wins').textContent = p.wins;
-    document.getElementById('m-s-crowns').textContent = p.gt.wins;
     document.getElementById('m-s-rate').textContent = p.races ? Math.round(100*p.wins/p.races) + '%' : '--';
-    const esc = load('rr_esc_best_score', 0);
-    document.getElementById('m-s-esc').textContent = esc ? esc.toLocaleString('en-US') : '--';
-    document.getElementById('m-s-pk').innerHTML = `${icon('star')} ${d1 + d2}`;
-    document.getElementById('m-s-tower').textContent = bestT ? pkFmtTime(bestT) : bestM ? `${bestM} m` : '--';
-    document.getElementById('m-s-pass').textContent = p.passPoints.toLocaleString('en-US');
+    renderProfile(p, L, d1 + d2);
     renderShop('skin');
 }
 

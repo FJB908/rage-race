@@ -26,8 +26,7 @@
 .lr-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; } .lr-name b { font-size: 16px; } .lr-name small { font-size: 12px; color: #8b95a7; }
 .lr-claim { flex: none; border: 0; border-radius: 11px; padding: 10px 14px; background: var(--rc); color: #12161f; font: inherit; font-weight: 900; font-size: 12px; }
 .lr-state { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: #8b95a7; display: inline-flex; align-items: center; gap: 4px; } .lr-state svg { width: 12px; height: 12px; }
-#m-plvl.has-claim::after { content: ''; display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: #ff3b52; }
 
 .lvr-screen { justify-content: flex-start; align-items: stretch; padding: 0; overflow: hidden; text-align: left; background: #0d1017; }
 .lr-name { text-align: left; }
-.m-lvl .nbadge { top: -13px; right: -12px; min-width: 18px; height: 18px; font-size: 11px; padding: 0 4px; }
+.m-lvl .nbadge { top: -15px; right: -15px; min-width: 18px; height: 18px; font-size: 11px; padding: 0 4px; }

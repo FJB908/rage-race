@@ -100,6 +100,6 @@
         debugClaimAll: () => claim(claimable()),
     };
     // tapping an XP bar opens it
-    document.querySelectorAll('.m-who .m-xpbar, #m-plvl, #m-xpfill2').forEach(x => { const t = x.closest('.m-xpbar') || x; t.style.cursor = 'pointer'; t.addEventListener('click', ev => { ev.stopPropagation(); SFX.play('count'); LevelRewards.open(); }); });
+    document.querySelectorAll('.m-who .m-xpbar, #pf-level').forEach(x => { const t = x.closest('.m-xpbar') || x; t.style.cursor = 'pointer'; t.addEventListener('click', ev => { ev.stopPropagation(); SFX.play('count'); LevelRewards.open(); }); });
     LevelRewards.refreshHome();
 })();

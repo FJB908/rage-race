@@ -557,3 +557,24 @@ body.online-race #btn-pause { display: none; }
 #m-skins .m-skin.leg { border-top-color: var(--rc); }
 #m-skins .m-skin.leg.eq { border-top-color: var(--accent); }
 .m-card.locked { opacity: .5; }
+
+/* profile tab */
+.pf-hero { display: flex; align-items: center; gap: 14px; padding: 14px; margin-top: 8px; border-radius: 20px; background: #161b24; border: 1px solid rgba(255,255,255,.08); }
+.pf-av { flex: none; width: 92px; height: 92px; border-radius: 22px; background: #1d2330; display: grid; place-items: center; overflow: hidden; }
+.pf-av canvas { width: 92px; height: 92px; }
+.pf-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.pf-rank { display: inline-flex; align-items: center; gap: 7px; min-height: 22px; } .pf-rank b { font-size: 13px; letter-spacing: .04em; } .pf-rank small { font-size: 12px; color: var(--muted); }
+.pf-rank svg { flex: none; }
+.pf-level { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 12px 14px; border-radius: 18px; background: #161b24; border: 1px solid rgba(255,255,255,.08); color: inherit; font: inherit; text-align: left; }
+.pf-lv-n { position: relative; flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: #241a00; font-size: 22px; font-weight: 900; }
+.pf-lv-n .nbadge { top: -6px; right: -8px; }
+.pf-lv-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; } .pf-lv-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; } .pf-lv-top b { font-size: 16px; } .pf-lv-top em { font-style: normal; font-size: 12px; color: var(--muted); }
+.pf-level .m-xpbar { display: block; height: 7px; } .pf-level .m-xpbar > span { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 4px; transition: width .5s; }
+.pf-level .ico-chev-r { width: 18px; height: 18px; flex: none; transform: scaleX(-1); color: var(--muted); }
+.pf-eq { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.pf-slot { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 9px; border-radius: 14px; background: #161b24; border: 1px solid rgba(255,255,255,.07); color: inherit; font: inherit; min-width: 0; }
+.pf-slot canvas { width: 100%; max-width: 72px; height: 64px; object-fit: contain; border-radius: 10px; background: #1d2330; }
+.pf-slot small { font-size: 10px; letter-spacing: .08em; color: var(--muted); margin-top: 4px; text-transform: uppercase; } .pf-slot b { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-rec { display: flex; flex-direction: column; gap: 8px; }
+.pf-r { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 14px; background: #161b24; border: 1px solid rgba(255,255,255,.07); }
+.pf-r .ico { width: 24px; height: 24px; flex: none; } .pf-r span { flex: 1; color: var(--muted); font-size: 14px; } .pf-r b { font-size: 15px; }

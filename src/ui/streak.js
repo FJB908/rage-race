@@ -34,7 +34,7 @@
     // ---- screen ----
     const el = document.createElement('div');
     el.id = 's-streak'; el.className = 'screen streak-screen'; el.style.cssText = 'display:none;opacity:0';
-    el.innerHTML = '<section class="sk-shell"><header class="sk-top"><button class="pass-back" type="button" id="sk-back" aria-label="Back to home">' + icon('chev-l') + '</button><div class="sk-title"><span class="sk-eyebrow">DAILY REWARDS</span><h1>' + icon('flame') + '<b id="sk-days">0</b><span>DAY STREAK</span></h1></div></header><div class="sk-grid" id="sk-grid"></div><footer class="sk-foot"><button class="sk-claim" id="sk-claim" type="button"></button></footer></section>';
+    el.innerHTML = '<section class="sk-shell"><header class="sk-top"><button class="pass-back" type="button" id="sk-back" aria-label="Back to home">' + icon('chev-l') + '</button><div class="sk-title"><span class="sk-eyebrow">DAILY REWARDS</span><h1>' + icon('calendar') + '<b id="sk-days">0</b><span>DAY STREAK</span></h1></div></header><div class="sk-grid" id="sk-grid"></div><footer class="sk-foot"><button class="sk-claim" id="sk-claim" type="button"></button></footer></section>';
     document.body.appendChild(el);
     S.streak = el;
     const grid = el.querySelector('#sk-grid'), claimBtn = el.querySelector('#sk-claim');

@@ -68,7 +68,7 @@
     }
     A.watchCoins = async function () {
         if (!await watch('coin')) return false;
-        addCoins(CFG.coin.amount); SFX.play('coin'); refreshMenu(); toast('+' + CFG.coin.amount + ' coins');
+        addCoins(CFG.coin.amount); SFX.play('coin'); refreshMenu(); A.refreshHome(); toast('+' + CFG.coin.amount + ' coins');
         return true;
     };
     A.watchDrop = async function () {
@@ -77,6 +77,12 @@
         const drop = awardLootDrop('ad:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), { coins: 40, xp: 20, passPoints: 0 }, { tier });
         openLootbox(drop, { onDone: () => { refreshMenu(); } });
         return true;
+    };
+    // small button on the home screen: watch a video for 500 coins
+    A.refreshHome = function () {
+        const b = document.getElementById('btn-ad-home'); if (!b) return;
+        const left = A.left('coin'); b.hidden = left <= 0;
+        setBadge(b, left);
     };
     A.renderShop = function (box) {
         const sec = document.createElement('div'); sec.className = 'ad-sec';
@@ -87,6 +93,7 @@
             b.onclick = async () => { b.disabled = true; await fn(); renderResourceShop(); };
             return b;
         };
+        A.refreshHome();
         sec.appendChild(mk('coin', '+' + CFG.coin.amount + ' coins', 'Watch a short video', A.watchCoins));
         sec.appendChild(mk('drop', 'Free supply drop', 'Watch a short video', A.watchDrop));
         box.prepend(sec);
@@ -120,5 +127,7 @@
     }, 500);
 
     A.debug = { st, eligible, maybeInterstitial, setSince: n => { const { p, a } = st(); a.since = n; saveProg(p); } };
-    window.Ads = A;
+    const hb = document.getElementById('btn-ad-home');
+    if (hb) hb.addEventListener('click', async e => { e.stopPropagation(); hb.disabled = true; await A.watchCoins(); hb.disabled = false; A.refreshHome(); });
+    window.Ads = A; A.refreshHome();
 })();
