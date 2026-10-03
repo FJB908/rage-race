@@ -1539,7 +1539,7 @@ function updateBot(p, dt) {
     // half a second; the old countdown could be stale (after a slide, a fall or a rush) and fire one frame after landing.
     p.idleT = (p.idleT || 0) + dt;
     const standing = p.plat && p.plat.type;
-    const minWait = (standing === 'fragile' ? 0.34 : standing === 'ice' ? 0.42 : 0.55) + (p.extraWait || 0);
+    const minWait = (standing === 'fragile' ? 0.34 : standing === 'ice' ? 0.42 : 0.55) * (p.waitScale || 1) + (p.extraWait || 0);
     if (p.thinkT > 0 || p.idleT < minWait) return;
 
     // Track stagnation: how many think-cycles without gaining height
@@ -1583,7 +1583,8 @@ function updateBot(p, dt) {
     // HUMAN: sometimes goes for the platform that just LOOKS closest/easiest rather than
     // the mathematically optimal one — a believable, low-stakes misjudgment, never one
     // that's actively bad (it still has to be a real, reachable platform).
-    if (isHuman && nearest && nearest !== best && Math.random() < 0.22) best = nearest;
+    const mistakeP = isHuman ? 0.22 : (p.mistake || 0);          // roster bots: weaker ones misjudge routes more often
+    if (mistakeP && nearest && nearest !== best && Math.random() < mistakeP) best = nearest;
 
     let { vx, vy } = best.sol;
 
@@ -1597,7 +1598,7 @@ function updateBot(p, dt) {
         if (human && !human.local) { /* sim / spectator: no banding */ }
         else if (human && !human.finished) {
             const lead = human.y - p.y;
-            const bandK = gameMode === 'gauntlet' ? GT_BAND : 1;
+            const bandK = gameMode === 'gauntlet' ? GT_BAND : (window.RACE_BAND === undefined ? 1 : window.RACE_BAND);   // Ranked turns the rubber band off
             if (lead > 250) {                       // ahead: ease off
                 const k = Math.min(1, (lead - 250) / 900) * bandK;
                 thinkMul = 1 + k * 2.8;             // up to 3.8x longer pauses
@@ -1638,7 +1639,7 @@ function updateBot(p, dt) {
     // SPRINT: once you've finished, nobody's actually being raced against anymore — so bots
     // stop being cautious and just close the race out quickly and cleanly, rather than
     // dragging on with their usual human-like misses and pauses.
-    const sprintFinish = gameMode !== 'gauntlet' && players[0] && players[0].finished;
+    const sprintFinish = gameMode !== 'gauntlet' && !window.rankedMatch && players[0] && players[0].finished;
     const sprintMul = sprintFinish ? 0.35 : 1;
     const sprintThink = sprintFinish ? 0.6 : 1;
 
@@ -1666,7 +1667,7 @@ function updateBot(p, dt) {
     if (wasCharged) { p.charged = false; burst(p.x, p.y, PLAT.boost, 12, 200); }
     else burst(p.x, p.y, p.color, 8, 140);
 
-    p.thinkT = rnd(BOT_BASE.thinkMin, BOT_BASE.thinkMax) * (p.thinkMul || 1) * sprintThink;
+    p.thinkT = rnd(BOT_BASE.thinkMin, BOT_BASE.thinkMax) * (p.thinkMul || 1) * sprintThink * (p.thinkScale || 1);
 }
 
 /* ---------- Collision (swept, no tunneling) ---------- */
@@ -1691,6 +1692,7 @@ function handleFinish(p) {
     finishedCount++;
     burst(p.x, p.y, p.color, 30, 260);
     if (p.local){ SFX.play('finish'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
+    if (window.rankedMatch){ if (p.local) Ranked.onLocalFinish(finishedCount); return; }   // Ranked ends the moment YOU cross the line: nobody after you can pass you
     checkEnd();
     maybePromptBotsDone();
 }
@@ -2635,7 +2637,9 @@ function draw() {
         if (!p.local && !p._lod && !p._noName){
             const hatLift = (p.look && p.look.hat && p.look.hat !== 'none') ? 12 * (p.r / 12) : 0;
             ctx.globalAlpha=0.65; ctx.fillStyle='#fff'; ctx.font='700 10px Space Grotesk'; ctx.textAlign='center';
-            ctx.fillText(p.name, p.x, tagY - hatLift); ctx.globalAlpha=1;
+            ctx.fillText(p.name, p.x, tagY - hatLift);
+            if (p.rkColor){ const tw = ctx.measureText(p.name).width / 2 + 7; ctx.fillStyle = p.rkColor; ctx.beginPath(); ctx.moveTo(p.x - tw, tagY - hatLift - 8); ctx.lineTo(p.x - tw + 3.5, tagY - hatLift - 4.5); ctx.lineTo(p.x - tw, tagY - hatLift - 1); ctx.lineTo(p.x - tw - 3.5, tagY - hatLift - 4.5); ctx.closePath(); ctx.fill(); }
+            ctx.globalAlpha=1;
         }
     }
     drawUfoCraft();
@@ -2830,6 +2834,7 @@ function quitToMenu() {
     state = 'menu'; dragging = false;
     hud.style.display = 'none';
     if (gameMode === 'parkour') pkWriteSave();          // leaving mid-climb keeps your spot
+    if (window.rankedMatch) Ranked.forfeit(true);
     if (gameMode === 'gauntlet') gtLeave(true);
     gameMode = 'race'; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level', 'mode-gauntlet'); lv = null;
     refreshStartMeta();
@@ -2900,6 +2905,7 @@ document.getElementById('set-reset').addEventListener('click', () => {
 });
 document.getElementById('btn-pause').addEventListener('click', () => {
     if (gameMode === 'gauntlet'){ gtPauseMenu(); return; }
+    if (window.rankedMatch){ Ranked.pauseMenu(); return; }
     openPrompt('PAUSED', 'Catch your breath.', [
         ['Resume', resumeRace],
         ['Settings', () => openSettings('pause'), true],
@@ -2991,6 +2997,7 @@ let matchBotNames = [];   // the 3 bot names for THIS match (index 1..3)
 let matchHumanSlot = 0;    // 0 = no human-profile bot this race; 1-3 = which slot has one
 
 function startMatchmaking() {
+    window.rankedMatch = false; window.RACE_BAND = undefined; window.matchBots = null;   // a normal quick match
     matchLootId = newLootId('race');
     // Decide ONCE, before the lobby even builds, whether this match has a "human" bot and
     // who it is — so the name shown in the lobby always matches who behaves that way in
@@ -3015,6 +3022,7 @@ function startGame() {
     gameMode = 'race'; esc = null; pk = null; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level'); lv = null;
     showScreen(''); // hide all overlays
     generateLevel(matchSeed); initPlayers(); botsDonePrompted = false;
+    if (window.matchBots && window.BotRoster) BotRoster.applyTo(players.slice(1), window.matchBots);   // Ranked: roster opponents with their own skill
     beginRound();
 }
 function beginRound() {
@@ -3148,6 +3156,7 @@ function startEscape(){
     matchHumanSlot = 0;
     matchBotNames = [];
     initPlayers();
+    if (window.BotRoster) BotRoster.applyTo(players.slice(1), BotRoster.pick(3, { mmr:Math.max(1200, prog().rk.mmr + 100), spread:260 }));   // named roster bots, some of them good
     for (const p of players) p.escape = escRunnerState();
     players[0].x = pw/2;
     beginRound();
@@ -4092,8 +4101,8 @@ function randomBotLook(){
     };
 }
 
-const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'The Gauntlet · 32 players' };
-const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown' };
+const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'The Gauntlet · 32 players', ranked:'Ranked · Season race' };
+const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked' };
 function prog(){
     let d = {}; try { d = JSON.parse(localStorage.getItem('rr_profile')) || {}; } catch(e){}
     if (!d.name) d.name = 'Player';
@@ -4108,6 +4117,8 @@ function prog(){
     d.gt = Object.assign({ runs:0, wins:0, best:0, crowned:false, keys:0, streak:0 }, (d.gt && typeof d.gt === 'object') ? d.gt : {});   // Gauntlet record
     for (const k of ['runs', 'wins', 'best', 'keys', 'streak']) if (!Number.isFinite(d.gt[k])) d.gt[k] = 0;
     d.gt.crowned = !!d.gt.crowned;
+    d.rk = Object.assign({ mmr:1000, rp:0, placed:0, peak:0, season:0, hist:[], claimed:[], protect:0, streak:0, matches:0, wins:0, dropDay:'', dropN:0 }, (d.rk && typeof d.rk === 'object') ? d.rk : {});   // Ranked record
+    if (!Array.isArray(d.rk.hist)) d.rk.hist = []; if (!Array.isArray(d.rk.claimed)) d.rk.claimed = [];
     if (!d.pendingDrops || typeof d.pendingDrops !== 'object') d.pendingDrops = {};
     if (!Array.isArray(d.owned)) d.owned = ['classic'];
     if (!d.owned.includes('classic')) d.owned.push('classic');
@@ -4116,7 +4127,7 @@ function prog(){
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
     if (!d.hat || !HATS.some(h => h.id === d.hat)) d.hat = 'none';
     if (!d.face || !FACES.some(f => f.id === d.face)) d.face = 'none';
-    if (!['race', 'escape', 'parkour', 'gauntlet'].includes(d.lastMode)) d.lastMode = 'race';
+    if (!['race', 'escape', 'parkour', 'gauntlet', 'ranked'].includes(d.lastMode)) d.lastMode = 'race';
     return d;
 }
 function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} }
@@ -4404,7 +4415,8 @@ function refreshMenu(){
     const inp = document.getElementById('m-name-input');
     if (document.activeElement !== inp) inp.value = p.name;
     document.getElementById('m-mode').textContent = MODE_LABEL[p.lastMode] || MODE_LABEL.race;
-    document.getElementById('m-mode-ico').innerHTML = icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
+    document.getElementById('m-mode-ico').innerHTML = (p.lastMode === 'ranked' && window.Ranked) ? Ranked.emblem(Ranked.state().tier, 30) : icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
+    if (window.Ranked) Ranked.refreshHome();
     document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));
     renderPassHome(p);
     if (window.Streak) Streak.refreshHome();
@@ -4483,6 +4495,7 @@ function playSelected(){
     if (m === 'escape') startEscape();
     else if (m === 'parkour') openLevels();
     else if (m === 'gauntlet') Gauntlet.open();
+    else if (m === 'ranked') Ranked.open();
     else startMatchmaking();
 }
 document.getElementById('btn-home-play').addEventListener('click', playSelected);

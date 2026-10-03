@@ -39,7 +39,13 @@ The drop goes through the normal tap-to-open chest (`awardLootDrop` / `renderLoo
 chances, gems and the EQUIP NOW button all work as everywhere else. The run id makes the grant idempotent.
 
 Winning the crown sets `prog().gt.crowned`; a crown holder wears a gold crown in the next Gauntlet until they lose it.
-Every run also has one bot "champion" wearing a crown.
+Every run also has one bot "champion" wearing a crown: the strongest of the 31 rivals.
+
+## Rivals
+
+The 31 rivals come from the shared bot roster (`src/modes/roster.js`, see `docs/RANKED.md`): `BotRoster.pick(31, { mmr, spread:240 })`
+with the centre at `max(1200, your ranked MMR + 120)`. Names, looks and play styles are the same as in Ranked and Escape, so a
+bot you met on the ladder can show up here. The pool is wide on purpose: some rivals are weak, a few are very good.
 
 ## Tuning knobs
 
@@ -60,5 +66,6 @@ All in `STAGES` / `ENTRY` / `PRIZES` at the top of `gauntlet.js`:
 `Gauntlet.debug`: `fast` (skip cards and countdown), `auto` (the local player is played by the bot AI), `start()`,
 `state()`, `log` (per-stage stats), `queue` (deferred stage transitions in fast mode: drain it between `update()` calls).
 Headless balance sim: run `Gauntlet.debug.start()` with `fast`/`auto`, then loop `update(1/60)` and drain `queue`.
-Measured with 30-40 autoplay runs (an average player): roughly 105-115 s of play per run (stage 1 ~76 s, stage 2 ~60 s, stage 3 ~30 s), the local autoplayer qualifies stage 1 about 40-45% of the time.
+Measured with 30-40 autoplay runs (an average player): roughly 105-115 s of play per run (stage 1 ~76 s, stage 2 ~60 s, stage 3 ~30 s), the local autoplayer qualified stage 1 about 40-45% of the time with the old random bots.
+With roster rivals (36 runs, fresh account): stage 1 qualified 33%, stage 2 42% of those, stage 3 won 0 of 5; about 140 s per run.
 Frame cost (headless Chromium, no GPU): 60 fps flat with all 32 visible; with a 4x CPU slowdown about 27 fps even with every bot wearing premium cosmetics (a normal 4-player race holds 60 fps in the same test). The Gauntlet starts one adaptive-quality step down.

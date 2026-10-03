@@ -175,22 +175,22 @@
         WORLD_W = GT_W; resize();
         hitStop = 0; spectating = false; showFinishMenu(false);
 
-        const g = pk_(), names = shuffle([...BOT_NAMES]).slice(0, FIELD - 1);
+        const g = pk_();
         const field = [];
         const lp = makePlayer({ id:0, name:'YOU', local:true, color:skinColor(), x:GT_W / 2, y:START_Y - 32, look:myLook(), skill:1 });
         lp.baseSkill = 1; lp.crowned = !!g.crowned;
         field.push(lp);
-        const champ = g.crowned ? -1 : 1 + Math.floor(Math.random() * (FIELD - 1));
-        for (let i = 1; i < FIELD; i++) {
-            const look = randomBotLook();
-            if (!look.skin) look.skin = SKINS[Math.floor(Math.random() * SKINS.length)].id;
-            const sk = skinById(look.skin);
-            const b = makePlayer({ id:i, name:names[i - 1], local:false, color:sk.color,
-                x:GT_W / 2, y:START_Y - 32, botType:Math.random() < 0.25 ? 'human' : 'standard', afk:Math.random() < 0.01, look,
-                skill:rnd(0.82, 1.15) * newPlayerEase() });
-            b.baseSkill = b.skill; b.champ = i === champ;
+        // the 31 rivals are roster bots around your level (a wide pool: some weak, some very good)
+        const centre = Math.max(1200, prog().rk.mmr + 120);
+        const crew = BotRoster.pick(FIELD - 1, { mmr:centre, spread:240 });
+        const top = crew.reduce((best, b) => (!best || b.mmr > best.mmr) ? b : best, null);
+        crew.forEach((rb, k) => {
+            const i = k + 1, b = makePlayer({ id:i, name:rb.name, local:false, color:skinById(rb.look.skin).color,
+                x:GT_W / 2, y:START_Y - 32, look:rb.look, skill:1 });
+            BotRoster.applyTo([b], [rb], { color:true });
+            b.champ = !g.crowned && rb === top;                   // the strongest rival is the defending champion
             field.push(b);
-        }
+        });
         gt = { entry, field, alive:field.slice(), stage:-1, out:[], qualified:[], winner:null, t:0, phase:'idle',
                localOutStage:-1, watching:false, lootId:newLootId('gauntlet'), banner:'', wall:null, st:null, spotsKey:'' };
         beginStage(0);

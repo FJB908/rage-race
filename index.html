@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="src/tutorial/tutorial.css">
 <link rel="stylesheet" href="src/ui/streak.css">
 <link rel="stylesheet" href="src/modes/gauntlet.css">
+<link rel="stylesheet" href="src/modes/ranked.css">
 </head>
 <body>
 
@@ -61,6 +62,7 @@
         <!-- PLAY -->
         <section class="m-tab" data-tab="play">
             <h1 class="m-h1">Play</h1><p class="m-sub">Pick a mode, then press Play on the home screen.</p>
+            <button class="m-card ranked" type="button" id="btn-ranked" data-mode="ranked"><span class="mc-ico" aria-hidden="true"></span><span class="mc-copy"><b>Ranked</b><span>Season ladder · 4 players</span><small id="p-rk-sub"></small></span><em></em></button>
             <button class="m-card teal" type="button" id="btn-find" data-mode="race"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-race"/></svg></span><span class="mc-copy"><b>Race</b><span>Quick match · 4 players · first to the top</span></span><em></em></button>
             <button class="m-card gold" type="button" id="btn-gauntlet" data-mode="gauntlet"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-crown"/></svg></span><span class="mc-copy"><b>The Gauntlet</b><span>32 players · 3 stages · 1 crown</span><small id="p-gt-sub"></small></span><em></em></button>
             <button class="m-card red" type="button" id="btn-escape" data-mode="escape"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-escape"/></svg></span><span class="mc-copy"><b>Escape</b><span>Survival · outrun the rising void</span></span><em id="start-best"></em></button>
@@ -349,7 +351,9 @@
 <script src="src/ui/pass.js"></script>
 <script src="game.js"></script>
 <script src="src/ui/lootbox.js"></script>
+<script src="src/modes/roster.js"></script>
 <script src="src/modes/gauntlet.js"></script>
+<script src="src/modes/ranked.js"></script>
 <script src="src/tutorial/tutorial.js"></script>
 <script src="src/ui/streak.js"></script>
 </body>
