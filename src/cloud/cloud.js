@@ -69,7 +69,7 @@
         if (!a || !b) return a || b;
         const nw = aNewer ? a : b, od = aNewer ? b : a, o = Object.assign({}, od, nw);   // newer wins: name, equipped, unknown fields
         MAX_FIELDS.forEach(k => { o[k] = Math.max(num(a[k]), num(b[k])); });
-        o.passClaimed = union(a.passClaimed, b.passClaimed); o.lvClaimed = union(a.lvClaimed, b.lvClaimed); o.owned = union(a.owned, b.owned);
+        o.passClaimed = union(a.passClaimed, b.passClaimed); o.lvClaimed = union(a.lvClaimed, b.lvClaimed); o.emotes = union(a.emotes, b.emotes); o.owned = union(a.owned, b.owned);
         o.lootGrants = Object.assign({}, od.lootGrants, nw.lootGrants);          // ids that were already granted: never grant twice
         o.pendingDrops = Object.assign({}, nw.pendingDrops);                     // unopened drops follow the newest state (avoids resurrecting opened ones)
         const ga = a.gt || {}, gb = b.gt || {}; o.gt = Object.assign({}, od.gt, nw.gt);
