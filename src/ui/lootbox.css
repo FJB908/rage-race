@@ -94,3 +94,27 @@
 .lb-equip:active { transform:translateX(-50%) translateY(3px); }
 .lb-equip.done { color:#7ee787; border-color:#7ee787; }
 .lb-equip .ico { width:18px; height:18px; }
+
+/* crate life: a shine sweeps across it and sparkles twinkle (used by the opening screen and the "tap to open" crate) */
+.lb-shine { animation: lbShineMove 3.6s ease-in-out infinite; }
+@keyframes lbShineMove { 0%, 55% { transform: translateX(0) skewX(-18deg); } 100% { transform: translateX(330px) skewX(-18deg); } }
+.lb-sparks .sp { opacity: 0; transform-box: fill-box; transform-origin: center; animation: lbTwinkle 2.6s ease-in-out infinite; }
+.lb-sparks .s2 { animation-delay: .9s; } .lb-sparks .s3 { animation-delay: 1.7s; }
+@keyframes lbTwinkle { 0%, 100% { opacity: 0; transform: scale(.3) rotate(0); } 45% { opacity: .95; transform: scale(1.1) rotate(25deg); } 70% { opacity: 0; transform: scale(.4) rotate(40deg); } }
+/* the result-screen crate: big, alive, tap it */
+.loot-drop.big { flex-direction: column; align-items: center; gap: 6px; max-width: none; padding: 4px 0 0; border: 0; background: none; }
+.loot-big { position: relative; width: min(60vw, 230px); padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; color: inherit; font: inherit; touch-action: manipulation; }
+.loot-big .lb-crate { display: block; --c: var(--tc); --c2: var(--tc2); filter: drop-shadow(0 0 16px color-mix(in srgb, var(--c) 55%, transparent)); animation: lootBob 2.4s ease-in-out infinite, lootNudge 5s ease-in-out infinite; }
+.loot-big .lb-crate svg { display: block; width: 100%; height: auto; overflow: visible; }
+.loot-big .lb-lid { animation: lootLid 5s ease-in-out infinite; transform-box: fill-box; transform-origin: 0 100%; }
+.loot-big .lb-leak { animation: lootLeak 2.4s ease-in-out infinite; }
+.loot-big .lb-tap { display: block; margin-top: 4px; text-align: center; font-size: 13px; font-weight: 900; letter-spacing: .22em; color: var(--tc); animation: lootTap 1.4s ease-in-out infinite; }
+.loot-big:active .lb-crate { animation: none; transform: scale(.96); }
+.loot-big.go .lb-crate { animation: lootGo .5s ease-out forwards; }
+@keyframes lootBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes lootNudge { 0%, 70%, 100% { rotate: 0deg; } 74% { rotate: -3.5deg; } 78% { rotate: 3.5deg; } 82% { rotate: -2.5deg; } 86% { rotate: 2deg; } 90% { rotate: 0deg; } }
+@keyframes lootLid { 0%, 70%, 100% { transform: translateY(0); } 76% { transform: translateY(-5px); } 86% { transform: translateY(0); } }
+@keyframes lootLeak { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@keyframes lootTap { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes lootGo { to { transform: scale(1.12); opacity: .0; } }
+.loot-big.tier-common { --tc: #35e0c8; --tc2: #127b6c; } .loot-big.tier-rare { --tc: #5b8def; --tc2: #1f3f8f; } .loot-big.tier-epic { --tc: #b3a9ff; --tc2: #4f3fc4; } .loot-big.tier-legendary { --tc: #ffcf3f; --tc2: #a86a00; }

@@ -4128,7 +4128,7 @@ function prog(){
     d.rk = Object.assign({ mmr:1000, rp:0, placed:0, peak:0, season:0, hist:[], claimed:[], protect:0, streak:0, matches:0, wins:0, dropDay:'', dropN:0, sm:0, lastPlayed:-1, seasons:[] }, (d.rk && typeof d.rk === 'object') ? d.rk : {});   // Ranked record
     if (!Array.isArray(d.rk.hist)) d.rk.hist = []; if (!Array.isArray(d.rk.claimed)) d.rk.claimed = [];
     if (!d.pendingDrops || typeof d.pendingDrops !== 'object') d.pendingDrops = {};
-    d.ads = Object.assign({ day:'', coin:0, drop:0, last:0, since:0 }, (d.ads && typeof d.ads === 'object') ? d.ads : {});
+    d.ads = Object.assign({ day:'', coin:0, drop:0, last:0, since:0, lastCoin:0, lastDrop:0 }, (d.ads && typeof d.ads === 'object') ? d.ads : {});
     if (!Array.isArray(d.owned)) d.owned = ['classic'];
     if (!d.owned.includes('classic')) d.owned.push('classic');
     if (!d.trail || !TRAILS.some(trail => trail.id === d.trail)) d.trail = 'none';
@@ -4242,18 +4242,19 @@ function renderLootDrop(containerId, drop){
     if (!panel || !drop) return;
     const tier = drop.tier || 'common';
     const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
-    panel.classList.remove('opening');
-    panel.innerHTML = `<div class="loot-crate tier-${tier}" aria-hidden="true">${icon('drop', 'loot-ico')}</div><div class="loot-info"><button class="loot-open" type="button">${icon('drop')}<span>OPEN</span></button></div>`;
-    panel.querySelector('.loot-crate').style.setProperty('--ic', TC[tier]);
-    panel.querySelector('.loot-open').addEventListener('click', event => {
+    panel.classList.remove('opening'); panel.classList.add('big');
+    panel.innerHTML = `<button class="loot-big tier-${tier}" type="button" aria-label="Open the supply drop"><span class="lb-crate">${LB_CHEST('p' + Math.random().toString(36).slice(2, 6))}</span><span class="lb-tap">TAP TO OPEN</span></button>`;
+    panel.querySelector('.loot-big').addEventListener('click', event => {
         const button = event.currentTarget;
-        button.disabled = true;
+        if (button.disabled) return;
+        button.disabled = true; button.classList.add('go');
         openLootbox(drop, { onDone: final => {
             final = final || drop;
             const chips = [R('coin', final.coins || 0, {plus:true}), R('xp', final.xp || 0, {plus:true})];
             if (final.passPoints) chips.push(R('pass', final.passPoints, {plus:true}));
             if (final.gems) chips.push(R('gem', final.gems, {plus:true}));
             if (final.cosmetic) chips.push(`<span class="rwd rwd-item"><canvas class="mini-item" width="112" height="112" style="--rc:${RARITY[final.cosmetic.rarity].color}"></canvas></span>`);
+            panel.classList.remove('big');
             panel.innerHTML = `<div class="loot-crate opened tier-${final.tier || tier}" aria-hidden="true">${icon('check')}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;
             panel.querySelector('.loot-crate').style.setProperty('--ic', TC[final.tier || tier]);
             const mc = panel.querySelector('canvas.mini-item');

@@ -7,13 +7,12 @@
         graceRaces: 4,                 // no interstitials for brand-new players
         everyMatches: 3,               // at most one interstitial per this many finished matches...
         minGapMs: 4 * 60 * 1000,       // ...and never more often than this
-        coin:  { amount: 500, perDay: 5 },
-        drop:  { perDay: 3 },
-        cooldownMs: 20 * 1000,         // between two rewarded ads
+        coin:  { amount: 500, perDay: 5, cooldownMs: 5 * 60 * 1000 },     // wait this long before the next 500-coin video
+        drop:  { perDay: 3, cooldownMs: 10 * 60 * 1000 },
     };
     const today = () => new Date().toISOString().slice(0, 10);
     const st = () => {
-        const p = prog(), a = p.ads = Object.assign({ day:'', coin:0, drop:0, last:0, since:0 }, p.ads || {});
+        const p = prog(), a = p.ads = Object.assign({ day:'', coin:0, drop:0, last:0, since:0, lastCoin:0, lastDrop:0 }, p.ads || {});
         if (a.day !== today()) { a.day = today(); a.coin = 0; a.drop = 0; }
         return { p, a };
     };
@@ -53,17 +52,19 @@
 
     /* ------------------------------------------------------------ rewarded ---- */
     A.left = kind => { const { a } = st(); return Math.max(0, CFG[kind].perDay - a[kind]); };
-    A.wait = () => { const { a } = st(); return Math.max(0, Math.ceil((a.last + CFG.cooldownMs - Date.now()) / 1000)); };
+    const lastKey = kind => kind === 'coin' ? 'lastCoin' : 'lastDrop';
+    A.wait = kind => { const { a } = st(); return Math.max(0, Math.ceil((a[lastKey(kind)] + CFG[kind].cooldownMs - Date.now()) / 1000)); };
+    const mmss = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
     async function watch(kind) {
         if (A.busy) return false;
         if (A.left(kind) <= 0) { toast('No more ads today'); return false; }
-        if (A.wait() > 0) { toast('Next ad in ' + A.wait() + ' s'); return false; }
+        if (A.wait(kind) > 0) { toast('Next ad in ' + mmss(A.wait(kind))); return false; }
         A.busy = true;
         let ok = false;
         try { ok = await provider.show('rewarded'); } catch (e) { ok = false; }
         A.busy = false;
         if (!ok) { toast('Ad not finished, no reward'); return false; }
-        const { p, a } = st(); a[kind]++; a.last = Date.now(); saveProg(p);
+        const { p, a } = st(); a[kind]++; a.last = a[lastKey(kind)] = Date.now(); saveProg(p);
         return true;
     }
     A.watchCoins = async function () {
@@ -81,15 +82,17 @@
     // small button on the home screen: watch a video for 500 coins
     A.refreshHome = function () {
         const b = document.getElementById('btn-ad-home'); if (!b) return;
-        const left = A.left('coin'); b.hidden = left <= 0;
-        setBadge(b, left);
+        const left = A.left('coin'), w = A.wait('coin'); b.hidden = left <= 0;
+        b.disabled = w > 0; b.classList.toggle('cool', w > 0);
+        const num = b.querySelector('b'); if (num) num.textContent = w > 0 ? mmss(w) : String(CFG.coin.amount);
+        setBadge(b, w > 0 ? 0 : left);
     };
     A.renderShop = function (box) {
         const sec = document.createElement('div'); sec.className = 'ad-sec';
         const mk = (kind, title, sub, fn) => {
-            const left = A.left(kind), b = document.createElement('button'); b.type = 'button'; b.className = 'ad-card'; b.disabled = left <= 0;
+            const left = A.left(kind), w = A.wait(kind), b = document.createElement('button'); b.type = 'button'; b.className = 'ad-card'; b.dataset.kind = kind; b.disabled = left <= 0 || w > 0;
             b.innerHTML = '<span class="ad-ic">' + (kind === 'coin' ? icon('coin') : icon('drop')) + '</span><span class="ad-tx"><b>' + title + '</b><small>' + sub + '</small></span>' +
-                '<span class="ad-go">' + (left > 0 ? 'WATCH' : 'DONE') + '</span><em>' + left + ' left today</em>';
+                '<span class="ad-go">' + (left <= 0 ? 'DONE' : w > 0 ? mmss(w) : 'WATCH') + '</span><em>' + left + ' left today</em>';
             b.onclick = async () => { b.disabled = true; await fn(); renderResourceShop(); };
             return b;
         };
@@ -130,4 +133,12 @@
     const hb = document.getElementById('btn-ad-home');
     if (hb) hb.addEventListener('click', async e => { e.stopPropagation(); hb.disabled = true; await A.watchCoins(); hb.disabled = false; A.refreshHome(); });
     window.Ads = A; A.refreshHome();
+    // live countdown on the home button and the shop cards
+    setInterval(() => {
+        A.refreshHome();
+        document.querySelectorAll('.ad-card').forEach(b => {
+            const kind = b.dataset.kind, left = A.left(kind), w = A.wait(kind), go = b.querySelector('.ad-go');
+            b.disabled = left <= 0 || w > 0; if (go) go.textContent = left <= 0 ? 'DONE' : w > 0 ? mmss(w) : 'WATCH';
+        });
+    }, 1000);
 })();

@@ -20,3 +20,4 @@
 .m-adpill .ico-video { width: 22px; height: 22px; } .m-adpill .ico-coin { width: 20px; height: 20px; } .m-adpill b { font-size: 14px; color: #ffcf3f; }
 .m-adpill .nbadge { top: -8px; right: -4px; }
 .m-adpill:disabled { opacity: .55; }
+.m-adpill.cool b { color: #aab3c4; font-variant-numeric: tabular-nums; }

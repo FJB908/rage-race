@@ -8,27 +8,39 @@
     const TIER_COLOR = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
     // Tap odds: the level-up chance shrinks with every tap, the open chance grows, so a drop always opens within a handful of taps.
     const UP0 = 0.45, UP_DECAY = 0.58, UP_TIER = [1, 0.8, 0.5], OPEN0 = 0.16, OPEN_STEP = 0.12;
-    // The supply crate: a steel cube like the players themselves, with the climbing chevrons on its face and tier-coloured corners.
-    const CHEST_SVG = (
-        '<svg viewBox="0 0 200 170" aria-hidden="true"><defs>' +
-        '<linearGradient id="lbBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#303a50"/><stop offset="1" stop-color="#171d2b"/></linearGradient>' +
-        '<linearGradient id="lbLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5675"/><stop offset="1" stop-color="#2a3349"/></linearGradient>' +
-        '<radialGradient id="lbGlow"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="var(--c)"/><stop offset="1" stop-color="var(--c)" stop-opacity="0"/></radialGradient></defs>' +
-        '<ellipse cx="100" cy="162" rx="76" ry="7" fill="#000" opacity=".35"/>' +
-        '<ellipse class="lb-inner" cx="100" cy="70" rx="68" ry="36" fill="url(#lbGlow)"/>' +
-        '<rect x="26" y="66" width="148" height="92" rx="20" fill="url(#lbBody)" stroke="#0d1017" stroke-width="3.5"/>' +
-        '<rect x="26" y="132" width="148" height="26" rx="14" fill="#0d1017" opacity=".3"/>' +
-        '<path d="M26 92 V86 Q26 66 46 66 H62 M174 92 V86 Q174 66 154 66 H138 M26 130 V138 Q26 158 46 158 H62 M174 130 V138 Q174 158 154 158 H138" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/>' +
-        '<path d="M70 126 L100 96 L130 126 M70 146 L100 116 L130 146" fill="none" stroke="#0d1017" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -6)"/>' +
-        '<path d="M70 126 L100 96 L130 126 M70 146 L100 116 L130 146" fill="none" stroke="var(--c)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -6)"/>' +
-        '<path d="M70 126 L100 96 L130 126" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -9)"/>' +
-        '<rect class="lb-leak" x="30" y="64" width="140" height="8" rx="4" fill="var(--c)"/>' +
-        '<g class="lb-lid"><rect x="18" y="30" width="164" height="42" rx="18" fill="url(#lbLid)" stroke="#0d1017" stroke-width="3.5"/>' +
-        '<rect x="22" y="60" width="156" height="8" rx="4" fill="var(--c)" opacity=".95"/>' +
-        '<path d="M34 44 Q48 38 78 38" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="5" stroke-linecap="round"/>' +
-        '<rect x="82" y="46" width="36" height="20" rx="8" fill="#0d1017" opacity=".55"/><rect x="88" y="50" width="24" height="12" rx="5" fill="var(--c)"/>' +
-        '<circle cx="36" cy="52" r="3.2" fill="#0d1017" opacity=".6"/><circle cx="164" cy="52" r="3.2" fill="#0d1017" opacity=".6"/></g></svg>'
+    // The supply crate: a heavy steel cube like the players themselves. Glowing tier-coloured bands, the climbing chevrons on the front,
+    // a jewel lock, and a light that leaks through the seam. `uid` keeps gradient ids unique when several crates are on screen.
+    const buildChest = uid => (
+        '<svg viewBox="0 0 200 180" aria-hidden="true"><defs>' +
+        '<linearGradient id="lbBody' + uid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46526f"/><stop offset=".45" stop-color="#2a3350"/><stop offset="1" stop-color="#151a2b"/></linearGradient>' +
+        '<linearGradient id="lbLid' + uid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7ba3"/><stop offset=".5" stop-color="#43506f"/><stop offset="1" stop-color="#2b3550"/></linearGradient>' +
+        '<linearGradient id="lbBand' + uid + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--c2)"/><stop offset=".5" stop-color="var(--c)"/><stop offset="1" stop-color="var(--c2)"/></linearGradient>' +
+        '<radialGradient id="lbGem' + uid + '" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="var(--c)"/><stop offset="1" stop-color="var(--c2)"/></radialGradient>' +
+        '<radialGradient id="lbGlow' + uid + '"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="var(--c)"/><stop offset="1" stop-color="var(--c)" stop-opacity="0"/></radialGradient>' +
+        '<linearGradient id="lbShine' + uid + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+        '<clipPath id="lbClip' + uid + '"><rect x="22" y="86" width="156" height="80" rx="18"/><rect x="16" y="38" width="168" height="52" rx="22"/></clipPath></defs>' +
+        '<ellipse cx="100" cy="170" rx="80" ry="7" fill="#000" opacity=".4"/>' +
+        '<ellipse class="lb-inner" cx="100" cy="76" rx="70" ry="38" fill="url(#lbGlow' + uid + ')"/>' +
+        '<rect x="22" y="86" width="156" height="80" rx="18" fill="url(#lbBody' + uid + ')" stroke="#0b0e16" stroke-width="3.5"/>' +
+        '<path d="M30 100 Q30 90 40 90 H160 Q170 90 170 100" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width="3" stroke-linecap="round"/>' +
+        '<rect x="22" y="146" width="156" height="20" rx="12" fill="#0b0e16" opacity=".4"/>' +
+        '<rect x="46" y="86" width="16" height="76" fill="url(#lbBand' + uid + ')" stroke="#0b0e16" stroke-width="2.5"/><rect x="138" y="86" width="16" height="76" fill="url(#lbBand' + uid + ')" stroke="#0b0e16" stroke-width="2.5"/>' +
+        '<g fill="#0b0e16" opacity=".75"><circle cx="54" cy="98" r="2.6"/><circle cx="54" cy="152" r="2.6"/><circle cx="146" cy="98" r="2.6"/><circle cx="146" cy="152" r="2.6"/></g>' +
+        '<path d="M76 134 L100 110 L124 134 M76 150 L100 126 L124 150" fill="none" stroke="#0b0e16" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -4)"/>' +
+        '<path d="M76 134 L100 110 L124 134 M76 150 L100 126 L124 150" fill="none" stroke="var(--c)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -4)"/>' +
+        '<path d="M80 130 L100 110 L120 130" fill="none" stroke="#fff" stroke-opacity=".65" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -7)"/>' +
+        '<rect class="lb-leak" x="26" y="82" width="148" height="8" rx="4" fill="var(--c)"/>' +
+        '<g class="lb-lid"><rect x="16" y="38" width="168" height="52" rx="22" fill="url(#lbLid' + uid + ')" stroke="#0b0e16" stroke-width="3.5"/>' +
+        '<path d="M32 54 Q46 44 86 44" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="5" stroke-linecap="round"/>' +
+        '<rect x="46" y="38" width="16" height="52" fill="url(#lbBand' + uid + ')" stroke="#0b0e16" stroke-width="2.5"/><rect x="138" y="38" width="16" height="52" fill="url(#lbBand' + uid + ')" stroke="#0b0e16" stroke-width="2.5"/>' +
+        '<rect x="20" y="76" width="160" height="8" rx="4" fill="var(--c)" opacity=".9"/>' +
+        '<rect x="80" y="54" width="40" height="30" rx="11" fill="#0b0e16" opacity=".7"/><circle cx="100" cy="68" r="11" fill="url(#lbGem' + uid + ')" stroke="#0b0e16" stroke-width="2.5"/><circle cx="96" cy="64" r="3" fill="#fff" opacity=".9"/>' +
+        '<g fill="#0b0e16" opacity=".6"><circle cx="30" cy="62" r="3"/><circle cx="170" cy="62" r="3"/></g></g>' +
+        '<g clip-path="url(#lbClip' + uid + ')"><rect class="lb-shine" x="-70" y="30" width="46" height="150" fill="url(#lbShine' + uid + ')" transform="skewX(-18)"/></g>' +
+        '<g class="lb-sparks" fill="#fff"><path class="sp s1" d="M20 40 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z"/><path class="sp s2" d="M180 30 l1.6 5 5 1.6 -5 1.6 -1.6 5 -1.6 -5 -5 -1.6 5 -1.6z"/><path class="sp s3" d="M186 110 l1.4 4 4 1.4 -4 1.4 -1.4 4 -1.4 -4 -4 -1.4 4 -1.4z"/></g></svg>'
     );
+    const CHEST_SVG = buildChest('');
+    window.LB_CHEST = buildChest;
     window.LB_CHEST_SVG = CHEST_SVG;
     const sfx = (n, a) => { try { SFX.play(n, a); } catch (e) {} };
     const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
