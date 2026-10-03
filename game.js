@@ -1716,6 +1716,7 @@ function handleFinish(p) {
     maybePromptBotsDone();
 }
 
+const SUPPORT_K = 0.3;      // how far the centre may hang past a platform edge (fraction of the radius) and still be standing on it
 function stepPlayer(p, dt) {
     if (p.remote){ Social.stepRemote(p, dt); return; }
     if (p.finished) return;
@@ -1730,17 +1731,17 @@ function stepPlayer(p, dt) {
             const pl = p.plat;
             if (pl.type==='moving') {
                 p.x += pl.speed*pl.dir*dt; p.vx = pl.speed*pl.dir;
-                if (p.x < pl.x-pl.w/2 || p.x > pl.x+pl.w/2){ p.mode='air'; p.plat=null; }
             } else if (pl.type==='ice') {
                 p.x += p.vx*dt; p.vx *= 0.985;
-                if (p.x < pl.x-pl.w/2 || p.x > pl.x+pl.w/2){ p.mode='air'; p.plat=null; }
             } else {
                 p.x += p.vx*dt; p.vx *= 0.55;
                 if (Math.abs(p.vx) < 4) p.vx = 0;
             }
+            // You only stand where your centre is (nearly) over the platform; landing uses the same rule, so nobody hovers beside an edge.
+            if (Math.abs(p.x - pl.x) > pl.w / 2 + SUPPORT_K * p.r){ p.mode='air'; p.plat=null; }
             // fragile trigger
-            if (pl.type==='fragile' && !pl.breaking){ pl.breaking=true; pl.breakT=0.9; }
-            if (!p.local) updateBot(p, dt);
+            else if (pl.type==='fragile' && !pl.breaking){ pl.breaking=true; pl.breakT=0.9; }
+            if (p.mode === 'idle' && !p.local) updateBot(p, dt);
         }
     }
 
@@ -1832,7 +1833,7 @@ function stepPlayer(p, dt) {
                 if (pl === p.dropPlat && p.dropT > 0) continue;   // stomped through this one
                 const top = pl.y - pl.h/2;
                 if (pBottomPrev <= top + 2 && pBottomNow >= top) {
-                    if (p.x + p.r > pl.x - pl.w/2 && p.x - p.r < pl.x + pl.w/2) {
+                    if (Math.abs(p.x - pl.x) < pl.w/2 + SUPPORT_K * p.r) {
                         // Super Bounce: rebound off the platform at 110% instead of landing
                         if (p.bounceT > 0 && pl.type !== 'finish' && p.vy > 60){
                             p.y = top - p.r; p.vy = bounceVy(p.vy);
@@ -2174,6 +2175,7 @@ function update(dt) {
 
     // Player-vs-player collisions (square bumping)
     resolveBumps();
+    for (const q of players) if (!q.remote && !q.ufoHold && !q.gone){ const w = PLAY_W(); if (q.x < q.r) q.x = q.r; else if (q.x > w - q.r) q.x = w - q.r; }   // bumps and shoves must never push anyone past the side walls (out of view)
     updateItemBoxes(dt);
     updateShots(dt);
     updateChains(dt);
@@ -3044,6 +3046,11 @@ function startGame() {
     showScreen(''); // hide all overlays
     generateLevel(matchSeed); initPlayers(); botsDonePrompted = false;
     if (window.matchBots && window.BotRoster) BotRoster.applyTo(players.slice(1), window.matchBots);   // Ranked: roster opponents with their own skill
+    // Quick match: now and then one bot is genuinely good (a roster bot rated like a top player), so wins are earned. Not for beginners.
+    else if (!window.rankedMatch && !window.partyMatch && window.BotRoster && prog().races >= 5 && Math.random() < 0.35) {
+        const slot = 1 + Math.floor(Math.random() * 3), rb = BotRoster.pick(1, { mmr: 1450 + Math.random() * 250, spread: 50 })[0];
+        if (rb) BotRoster.applyTo([players[slot]], [Object.assign({}, rb, { name: players[slot].name, look: players[slot].look })], { color: false });
+    }
     beginRound();
 }
 function beginRound() {
