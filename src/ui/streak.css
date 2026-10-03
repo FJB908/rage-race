@@ -35,3 +35,7 @@
 .m-streak.ready { border-color:#ffcf3f; }
 
 .ms-day .ms-fire { width:15px !important; height:15px !important; vertical-align:-2px; margin-right:1px; }
+
+.sk-save { display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 8px; padding: 11px 14px; border: 1px solid rgba(255,138,230,.35); border-radius: 14px; background: rgba(255,138,230,.07); color: #fff; font: inherit; font-weight: 700; font-size: 14px; }
+.sk-save[hidden] { display: none; } .sk-save .ico-flame { width: 22px; height: 22px; } .sk-save span { flex: 1; text-align: left; } .sk-save b { display: inline-flex; align-items: center; gap: 4px; color: #ff8ae6; } .sk-save b .ico { width: 16px; height: 16px; }
+.sk-save.arm { border-color: #ff8ae6; background: rgba(255,138,230,.16); }

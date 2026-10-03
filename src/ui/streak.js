@@ -7,12 +7,15 @@
     const now = () => window.__todayOverride ? new Date(window.__todayOverride + 'T12:00:00') : new Date();
     const today = () => dstr(now());
     const yesterday = () => { const d = now(); d.setDate(d.getDate() - 1); return dstr(d); };
+    const twoDaysAgo = () => { const d = now(); d.setDate(d.getDate() - 2); return dstr(d); };
+    const SAVE_GEMS = 25;
     const itemOf = r => COS_BY[r.cat].find(i => i.id === r.id);
 
     function state() {
         const p = prog(), s = p.streak || { n:0, last:'' }, t = today(), y = yesterday();
         const alive = s.last === t || s.last === y, n = alive ? (s.n || 0) : 0, claimedToday = s.last === t;
-        return { streak:n, claimedToday, canClaim:!claimedToday, nextDay:claimedToday ? null : (n >= N ? 1 : n + 1), shown:claimedToday ? n : (n >= N ? 0 : n) };
+        const canSave = !alive && (s.n || 0) > 0 && s.last === twoDaysAgo();          // missed exactly one day: it can still be saved
+        return { canSave, lost:s.n || 0, streak:n, claimedToday, canClaim:!claimedToday, nextDay:claimedToday ? null : (n >= N ? 1 : n + 1), shown:claimedToday ? n : (n >= N ? 0 : n) };
     }
 
     function art(r, i) {
@@ -34,7 +37,7 @@
     // ---- screen ----
     const el = document.createElement('div');
     el.id = 's-streak'; el.className = 'screen streak-screen'; el.style.cssText = 'display:none;opacity:0';
-    el.innerHTML = '<section class="sk-shell"><header class="sk-top"><button class="pass-back" type="button" id="sk-back" aria-label="Back to home">' + icon('chev-l') + '</button><div class="sk-title"><span class="sk-eyebrow">DAILY REWARDS</span><h1>' + icon('calendar') + '<b id="sk-days">0</b><span id="sk-flame" class="sk-flame" hidden>' + icon('flame') + '</span><span class="sk-lbl">day streak</span></h1></div></header><div class="sk-grid" id="sk-grid"></div><footer class="sk-foot"><button class="sk-claim" id="sk-claim" type="button"></button></footer></section>';
+    el.innerHTML = '<section class="sk-shell"><header class="sk-top"><button class="pass-back" type="button" id="sk-back" aria-label="Back to home">' + icon('chev-l') + '</button><div class="sk-title"><span class="sk-eyebrow">DAILY REWARDS</span><h1>' + icon('calendar') + '<b id="sk-days">0</b><span id="sk-flame" class="sk-flame" hidden>' + icon('flame') + '</span><span class="sk-lbl">day streak</span></h1></div></header><div class="sk-grid" id="sk-grid"></div><footer class="sk-foot"><button class="sk-save" id="sk-save" type="button" hidden></button><button class="sk-claim" id="sk-claim" type="button"></button></footer></section>';
     document.body.appendChild(el);
     S.streak = el;
     const grid = el.querySelector('#sk-grid'), claimBtn = el.querySelector('#sk-claim');
@@ -51,6 +54,7 @@
             const cv = tile.querySelector('canvas');
             if (cv) { const it = itemOf(r), look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [r.cat]:r.id }); try { renderLook(cv, look, { scale:.24, cy:.6 }); } catch (e) {} }
         });
+        const sv = el.querySelector('#sk-save'); sv.hidden = !st.canSave; sv.dataset.armed = ''; sv.innerHTML = icon('flame') + '<span>Save your ' + st.lost + ' day streak</span><b>' + icon('gem') + ' ' + SAVE_GEMS + '</b>';
         claimBtn.disabled = !st.canClaim;
         claimBtn.innerHTML = st.canClaim ? 'CLAIM DAY ' + st.nextDay : '<span>' + icon('check') + '</span> COME BACK TOMORROW';
         claimBtn.classList.toggle('ready', st.canClaim);
@@ -81,6 +85,15 @@
         } finally { busy = false; refreshMenu(); render(); Streak.refreshHome(); }
     }
     claimBtn.addEventListener('click', claim);
+    const saveBtn = el.querySelector('#sk-save');
+    saveBtn.addEventListener('click', () => {
+        const st = state(); if (!st.canSave) return;
+        if (!saveBtn.dataset.armed) { saveBtn.dataset.armed = '1'; saveBtn.classList.add('arm'); setTimeout(() => { saveBtn.dataset.armed = ''; saveBtn.classList.remove('arm'); }, 2600); return; }
+        if (gemCount() < SAVE_GEMS) { toast('You need ' + SAVE_GEMS + ' gems'); return; }
+        store('rr_gems', gemCount() - SAVE_GEMS);
+        const p = prog(); p.streak = { n:p.streak.n, last:yesterday() }; saveProg(p);       // the missed day counts as played
+        SFX.play('finish'); toast('Streak saved'); refreshMenu(); render(); Streak.refreshHome();
+    });
     el.querySelector('#sk-back').addEventListener('click', () => showScreen('start'));
 
     window.Streak = {

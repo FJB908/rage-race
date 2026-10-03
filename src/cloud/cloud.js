@@ -19,7 +19,7 @@
     const TIME_KEY = 'rr_pk_best_time';                                              // lower is better, 0 = none
     const DIM_KEYS = ['rr_pk_levels_v1', 'rr_pk_levels_v2'];
     const FLAG_KEYS = ['rr_tutorial_done'];
-    const MAX_FIELDS = ['xp', 'races', 'wins', 'passPoints', 'passPointsEarned', 'cosmeticPity'];
+    const MAX_FIELDS = ['xp', 'races', 'wins', 'passPoints', 'passPointsEarned', 'cosmeticPity', 'nameChanges'];
 
     /* ------------------------------------------------------------ local snapshot ---- */
     const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -88,7 +88,8 @@
             const x = num((a.best || [])[i]), y = num((b.best || [])[i]);
             best.push(x && y ? Math.min(x, y) : (x || y));
         }
-        out.stars = stars; out.best = best; return out;
+        out.stars = stars; out.best = best;
+        const sk = []; for (let i = 0; i < n; i++) sk.push(!!(((a.skipped || [])[i]) || ((b.skipped || [])[i]))); out.skipped = sk; return out;
     }
     function merge(a, b) {                       // a, b: snapshots; the result keeps the best of both
         const aNewer = a.ts >= b.ts, pNewer = blank(a.d.profile) ? false : blank(b.d.profile) ? true : aNewer, out = { v:1, ts:Math.max(a.ts, b.ts), d:{ nums:{}, dims:{}, flags:{} } };

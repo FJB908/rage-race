@@ -2929,12 +2929,23 @@ document.getElementById('set-reset').addEventListener('click', () => {
 document.getElementById('btn-pause').addEventListener('click', () => {
     if (gameMode === 'gauntlet'){ gtPauseMenu(); return; }
     if (window.rankedMatch){ Ranked.pauseMenu(); return; }
-    openPrompt('PAUSED', 'Catch your breath.', [
+    const btns = [
         ['Resume', resumeRace],
         ['Settings', () => openSettings('pause'), true],
         ['Restart', restartRace, true],
         ['Main menu', quitToMenu, true],
-    ]);
+    ];
+    if (gameMode === 'level' && lv && dimLoad(DIMENSIONS[curDim]).stars[lv.idx] === 0) {       // stuck on a level: skip it (no stars) for gems
+        let armed = false;
+        btns.splice(2, 0, ['Skip level · ' + SKIP_LEVEL_GEMS + ' gems', function () {
+            if (!armed) { armed = true; this.textContent = 'Tap again to skip'; return; }
+            if (gemCount() < SKIP_LEVEL_GEMS) { toast('You need ' + SKIP_LEVEL_GEMS + ' gems'); return; }
+            store('rr_gems', gemCount() - SKIP_LEVEL_GEMS);
+            const dm = DIMENSIONS[curDim], d = dimLoad(dm); d.skipped = d.skipped || []; d.skipped[lv.idx] = true; dimSave(dm, d);
+            showScreen(''); state = 'playing'; quitToMenu(); openLevels(); toast('Level skipped');
+        }, true]);
+    }
+    openPrompt('PAUSED', 'Catch your breath.', btns);
 });
 function ordinal(n){ return n===1?'1st':n===2?'2nd':n===3?'3rd':n+'th'; }
 let spectating = false, spectateTarget = null;
@@ -4483,6 +4494,7 @@ function renderProfile(p, L, stars){
     ];
     document.getElementById('pf-rec').innerHTML = rows.map(r => '<div class="pf-r">' + icon(r[0]) + '<span>' + r[1] + '</span><b>' + r[2] + '</b></div>').join('');
 }
+const RENAME_GEMS = 50, SKIP_LEVEL_GEMS = 20;
 function refreshMenu(){
     const p = prog(), L = levelInfo(prog().xp), sk = skinById(p.skin);
     const root = document.getElementById('s-start');
@@ -4576,11 +4588,23 @@ document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.addEvent
 document.getElementById('m-tile-parkour').addEventListener('click', () => { setLastMode('parkour'); openLevels(); });
 {
     const inp = document.getElementById('m-name-input');
+    // The first rename is free, every later one costs RENAME_GEMS. The field is locked until you tap the pencil.
+    const hint = document.getElementById('pf-name-hint'), editBtn = document.getElementById('pf-name-edit');
+    const showHint = () => { const p = prog(); hint.textContent = (p.nameChanges || 0) >= 1 ? 'Changing your name costs ' + RENAME_GEMS + ' gems' : 'Your first change is free'; };
+    const lock = () => { inp.readOnly = true; editBtn.hidden = false; hint.hidden = true; };
     const commit = () => {
-        const v = inp.value.replace(/[^\p{L}\p{N}_.\- ]/gu, '').trim().slice(0, 16);
-        const p = prog(); p.name = v || 'Player'; saveProg(p); refreshMenu();
+        if (inp.readOnly) return;
+        const v = inp.value.replace(/[^\p{L}\p{N}_.\- ]/gu, '').trim().slice(0, 16) || 'Player';
+        const p = prog();
+        if (v !== p.name) {
+            const cost = (p.nameChanges || 0) >= 1 ? RENAME_GEMS : 0;
+            if (cost && gemCount() < cost) { toast('You need ' + cost + ' gems'); inp.value = p.name; lock(); return; }
+            if (cost) store('rr_gems', gemCount() - cost);
+            const q = prog(); q.name = v; q.nameChanges = (q.nameChanges || 0) + 1; saveProg(q); toast('Name changed');
+        }
+        lock(); refreshMenu();
     };
-    inp.addEventListener('change', commit);
+    editBtn.addEventListener('click', () => { inp.readOnly = false; editBtn.hidden = true; hint.hidden = false; showHint(); inp.focus(); inp.select(); });
     inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') inp.blur(); });
     inp.addEventListener('blur', commit);
 }
@@ -5079,7 +5103,7 @@ function lvGenerate(i){
 
 function lvLoad(){ return dimLoad(DIMENSIONS[curDim]); }
 function lvSave(d){ dimSave(DIMENSIONS[curDim], d); }
-function lvUnlocked(d, i){ return i === 0 || d.stars[i-1] > 0; }
+function lvUnlocked(d, i){ return i === 0 || d.stars[i-1] > 0 || !!(d.skipped && d.skipped[i-1]); }
 function lvStarsFor(i, t){ const L = DIMENSIONS[curDim].levels[i]; return t <= L.par3 ? 3 : t <= L.par2 ? 2 : 1; }
 
 /* ---- level select ---- */
