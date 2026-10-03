@@ -363,7 +363,7 @@
         const RANK = { common: 0, rare: 1, epic: 2, legendary: 3 };
         const isOwn = f => f.price === 0 || p.owned.includes(f.id);
         const grp = f => f.premium ? 0 : isOwn(f) ? 1 : 2;      // gem finishers first, then what you own, then what is for sale
-        const list = FINISHERS.slice().sort((a, b) => grp(a) - grp(b) || (grp(a) === 1 ? p.owned.indexOf(b.id) - p.owned.indexOf(a.id) : RANK[a.rarity] - RANK[b.rarity] || (a.price || a.gemPrice) - (b.price || b.gemPrice)));
+        const list = FINISHERS.slice().sort((a, b) => grp(a) - grp(b) || (grp(a) === 1 ? ((a.price === 0 ? 0 : 1) - (b.price === 0 ? 0 : 1)) || p.owned.indexOf(b.id) - p.owned.indexOf(a.id) : RANK[a.rarity] - RANK[b.rarity] || (a.price || a.gemPrice) - (b.price || b.gemPrice)));
         let armed = null, armT = 0;
         for (const f of list) {
             const own = isOwn(f), eq = (p.finisher || 'f-none') === f.id;

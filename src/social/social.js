@@ -74,8 +74,9 @@
         try {
             const f = fs(), q = await f.getDocs(f.query(col('profiles'), f.where('code', '==', code), f.limit(1)));
             if (q.empty) { say('No player with that code'); return; }
-            const other = q.docs[0].id, id = fid(S.uid, other), cur = await f.getDoc(dref('friendships', id));
-            if (cur.exists()) {
+            const other = q.docs[0].id, id = fid(S.uid, other);
+            let cur = null; try { cur = await f.getDoc(dref('friendships', id)); } catch (e) { cur = null; }       // a missing pair can read as 'denied' under the old rules: treat as no friendship yet
+            if (cur && cur.exists()) {
                 const x = cur.data();
                 if (x.status === 'accepted') { say('Already friends'); return; }
                 if (x.requester === other) { await f.updateDoc(dref('friendships', id), { status:'accepted' }); say('Friend added'); return; }
@@ -83,7 +84,7 @@
             }
             await f.setDoc(dref('friendships', id), { members:[S.uid, other].sort(), requester:S.uid, status:'pending', t:Date.now() });
             say('Request sent');
-        } catch (e) { say('Could not add friend'); }
+        } catch (e) { say(e && e.code === 'permission-denied' ? 'Not allowed: publish the new Firestore rules' : 'Could not add friend, try again'); }
     }
     const answer = (id, ok) => (ok ? fs().updateDoc(dref('friendships', id), { status:'accepted' }) : fs().deleteDoc(dref('friendships', id))).catch(() => say('Failed, try again'));
 

@@ -19,7 +19,8 @@ service cloud.firestore {
     }
     // Friendship = one document per pair (id = sorted uids). Only the other person can accept.
     match /friendships/{id} {
-      allow read: if request.auth != null && request.auth.uid in resource.data.members;
+      allow get: if request.auth != null && request.auth.uid in id.split('_');                      // the id is the two uids, so a pair that does not exist yet can be checked
+      allow list: if request.auth != null && request.auth.uid in resource.data.members;
       allow create: if request.auth != null && request.auth.uid in request.resource.data.members && request.resource.data.members.size() == 2
         && request.resource.data.requester == request.auth.uid && request.resource.data.status == 'pending';
       allow update: if request.auth != null && request.auth.uid in resource.data.members && request.auth.uid != resource.data.requester

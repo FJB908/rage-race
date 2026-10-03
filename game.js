@@ -795,7 +795,8 @@ function rollItem(p){
     const isLeader = !players.some(o => o !== p && !o.finished && o.y < p.y);
     // Quake needs SOME gap to the leader before it can appear (never in 1st), then ramps up:
     // a real but modest chance in 2nd, growing into a strong comeback tool in 3rd/4th.
-    const quakeW = others ? Math.max(0, f - 0.18) * 1.1 : 0;
+    let quakeW = others ? Math.max(0, f - 0.18) * 1.1 : 0;
+    if (gameMode === 'gauntlet') quakeW *= 0.25;                  // 32 players would shake the course constantly
     // Shield is defensive: more useful (and more common) the further ahead you are —
     // you're the one everyone else's attacks are aimed at.
     const shieldW = 0.16 + 0.16*(1-f);
@@ -1073,7 +1074,7 @@ function startQuake(p){
     // it reads as "the ground gave way", not a random jump in position.
     let shaken = 0;
     for (const o of alive){
-        if (o === p) continue;
+        if (o === p || o.mode !== 'idle') continue;      // only someone standing on a platform loses the ground; nobody is hit mid-air
         const lead = p.y - o.y;                        // how far ahead o is of the caster
         if (lead < margin) continue;
         if (shieldBlocks(o)){ if (p.local) floatText(o.x, o.y - o.r - 18, 'BLOCKED!', ITEMS.shield.color); continue; }
@@ -1093,6 +1094,7 @@ function startQuake(p){
 // Resolves the queued fall once the warning shake has played out.
 function triggerQueuedQuakeFall(o){
     o.quakePending = 0;
+    if (o.mode !== 'idle') return;                       // already airborne by now: leave the jump alone
     o.mode = 'air'; o.plat = null;
     o.vy = Math.max(o.vy, 0) + o.quakeDrop / QUAKE_FALL_T;   // reach the drop distance in QUAKE_FALL_T seconds
     camShake = Math.max(camShake, o.local ? 8 : 0);
@@ -3111,7 +3113,21 @@ const ESC_PICKUPS = { rocket:0.40, shield:0.32, giant:0.28 };   // no Super Boun
 const ESC_WIDTH_MUL = 1.3;      // wider platforms than the race
 const ESC_METERS = 10;          // px per displayed meter
 
-function store(k, v){ try { localStorage.setItem(k, String(v)); } catch(e){} if (window.Cloud) Cloud.touch(); }
+function store(k, v){
+    try { localStorage.setItem(k, String(v)); } catch(e){}
+    if (k === 'rr_coins' || k === 'rr_gems') paintWallet(k);          // the top bar changes the moment you spend or earn
+    if (window.Cloud) Cloud.touch();
+}
+let _walletPrev = {};
+function paintWallet(k){
+    const isC = k === 'rr_coins', el = document.getElementById(isC ? 'wallet-num' : 'gem-num'); if (!el) return;
+    const v = Math.max(0, +localStorage.getItem(k) || 0), prev = _walletPrev[k];
+    el.textContent = isC ? String(v) : v.toLocaleString('en-US');
+    _walletPrev[k] = v;
+    if (prev === undefined || prev === v) return;
+    const pill = el.closest('button'); if (!pill) return;
+    pill.classList.remove('w-up', 'w-down'); void pill.offsetWidth; pill.classList.add(v > prev ? 'w-up' : 'w-down');
+}
 function load(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : Number(v); } catch(e){ return d; } }
 
 // Canvas-ready copies of the item icons, so power-ups on the map use the exact same art as the HUD
@@ -4408,22 +4424,26 @@ function renderShop(cat){
     const rarityOrder = {common:0, rare:1, epic:2, legendary:3};
     // order: gem items first (they stay on top, owned or not), then everything you own, then what is still for sale
     const grp = it => it.premium ? 0 : current.owned.includes(it.id) ? 1 : 2;
-    const items = [...(COS_BY[cat] || SKINS)].filter(it => !it.exclusive || current.owned.includes(it.id)).sort((a,b) => grp(a) - grp(b) || (grp(a) === 1 ? current.owned.indexOf(b.id) - current.owned.indexOf(a.id) : 0) || rarityOrder[a.rarity]-rarityOrder[b.rarity] || (a.price || a.gemPrice || 0)-(b.price || b.gemPrice || 0) || a.name.localeCompare(b.name));
+    const items = [...(COS_BY[cat] || SKINS)].filter(it => !it.exclusive || current.owned.includes(it.id)).sort((a,b) => grp(a) - grp(b) || (grp(a) === 1 ? ((a.price === 0 ? 0 : 1) - (b.price === 0 ? 0 : 1)) || current.owned.indexOf(b.id) - current.owned.indexOf(a.id) : 0) || rarityOrder[a.rarity]-rarityOrder[b.rarity] || (a.price || a.gemPrice || 0)-(b.price || b.gemPrice || 0) || a.name.localeCompare(b.name));
     const animated = [];
     grid.innerHTML = '';
+    grid.classList.toggle('trails', cat === 'trail');
+    let lastGrp = -1;
+    const GRP_LABEL = ['Gems', 'Owned', 'Coins'];
     for (const it of items){
+                if (grp(it) !== lastGrp){ lastGrp = grp(it); const lb = document.createElement('div'); lb.className = 'm-grp'; lb.textContent = GRP_LABEL[lastGrp]; grid.appendChild(lb); }
                 const owned = current.owned.includes(it.id);
                 const eq = current[cat] === it.id;
                 const b = document.createElement('button');
-                b.type = 'button'; b.style.setProperty('--rc', RARITY[it.rarity].color); b.title = RARITY[it.rarity].label;
+                b.type = 'button'; b.style.setProperty('--rc', RARITY[it.rarity].color); b.title = RARITY[it.rarity].label; b.dataset.tid = it.id;
                 b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' ? ' leg' : '') + (it.premium ? ' prem' : '');
                 b.innerHTML = `<span class="m-skin-pv"><canvas width="160" height="160"></canvas></span>` +
                     `<b>${it.name}</b>` +
-                    (cat === 'trail' ? `<canvas class="tr-pv" width="300" height="100"></canvas>` : '') +
+                    (cat === 'trail' ? `<canvas class="tr-pv" width="400" height="200"></canvas>` : '') +
                     `<span class="m-skin-f"><span class="buy-hint">Tap again</span><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.premium ? R('gem', it.gemPrice) : R('coin', it.price)}</span></span>` + (it.premium ? `<span class="prem-tag">${icon('gem')}</span>` : '');
                 const preview = { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail };
                 renderLook(b.querySelector('canvas'), preview, { scale:0.22, cy:0.62 });
-                { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it); }
+                { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it, undefined, 1.7); }
                 if (it.premium && cat !== 'trail') animated.push([b.querySelector('canvas'), preview]);
                 b.addEventListener('click', () => {
                     const q = prog();
@@ -4455,6 +4475,17 @@ function renderShop(cat){
                     refreshMenu(); renderShop(cat);
                 });
                 grid.appendChild(b);
+    }
+    cancelAnimationFrame(renderShop._trRaf);
+    if (cat === 'trail'){                                   // trail previews play as a loop
+        const tps = [...grid.querySelectorAll('canvas.tr-pv')];
+        const byCanvas = new Map(); grid.querySelectorAll('.m-skin').forEach((card, i) => { const cv = card.querySelector('canvas.tr-pv'); if (cv) byCanvas.set(cv, card.dataset.tid); });
+        const loop = now => {
+            if (grid.hidden || !grid.isConnected || !grid.classList.contains('trails')) return;
+            for (const cv of tps){ const r = cv.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight || !r.width) continue; const tr = TRAIL_BY_ID[byCanvas.get(cv)]; if (tr) { try { drawTrailPreview(cv, tr, 0.4 + (now / 1000) % 3.4, 1.7); } catch (e) {} } }
+            renderShop._trRaf = requestAnimationFrame(loop);
+        };
+        renderShop._trRaf = requestAnimationFrame(loop);
     }
     clearInterval(renderShop._anim);
     if (animated.length) renderShop._anim = setInterval(() => {
@@ -4638,6 +4669,7 @@ function refreshStartMeta(){
     document.getElementById('start-best').textContent = best > 0 ? 'Best ' + best.toLocaleString('en-US') : '';
     document.getElementById('wallet-num').textContent = coins;
     document.getElementById('gem-num').textContent = gemCount().toLocaleString('en-US');
+    _walletPrev = { rr_coins: +coins || 0, rr_gems: gemCount() };
     try {
         const tot = dimTotalStars();
         const max = DIMENSIONS.filter(dm => !dm.hidden).reduce((a,dm) => a + dm.levels.length*3, 0);

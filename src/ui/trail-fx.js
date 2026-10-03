@@ -71,10 +71,10 @@
         c.globalAlpha = 1;
     };
     // Animated/static preview on a small canvas. t = seconds into the loop.
-    window.drawTrailPreview = function (cv, trail, t) {
+    window.drawTrailPreview = function (cv, trail, t, zoom) {
         const c = cv.getContext('2d'), W = cv.width, H = cv.height; t = t === undefined ? 1.15 : t;
         c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
-        const life = trailLife(trail), rate = trailRate(trail), u = H / 120;
+        const life = trailLife(trail), rate = trailRate(trail), u = H / 120 * (zoom || 1);
         c.setTransform(u, 0, 0, u, 0, 0);
         const ww = W / u, hh = H / u, pathX = e => ww * .5 + Math.sin(e * 1.1 - 1.1) * ww * .34, pathY = e => hh * .5 + Math.sin(e * 2.6) * hh * .2;
         const samples = [], first = Math.max(0, t - life), k0 = Math.floor(first / rate);
