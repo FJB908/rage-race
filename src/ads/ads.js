@@ -90,7 +90,7 @@
     A.renderShop = function (box) {
         const sec = document.createElement('div'); sec.className = 'ad-sec';
         const mk = (kind, title, sub, fn) => {
-            const left = A.left(kind), w = A.wait(kind), b = document.createElement('button'); b.type = 'button'; b.className = 'ad-card'; b.dataset.kind = kind; b.disabled = left <= 0 || w > 0;
+            const left = A.left(kind), w = A.wait(kind), b = document.createElement('button'); b.type = 'button'; b.className = 'ad-card'; b.dataset.kind = kind; b.disabled = left <= 0 || w > 0; b.classList.toggle('cool', w > 0 && left > 0);
             b.innerHTML = '<span class="ad-ic">' + (kind === 'coin' ? icon('coin') : icon('drop')) + '</span><span class="ad-tx"><b>' + title + '</b><small>' + sub + '</small></span>' +
                 '<span class="ad-go">' + (left <= 0 ? 'DONE' : w > 0 ? mmss(w) : 'WATCH') + '</span><em>' + left + ' left today</em>';
             b.onclick = async () => { b.disabled = true; await fn(); renderResourceShop(); };
@@ -138,7 +138,7 @@
         A.refreshHome();
         document.querySelectorAll('.ad-card').forEach(b => {
             const kind = b.dataset.kind, left = A.left(kind), w = A.wait(kind), go = b.querySelector('.ad-go');
-            b.disabled = left <= 0 || w > 0; if (go) go.textContent = left <= 0 ? 'DONE' : w > 0 ? mmss(w) : 'WATCH';
+            b.disabled = left <= 0 || w > 0; b.classList.toggle('cool', w > 0 && left > 0); if (go) go.textContent = left <= 0 ? 'DONE' : w > 0 ? mmss(w) : 'WATCH';
         });
     }, 1000);
 })();

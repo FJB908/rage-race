@@ -21,3 +21,9 @@
 .m-adpill .nbadge { top: -8px; right: -4px; }
 .m-adpill:disabled { opacity: .55; }
 .m-adpill.cool b { color: #aab3c4; font-variant-numeric: tabular-nums; }
+
+/* cooling down: clearly grey, with the timer in white */
+.m-adpill.cool { filter: grayscale(1); border-color: rgba(255,255,255,.18); background: rgba(40,44,54,.9); opacity: .9; }
+.m-adpill.cool b { color: #fff; }
+.ad-card:disabled.cool { filter: grayscale(1); border-color: rgba(255,255,255,.14); background: #1a1d25; opacity: .85; }
+.ad-card.cool .ad-go { background: #3a3f4c; color: #fff; font-variant-numeric: tabular-nums; min-width: 58px; text-align: center; }

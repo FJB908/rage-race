@@ -22,7 +22,7 @@
         if (r.t === 'coin') return '<b>' + r.n.toLocaleString('en-US') + '</b><small>Coins</small>';
         if (r.t === 'gem') return '<b>' + r.n + '</b><small>Gems</small>';
         if (r.t === 'drop') return '<b style="color:' + TC[r.tier] + '">' + r.tier.toUpperCase() + '</b><small>Supply drop</small>';
-        if (r.t === 'boost') return '<b style="color:' + color(r) + '">x' + r.mult + ' ' + Boost.KINDS[r.kind].name + '</b><small>' + r.n + ' ' + (r.kind === 'coin' ? (r.n === 1 ? 'match' : 'matches') : (r.n === 1 ? 'chest' : 'chests')) + '</small>';
+        if (r.t === 'boost') return '<b style="color:' + color(r) + '">x' + r.mult + ' ' + Boost.KINDS[r.kind].name + '</b><small>' + r.n + ' ' + (r.kind === 'coin' ? (r.n === 1 ? 'match' : 'matches') : (r.n === 1 ? 'chest' : 'chests')) + (r.kind === 'chest' ? ' · from matches' : '') + '</small>';
         const it = itemOf(r); return '<b style="color:' + RARITY[it.rarity].color + '">' + it.name + '</b><small>' + RARITY[it.rarity].label + ' ' + ({ skin:'skin', hat:'headwear', face:'face', trail:'trail' }[r.cat]) + '</small>';
     }
 
@@ -58,7 +58,7 @@
             if (ready) row.querySelector('.lr-claim').onclick = () => claim([l]);
             list.appendChild(row);
             const cv = row.querySelector('canvas');
-            if (cv) { const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [r.cat]:r.id }); try { renderLook(cv, look, { scale:.24, cy:.6 }); } catch (e) {} if (r.cat === 'trail') { cv.width = 160; try { drawTrailPreview(cv, itemOf(r)); } catch (e) {} } }
+            if (cv) { const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [r.cat]:r.id }); if (r.cat === 'trail') { cv.width = 200; cv.height = 100; try { drawTrailPreview(cv, itemOf(r)); } catch (e) {} } else try { renderLook(cv, look, { scale:.36, cy:.56 }); } catch (e) {} }
         }
     }
     function scrollToCurrent() {
@@ -73,7 +73,7 @@
         if (r.t === 'coin') { addCoins(r.n); await showRewardPops([{ type:'coin', n:r.n }]); }
         else if (r.t === 'gem') { addGems(r.n); await showRewardPops([{ type:'gem', n:r.n }]); }
         else if (r.t === 'boost') await showRewardPops([Boost.pop(r)]);
-        else if (r.t === 'drop') { const drop = awardLootDrop(newLootId('level'), { coins:60, xp:40, passPoints:0 }, { tier:r.tier }); await new Promise(res => openLootbox(drop, { title:'LEVEL ' + l + ' REWARD', onDone:res })); }
+        else if (r.t === 'drop') { const drop = awardLootDrop(newLootId('lvreward'), { coins:60, xp:40, passPoints:0 }, { tier:r.tier }); await new Promise(res => openLootbox(drop, { title:'LEVEL ' + l + ' REWARD', onDone:res })); }
         else {
             const it = itemOf(r), q = prog();
             if (q.owned.includes(it.id)) { const back = { common:100, rare:400, epic:1200, legendary:3000 }[it.rarity] || 100; addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:it.rarity }); }

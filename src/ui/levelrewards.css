@@ -30,3 +30,7 @@
 .lvr-screen { justify-content: flex-start; align-items: stretch; padding: 0; overflow: hidden; text-align: left; background: #0d1017; }
 .lr-name { text-align: left; }
 .m-lvl .nbadge { top: -15px; right: -15px; min-width: 18px; height: 18px; font-size: 11px; padding: 0 4px; }
+
+.lr-art canvas { object-fit: contain; }
+.lr-name b { font-size: 15px; line-height: 1.15; }
+.lr-card { min-height: 64px; }
