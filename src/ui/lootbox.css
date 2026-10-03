@@ -118,3 +118,8 @@
 @keyframes lootTap { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 @keyframes lootGo { to { transform: scale(1.12); opacity: .0; } }
 .loot-big.tier-common { --tc: #35e0c8; --tc2: #127b6c; } .loot-big.tier-rare { --tc: #5b8def; --tc2: #1f3f8f; } .loot-big.tier-epic { --tc: #b3a9ff; --tc2: #4f3fc4; } .loot-big.tier-legendary { --tc: #ffcf3f; --tc2: #a86a00; }
+
+.lb-boosts { flex-wrap: wrap; justify-content: center; gap: 10px 18px; max-width: 92vw; }
+.lb-pop.pop-boost { flex-direction: row; gap: 8px; } .lb-pop.pop-boost b { font-size: 14px; font-weight: 800; text-align: left; line-height: 1.15; max-width: 120px; }
+.lb-pop.pop-boost .bo-art { width: 40px; height: 40px; } .lb-pop.pop-boost .bo-art b { position: absolute; max-width: none; font-size: 11px; }
+.lb.dense .lb-itempop canvas { width: 150px; height: 150px; } .lb.dense .lb-itempop .nm { font-size: 24px; }

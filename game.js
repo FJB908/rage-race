@@ -4371,6 +4371,7 @@ function renderResourceShop(){
         });
         grid.appendChild(card);
     }
+    if (window.GemCrate) GemCrate.render(box);
     if (window.Ads) Ads.renderShop(box);
 }
 function renderShop(cat){

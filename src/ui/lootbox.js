@@ -121,9 +121,13 @@
             sfx('item'); const r = d.getBoundingClientRect(); o.emit(10, { x:r.left + 28, y:r.top + 28, speed:260, size:7, colors:kind === 'coin' ? ['#ffcf3f', '#fff3b0'] : kind === 'xp' ? ['#6cc4ff', '#bfe9ff'] : kind === 'gem' ? ['#ff6fd8', '#ffe0f8'] : ['#b3a9ff', '#e4defd'], g:500 });
             await countUp(d.querySelector('b'), n, skipped); await sleep(160);
         }
-        for (const bo of (final.boosts || [])) {
-            const d = document.createElement('div'); d.className = 'lb-pop pop-boost'; d.innerHTML = Boost.art(bo, true) + '<b>' + Boost.short(bo) + '</b>'; row.appendChild(d); void d.offsetWidth; d.classList.add('show');
-            sfx('item'); await sleep(420);
+        if ((final.boosts || []).length) {
+            o.el.classList.add('dense');
+            const brow = document.createElement('div'); brow.className = 'lb-row lb-boosts'; pops.appendChild(brow);
+            for (const bo of final.boosts) {
+                const d = document.createElement('div'); d.className = 'lb-pop pop-boost'; d.innerHTML = Boost.art(bo) + '<b>' + Boost.short(bo) + '</b>'; brow.appendChild(d); void d.offsetWidth; d.classList.add('show');
+                sfx('item'); await sleep(380);
+            }
         }
         if (final.boost > 1) { const d = document.createElement('div'); d.className = 'lb-pop pop-boost'; d.innerHTML = '<b style="color:#35e0c8">CHEST BOOSTER x' + final.boost + '</b>'; row.appendChild(d); void d.offsetWidth; d.classList.add('show'); await sleep(300); }
         const cos = final.cosmetic;
@@ -216,7 +220,7 @@
             sfx('count'); buzz(18 + n * 6);
             const p = chestPos(); o.emit(6, { x:p.x, y:p.y, speed:240, size:6, colors:[TIER_COLOR[tier], '#fff'], g:300 });
             await wait(300); chest.classList.remove('tap');
-            const up = tier !== 'legendary' && Math.random() < upChance(n);
+            const up = tier !== 'legendary' && !opts.fixed && Math.random() < upChance(n);
             if (up) {
                 tier = TIERS[TIERS.indexOf(tier) + 1]; paint();
                 o.flash(); o.shake(); buzz([30, 30, 50]); sfx('boost'); sfx('finish');
