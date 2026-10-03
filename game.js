@@ -1698,6 +1698,7 @@ function handleFinish(p) {
 function stepPlayer(p, dt) {
     if (p.finished) return;
     if (p.ufoHold) return;                         // being carried: the UFO owns your position
+    if (p.dropT > 0) p.dropT -= dt;                // briefly ignores the platform it was stomped through
     const pw = PLAY_W();
     tickAbilities(p, dt);
 
@@ -1806,6 +1807,7 @@ function stepPlayer(p, dt) {
             for (const pl of platforms) {
                 if (!pl.active) continue;
                 if (pl.type==='finish') continue;    // finishing is handled unconditionally above
+                if (pl === p.dropPlat && p.dropT > 0) continue;   // stomped through this one
                 const top = pl.y - pl.h/2;
                 if (pBottomPrev <= top + 2 && pBottomNow >= top) {
                     if (p.x + p.r > pl.x - pl.w/2 && p.x - p.r < pl.x + pl.w/2) {
@@ -2045,6 +2047,18 @@ function resolveBumps() {
                 p1.x -= s * push; p2.x += s * push; p1.vx -= s * 0.5; p2.vx += s * 0.5;
             } else if (idle1 !== idle2) {                 // one stands, one is in the air: only the flyer gives way
                 const S = idle1 ? p1 : p2, F = idle1 ? p2 : p1;
+                // STOMP: landing on someone's head knocks them down through the platform they stand on
+                if (F.vy > 150 && F.y < S.y - 4 && Math.abs(F.x - S.x) < rs * 0.8 && S.plat && !S.plat.ground && !(S._stompTick && bumpTick - S._stompTick < 30)) {
+                    if (shieldBlocks(S)) { F.vy = -260; F.vx += (F.x >= S.x ? 1 : -1) * 120; continue; }
+                    S._stompTick = bumpTick;
+                    S.dropPlat = S.plat; S.dropT = 0.6;
+                    S.mode = 'air'; S.plat = null; S.charged = false; S.vx *= 0.3; S.vy = Math.max(620, F.vy); S.squash = 0.6;
+                    F.vy = -260; F.squash = 1.3;
+                    burst(S.x, S.y + S.r, '#ffffff', 12, 220); ring(S.x, S.y, '#ffffff', 55);
+                    if (S.local) { SFX.play('stumble'); haptic([30, 30, 70]); camShake = Math.max(camShake, 7); }
+                    else if (F.local) { SFX.play('shatter'); haptic(20); }
+                    continue;
+                }
                 const side = F.x !== S.x ? Math.sign(F.x - S.x) : (Math.random() < 0.5 ? -1 : 1);
                 const need = Math.sqrt(Math.max(0, rs * rs - (F.y - S.y) * (F.y - S.y))) + 0.5;   // sideways distance that clears the overlap
                 F.x = S.x + side * Math.max(need, Math.abs(F.x - S.x));
