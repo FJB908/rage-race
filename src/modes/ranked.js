@@ -62,16 +62,37 @@
 
     /* -------------------------------------------------------------------- state ---- */
     function withRk(fn) { const p = prog(); const r = fn(p.rk, p); saveProg(p); return r; }
-    function ensureSeason() {
-        const p = prog(), now = seasonNow();
-        if (p.rk.season === now) return;
-        const fresh = p.rk.matches === 0 && p.rk.claimed.length === 0;
-        if (!fresh) {                       // soft reset: pulled halfway to the middle, a short re-placement
-            p.rk.mmr = Math.round(1100 + (p.rk.mmr - 1100) * 0.55);
-            p.rk.placed = Math.min(p.rk.placed, PLACEMENTS - 2);
-            p.rk.rp = B.mmrToRp(p.rk.mmr); p.rk.peak = p.rk.rp; p.rk.protect = 0; p.rk.streak = 0; p.rk.claimed = [];
+    // Season history lives in the account record (prog().rk.seasons, newest first, max 12 entries):
+    //   { s:seasonIndex, mmr:end-of-season MMR, rp, tier:best tier reached, m:matches that season }
+    // A new season starts from a weighted average of the last seasons (recent and well-played ones count more),
+    // pulled towards the middle, and pulled a bit further for every season you did not play at all.
+    const HIST_MAX = 12, SEASON_AGE = 0.65, IDLE_DECAY = 0.85;
+    function carryMmr(seasons, now, idle) {
+        let sum = 0, wsum = 0;
+        for (const e of seasons) {
+            const w = Math.pow(SEASON_AGE, Math.max(0, now - 1 - e.s)) * Math.min(1, 0.4 + e.m / 12);
+            sum += e.mmr * w; wsum += w;
         }
-        p.rk.season = now; saveProg(p);
+        const avg = wsum ? sum / wsum : 1100;
+        return Math.round(1100 + (avg - 1100) * 0.55 * Math.pow(IDLE_DECAY, idle));
+    }
+    function ensureSeason() {
+        const p = prog(), r = p.rk, now = seasonNow();
+        if (r.season === now) return;
+        // old test accounts have no per-season count: treat all their matches as the season that just ended
+        const played = r.sm || (r.matches > 0 && !r.seasons.length ? r.matches : 0);
+        if (played > 0) {
+            r.seasons.unshift({ s:r.season, mmr:r.mmr, rp:r.rp, tier:B.rankOf(r.peak).tier, m:played });
+            r.seasons.length = Math.min(r.seasons.length, HIST_MAX);
+            r.lastPlayed = r.season;
+        }
+        if (r.seasons.length) {
+            const idle = Math.max(0, now - 1 - Math.max(r.lastPlayed, r.seasons[0].s));   // whole seasons skipped
+            r.mmr = carryMmr(r.seasons, now, idle);
+            r.placed = Math.max(0, Math.min(r.placed, PLACEMENTS - 2 - Math.min(2, idle >> 1)));   // long away: more re-placement
+            r.rp = B.mmrToRp(r.mmr); r.peak = r.rp; r.protect = 0; r.streak = 0; r.claimed = [];
+        }
+        r.sm = 0; r.season = now; saveProg(p);
     }
     function rkState() {
         ensureSeason();
@@ -95,7 +116,7 @@
         let rpd = 0, promo = null, demo = null;
         const out = withRk((rk, p) => {
             rk.mmr = clamp(rk.mmr + dm, 400, 2900);
-            rk.matches++; if (place === 1) { rk.wins++; rk.streak++; } else if (place >= 3) rk.streak = 0;
+            rk.matches++; rk.sm++; rk.lastPlayed = seasonNow(); if (place === 1) { rk.wins++; rk.streak++; } else if (place >= 3) rk.streak = 0;
             const wasRank = before.placed ? B.rankOf(rk.rp) : null;
             if (placing) {
                 rk.placed++;
@@ -224,7 +245,7 @@
             '<div class="rk-scroll">' +
               '<div class="rk-hero" style="--tc:' + (s.placed ? T[s.tier].c1 : '#8b95a7') + '">' + emblem(s.tier, 150, { cls:'rk-float' }) +
                 '<h1>' + (s.placed ? s.rank.label : 'UNRANKED') + '</h1>' +
-                '<p>' + (s.placed ? 'Rank points <b>' + r.rp + '</b>' + (s.peakRank && s.peakRank.tier > s.rank.tier ? ' · Peak ' + s.peakRank.name : '') : s.left + ' placement ' + (s.left === 1 ? 'match' : 'matches') + ' to reveal your rank') + '</p>' +
+                '<p>' + (s.placed ? 'Rank points <b>' + r.rp + '</b>' + (s.peakRank && s.peakRank.tier > s.rank.tier ? ' · Peak ' + s.peakRank.name : '') + (r.seasons.length ? ' · Last season ' + B.rankOf(r.seasons[0].rp).label : '') : s.left + ' placement ' + (s.left === 1 ? 'match' : 'matches') + ' to reveal your rank') + '</p>' +
                 '<div class="rk-bar"><div class="rk-bar-top"><span>' + bar.from + '</span><span>' + bar.to + '</span></div><div class="rk-track"><i style="width:' + bar.fill + '%"></i>' + (s.placed ? '' : [1, 2, 3, 4].map(n => '<u style="left:' + (n * 20) + '%"></u>').join('')) + '</div></div>' +
               '</div>' +
               '<h2 class="rk-h2">LAST MATCHES</h2><div class="rk-hist">' + hist + '</div>' +

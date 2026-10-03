@@ -4117,7 +4117,7 @@ function prog(){
     d.gt = Object.assign({ runs:0, wins:0, best:0, crowned:false, keys:0, streak:0 }, (d.gt && typeof d.gt === 'object') ? d.gt : {});   // Gauntlet record
     for (const k of ['runs', 'wins', 'best', 'keys', 'streak']) if (!Number.isFinite(d.gt[k])) d.gt[k] = 0;
     d.gt.crowned = !!d.gt.crowned;
-    d.rk = Object.assign({ mmr:1000, rp:0, placed:0, peak:0, season:0, hist:[], claimed:[], protect:0, streak:0, matches:0, wins:0, dropDay:'', dropN:0 }, (d.rk && typeof d.rk === 'object') ? d.rk : {});   // Ranked record
+    d.rk = Object.assign({ mmr:1000, rp:0, placed:0, peak:0, season:0, hist:[], claimed:[], protect:0, streak:0, matches:0, wins:0, dropDay:'', dropN:0, sm:0, lastPlayed:-1, seasons:[] }, (d.rk && typeof d.rk === 'object') ? d.rk : {});   // Ranked record
     if (!Array.isArray(d.rk.hist)) d.rk.hist = []; if (!Array.isArray(d.rk.claimed)) d.rk.claimed = [];
     if (!d.pendingDrops || typeof d.pendingDrops !== 'object') d.pendingDrops = {};
     if (!Array.isArray(d.owned)) d.owned = ['classic'];

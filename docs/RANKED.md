@@ -26,6 +26,14 @@ A match ends the moment YOU cross the finish line (nobody behind you can overtak
 again, rewards reset. Each rank gives a one-time reward per season (coins, a supply drop, gems, and at Crown an item); the
 Play-tab card shows a red number when something can be claimed.
 
+### Season history (account data)
+
+`prog().rk.seasons` keeps the last 12 played seasons, newest first: `{ s, mmr, rp, tier, m }` (season index, end MMR, end RP,
+best tier, matches). `rk.sm` counts this season's matches and `rk.lastPlayed` the last season you played. A new season starts
+from a weighted average of those seasons (weight `0.65^age`, times a confidence of `0.4 + matches/12`, max 1), pulled 45% to
+1100, and for every whole season you skipped the pull grows (`x0.85` each). Long away also means more placement matches
+(one extra per two skipped seasons, max +2). Seasons without a played match are never recorded.
+
 ## Rules that make it fair
 
 * No rubber band: bots never slow down for you (`window.RACE_BAND = 0`), and no easy-start for new players.
