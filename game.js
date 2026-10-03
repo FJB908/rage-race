@@ -1699,6 +1699,7 @@ function handleFinish(p) {
 }
 
 function stepPlayer(p, dt) {
+    if (p.remote){ Social.stepRemote(p, dt); return; }      // party race: a friend's phone drives this player
     if (p.finished) return;
     if (p.ufoHold) return;                         // being carried: the UFO owns your position
     if (p.dropT > 0) p.dropT -= dt;                // briefly ignores the platform it was stomped through
@@ -2035,10 +2036,10 @@ function resolveBumps() {
     bumpTick++;
     for (let i = 0; i < players.length; i++) {
         const p1 = players[i];
-        if (p1.dead || p1.gone || p1.finished || p1.ufoHold) continue;
+        if (p1.dead || p1.gone || p1.remote || p1.finished || p1.ufoHold) continue;
         for (let j = i + 1; j < players.length; j++) {
             const p2 = players[j];
-            if (p2.dead || p2.gone || p2.finished || p2.ufoHold) continue;
+            if (p2.dead || p2.gone || p2.remote || p2.finished || p2.ufoHold) continue;
             const dx = p2.x - p1.x, dy = p2.y - p1.y, rs = p1.r + p2.r;
             const distSq = dx * dx + dy * dy;
             if (distSq >= rs * rs || distSq === 0) continue;

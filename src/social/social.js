@@ -89,7 +89,7 @@
     /* -------------------------------------------------------------------- party ---- */
     function stopParty() { S.partyUnsubs.forEach(f => { try { f(); } catch (e) {} }); S.partyUnsubs = []; S.party = null; S.members = []; S.results = []; }
     function watchParty(code) {
-        const f = fs(); stopParty();
+        const f = fs(); stopParty(); loadRt().catch(() => {});
         S.party = { code, host:'', status:'lobby', token:0, seed:0 };
         S.partyUnsubs.push(f.onSnapshot(dref('parties', code), snap => {
             if (!snap.exists()) { if (S.party) { say('Party closed'); stopParty(); closeBoard(); render(); } return; }
@@ -145,23 +145,89 @@
     async function kick(uid) { try { await fs().deleteDoc(dref('parties', S.party.code, 'members', uid)); } catch (e) {} }
     async function startParty() {
         const p = S.party; if (!p || p.host !== S.uid) return;
-        try { await fs().updateDoc(dref('parties', p.code), { status:'racing', seed:(Math.random() * 4294967296) >>> 0, token:Date.now() }); } catch (e) { say('Could not start'); }
+        const rt = await loadRt().catch(() => null);
+        const startAt = rt ? Date.now() + rt.offset + 5000 : 0;                 // shared start moment on the Realtime Database clock
+        try { await fs().updateDoc(dref('parties', p.code), { status:'racing', seed:(Math.random() * 4294967296) >>> 0, token:Date.now(), startAt, live:!!rt }); } catch (e) { say('Could not start'); }
+    }
+
+    /* --------------------------------------------------- live positions (Realtime Database) ---- */
+    let RT = null, LIVE = null;
+    async function loadRt() {
+        if (RT) return RT;
+        const m = await import(Cloud.sdk + 'firebase-database.js'), url = Cloud.config.databaseURL;
+        const db = url ? m.getDatabase(S.api.fb.a, url) : m.getDatabase(S.api.fb.a);
+        const r = { m, db, offset:0 };
+        m.onValue(m.ref(db, '.info/serverTimeOffset'), s => { r.offset = s.val() || 0; });
+        RT = r; return r;
+    }
+    function liveStart(d) {                          // after startGame(): turn friends' slots into remote players, start sending
+        const rt = RT, m = rt.m, base = 'rooms/' + S.party.code + '/' + d.token + '/';
+        const others = S.members.filter(x => x.uid !== S.uid).slice(0, 3);
+        LIVE = { base, subs:[], timer:0, remotes:[], t0:Date.now() };
+        others.forEach((mem, k) => {
+            const p = players[k + 1]; if (!p) return;
+            const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, mem.look || {});
+            p.remote = true; p.uid = mem.uid; p.name = mem.name; p.look = look; p.afk = false; p.botType = null;
+            p.color = skinById(look.skin).color; p.samples = []; p.rkColor = null;
+            LIVE.remotes.push(p);
+            LIVE.subs.push(m.onValue(m.ref(rt.db, base + mem.uid), snap => {
+                const v = snap.val();
+                if (!v) { if (Date.now() - LIVE.t0 > 4000) p.left = true; return; }
+                p.left = false; p.samples.push({ t:performance.now(), x:v.x, y:v.y, vy:v.vy || 0, f:v.f || 0 });
+                if (p.samples.length > 20) p.samples.shift();
+            }));
+        });
+        const mine = m.ref(rt.db, base + S.uid);
+        try { m.onDisconnect(mine).remove(); } catch (e) {}
+        LIVE.timer = setInterval(() => {
+            const me = players[0]; if (!me) return;
+            m.set(mine, { x:Math.round(me.x * 10) / 10, y:Math.round(me.y * 10) / 10, vy:Math.round(me.vy), f:me.finished ? me.finishTime : 0 }).catch(() => {});
+            if (state === 'menu') liveStop();
+        }, 100);
+    }
+    function liveStop() {
+        if (!LIVE) return;
+        clearInterval(LIVE.timer); LIVE.subs.forEach(f => { try { f(); } catch (e) {} });
+        try { RT.m.remove(RT.m.ref(RT.db, LIVE.base + S.uid)); } catch (e) {}
+        LIVE = null; window.partyMatch = null; window.RACE_BAND = undefined; window.matchBots = null;
+        if (S.party && S.party.host === S.uid) fs().updateDoc(dref('parties', S.party.code), { status:'lobby' }).catch(() => {});
+    }
+    function stepRemote(p, dt) {                     // smooth the friend's 10 Hz samples, shown about 150 ms in the past
+        if (p.finished) return;
+        const s = p.samples;
+        if (p.left && !p.finished) { p.finished = true; p.finishTime = 9999; finishedCount++; return; }
+        if (!s || !s.length) return;
+        const t = performance.now() - 150;
+        let a = s[0], b = s[s.length - 1];
+        for (let i = s.length - 1; i > 0; i--) if (s[i - 1].t <= t) { a = s[i - 1]; b = s[i]; break; }
+        const k = b.t > a.t ? Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t))) : 1, px = p.x, py = p.y;
+        p.x = a.x + (b.x - a.x) * k; p.y = a.y + (b.y - a.y) * k;
+        p.vx = dt > 0 ? (p.x - px) / dt : 0; p.vy = dt > 0 ? (p.y - py) / dt : 0;
+        p.mode = Math.abs(p.vy) > 40 ? 'air' : 'idle';
+        if (p.y < p.best) p.best = p.y;
+        const last = s[s.length - 1];
+        if (last.f > 0 && !p.finished) { p.finished = true; p.finishTime = last.f; finishedCount++; p.x = last.x; p.y = last.y; if (typeof burst === 'function') burst(p.x, p.y, p.color, 24, 240); checkEnd(); }
     }
 
     /* ------------------------------------------------------------------- racing ---- */
     function startRace(d) {
         if (typeof state !== 'undefined' && state !== 'menu') return;
         S.boardDone = false;
-        window.partyMatch = { code:S.party.code, token:d.token, seed:d.seed, n:S.members.length };
+        window.partyMatch = { code:S.party.code, token:d.token, seed:d.seed, n:S.members.length, live:!!(d.live && RT) };
         window.rankedMatch = false; window.RACE_BAND = 0;
         window.matchBots = window.BotRoster ? BotRoster.pick(3, { mmr:Math.max(1000, prog().rk.mmr), spread:160 }) : null;
         matchSeed = d.seed; matchLootId = newLootId('party'); matchBotNames = window.matchBots ? window.matchBots.map(b => b.name) : matchBotNames; matchHumanSlot = 0;
-        startGame();
+        const live = window.partyMatch.live, wait = live ? d.startAt - (Date.now() + RT.offset) - 2400 : 0;   // the game's countdown takes 2.4 s to GO
+        const go = () => {
+            if (typeof state !== 'undefined' && state !== 'menu') { window.partyMatch = null; return; }
+            startGame(); if (live) liveStart(d);
+        };
+        if (wait > 0) { say('Race starts in ' + Math.ceil((wait + 2400) / 1000) + ' s'); setTimeout(go, wait); } else go();
     }
     async function onFinish(time, place) {                          // called by game.js when YOU cross the line
         const m = window.partyMatch; if (!m || !S.party) return;
         try { await fs().setDoc(dref('parties', m.code, 'results', S.uid), { token:m.token, time:+time.toFixed(2), place }); } catch (e) {}
-        setTimeout(openBoard, 1400);
+        if (!m.live) setTimeout(openBoard, 1400);          // without live positions the party board replaces the normal results
     }
     function openBoard() {
         if ($('soc-board')) return;
@@ -258,5 +324,5 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden && S.api) publish(true); });
     ensure();
 
-    window.Social = { touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
+    window.Social = { stepRemote, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
 })();

@@ -10,6 +10,7 @@
         storageBucket: 'rage-race.firebasestorage.app',
         messagingSenderId: '889174064806',
         appId: '1:889174064806:web:735614767e97b65cd3fe67',
+        databaseURL: '',               // Realtime Database URL for live party races; empty = the default (US) URL
     };
     const SDK = 'https://www.gstatic.com/firebasejs/10.14.1/';
     const META_KEY = 'rr_cloud_meta';
@@ -220,6 +221,7 @@
     }
 
     Object.assign(C, {
+        config: FIREBASE_CONFIG, sdk: SDK,
         touch, afterReset, api: () => (fb && user) ? { fb, user } : null, signInGoogle, sync: () => { ready = false; return sync(); },
         on: f => C.listeners.push(f),
         _merge:merge, _snapshot:snapshot,
