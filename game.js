@@ -1710,6 +1710,7 @@ function handleFinish(p) {
     finishedCount++;
     if (p.local && window.partyMatch && window.Social) Social.onPartyFinish(p.finishTime, finishedCount);
     burst(p.x, p.y, p.color, 30, 260);
+    if (p.local && window.Finishers) Finishers.play(p);                // the finisher you equipped
     if (p.local){ SFX.play('finish'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
     if (window.rankedMatch){ if (p.local) Ranked.onLocalFinish(finishedCount); return; }   // Ranked ends the moment YOU cross the line: nobody after you can pass you
     checkEnd();
@@ -4161,6 +4162,7 @@ function prog(){
     if (!Array.isArray(d.lvClaimed)) d.lvClaimed = [];
     if (!Array.isArray(d.emotes)) d.emotes = ['gg', 'gl', 'wp', 'oops'];
     if (!Array.isArray(d.emoteLoadout)) d.emoteLoadout = ['gg', 'gl', 'wp', 'oops'];
+    if (typeof d.finisher !== 'string') d.finisher = 'f-none';
     if (!d.streak || typeof d.streak !== 'object') d.streak = { n:0, last:'' };
     d.gt = Object.assign({ runs:0, wins:0, best:0, crowned:false, keys:0, streak:0 }, (d.gt && typeof d.gt === 'object') ? d.gt : {});   // Gauntlet record
     for (const k of ['runs', 'wins', 'best', 'keys', 'streak']) if (!Number.isFinite(d.gt[k])) d.gt[k] = 0;
@@ -4384,6 +4386,7 @@ function renderShop(cat){
     document.querySelectorAll('.m-pill[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
     if (cat === 'resources'){ renderResourceShop(); return; }
     if (cat === 'emote'){ if (window.Emotes) Emotes.renderShop(grid); return; }
+    if (cat === 'finisher'){ if (window.Finishers) Finishers.renderShop(grid); return; }
     const rarityOrder = {common:0, rare:1, epic:2, legendary:3};
     // order: gem items first (they stay on top, owned or not), then everything you own, then what is still for sale
     const grp = it => it.premium ? 0 : current.owned.includes(it.id) ? 1 : 2;

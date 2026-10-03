@@ -10,3 +10,4 @@
 .em-head { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .em-head b { font-size: 15px; } .em-head span { color: var(--muted); font-size: 13px; } .em-head small { flex-basis: 100%; color: var(--muted); font-size: 12px; }
 .em-slots { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 12px; border-radius: 14px; background: #161b24; min-height: 44px; margin-bottom: 4px; align-items: center; }
 .em-card .em-pv { display: grid; place-items: center; height: 64px; border-radius: 8px; background: #1d2330; overflow: hidden; } .em-card .em-pv .em-chip b { font-size: 14px; } .em-card .em-pv .em-chip .em-gl, .em-card .em-pv .em-chip .em-gl canvas { width: 18px; height: 18px; }
+#m-skins .m-skin-pv canvas.fn-pv { width: 92px; height: 58px; } .fn-card .m-skin-pv { height: 64px; }
