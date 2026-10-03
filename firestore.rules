@@ -47,6 +47,13 @@ service cloud.firestore {
       }
     }
 
+    // Ranked record: written only by the server (Cloud Functions), readable by its owner.
+    match /ranked/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    match /matches/{id} { allow read, write: if false; }
+
     match /{document=**} { allow read, write: if false; }
   }
 }

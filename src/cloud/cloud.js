@@ -205,6 +205,13 @@
         }
         user = fb.au.currentUser; C.email = user.email || ''; C.anon = false; emit('ok'); ready = true; touch(); push();
     }
+    // Callable Cloud Functions (europe-west1). The SDK is only loaded when something calls one.
+    let fnMod = null, fnApi = null;
+    async function call(name, data) {
+        if (!fb || !user) throw new Error('not-ready');
+        if (!fnMod) { fnMod = await import(SDK + 'firebase-functions.js'); fnApi = fnMod.getFunctions(fb.a, 'europe-west1'); }
+        return (await fnMod.httpsCallable(fnApi, name)(data)).data;
+    }
     // Sign out: everything must be in the cloud first, then this phone is cleared so the next account never inherits it.
     const KEEP_KEYS = ['rr_mute', 'rr_sfxvol', 'rr_musvol', 'rr_music', 'rr_haptics'];
     async function signOut() {
@@ -234,7 +241,7 @@
 
     Object.assign(C, {
         config: FIREBASE_CONFIG, sdk: SDK,
-        touch, afterReset, signOut, api: () => (fb && user) ? { fb, user } : null, signInGoogle, sync: () => { ready = false; return sync(); },
+        touch, afterReset, signOut, call, api: () => (fb && user) ? { fb, user } : null, signInGoogle, sync: () => { ready = false; return sync(); },
         on: f => C.listeners.push(f),
         _merge:merge, _snapshot:snapshot,
     });

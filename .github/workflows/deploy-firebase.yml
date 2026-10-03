@@ -1,0 +1,23 @@
+# Deploys Cloud Functions and the security rules. Run it by hand: Actions > Deploy Firebase > Run workflow.
+# Needs the repository secret FIREBASE_SERVICE_ACCOUNT (the JSON key of a service account that may deploy). See docs/SERVER.md.
+name: Deploy Firebase
+on:
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci || npm install
+        working-directory: functions
+      - run: node test.js
+        working-directory: functions
+      - name: Deploy
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only functions,firestore:rules,database --project rage-race --non-interactive

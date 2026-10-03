@@ -62,6 +62,28 @@
 
     /* -------------------------------------------------------------------- state ---- */
     function withRk(fn) { const p = prog(); const r = fn(p.rk, p); saveProg(p); return r; }
+
+    /* ------------------------------------------------------------------ server ---- */
+    // Cloud Functions own MMR and rank points (functions/). While they are not deployed (or unreachable) the phone computes the result itself.
+    // Set SERVER_REQUIRED to true at launch: then a match only counts when the server confirmed it.
+    const SERVER_REQUIRED = false;
+    const SERVER_FIELDS = ['mmr', 'rp', 'placed', 'peak', 'season', 'hist', 'protect', 'streak', 'matches', 'wins', 'sm', 'lastPlayed', 'seasons'];
+    const slim = rk => { const o = {}; SERVER_FIELDS.forEach(f => { o[f] = rk[f]; }); return o; };
+    const within = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+    const serverUp = () => !!(window.Cloud && Cloud.call && Cloud.api && Cloud.api());
+    function adoptServer(srk) {
+        withRk(rk => { if (rk.season !== srk.season) rk.claimed = []; SERVER_FIELDS.forEach(f => { rk[f] = srk[f]; }); });
+    }
+    async function srvStart() {
+        if (!serverUp()) return null;
+        try { const r = await within(Cloud.call('rankedStart', { rk:slim(prog().rk) }), 5000); adoptServer(r.rk); return r.id; } catch (e) { return null; }
+    }
+    // returns { ok:true, ... } | { ok:false, rejected:true, reason } | null (unreachable)
+    async function srvFinish(id, place, forfeit, finishTime, ratings) {
+        if (!id || !serverUp()) return null;
+        try { const r = await within(Cloud.call('rankedFinish', { id, place, forfeit, finishTime, ratings }), 6000); return Object.assign({ ok:true }, r); }
+        catch (e) { return e && e.code && /failed-precondition/.test(e.code) ? { ok:false, rejected:true, reason:e.message } : null; }
+    }
     // Season history lives in the account record (prog().rk.seasons, newest first, max 12 entries):
     //   { s:seasonIndex, mmr:end-of-season MMR, rp, tier:best tier reached, m:matches that season }
     // A new season starts from a weighted average of the last seasons (recent and well-played ones count more),
@@ -156,12 +178,12 @@
     }
     function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-    function startMatch(chosen) {
+    function startMatch(chosen, srvId) {
         document.body.classList.add('online-race');
         window.rankedMatch = true; window.RACE_BAND = 0; window.matchBots = chosen;
         matchLootId = newLootId('rk'); matchSeed = (Math.random() * 4294967296) >>> 0; matchHumanSlot = 0; matchBotNames = chosen.map(b => b.name);
-        cur = { id:matchLootId, chosen, done:false, t0:Date.now() };
-        withRk(rk => { rk.pending = { id:cur.id, t:Date.now() }; });      // closing the app mid-match counts as a loss
+        cur = { id:matchLootId, chosen, done:false, t0:Date.now(), srvId:srvId || '' };
+        withRk(rk => { rk.pending = { id:cur.id, t:Date.now(), srv:srvId || '' }; });      // closing the app mid-match counts as a loss
         hide($('rk-queue')); hide($('rk-hub')); hide($('rk-result'));
         startGame();
         clearInterval(cur.watch);
@@ -177,16 +199,34 @@
         return list;
     }
 
-    function finishMatch(place, forfeit, silent) {
+    async function finishMatch(place, forfeit, silent) {
         if (!cur || cur.done) return;
         cur.done = true; clearInterval(cur.watch);
+        const m = cur, pre = JSON.parse(JSON.stringify(prog().rk));
         withRk(rk => { delete rk.pending; });
         const order = orderNow(place, forfeit);
         const res = applyResult(order, place, forfeit);
         clearMatchFlags();
-        if (silent) { toast(forfeit ? 'Match forfeited: ' + res.rpd + ' RP' : ''); return; }
+        const ftime = players[0] && players[0].finished ? players[0].finishTime : 0, ratings = order.filter(o => o.id !== 'me').map(o => o.mmr);
+        if (silent) {
+            toast(forfeit ? 'Match forfeited: ' + res.rpd + ' RP' : '');
+            srvFinish(m.srvId, place, forfeit, ftime, ratings).then(r => { if (r && r.ok) adoptServer(r.rk); else if (r && r.rejected) withRk(rk => Object.assign(rk, pre)); refreshHome(); });
+            return;
+        }
         state = 'finished';
         hud.style.display = 'none'; showFinishMenu(false);
+        const srv = await srvFinish(m.srvId, place, forfeit, ftime, ratings);
+        if (srv && srv.ok) {                                         // the server decides: take its numbers
+            adoptServer(srv.rk);
+            const was = res.before.placed ? B.rankOf(res.before.rk.rp) : null, after = rkState(), now = after.placed ? B.rankOf(after.rk.rp) : null;
+            res.dm = srv.dm; res.rpd = srv.rpd; res.placing = srv.placing; res.after = after;
+            res.promo = now && !was ? { first:true, to:now } : (now && was && now.tier > was.tier ? { to:now, from:was } : null);
+            res.demo = now && was && now.tier < was.tier ? { to:now, from:was } : null;
+        } else if ((srv && srv.rejected) || (SERVER_REQUIRED && !srv)) {      // not counted: undo the local result
+            withRk(rk => Object.assign(rk, pre));
+            res.dm = 0; res.rpd = 0; res.promo = null; res.demo = null; res.after = rkState();
+            toast(srv ? 'Match not counted' : 'Offline: match not counted');
+        }
         renderResult(res, order);
     }
     function clearMatchFlags() { document.body.classList.remove('online-race'); window.rankedMatch = false; window.RACE_BAND = undefined; window.matchBots = null; }
@@ -208,7 +248,7 @@
                 ['Forfeit match', () => { showScreen(''); state = 'playing'; quitToMenu(); }, true],
             ]);
         },
-        debug:{ providerFindMatch, applyResult, startMatch, finishMatch, cur:() => cur },
+        debug:{ srvStart, srvFinish, adoptServer, providerFindMatch, applyResult, startMatch, finishMatch, cur:() => cur },
     };
 
     /* ------------------------------------------------------------------- screens ---- */
@@ -287,8 +327,12 @@
     }
 
     /* --------------------------------------------------------------- the queue ---- */
-    function findMatch() {
+    async function findMatch() {
         if (cur && !cur.done) return;
+        const btn = $('rk-find'); if (btn) btn.disabled = true;
+        const srvId = await srvStart();
+        if (btn) btn.disabled = false;
+        if (SERVER_REQUIRED && !srvId) { toast('Ranked needs an internet connection'); return; }
         const chosen = providerFindMatch(), s = rkState(), me = s.placed ? s.rank : null;
         const slot = (b, i) => {
             if (!b) return '<div class="rk-slot"><span class="rk-spin"></span><b>Searching...</b><small>&nbsp;</small></div>';
@@ -304,7 +348,7 @@
         $('rk-queue').classList.remove('vs'); draw(0); show($('rk-queue')); hide($('rk-hub'));
         [700, 1500, 2200].forEach((ms, i) => setTimeout(() => { draw(i + 1); SFX.play('count'); }, ms));
         setTimeout(() => { SFX.play('go'); showVs(chosen, s); }, 3000);
-        setTimeout(() => startMatch(chosen), 4400);
+        setTimeout(() => startMatch(chosen, srvId), 4400);
     }
     function showVs(chosen, s) {
         const avg = Math.round(chosen.reduce((a, b) => a + b.mmr, 0) / chosen.length), rk = B.rankOf(B.mmrToRp(avg));
@@ -384,8 +428,18 @@
         const p = prog(); if (!p.rk.pending) return;
         const a = B.pick(3, { mmr:p.rk.mmr, spread:80 }), order = [...a.map(b => ({ id:b.id, mmr:b.mmr })), { id:'me', mmr:p.rk.mmr }];
         withRk(rk => { delete rk.pending; });
+        const srvId = p.rk.pending.srv, ratings = order.filter(o => o.id !== 'me').map(o => o.mmr);
         const res = applyResult(order, 4, true);
         setTimeout(() => { try { toast('Unfinished ranked match counted as a loss'); } catch (e) {} }, 1500);
+        if (srvId) {                                                     // tell the server too, once the connection is up
+            let tries = 0;
+            const t = setInterval(async () => {
+                if (!serverUp() && ++tries < 30) return;
+                clearInterval(t);
+                const r = await srvFinish(srvId, 4, true, 0, ratings);
+                if (r && r.ok) { adoptServer(r.rk); refreshHome(); }
+            }, 1000);
+        }
     })();
     ensureSeason(); refreshHome();
 })();
