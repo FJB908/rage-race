@@ -5273,3 +5273,6 @@ function syncMuteBtn(){
 
 /* start loop */
 requestAnimationFrame(t=>{ last=t; requestAnimationFrame(loop); });
+
+// no pinch-zoom of the game page (iOS Safari ignores user-scalable)
+['gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive:false }));

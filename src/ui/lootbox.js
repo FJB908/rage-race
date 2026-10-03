@@ -37,6 +37,11 @@
         el.id = 'lootbox'; el.className = 'lb tier-' + tier;
         el.innerHTML = '<div class="lb-rays"></div><canvas class="lb-fx"></canvas><div class="lb-flash"></div>' + inner + '<div class="lb-pops"></div><button class="lb-skip" type="button">SKIP</button><button class="lb-btn" type="button">COLLECT</button>';
         document.body.appendChild(el);
+        // iOS Safari zooms the page on a quick second tap or a pinch; tapping the crate repeatedly must never do that
+        let lastEnd = 0;
+        el.addEventListener('touchend', e => { const n = Date.now(); if (n - lastEnd < 450) e.preventDefault(); lastEnd = n; }, { passive:false });
+        el.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive:false });
+        ['gesturestart', 'gesturechange', 'dblclick'].forEach(t => el.addEventListener(t, e => e.preventDefault()));
         const cv = el.querySelector('.lb-fx'), g = cv.getContext('2d'), parts = [];
         let W = 0, H = 0, raf = 0, closed = false;
         const fit = () => { const d = Math.min(window.devicePixelRatio || 1, 1.5); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); };
@@ -162,7 +167,8 @@
             skipBtn.classList.remove('show'); btn.classList.add('show'); if (final.cosmetic) addEquip(o, final.cosmetic);
             btn.onclick = () => { sfx('count'); o.close(() => { if (opts.onDone) opts.onDone(final); }); };
         }
-        async function tap() {
+        async function tap() { try { await tapInner(); } catch (e) { if (!opened) busy = false; } }      // an error mid-animation must never leave the crate stuck
+        async function tapInner() {
             if (busy || opened) return; busy = true;
             const n = taps; taps++;
             el.style.setProperty('--amp', Math.min(1.8, .7 + n * .25).toFixed(2));
