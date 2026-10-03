@@ -34,16 +34,19 @@
           '<path d="M24 22 L27.2 29 L35 29.9 L29.2 35 L30.9 42.5 L24 38.6 L17.1 42.5 L18.8 35 L13 29.9 L20.8 29 Z" fill="#fff" stroke="#1c1450" stroke-width="2" stroke-linejoin="round" transform="translate(32 32) scale(1.2) translate(-24 -32) translate(1 1)"/>' +
           '<path d="M10 16 H30" stroke="#fff" stroke-opacity=".5" stroke-width="2.5" stroke-linecap="round"/>' +
         '</symbol>' +
+        '<linearGradient id="gdb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46526f"/><stop offset=".5" stop-color="#2a3350"/><stop offset="1" stop-color="#151a2b"/></linearGradient>' +
+        '<linearGradient id="gdl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7ba3"/><stop offset="1" stop-color="#2f3a56"/></linearGradient>' +
         '<symbol id="ico-drop" viewBox="0 0 64 64">' +
-          '<ellipse cx="32" cy="58" rx="22" ry="3" fill="#000" opacity=".3"/>' +
-          '<rect x="9" y="25" width="46" height="31" rx="8" fill="#252c3c" stroke="#0d1017" stroke-width="3"/>' +
-          '<rect x="9" y="46" width="46" height="10" rx="6" fill="#0d1017" opacity=".32"/>' +
-          '<path d="M9 34 V32 Q9 25 16 25 H19 M55 34 V32 Q55 25 48 25 H45 M9 47 V49 Q9 56 16 56 H19 M55 47 V49 Q55 56 48 56 H45" fill="none" style="stroke:var(--ic,#35e0c8)" stroke-width="3" stroke-linecap="round"/>' +
-          '<path d="M24 45 L32 37 L40 45 M24 51 L32 43 L40 51" fill="none" stroke="#0d1017" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -3)"/>' +
-          '<path d="M24 45 L32 37 L40 45 M24 51 L32 43 L40 51" fill="none" style="stroke:var(--ic,#35e0c8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -3)"/>' +
-          '<rect x="6" y="11" width="52" height="17" rx="7" fill="#394258" stroke="#0d1017" stroke-width="3"/>' +
-          '<rect x="9" y="23" width="46" height="3.4" rx="1.7" style="fill:var(--ic,#35e0c8)" opacity=".9"/>' +
-          '<path d="M13 17 H31" stroke="#fff" stroke-opacity=".28" stroke-width="2.4" stroke-linecap="round"/>' +
+          '<ellipse cx="32" cy="59" rx="24" ry="3" fill="#000" opacity=".3"/>' +
+          '<rect x="8" y="28" width="48" height="29" rx="7" fill="url(#gdb)" stroke="#0b0e16" stroke-width="2.6"/>' +
+          '<rect x="15" y="28" width="6" height="28" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="1.6"/><rect x="43" y="28" width="6" height="28" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="1.6"/>' +
+          '<path d="M25 47 L32 40 L39 47 M25 53 L32 46 L39 53" fill="none" stroke="#0b0e16" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -2)"/>' +
+          '<path d="M25 47 L32 40 L39 47 M25 53 L32 46 L39 53" fill="none" style="stroke:var(--ic,#35e0c8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -2)"/>' +
+          '<rect x="5" y="12" width="54" height="19" rx="9" fill="url(#gdl)" stroke="#0b0e16" stroke-width="2.6"/>' +
+          '<rect x="15" y="12" width="6" height="19" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="1.6"/><rect x="43" y="12" width="6" height="19" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="1.6"/>' +
+          '<rect x="7" y="25" width="50" height="3.2" rx="1.6" style="fill:var(--ic,#35e0c8)"/>' +
+          '<circle cx="32" cy="21" r="4.4" style="fill:var(--ic,#35e0c8)" stroke="#0b0e16" stroke-width="2"/><circle cx="30.6" cy="19.6" r="1.3" fill="#fff"/>' +
+          '<path d="M11 18 Q15 15 22 15" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/>' +
         '</symbol>' +
         '<symbol id="ico-gem" viewBox="0 0 64 64">' +
           '<path d="M18 11 H46 L59 26 L32 58 L5 26 Z" fill="#3a0830" opacity=".4" transform="translate(0 2)"/>' +

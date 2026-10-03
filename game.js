@@ -1579,6 +1579,20 @@ function updateBot(p, dt) {
             if (!best || e.score > best.score) best = e;
         }
     }
+    // Chained (slower, heavier): nothing may be reachable any more, e.g. the last platform before the finish. A player would still
+    // try with everything they have rather than stand there, so jump at the closest platform above at full power.
+    if (!best && p.chainT > 0) {
+        let tgt = null, td = Infinity;
+        for (const pl of platforms) {
+            if (!pl.active || pl === p.plat || pl.y >= p.y - 20) continue;
+            const d = Math.hypot(pl.x - p.x, pl.y - p.y) - (pl.type === 'finish' ? 400 : 0);
+            if (d < td && Math.hypot(pl.x - p.x, pl.y - p.y) < 900) { td = d; tgt = pl; }
+        }
+        if (tgt) {
+            const tx = Math.max(tgt.x - tgt.w / 2 + 20, Math.min(tgt.x + tgt.w / 2 - 20, p.x)), dx = tx - p.x, dy = (tgt.y - tgt.h / 2 - p.r) - p.y - 30, len = Math.hypot(dx, dy) || 1, mv = playerMaxV(p, !!p._air) * 0.97;
+            best = { score:0, pl:tgt, sol:{ vx:dx / len * mv, vy:dy / len * mv, t:1 } };
+        }
+    }
     if (!best) { p.thinkT = rnd(0.2, 0.4); return; }
 
     // Anti-stagnation: if stuck for a while, try the alternative target to break the loop
@@ -4441,11 +4455,10 @@ function renderProfile(p, L, stars){
     // records
     const bestT = load('rr_pk_best_time', 0), bestM = load('rr_pk_best', 0), esc = load('rr_esc_best_score', 0), passTier = Math.min(30, Math.floor((p.passPointsEarned || 0) / 100));
     const rows = [
-        ['crown', 'Gauntlet crowns', p.gt.wins],
+        ['crown', 'Crowns', p.gt.wins],
         ['mode-escape', 'Escape best', esc ? esc.toLocaleString('en-US') : '--'],
         ['star', 'Level stars', stars + ' / 60'],
         ['mode-levels', 'Tower best', bestT ? pkFmtTime(bestT) : bestM ? bestM + ' m' : '--'],
-        ['pass', 'Season pass', 'Tier ' + passTier + ' / 30'],
     ];
     document.getElementById('pf-rec').innerHTML = rows.map(r => '<div class="pf-r">' + icon(r[0]) + '<span>' + r[1] + '</span><b>' + r[2] + '</b></div>').join('');
 }
@@ -5067,7 +5080,7 @@ function openLevels(gotoDim){
         b.style.setProperty('--lv', L.color);
         const stars = [0,1,2].map(k => `<span class="s${k < d.stars[i] ? ' on' : ''}">${icon('star')}</span>`).join('');
         const tc = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' }[lvDropTier(curDim, i)];
-        const chest = open ? `<span class="lv-drop" title="3 stars: supply drop" style="--ic:${tc}">${icon('drop')}</span>` : '';
+        const chest = d.stars[i] >= 3 ? '' : `<span class="lv-drop" title="3 stars: supply drop" style="--ic:${tc}">${icon('drop')}</span>`;   // shown until you have earned it, also on locked levels
         b.innerHTML = chest + `<span class="lv-num">${i+1}</span><span class="lv-name">${L.name}</span>` +
                       (open ? `<span class="lv-stars">${stars}</span>` : `<span class="lv-lock">${LOCK_SVG}</span>`);
         b.addEventListener('click', () => {
