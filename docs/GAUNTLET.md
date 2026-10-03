@@ -23,7 +23,6 @@ Stage 1 start: 16 players stand on the ground and 16 on a deck 112 px higher. Th
 | Option | Cost | Notes |
 |---|---|---|
 | Coin entry | 500 coins | always available |
-| Key | 1 key | earned by winning 3 Quick matches in a row (`prog().gt.streak` / `.keys`) |
 | Wager | 1000 / 2500 / 5000 coins | coin prizes x1.5 / x2.5 / x4. Reach the Crown Duel and the stake comes back. 5000 also starts the supply drop one tier higher |
 
 ## Prizes (`PRIZES` in gauntlet.js)

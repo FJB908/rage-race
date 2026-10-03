@@ -593,3 +593,8 @@ body.online-race #btn-pause { display: none; }
 .pf-edit { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: 0; border-radius: 10px; background: rgba(255,255,255,.07); display: grid; place-items: center; color: var(--muted); }
 .pf-edit svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } .pf-edit[hidden] { display: none; }
 .pf-hint { font-size: 11px; color: var(--accent); } .pf-hint[hidden] { display: none; }
+
+.m-row { border-color:rgba(53,224,200,.4); background:linear-gradient(100deg,rgba(53,224,200,.12),#161b24 70%); min-height:60px; }
+.m-row .m-kick { color:var(--accent); }
+.m-row-t { font-size:17px; }
+.m-row-chg { display:inline-flex; align-items:center; gap:4px; flex:none; padding:7px 10px 7px 12px; border-radius:99px; background:rgba(53,224,200,.14); color:var(--accent); font-size:12px; font-weight:800; letter-spacing:.03em; }

@@ -10,7 +10,7 @@
         const pts = p.passPointsEarned || 0;
         const done = Math.min(N, Math.floor(pts / PASS_TIER_PTS));              // tiers fully earned
         const claimable = [];
-        for (let i = 0; i < done; i++) if (!p.passClaimed.includes(i)) claimable.push(i);
+        for (let i = 0; i < done; i++) if (PASS_TIERS[i].t !== 'none' && !p.passClaimed.includes(i)) claimable.push(i);
         const rageClaimable = []; for (let i = 0; i < done; i++) if (!(p.rageClaimed || []).includes(i)) rageClaimable.push(i);
         return { pts, done, claimable, rageClaimable, into: done >= N ? PASS_TIER_PTS : pts % PASS_TIER_PTS };
     }
@@ -33,6 +33,7 @@
     const finOf = t => Finishers.BY[t.id];
     const emoOf = t => Emotes.BY[t.id];
     function art(t, key) {
+        if (t.t === 'none') return '<div class="pz-art none"></div>';
         if (t.t === 'coins') return '<div class="pz-art coin">' + icon('coin') + '</div>';
         if (t.t === 'gem') return '<div class="pz-art gem">' + icon('gem') + '</div>';
         if (t.t === 'drop') { const c = { rare:['#5eb4ff', '#1f5bd0'], epic:['#b3a9ff', '#5b46d6'], legendary:['#ffcf3f', '#b8651a'] }[t.tier] || ['#35e0c8', '#127b6c']; return '<div class="pz-art chest" style="--c:' + c[0] + ';--c2:' + c[1] + '">' + (window.LB_CHEST ? LB_CHEST('pz' + key, t.tier || 'common') : LB_CHEST_SVG) + '</div>'; }
@@ -42,15 +43,17 @@
         return '<div class="pz-art item"><canvas width="140" height="140" data-key="' + key + '"></canvas></div>';
     }
     function nameOf(t) {
+        if (t.t === 'none') return '<span class="pz-lbl dim">NO REWARD</span>';
         if (t.t === 'coins') return R('coin', t.n);
         if (t.t === 'gem') return R('gem', t.n);
-        if (t.t === 'drop') return '<span class="pz-lbl">' + (t.tier ? t.tier.toUpperCase() + ' DROP' : 'SUPPLY DROP') + '</span>';
+        if (t.t === 'drop') return '<span class="pz-lbl">' + (t.tier ? t.tier.toUpperCase() + ' CHEST' : 'CHEST') + '</span>';
         if (t.t === 'boost') { const k = Boost.KINDS[t.kind]; return '<span class="pz-lbl">x' + t.mult + (t.kind === 'coin' ? ' COINS' : ' CHESTS') + '</span><small class="bo-sub">' + t.n + ' ' + (t.n === 1 ? k.unit : k.plural) + '</small>'; }
         if (t.t === 'emote') return '<span class="pz-lbl">EMOTE</span>';
         if (t.t === 'finisher') return '<span class="pz-lbl">' + finOf(t).name.toUpperCase() + '</span>';
         return '<span class="pz-lbl">' + itemOf(t).name.toUpperCase() + '</span>';
     }
     function colorOf(t) {
+        if (t.t === 'none') return '#3a4258';
         if (isItem(t)) return t.t === 'prem' ? '#ff8ae6' : rar(itemOf(t).rarity).color;
         if (t.t === 'finisher') return rar(finOf(t).rarity).color;
         if (t.t === 'emote') return emoOf(t).col[1];
@@ -114,14 +117,14 @@
         const track = document.getElementById('pz-track'), keepX = track.scrollLeft;
         track.innerHTML = '<div class="pz-line"><i id="pz-line-fill"></i></div>';
         PASS_TIERS.forEach((t, i) => {
-            const claimed = p.passClaimed.includes(i), ready = !claimed && i < st.done, isNext = i === st.done;
+            const none = t.t === 'none', claimed = none ? i < st.done : p.passClaimed.includes(i), ready = !none && !claimed && i < st.done, isNext = i === st.done;
             const rt = RAGE_TIERS[i], rClaimed = p.rageClaimed.includes(i), rReady = p.rage && !rClaimed && i < st.done;
             const col = document.createElement('div');
             col.className = 'pz-col' + (isNext ? ' next' : '') + (i < st.done ? ' reached' : '') + (claimed && (!p.rage || rClaimed) ? ' claimed' : '') + ((ready || rReady) ? ' ready' : '');
             col.dataset.i = i;
-            const fState = ready ? '<span class="pz-claim">CLAIM</span>' : claimed ? '<span class="pz-state">CLAIMED</span>' : '<span class="pz-state lock">' + (i < st.done ? '' : icon('lock')) + '</span>';
+            const fState = none ? '<span class="pz-state"></span>' : ready ? '<span class="pz-claim">CLAIM</span>' : claimed ? '<span class="pz-state">CLAIMED</span>' : '<span class="pz-state lock">' + (i < st.done ? '' : icon('lock')) + '</span>';
             const rState = rReady ? '<span class="pz-claim">CLAIM</span>' : rClaimed ? '<span class="pz-state">CLAIMED</span>' : '<span class="pz-state lock">' + icon('lock') + '</span>';
-            const top = card(t, 'f' + i, 'free' + (claimed ? ' claimed' : ready ? ' ready' : i < st.done ? '' : ' locked'), fState, () => { if (ready) claim([['f', i]]); });
+            const top = card(t, 'f' + i, 'free' + (none ? ' none' : '') + (claimed ? ' claimed' : ready ? ' ready' : i < st.done ? '' : ' locked'), fState, () => { if (ready) claim([['f', i]]); });
             const node = document.createElement('div'); node.className = 'pz-node'; node.innerHTML = claimed && (!p.rage || rClaimed) ? icon('check') : String(i + 1);
             const bot = card(rt, 'r' + i, 'rage' + (p.rage ? '' : ' off') + (rClaimed ? ' claimed' : rReady ? ' ready' : ''), rState, () => {
                 if (rReady) claim([['r', i]]); else if (!p.rage) { toast('Unlock the Rage pass first'); const b = document.getElementById('pz-rage'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
@@ -140,6 +143,10 @@
         const x0 = nodeX(0), x1 = nodeX(N - 1);
         const nd = first.querySelector('.pz-node').getBoundingClientRect(), tr = track.getBoundingClientRect();
         line.style.top = (nd.top - tr.top + track.scrollTop + nd.height / 2) + 'px';
+        let ln = document.getElementById('pz-lanes');
+        if (!ln) { ln = document.createElement('div'); ln.id = 'pz-lanes'; ln.className = 'pz-lanes'; ln.innerHTML = '<span class="free">FREE</span><span class="rage">RAGE</span>'; document.querySelector('.pz-shell').appendChild(ln); }
+        const cf = first.querySelector('.pz-card.free').getBoundingClientRect(), cr = first.querySelector('.pz-card.rage').getBoundingClientRect(), sh = document.querySelector('.pz-shell').getBoundingClientRect();
+        ln.children[0].style.cssText = 'top:' + (cf.top - sh.top) + 'px;height:' + cf.height + 'px'; ln.children[1].style.cssText = 'top:' + (cr.top - sh.top) + 'px;height:' + cr.height + 'px';
         line.style.left = x0 + 'px'; line.style.width = (x1 - x0) + 'px';
         const prog01 = Math.min(N - 1, Math.max(0, (st.pts / PASS_TIER_PTS) - 1));
         fill.style.width = (prog01 * w) + 'px';
@@ -159,7 +166,7 @@
         else if (t.t === 'boost') await showRewardPops([Boost.pop(t)]);
         else if (t.t === 'drop') {
             const drop = awardLootDrop(newLootId('pass'), { coins:60, xp:50, passPoints:0 }, t.tier ? { tier:t.tier } : undefined);
-            await new Promise(res => openLootbox(drop, { title:t.tier ? 'RAGE DROP' : 'SEASON DROP', onDone:res }));
+            await new Promise(res => openLootbox(drop, { title:t.tier ? 'RAGE CHEST' : 'SEASON CHEST', onDone:res }));
         } else if (t.t === 'emote') {
             const e = emoOf(t), q = prog();
             if (!q.emotes.includes(e.id)) { q.emotes.push(e.id); saveProg(q); }

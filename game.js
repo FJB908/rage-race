@@ -2275,7 +2275,6 @@ function showResults() {
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
     sub.innerHTML = (msgs[you-1] || "") + (rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
-    if (rewardRace.keyEarned) toast('Gauntlet key earned');
     sub.style.color = you===1 ? 'var(--gold)' : 'var(--muted)';
 
     const board = document.getElementById('board');
@@ -3698,13 +3697,13 @@ for (const arr of [SKINS, HATS, FACES, TRAILS]){
 }
 if (typeof PREMIUM_COSMETICS !== 'undefined'){
     for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
-        for (const it of (PREMIUM_COSMETICS[key] || [])) if (!arr.some(x => x.id === it.id)) arr.push(Object.assign({ premium:true, rarity:'legendary' }, it));
+        for (const it of (PREMIUM_COSMETICS[key] || [])) if (!arr.some(x => x.id === it.id)) arr.push(Object.assign({ premium:true, rarity:'legendary' }, it, it.gemPrice ? { gemPrice:Math.round(it.gemPrice * 0.75 / 50) * 50 } : {}));
 }
 const TRAIL_BY_ID = Object.fromEntries(TRAILS.map(trail => [trail.id, trail]));
 const COS_BY = { skin: SKINS, hat: HATS, face: FACES, trail: TRAILS };
 const RESOURCE_PACKS = [
     { id:'field-notes', name:'Small Crate', price:80, xp:45, passPoints:30 },
-    { id:'supply-cache', name:'Supply Drop', price:240, xp:160, passPoints:120 },
+    { id:'supply-cache', name:'Chest', price:240, xp:160, passPoints:120 },
     { id:'season-crate', name:'Season Crate', price:600, xp:450, passPoints:360 },
 ];
 const OUT = 'rgba(13,16,23,0.85)';
@@ -4142,7 +4141,7 @@ function randomBotLook(){
     };
 }
 
-const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'The Gauntlet · 32 players', ranked:'Ranked · Season race' };
+const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race' };
 const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked' };
 let _freeIds = null;
 function freeItemIds(){
@@ -4204,12 +4203,12 @@ function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Ma
 const DROP_TIERS = ['common', 'rare', 'epic', 'legendary'];
 const DROP_COIN_MULT = { common:1, rare:1.75, epic:3, legendary:5 };
 const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, legendary:2.2 };
-const DROP_COSMETIC_CHANCE = { common:0.035, rare:0.09, epic:0.2, legendary:0.45 };
+const DROP_COSMETIC_CHANCE = { common:0.035, rare:0.09, epic:0.2, legendary:0.85 };
 const DROP_RARITY_WEIGHTS = {
     common:    { common:60, rare:28, epic:9,  legendary:3 },
     rare:      { common:36, rare:40, epic:18, legendary:6 },
     epic:      { common:14, rare:34, epic:38, legendary:14 },
-    legendary: { common:5,  rare:20, epic:40, legendary:35 },
+    legendary: { common:22, rare:32, epic:28, legendary:18 },
 };
 function pickCosmetic(available, tier){
     const W = DROP_RARITY_WEIGHTS[tier] || DROP_RARITY_WEIGHTS.common, by = {};
@@ -4288,7 +4287,7 @@ function renderLootDrop(containerId, drop){
     const tier = drop.tier || 'common';
     const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
     panel.classList.remove('opening'); panel.classList.add('big');
-    panel.innerHTML = `<button class="loot-big tier-${tier}" type="button" aria-label="Open the supply drop"><span class="lb-crate">${LB_CHEST('p' + Math.random().toString(36).slice(2, 6), tier)}</span><span class="lb-tap">TAP TO OPEN</span></button>`;
+    panel.innerHTML = `<button class="loot-big tier-${tier}" type="button" aria-label="Open the chest"><span class="lb-crate">${LB_CHEST('p' + Math.random().toString(36).slice(2, 6), tier)}</span><span class="lb-tap">TAP TO OPEN</span></button>`;
     panel.querySelector('.loot-big').addEventListener('click', event => {
         const button = event.currentTarget;
         if (button.disabled) return;
@@ -4535,7 +4534,6 @@ function refreshMenu(){
     document.getElementById('m-d1').innerHTML = `${icon('star')} ${d1}/30`;
     document.getElementById('m-d2').innerHTML = (d1+d2) >= 28 ? `${icon('star')} ${d2}/30` : `28 ${icon('star')} to unlock`;
     document.getElementById('m-d2box').classList.toggle('locked', d1+d2 < 28);
-    document.getElementById('m-tile-pk').innerHTML = `${icon('star')} ${d1+d2} / 60`;
     const save = pkLoadSave(), bestM = load('rr_pk_best', 0), bestT = load('rr_pk_best_time', 0);
     document.getElementById('m-tower').textContent = bestT ? pkFmtTime(bestT) : save ? `${save.m || 0} m` : bestM ? `${bestM} m` : '--';
     document.getElementById('m-s-races').textContent = p.races;
@@ -4553,7 +4551,7 @@ function rewardRace(place, finished, lootId){
     const xp    = finished ? [60, 45, 35, 25][place-1] || 15 : 15;
     const passPoints = finished ? [50, 40, 32, 25][place-1] || 20 : 15;
     const pp = prog(), alreadyGranted = !!(pp.lootGrants[id] || pp.pendingDrops[id]);
-    // Only the winner earns a supply drop; everyone else gets the base rewards straight away.
+    // Only the winner earns a chest; everyone else gets the base rewards straight away.
     let drop = null;
     if (place === 1 && finished) drop = awardLootDrop(id, {coins, xp, passPoints});
     else if (!alreadyGranted){
@@ -4564,8 +4562,6 @@ function rewardRace(place, finished, lootId){
     rewardRace.keyEarned = false;
     if (!alreadyGranted){
         const p = prog(); p.races++; if (finished && place === 1) p.wins++;
-        // three first places in a row earn a Gauntlet key
-        if (finished && place === 1){ p.gt.streak++; if (p.gt.streak >= 3){ p.gt.streak = 0; p.gt.keys++; rewardRace.keyEarned = true; } }
         else p.gt.streak = 0;
         saveProg(p);
     }
@@ -4595,7 +4591,6 @@ document.getElementById('btn-pass-open').addEventListener('click', openPass);
 document.getElementById('pz-claimall').addEventListener('click', claimAllPass);
 document.getElementById('btn-pass-back').addEventListener('click', () => showScreen('start'));
 document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.addEventListener('click', () => selectMode(c.dataset.mode)));
-document.getElementById('m-tile-parkour').addEventListener('click', () => { setLastMode('parkour'); openLevels(); });
 {
     const inp = document.getElementById('m-name-input');
     // The first rename is free, every later one costs RENAME_GEMS. The field is locked until you tap the pencil.
@@ -5135,7 +5130,7 @@ function openLevels(gotoDim){
         b.style.setProperty('--lv', L.color);
         const stars = [0,1,2].map(k => `<span class="s${k < d.stars[i] ? ' on' : ''}">${icon('star')}</span>`).join('');
         const tc = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' }[lvDropTier(curDim, i)];
-        const chest = d.stars[i] >= 3 ? '' : `<span class="lv-drop" title="3 stars: supply drop" style="--ic:${tc}">${icon('drop-' + lvDropTier(curDim, i))}</span>`;   // shown until you have earned it, also on locked levels
+        const chest = d.stars[i] >= 3 ? '' : `<span class="lv-drop" title="3 stars: chest" style="--ic:${tc}">${icon('drop-' + lvDropTier(curDim, i))}</span>`;   // shown until you have earned it, also on locked levels
         b.innerHTML = chest + `<span class="lv-num">${i+1}</span><span class="lv-name">${L.name}</span>` +
                       (open ? `<span class="lv-stars">${stars}</span>` : `<span class="lv-lock">${LOCK_SVG}</span>`);
         b.addEventListener('click', () => {

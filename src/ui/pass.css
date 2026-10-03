@@ -113,3 +113,32 @@
 .pz-name { flex-direction:column; gap:2px; font-size:13px; }
 .pz-name .bo-sub { display:block; font-size:10px; font-weight:700; color:#9aa3b5; text-align:center; }
 .pz-name .pz-lbl { font-size:12px; text-align:center; }
+
+/* ---- compact two-lane layout ---- */
+.pz-col { width:108px; gap:10px; }
+.pz-card { width:98px; height:140px; padding:15px 5px 7px; border-radius:15px; box-shadow:0 4px 0 #0a0d14; }
+.pz-card.rage { height:158px; }
+.pz-card.none { border-style:dashed; border-color:#2a3144; background:rgba(255,255,255,.02); box-shadow:none; opacity:.7; }
+.pz-art { font-size:44px; } .pz-art.chest svg { width:60px; } .pz-art canvas { width:76px; height:76px; } .pz-art.gem .ico { width:44px; height:44px; }
+.pz-art.emote span { font-size:15px; }
+.pz-name { min-height:28px; font-size:12px; } .pz-name .pz-lbl { font-size:11px; } .pz-name .pz-lbl.dim { color:#566078; font-size:10px; }
+.pz-name .bo-sub { font-size:9px; }
+.pz-claim, .pz-state { padding:5px 0; font-size:11px; border-radius:9px; min-height:0; margin-top:3px; }
+.pz-state { min-height:20px; }
+.pz-rar { font-size:8px; padding:2px 7px; }
+.pz-node { width:34px; height:34px; font-size:14px; }
+.pz-art.chest svg { max-height:64px; }
+.pz-track { padding:0 calc(50vw - 54px); }
+/* lane labels sit at the left edge, outside the scrolling track */
+.pz-shell { position:relative; }
+.pz-lanes { position:absolute; left:0; top:0; width:20px; z-index:6; pointer-events:none; margin:0; }
+.pz-lanes span { position:absolute; left:0; display:grid; place-items:center; width:18px; border-radius:0 8px 8px 0; writing-mode:vertical-rl; transform:rotate(180deg); font:900 10px/1 system-ui,sans-serif; letter-spacing:.2em; backdrop-filter:blur(4px); }
+.pz-lanes span.free { background:rgba(40,34,90,.85); color:#c5bcff; border:1px solid rgba(179,169,255,.5); border-left:0; }
+.pz-lanes span.rage { background:rgba(90,20,60,.85); color:#ff9fd0; border:1px solid rgba(255,90,168,.6); border-left:0; }
+.pz-col::before { content:""; position:absolute; left:0; right:0; top:calc(140px + 10px + 17px); height:0; }
+.pz-card.free { margin-bottom:0; }
+.pz-col .pz-card.rage { border-top-width:2px; }
+
+.pz-art { min-height:0; overflow:hidden; } .pz-art.boost .bo-art { transform:scale(.62); }
+.pz-art.boost { overflow:visible; }
+.pz-art.boost .bo-art { transform:scale(.55) translateY(-8px); }

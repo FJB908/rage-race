@@ -30,7 +30,7 @@
         { id: 'f-rocket',    name: 'Rocket',     rarity: 'legendary', price: 4000,
           play(p) { sfx('rocket'); for (let i = 0; i < 28; i++) later(() => { const y = p.y - i * 16; pt(p.x + R_(-5, 5), y + 24, R_(-40, 40), R_(80, 200), pick(['#fff4c2', '#ffcf3f', '#ff7a3d']), R_(3, 6), R_(1.1, 1.8)); }, i * 14);
                   later(() => { sfx('shatter'); camShake = Math.max(camShake, 10); const y = p.y - 28 * 16; for (let k = 0; k < 4; k++) later(() => { const c = pick(PAL); ring(p.x, y, c, 110 + k * 25); burst(p.x, y, c, 20, 340); }, k * 120); }, 420); } },
-        { id: 'f-supernova', name: 'Supernova',  rarity: 'legendary', gemPrice: 600, premium: true,
+        { id: 'f-supernova', name: 'Supernova',  rarity: 'legendary', gemPrice: 450, premium: true,
           play(p) { camShake = Math.max(camShake, 16); sfx('boost'); sfx('finish'); [0, 90, 180, 270].forEach((t, i) => later(() => { ring(p.x, p.y, i % 2 ? '#ffcf3f' : '#ffffff', 170 + i * 45); }, t));
                   for (let i = 0; i < 70; i++) { const a = i / 70 * Math.PI * 2, s = R_(220, 640); pt(p.x, p.y, Math.cos(a) * s, Math.sin(a) * s, i % 3 ? '#ffcf3f' : '#ffffff', R_(3, 6), R_(.5, .9)); } } },
     ];

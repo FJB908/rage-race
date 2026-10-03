@@ -68,7 +68,7 @@
         else if (r.t === 'xp') { p.xp += r.n; saveProg(p); await showRewardPops([{ type:'xp', n:r.n }]); }
         else if (r.t === 'pass') { p.passPoints += r.n; p.passPointsEarned += r.n; saveProg(p); await showRewardPops([{ type:'pass', n:r.n }]); }
         else if (r.t === 'boost') { await showRewardPops([Boost.pop(r)]); }
-        else if (r.t === 'drop') { const drop = awardLootDrop(newLootId('streak'), { coins:80, xp:60, passPoints:0 }, { tier:r.tier }); await new Promise(res => openLootbox(drop, { title:'DAILY DROP', onDone:res })); }
+        else if (r.t === 'drop') { const drop = awardLootDrop(newLootId('streak'), { coins:80, xp:60, passPoints:0 }, { tier:r.tier }); await new Promise(res => openLootbox(drop, { title:'DAILY CHEST', onDone:res })); }
         else {
             const it = itemOf(r);
             if (p.owned.includes(it.id)) { const back = { common:100, rare:400, epic:1200, legendary:3000 }[it.rarity] || 100; addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:it.rarity }); }

@@ -189,3 +189,13 @@ body.mode-gauntlet .place { margin-top:-2px; }
 .gt-spots { flex-direction:row; align-items:center; padding:6px 12px; }
 .gt-spots-txt { width:100%; align-items:center; }
 .gt-spots-txt b { font-size:18px; } .gt-spots-txt span { font-size:14px; }
+
+/* result: per-stage placement in the same look as the in-race position */
+.gt-rs span em.pl { display:flex; align-items:flex-start; justify-content:center; gap:1px; font-style:italic; font-weight:900; line-height:1; background:linear-gradient(180deg,var(--pa,#fff4c2),var(--pb,#ffcf3f) 50%,var(--pc,#ff9838)); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 2px 0 rgba(0,0,0,.55)) drop-shadow(0 0 8px var(--pg,rgba(255,207,63,.45))); }
+.gt-rs span em.pl b { font-size:24px; letter-spacing:-.04em; } .gt-rs span em.pl u { font-size:10px; text-decoration:none; margin-top:3px; }
+.gt-rs.ok span { --pa:#e6ffe9; --pb:#7ee787; --pc:#2fa84a; --pg:rgba(126,231,135,.45); }
+.gt-rs.out span { --pa:#ffd6de; --pb:#ff5470; --pc:#b81f4a; --pg:rgba(255,84,112,.45); }
+.gt-rs.has span { width:54px; height:54px; border-radius:16px; }
+.gt-wagerbox { margin-top:14px; } .gt-wagerbox .gt-h2 { margin-bottom:6px; }
+.gt-wrow { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-top:1px solid rgba(255,255,255,.08); font-weight:700; font-size:14px; }
+.gt-wrow.win span { color:#ffcf3f; } .gt-wrow.ok span { color:#7ee787; } .gt-wrow.lost span { color:#ff7a90; } .gt-neg { color:#ff7a90; font-weight:900; }

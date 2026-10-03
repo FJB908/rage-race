@@ -21,7 +21,7 @@
     function name(r) {
         if (r.t === 'coin') return '<b>' + r.n.toLocaleString('en-US') + '</b><small>Coins</small>';
         if (r.t === 'gem') return '<b>' + r.n + '</b><small>Gems</small>';
-        if (r.t === 'drop') return '<b style="color:' + TC[r.tier] + '">' + r.tier.toUpperCase() + '</b><small>Supply drop</small>';
+        if (r.t === 'drop') return '<b style="color:' + TC[r.tier] + '">' + r.tier.toUpperCase() + '</b><small>Chest</small>';
         if (r.t === 'boost') return '<b style="color:' + color(r) + '">x' + r.mult + ' ' + Boost.KINDS[r.kind].name + '</b><small>' + r.n + ' ' + (r.kind === 'coin' ? (r.n === 1 ? 'match' : 'matches') : (r.n === 1 ? 'chest' : 'chests')) + (r.kind === 'chest' ? ' · from matches' : '') + '</small>';
         const it = itemOf(r); return '<b style="color:' + RARITY[it.rarity].color + '">' + it.name + '</b><small>' + RARITY[it.rarity].label + ' ' + ({ skin:'skin', hat:'headwear', face:'face', trail:'trail' }[r.cat]) + '</small>';
     }

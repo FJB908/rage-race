@@ -129,3 +129,12 @@
 .gem-o { animation: gemTw 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes gemOrbit { to { transform: rotate(360deg); } } @keyframes gemTw { 50% { transform: scale(1.35); } }
 .gc-aura { animation: gcAura 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; } @keyframes gcAura { 50% { opacity: .75; transform: scale(1.06); } }
+
+/* Result chest: no window, it sits straight on the screen */
+.loot-drop { border: 0; background: none; box-shadow: none; padding: 0; margin: 4px auto 14px; justify-content: center; }
+.loot-drop.big { flex-direction: column; }
+.loot-drop .loot-crate.opened { width: 46px; height: 46px; padding: 0; border-radius: 50%; border: 2px solid var(--ic, var(--gold)); background: color-mix(in srgb, var(--ic, #ffcf3f) 16%, transparent); color: var(--ic, var(--gold)); box-shadow: 0 0 18px -4px var(--ic, #ffcf3f); font-size: 22px; }
+.loot-drop .loot-crate.opened .ico { width: 24px; height: 24px; filter: none; }
+.loot-drop:has(.loot-crate.opened) { flex-direction: column; gap: 10px; }
+.loot-drop .loot-info { align-items: center; flex: none; }
+.loot-drop .loot-items { justify-content: center; }

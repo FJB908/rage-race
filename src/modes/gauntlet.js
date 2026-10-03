@@ -92,13 +92,11 @@
     let sel = { type:'coins', wager:0 };      // wager = index into ENTRY.wagers
 
     function costOf(s) {
-        if (s.type === 'key') return { key:1 };
         if (s.type === 'wager') return { coins:ENTRY.wagers[s.wager].stake };
         return { coins:ENTRY.coins };
     }
     function canAfford(s) {
         const c = costOf(s);
-        if (c.key) return pk_().keys >= 1;
         return coins() >= c.coins;
     }
 
@@ -109,12 +107,12 @@
         const opt = (type, cls, inner) => '<button class="gt-opt ' + cls + (sel.type === type ? ' on' : '') + '" type="button" data-type="' + type + '">' + inner + '</button>';
         const node = (n, label, i) => '<div class="gt-node s' + i + '"><b>' + n + '</b><small>' + label + '</small></div>';
         const prize = (i, title, body, tierKey) => '<div class="gt-prize"><span class="gt-pico" style="--ic:' + (TIER_COLOR[tierKey] || '#8b95a7') + '">' + (i === 3 ? icon('crown') : (tierKey ? icon('drop-' + tierKey) : icon('coin'))) + '</span><span class="gt-ptxt"><b>' + title + '</b><small>' + body + '</small></span></div>';
-        const ctaLabel = sel.type === 'key' ? icon('key') + '<b>1</b>' : (costOf(sel).coins ? icon('coin') + '<b>' + costOf(sel).coins.toLocaleString('en-US') + '</b>' : '<b>FREE</b>');
+        const ctaLabel = (costOf(sel).coins ? icon('coin') + '<b>' + costOf(sel).coins.toLocaleString('en-US') + '</b>' : '<b>FREE</b>');
         $('gt-entry').innerHTML =
             '<div class="gt-top"><button class="gt-back" type="button" id="gt-back" aria-label="Back">' + icon('chev-l') + '</button>' +
-              '<div class="gt-wallet"><span class="gt-w coin">' + icon('coin') + '<b>' + bal.toLocaleString('en-US') + '</b></span><span class="gt-w key">' + icon('key') + '<b>' + g.keys + '</b></span></div></div>' +
+              '<div class="gt-wallet"><span class="gt-w coin">' + icon('coin') + '<b>' + bal.toLocaleString('en-US') + '</b></span></div></div>' +
             '<div class="gt-scroll">' +
-              '<div class="gt-hero"><div class="gt-crown">' + icon('crown') + '</div><h1>THE GAUNTLET</h1>' +
+              '<div class="gt-hero"><div class="gt-crown">' + icon('crown') + '</div><h1>GAUNTLET</h1>' +
                 '<p>' + FIELD + ' players, 3 stages, 1 crown</p>' +
                 (g.crowned ? '<div class="gt-holder">' + icon('crown') + '<span>YOU HOLD THE CROWN. DEFEND IT.</span></div>' : '') + '</div>' +
               '<div class="gt-ladder">' + node(32, 'Stampede', 0) + '<i></i>' + node(16, 'Hazard Run', 1) + '<i></i>' + node(6, 'Crown Duel', 2) + '<i></i>' +
@@ -122,22 +120,21 @@
               '<h2 class="gt-h2">Prizes</h2>' +
               '<div class="gt-prizes">' +
                 prize(0, 'Out in Stampede', R('coin', PRIZES[0].coins) + R('xp', PRIZES[0].xp), null) +
-                prize(1, 'Out in Hazard Run', 'Rare supply drop', 'rare') +
-                prize(2, 'Out in Crown Duel', 'Epic supply drop', 'epic') +
-                prize(3, 'Win the crown', 'Legendary supply drop', 'legendary') +
+                prize(1, 'Out in Hazard Run', 'Rare chest', 'rare') +
+                prize(2, 'Out in Crown Duel', 'Epic chest', 'epic') +
+                prize(3, 'Win the crown', 'Legendary chest', 'legendary') +
               '</div>' +
               '<h2 class="gt-h2">Entry</h2>' +
               '<div class="gt-opts">' +
                 opt('coins', 'coin', '<span class="gt-oi">' + icon('coin') + '</span><span class="gt-ot"><b>' + (ENTRY.coins || 'Free') + '</b><small>' + (ENTRY.coins ? 'Open to everyone' : 'Free while we test') + '</small></span>') +
-                opt('key', 'key' + (g.keys < 1 ? ' dim' : ''), '<span class="gt-oi">' + icon('key') + '</span><span class="gt-ot"><b>Key <em>x' + g.keys + '</em></b><small>Win 3 Quick matches in a row · ' + g.streak + ' / 3</small></span>') +
                 opt('wager', 'wager', '<span class="gt-oi">' + icon('coin') + icon('coin') + '</span><span class="gt-ot"><b>Wager</b><small>Bigger stake, bigger coin prizes</small></span>') +
               '</div>' +
               (sel.type === 'wager'
                 ? '<div class="gt-wager">' + ENTRY.wagers.map((w, i) => '<button type="button" class="gt-stake' + (i === sel.wager ? ' on' : '') + '" data-w="' + i + '">' + icon('coin') + '<b>' + w.stake.toLocaleString('en-US') + '</b><small>x' + w.mult + '</small></button>').join('') +
-                  '</div><p class="gt-fine">Coin prizes are multiplied by x' + wg.mult + '. Reach the Crown Duel and your stake comes back.' + (wg.stake >= 5000 ? ' Biggest stake: your supply drop starts one tier higher.' : '') + '</p>'
+                  '</div><p class="gt-fine">The wager bonus (x' + wg.mult + ' on the coin prizes) is paid on top of your chest. Reach the Crown Duel and your stake comes back.' + (wg.stake >= 5000 ? ' Biggest stake: your chest starts one tier higher.' : '') + '</p>'
                 : '') +
             '</div>' +
-            '<div class="gt-cta"><button class="gt-go' + (afford ? '' : ' no') + '" type="button" id="gt-go">' + (afford ? '<span>ENTER</span>' + ctaLabel : '<span>' + (sel.type === 'key' ? 'NO KEYS' : 'NOT ENOUGH COINS') + '</span>') + '</button></div>';
+            '<div class="gt-cta"><button class="gt-go' + (afford ? '' : ' no') + '" type="button" id="gt-go">' + (afford ? '<span>ENTER</span>' + ctaLabel : '<span>' + 'NOT ENOUGH COINS' + '</span>') + '</button></div>';
         $('gt-back').onclick = closeEntry;
         $('gt-entry').querySelectorAll('.gt-opt').forEach(b => b.onclick = () => { sel.type = b.dataset.type; SFX.play('count'); renderEntry(); });
         $('gt-entry').querySelectorAll('.gt-stake').forEach(b => b.onclick = () => { sel.wager = +b.dataset.w; SFX.play('count'); renderEntry(); });
@@ -148,10 +145,8 @@
     const UNLOCK_LEVEL = 5;                       // the Gauntlet opens at player level 5
     const unlocked = () => levelInfo(prog().xp).lvl >= UNLOCK_LEVEL;
     function openEntry() {
-        if (!unlocked()) { toast('The Gauntlet unlocks at level ' + UNLOCK_LEVEL); return; }
+        if (!unlocked()) { toast('Gauntlet unlocks at level ' + UNLOCK_LEVEL); return; }
         const g = pk_();
-        if (sel.type === 'key' && g.keys < 1) sel.type = 'coins';
-        else if (g.keys > 0 && !GT._entered) { sel.type = 'key'; }
         GT._entered = true;
         renderEntry();
         show($('gt-entry'));
@@ -159,9 +154,9 @@
     function closeEntry() { hide($('gt-entry')); }
 
     function tryStart() {
-        if (!canAfford(sel)) { toast(sel.type === 'key' ? 'Win 3 Quick matches in a row for a key' : 'Not enough coins'); SFX.play('fail'); return; }
+        if (!canAfford(sel)) { toast('Not enough coins'); SFX.play('fail'); return; }
         const p = prog(), c = costOf(sel);
-        if (c.key) p.gt.keys -= 1; else store('rr_coins', coins() - c.coins);
+        store('rr_coins', coins() - c.coins);
         saveProg(p);
         startRun({ type:sel.type, stake:sel.type === 'wager' ? c.coins : 0, mult:sel.type === 'wager' ? ENTRY.wagers[sel.wager].mult : 1, bump:sel.type === 'wager' && ENTRY.wagers[sel.wager].stake >= 5000 });
     }
@@ -201,7 +196,7 @@
 
     function beginStage(i) {
         window.GT_BAND = STAGES[i].band; window.GT_BG = STAGES[i].bg;
-        gt.stage = i; gt.st = STAGES[i]; gt.t = 0; gt.qualified = []; gt.winner = null; gt.wall = null;
+        gt.stage = i; gt.st = STAGES[i]; gt.t = 0; gt.qualified = []; gt.winner = null; gt.wall = null; gt.outBase = gt.out.length; if (!gt.places) gt.places = [];
         gt.phase = 'card'; gt.watching = false;
         const st = gt.st;
         buildTrack(st);
@@ -434,6 +429,13 @@
         for (const p of rest) { p.finished = true; p.gone = true; p.out = true; gt.out.push(p); if (p.local) gt.localOutStage = gt.stage; }
         const lp = localP();
         const st = gt.st;
+        if (lp) {                                                          // where the local player ended in THIS stage
+            let pl = null;
+            if (gt.winner === lp) pl = 1;
+            else if (gt.qualified.includes(lp)) pl = gt.qualified.indexOf(lp) + 1;
+            else if (gt.out.includes(lp)) pl = Math.max(2, st.field - (gt.out.indexOf(lp) - gt.outBase));
+            if (pl) gt.places[gt.stage] = pl;
+        }
         gt.alive = gt.stage === 2 ? [] : gt.qualified.slice();
         if (gt.stage === 2) {
             const w = gt.winner;
@@ -764,7 +766,9 @@
         const reached = reachedStage(), win = reached === 3;
         const place = placeOf(lp);
         const pr = PRIZES[reached], e = gt.entry;
-        const coinBase = window.Boost ? Boost.coins(Math.round(pr.coins * e.mult), gt.lootId) : Math.round(pr.coins * e.mult);   // coin booster
+        const bc = n => window.Boost ? Boost.coins(n, gt.lootId) : n;                                                       // coin booster
+        const coinBase = bc(pr.coins);                                                                                       // the chest's own coins
+        const wagerCoins = e.mult > 1 ? Math.max(0, bc(Math.round(pr.coins * e.mult)) - coinBase) : 0;                      // extra from the wager, paid straight away
         const refund = e.stake && reached >= 2 ? e.stake : 0;
         let tier = pr.tier;
         if (tier && e.bump) tier = TIERS[Math.min(3, TIERS.indexOf(tier) + 1)];
@@ -776,6 +780,7 @@
             g.crowned = win;                                              // the crown is yours until someone takes it
             saveProg(p);
             if (refund) store('rr_coins', coins() + refund);
+            if (wagerCoins) store('rr_coins', coins() + wagerCoins);
             if (tier) drop = awardLootDrop(id, { coins:coinBase, xp:pr.xp, passPoints:pr.pass }, { tier });
             else {
                 const q = prog(); q.xp += pr.xp; q.passPoints += pr.pass; q.passPointsEarned += pr.pass;
@@ -785,7 +790,7 @@
         } else drop = p.pendingDrops[id] || p.lootGrants[id];
         if (!drop) drop = { noDrop:true, coins:coinBase, xp:pr.xp, passPoints:pr.pass };
         refreshMenu();
-        renderResult({ reached, win, place, drop, tier, coinBase, refund, pr, e, lootId:id });
+        renderResult({ reached, win, place, drop, tier, coinBase, wagerCoins, refund, pr, e, lootId:id });
     }
 
     function renderResult(r) {
@@ -793,22 +798,26 @@
         const accent = r.win ? '#ffcf3f' : r.reached === 2 ? '#b3a9ff' : r.reached === 1 ? '#5b8def' : '#ff5470';
         const steps = STAGES.map((s, k) => {
             const cls = r.reached > k || (r.win) ? 'ok' : r.reached === k ? 'out' : 'na';
-            return '<div class="gt-rs ' + cls + '"><span>' + (cls === 'ok' ? icon('check') : cls === 'out' ? '<em>X</em>' : icon('lock')) + '</span><small>' + s.name + '</small></div>';
+            const pl = (gt.places && gt.places[k]) || (cls === 'out' ? r.place : 0);
+            const num = pl ? '<em class="pl"><b>' + pl + '</b><u>' + ord(pl).replace(/^\d+/, '') + '</u></em>' : cls === 'ok' ? icon('check') : cls === 'out' ? '<em>X</em>' : icon('lock');
+            return '<div class="gt-rs ' + cls + (pl ? ' has' : '') + '"><span>' + (cls === 'na' ? icon('lock') : num) + '</span><small>' + s.name + '</small></div>';
         }).join('<i></i>');
         const winner = gt.winner;
         $('gt-result').style.setProperty('--ac', accent);
         $('gt-result').innerHTML =
             '<div class="gt-scroll res">' +
               '<div class="gt-res-hero">' + (r.win ? '<div class="gt-crown big">' + icon('crown') + '</div>' : '') +
-                '<small>' + (r.win ? 'THE GAUNTLET' : 'ELIMINATED IN') + '</small>' +
+                '<small>' + (r.win ? 'GAUNTLET' : 'ELIMINATED IN') + '</small>' +
                 '<h1>' + (r.win ? 'CROWN WINNER' : names[r.reached]) + '</h1>' +
                 '<p>You placed <b>' + ord(r.place) + '</b> of ' + FIELD + (winner && !winner.local ? ' · Crown: ' + winner.name : '') + '</p></div>' +
               '<div class="gt-rsteps">' + steps + '</div>' +
               '<div class="gt-rewards">' +
-                '<h2 class="gt-h2">' + (r.drop && !r.drop.noDrop ? 'Supply drop' : 'Rewards') + '</h2>' +
+                '<h2 class="gt-h2">' + (r.drop && !r.drop.noDrop ? 'Chest' : 'Rewards') + '</h2>' +
                 (r.drop && !r.drop.noDrop ? '<div class="loot-drop" id="gt-loot"></div>' : '<div class="gt-chips">' + R('coin', r.coinBase, { plus:true }) + R('xp', r.pr.xp, { plus:true }) + R('pass', r.pr.pass, { plus:true }) + '</div>') +
-                (r.e.stake ? '<p class="gt-stakeline ' + (r.refund ? 'ok' : 'lost') + '">' + icon('coin') + (r.refund ? '<span>Stake returned: <b>' + r.e.stake.toLocaleString('en-US') + '</b></span>' : '<span>Stake spent: <b>' + r.e.stake.toLocaleString('en-US') + '</b></span>') + '</p>' : '') +
-                (r.e.mult > 1 ? '<p class="gt-fine">Coin prizes x' + r.e.mult + ' from your wager.</p>' : '') +
+                (r.e.stake ? '<div class="gt-wagerbox"><h2 class="gt-h2">Wager</h2>' +
+                    (r.wagerCoins ? '<div class="gt-wrow win"><span>Wager bonus x' + r.e.mult + '</span><b>' + R('coin', r.wagerCoins, { plus:true }) + '</b></div>' : '') +
+                    '<div class="gt-wrow ' + (r.refund ? 'ok' : 'lost') + '"><span>' + (r.refund ? 'Stake returned' : 'Stake lost') + '</span><b>' + (r.refund ? R('coin', r.e.stake, { plus:true }) : '<span class="gt-neg">-' + r.e.stake.toLocaleString('en-US') + '</span>') + '</b></div>' +
+                    '<p class="gt-fine">Wager coins are paid on top of the chest.</p></div>' : '') +
               '</div>' +
             '</div>' +
             '<div class="gt-cta two"><button class="gt-go" type="button" id="gt-again"><span>PLAY AGAIN</span></button><button class="gt-go ghost" type="button" id="gt-menu"><span>MAIN MENU</span></button></div>';
@@ -857,9 +866,9 @@
     GT.refreshHome = function () {
         const g = prog().gt, el = $('m-gt-sub'), tag = $('m-gt-tag'), pcard = $('p-gt-sub');
         const lock = !unlocked(), card = $('btn-gauntlet'); if (card) card.classList.toggle('locked', lock);
-        if (el) el.textContent = lock ? 'Unlocks at level ' + UNLOCK_LEVEL : g.crowned ? 'You hold the crown' : g.keys > 0 ? 'Free entry ready' : '32 players · 3 stages';
-        if (tag) { tag.innerHTML = g.keys > 0 ? icon('key') + '<b>' + g.keys + '</b>' : (g.crowned ? icon('crown') : icon('users')); }
-        if (pcard) pcard.textContent = lock ? 'Reach level ' + UNLOCK_LEVEL + ' to play' : g.keys > 0 ? 'Keys: ' + g.keys : 'Win 3 races in a row for a key: ' + g.streak + ' / 3';
+        if (el) el.textContent = lock ? 'Unlocks at level ' + UNLOCK_LEVEL : g.crowned ? 'You hold the crown' : '32 players · 3 stages';
+        if (tag) { tag.innerHTML = g.crowned ? icon('crown') : icon('users'); }
+        if (pcard) pcard.textContent = lock ? 'Reach level ' + UNLOCK_LEVEL + ' to play' : '32 players · 3 stages';
     };
     GT.refreshHome();
 

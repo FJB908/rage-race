@@ -9,13 +9,13 @@
         { id: 'gl',    text: 'GOOD LUCK',   col: TEAL,   price: 0 },
         { id: 'wp',    text: 'WELL PLAYED', col: SILVER, price: 0 },
         { id: 'oops',  text: 'OOPS',        col: ORANGE, price: 0, fx: 'wobble' },
-        { id: 'nice',  text: 'NICE ONE',    col: GOLD,   gems: 30, fx: 'pulse' },
-        { id: 'close', text: 'SO CLOSE',    col: BLUE,   gems: 30, fx: 'shake', amp: 1.3 },
-        { id: 'rage',  text: 'RAGE!',       col: RED,    gems: 40, fx: 'shake', amp: 3, big: 1.25, heat: true },
-        { id: 'wow',   text: 'WOW',         col: PINK,   gems: 40, fx: 'jelly', big: 1.2 },
-        { id: 'cool',  text: 'COOL',        col: BLUE,   gems: 40, fx: 'shine', frost: true },
-        { id: 'boom',  text: 'BOOM',        col: ORANGE, gems: 50, fx: 'boom', big: 1.3 },
-        { id: 'king',  text: 'KING',        col: PURPLE, gems: 60, fx: 'shine', sparkle: true, big: 1.2 },
+        { id: 'nice',  text: 'NICE ONE',    col: GOLD,   gems: 25, fx: 'pulse' },
+        { id: 'close', text: 'SO CLOSE',    col: BLUE,   gems: 25, fx: 'shake', amp: 1.3 },
+        { id: 'rage',  text: 'RAGE!',       col: RED,    gems: 30, fx: 'shake', amp: 3, big: 1.25, heat: true },
+        { id: 'wow',   text: 'WOW',         col: PINK,   gems: 30, fx: 'jelly', big: 1.2 },
+        { id: 'cool',  text: 'COOL',        col: BLUE,   gems: 30, fx: 'shine', frost: true },
+        { id: 'boom',  text: 'BOOM',        col: ORANGE, gems: 40, fx: 'boom', big: 1.3 },
+        { id: 'king',  text: 'KING',        col: PURPLE, gems: 45, fx: 'shine', sparkle: true, big: 1.2 },
     ];
     const BY = Object.fromEntries(EMOTES.map(e => [e.id, e]));
     const FAMILY = '"Bricolage Grotesque","Arial Rounded MT Bold","Segoe UI",system-ui,sans-serif';

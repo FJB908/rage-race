@@ -99,7 +99,7 @@
         };
         A.refreshHome();
         sec.appendChild(mk('coin', icon('coin'), '+' + CFG.coin.amount, A.watchCoins));
-        sec.appendChild(mk('drop', icon('drop-common'), 'Free drop', A.watchDrop));
+        sec.appendChild(mk('drop', icon('drop-common'), 'Free chest', A.watchDrop));
         box.prepend(sec);
     };
 
@@ -140,7 +140,7 @@
         document.querySelectorAll('.ad-chip').forEach(b => {
             const kind = b.dataset.kind, left = A.left(kind), w = A.wait(kind), lb = b.querySelector('.ad-lbl');
             b.disabled = left <= 0 || w > 0; b.classList.toggle('cool', w > 0 && left > 0);
-            if (lb) lb.textContent = left <= 0 ? 'Done' : w > 0 ? mmss(w) : (kind === 'coin' ? '+' + CFG.coin.amount : 'Free drop');
+            if (lb) lb.textContent = left <= 0 ? 'Done' : w > 0 ? mmss(w) : (kind === 'coin' ? '+' + CFG.coin.amount : 'Free chest');
         });
     }, 1000);
 })();

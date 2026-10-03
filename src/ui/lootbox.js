@@ -4,7 +4,7 @@
 // drop = pending drop {id, pending:true, tier, base} (resolved with resolveDrop when it opens) or an already resolved drop.
 (function () {
     const TIERS = ['common', 'rare', 'epic', 'legendary'];
-    const TIER_NAME = { common:'SUPPLY DROP', rare:'RARE DROP', epic:'EPIC DROP', legendary:'LEGENDARY DROP' };
+    const TIER_NAME = { common:'CHEST', rare:'RARE CHEST', epic:'EPIC CHEST', legendary:'LEGENDARY CHEST' };
     const TIER_COLOR = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
     // Tap odds: the level-up chance shrinks with every tap, the open chance grows, so a drop always opens within a handful of taps.
     const UP0 = 0.45, UP_DECAY = 0.58, UP_TIER = [1, 0.8, 0.5], OPEN0 = 0.16, OPEN_STEP = 0.12;
