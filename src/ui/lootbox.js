@@ -8,21 +8,26 @@
     const TIER_COLOR = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
     // Tap odds: the level-up chance shrinks with every tap, the open chance grows, so a drop always opens within a handful of taps.
     const UP0 = 0.45, UP_DECAY = 0.58, UP_TIER = [1, 0.8, 0.5], OPEN0 = 0.16, OPEN_STEP = 0.12;
+    // The supply crate: a steel cube like the players themselves, with the climbing chevrons on its face and tier-coloured corners.
     const CHEST_SVG = (
         '<svg viewBox="0 0 200 170" aria-hidden="true"><defs>' +
-        '<linearGradient id="lbBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3142"/><stop offset="1" stop-color="#151a26"/></linearGradient>' +
-        '<linearGradient id="lbLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4258"/><stop offset="1" stop-color="#232a3b"/></linearGradient>' +
+        '<linearGradient id="lbBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#303a50"/><stop offset="1" stop-color="#171d2b"/></linearGradient>' +
+        '<linearGradient id="lbLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5675"/><stop offset="1" stop-color="#2a3349"/></linearGradient>' +
         '<radialGradient id="lbGlow"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="var(--c)"/><stop offset="1" stop-color="var(--c)" stop-opacity="0"/></radialGradient></defs>' +
-        '<ellipse cx="100" cy="160" rx="82" ry="8" fill="#000" opacity=".35"/>' +
-        '<ellipse class="lb-inner" cx="100" cy="76" rx="70" ry="38" fill="url(#lbGlow)"/>' +
-        '<rect x="22" y="74" width="156" height="82" rx="10" fill="url(#lbBody)" stroke="#0d1017" stroke-width="3"/>' +
-        '<rect x="62" y="74" width="14" height="82" fill="var(--c2)"/><rect x="124" y="74" width="14" height="82" fill="var(--c2)"/>' +
-        '<rect x="22" y="140" width="156" height="16" rx="6" fill="#0d1017" opacity=".35"/>' +
-        '<rect class="lb-leak" x="24" y="70" width="152" height="8" rx="3" fill="var(--c)"/>' +
-        '<g class="lb-lid"><path d="M18 76 V58 Q18 26 100 26 Q182 26 182 58 V76 Z" fill="url(#lbLid)" stroke="#0d1017" stroke-width="3"/>' +
-        '<rect x="62" y="30" width="14" height="46" fill="var(--c2)"/><rect x="124" y="30" width="14" height="46" fill="var(--c2)"/>' +
-        '<path d="M34 54 Q60 38 100 38" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="5" stroke-linecap="round"/>' +
-        '<rect x="86" y="62" width="28" height="26" rx="6" fill="var(--c)" stroke="#0d1017" stroke-width="3"/><circle cx="100" cy="73" r="4" fill="#0d1017"/><rect x="98" y="73" width="4" height="9" rx="2" fill="#0d1017"/></g></svg>'
+        '<ellipse cx="100" cy="162" rx="76" ry="7" fill="#000" opacity=".35"/>' +
+        '<ellipse class="lb-inner" cx="100" cy="70" rx="68" ry="36" fill="url(#lbGlow)"/>' +
+        '<rect x="26" y="66" width="148" height="92" rx="20" fill="url(#lbBody)" stroke="#0d1017" stroke-width="3.5"/>' +
+        '<rect x="26" y="132" width="148" height="26" rx="14" fill="#0d1017" opacity=".3"/>' +
+        '<path d="M26 92 V86 Q26 66 46 66 H62 M174 92 V86 Q174 66 154 66 H138 M26 130 V138 Q26 158 46 158 H62 M174 130 V138 Q174 158 154 158 H138" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/>' +
+        '<path d="M70 126 L100 96 L130 126 M70 146 L100 116 L130 146" fill="none" stroke="#0d1017" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -6)"/>' +
+        '<path d="M70 126 L100 96 L130 126 M70 146 L100 116 L130 146" fill="none" stroke="var(--c)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -6)"/>' +
+        '<path d="M70 126 L100 96 L130 126" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -9)"/>' +
+        '<rect class="lb-leak" x="30" y="64" width="140" height="8" rx="4" fill="var(--c)"/>' +
+        '<g class="lb-lid"><rect x="18" y="30" width="164" height="42" rx="18" fill="url(#lbLid)" stroke="#0d1017" stroke-width="3.5"/>' +
+        '<rect x="22" y="60" width="156" height="8" rx="4" fill="var(--c)" opacity=".95"/>' +
+        '<path d="M34 44 Q48 38 78 38" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="5" stroke-linecap="round"/>' +
+        '<rect x="82" y="46" width="36" height="20" rx="8" fill="#0d1017" opacity=".55"/><rect x="88" y="50" width="24" height="12" rx="5" fill="var(--c)"/>' +
+        '<circle cx="36" cy="52" r="3.2" fill="#0d1017" opacity=".6"/><circle cx="164" cy="52" r="3.2" fill="#0d1017" opacity=".6"/></g></svg>'
     );
     window.LB_CHEST_SVG = CHEST_SVG;
     const sfx = (n, a) => { try { SFX.play(n, a); } catch (e) {} };
@@ -88,6 +93,11 @@
             sfx('item'); const r = d.getBoundingClientRect(); o.emit(10, { x:r.left + 28, y:r.top + 28, speed:260, size:7, colors:kind === 'coin' ? ['#ffcf3f', '#fff3b0'] : kind === 'xp' ? ['#6cc4ff', '#bfe9ff'] : kind === 'gem' ? ['#ff6fd8', '#ffe0f8'] : ['#b3a9ff', '#e4defd'], g:500 });
             await countUp(d.querySelector('b'), n, skipped); await sleep(160);
         }
+        for (const bo of (final.boosts || [])) {
+            const d = document.createElement('div'); d.className = 'lb-pop pop-boost'; d.innerHTML = Boost.art(bo, true) + '<b>' + Boost.short(bo) + '</b>'; row.appendChild(d); void d.offsetWidth; d.classList.add('show');
+            sfx('item'); await sleep(420);
+        }
+        if (final.boost > 1) { const d = document.createElement('div'); d.className = 'lb-pop pop-boost'; d.innerHTML = '<b style="color:#35e0c8">CHEST BOOSTER x' + final.boost + '</b>'; row.appendChild(d); void d.offsetWidth; d.classList.add('show'); await sleep(300); }
         const cos = final.cosmetic;
         if (cos) {
             await sleep(350);
@@ -125,8 +135,8 @@
             if (document.getElementById('lootbox')) return res();
             const tier = opts.tier || 'common', o = makeOverlay(tier, '');
             let skipped = false; const btn = o.$('.lb-btn');
-            const final = { coins:0, xp:0, passPoints:0, gems:0, cosmetic:null };
-            for (const r of list) { if (r.type === 'coin') final.coins += r.n; else if (r.type === 'xp') final.xp += r.n; else if (r.type === 'pass') final.passPoints += r.n; else if (r.type === 'gem') final.gems += r.n; else if (r.type === 'item') final.cosmetic = r.item; }
+            const final = { coins:0, xp:0, passPoints:0, gems:0, cosmetic:null, boosts:[] };
+            for (const r of list) { if (r.type === 'coin') final.coins += r.n; else if (r.type === 'xp') final.xp += r.n; else if (r.type === 'pass') final.passPoints += r.n; else if (r.type === 'gem') final.gems += r.n; else if (r.type === 'boost') final.boosts.push(r); else if (r.type === 'item') final.cosmetic = r.item; }
             o.el.classList.add('burst'); o.flash(); sfx('finish');
             revealRewards(o, final, () => skipped).then(() => { btn.classList.add('show'); if (final.cosmetic) addEquip(o, final.cosmetic); });
             o.$('.lb-skip').onclick = () => { skipped = true; };

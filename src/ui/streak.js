@@ -20,11 +20,13 @@
         if (r.t === 'gem') return icon('gem');
         if (r.t === 'xp') return icon('xp');
         if (r.t === 'pass') return icon('pass');
+        if (r.t === 'boost') return Boost.art(r);
         if (r.t === 'drop') return '<span class="sk-chest" style="--ic:' + TC[r.tier] + '">' + icon('drop') + '</span>';
         return '<canvas width="120" height="120" data-i="' + i + '"></canvas>';
     }
     function amount(r) {
         if (r.t === 'coin' || r.t === 'gem' || r.t === 'xp' || r.t === 'pass') return '<b class="a-' + r.t + '">' + r.n.toLocaleString('en-US') + '</b>';
+        if (r.t === 'boost') return '<b class="a-boost" style="color:' + Boost.KINDS[r.kind].color + '">x' + r.mult + ' <small>' + r.n + (r.kind === 'coin' ? (r.n === 1 ? ' match' : ' matches') : (r.n === 1 ? ' chest' : ' chests')) + '</small></b>';
         if (r.t === 'drop') return '<b class="a-drop" style="color:' + TC[r.tier] + '">' + r.tier.toUpperCase() + '</b>';
         const it = itemOf(r); return '<b class="a-item" style="color:' + (r.t === 'prem' ? '#ff8ae6' : RARITY[it.rarity].color) + '">' + (r.t === 'prem' ? 'PREMIUM' : RARITY[it.rarity].label.toUpperCase()) + '</b>';
     }
@@ -61,6 +63,7 @@
         else if (r.t === 'gem') { addGems(r.n); await showRewardPops([{ type:'gem', n:r.n }]); }
         else if (r.t === 'xp') { p.xp += r.n; saveProg(p); await showRewardPops([{ type:'xp', n:r.n }]); }
         else if (r.t === 'pass') { p.passPoints += r.n; p.passPointsEarned += r.n; saveProg(p); await showRewardPops([{ type:'pass', n:r.n }]); }
+        else if (r.t === 'boost') { await showRewardPops([Boost.pop(r)]); }
         else if (r.t === 'drop') { const drop = awardLootDrop(newLootId('streak'), { coins:80, xp:60, passPoints:0 }, { tier:r.tier }); await new Promise(res => openLootbox(drop, { title:'DAILY DROP', onDone:res })); }
         else {
             const it = itemOf(r);

@@ -4101,10 +4101,10 @@ function randomBotLook(){
     const pickAny = arr => arr[Math.floor(Math.random() * arr.length)].id;
     const pickReal = arr => arr[1 + Math.floor(Math.random() * (arr.length - 1))].id;
     return {
-        skin: Math.random() < 0.78 ? pickAny(SKINS) : null,
-        hat: Math.random() < 0.62 ? pickReal(HATS) : 'none',
-        face: Math.random() < 0.5 ? pickReal(FACES) : 'none',
-        trail: Math.random() < 0.4 ? pickReal(TRAILS) : 'none',
+        skin: Math.random() < 0.5 ? pickAny(SKINS) : null,
+        hat: Math.random() < 0.2 ? pickReal(HATS) : 'none',
+        face: Math.random() < 0.14 ? pickReal(FACES) : 'none',
+        trail: Math.random() < 0.07 ? pickReal(TRAILS) : 'none',
     };
 }
 
@@ -4188,9 +4188,11 @@ function awardLootDrop(id, base, opts){
 }
 // Turn a pending drop into rewards at the given final tier. Safe to call twice (second call returns the stored result).
 function resolveDrop(id, tier){
-    const p = prog();
-    if (p.lootGrants[id]) return p.lootGrants[id];
-    const pend = p.pendingDrops[id]; if (!pend) return null;
+    const p0 = prog();
+    if (p0.lootGrants[id]) return p0.lootGrants[id];
+    if (!p0.pendingDrops[id]) return null;
+    const cm = window.Boost ? Boost.chest(id) : 1;                    // chest booster (asked BEFORE the profile is loaded: it saves the profile itself)
+    const p = prog(), pend = p.pendingDrops[id];
     tier = DROP_TIERS.includes(tier) ? tier : pend.tier;
     const drop = {
         id, tier,
@@ -4217,6 +4219,7 @@ function resolveDrop(id, tier){
     } else if (!drop.cosmetic){
         drop.coins += 100;
     }
+    if (cm > 1){ drop.coins = Math.round(drop.coins * cm); drop.xp = Math.round(drop.xp * cm); drop.passPoints = Math.round(drop.passPoints * cm); drop.boost = cm; }
     p.xp += drop.xp;
     p.passPoints += drop.passPoints;
     p.passPointsEarned += drop.passPoints;
@@ -4430,6 +4433,7 @@ function refreshMenu(){
     if (window.Ranked) Ranked.refreshHome();
     document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));
     renderPassHome(p);
+    if (window.Boost) Boost.refreshHome();
     if (window.Streak) Streak.refreshHome();
     if (window.Gauntlet) Gauntlet.refreshHome();
     refreshShopBadge();
@@ -4468,10 +4472,11 @@ function refreshMenu(){
 
 // Rewards after a race (place-based), shown on the results screen
 function rewardRace(place, finished, lootId){
-    const coins = finished ? [60, 40, 25, 15][place-1] || 10 : 10;
+    const id = lootId || newLootId('race');
+    const coins0 = finished ? [60, 40, 25, 15][place-1] || 10 : 10;
+    const coins = window.Boost ? Boost.coins(coins0, id) : coins0;       // coin booster
     const xp    = finished ? [60, 45, 35, 25][place-1] || 15 : 15;
     const passPoints = finished ? [50, 40, 32, 25][place-1] || 20 : 15;
-    const id = lootId || newLootId('race');
     const pp = prog(), alreadyGranted = !!(pp.lootGrants[id] || pp.pendingDrops[id]);
     // Only the winner earns a supply drop; everyone else gets the base rewards straight away.
     let drop = null;
@@ -5145,13 +5150,14 @@ function lvComplete(p){
     // Three stars earn a supply drop whose starting rarity follows the level's difficulty (and the dimension);
     // anything less pays the base rewards straight away.
     let loot;
+    const bc = n => window.Boost ? Boost.coins(n, lv.lootId) : n;      // coin booster
     if (stars >= 3 && prevStars < 3){   // the drop is a one-time reward for the first 3-star clear
         const n = DIMENSIONS[curDim].levels.length, f = i / Math.max(1, n - 1);
         const tier = lvDropTier(curDim, i);
-        const coins = curDim === 0 ? Math.round(40 + f * 60) : Math.round(90 + f * 120);
+        const coins = bc(curDim === 0 ? Math.round(40 + f * 60) : Math.round(90 + f * 120));
         loot = awardLootDrop(lv.lootId, {coins, xp:25 + Math.round(f * 25), passPoints:50}, {tier});
     } else {
-        const coins = gainedStars * 20, xp = 25, pp = 20 + stars * 10, q = prog();
+        const coins = bc(gainedStars * 20), xp = 25, pp = 20 + stars * 10, q = prog();
         if (!q.lootGrants[lv.lootId] && !q.pendingDrops[lv.lootId]){
             q.xp += xp; q.passPoints += pp; q.passPointsEarned += pp;
             q.lootGrants[lv.lootId] = { id:lv.lootId, tier:'common', coins, xp, passPoints:pp, cosmetic:null, noDrop:true }; saveProg(q);

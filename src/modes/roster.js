@@ -64,7 +64,7 @@
     }
 
     /* --------------------------------------------------------------- the roster ---- */
-    const SEED = 20261001, COUNT = 240, KEY = 'rr_rk_roster_v1';
+    const SEED = 20261001, COUNT = 240, KEY = 'rr_rk_roster_v2';
     let bots = null, seasonKey = -1;
     const rng = seed => pkRng(seed >>> 0);
     function normal(r) { let u = 0, v = 0; while (u === 0) u = r(); while (v === 0) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
@@ -76,14 +76,18 @@
         let x = r() * tot; for (let i = 0; i < arr.length; i++) { x -= w[i]; if (x <= 0) return arr[i]; }
         return arr[0];
     }
+    // Most bots look plain (a basic skin, maybe one accessory); a few are decked out. Better players are a little more likely to own something.
     function lookFor(mmr, r) {
-        const t = Math.max(0, Math.min(1, (mmr - 850) / 900)), want = t * 3.1;
+        const t = Math.max(0, Math.min(1, (mmr - 850) / 900));
         const real = a => a.filter(i => i.id !== 'none' && !i.exclusive);
+        const flashy = r() < 0.07 + t * 0.07, want = flashy ? 1.5 + t * 1.6 : t * 0.9;            // 7-14% wear rare things
+        const some = (chance, arr) => r() < chance ? weightedPick(real(arr), want, r).id : 'none';
+        const skins = real(SKINS);
         return {
-            skin: weightedPick(real(SKINS).length ? real(SKINS) : SKINS, want, r).id,
-            hat: r() < 0.5 + t * 0.4 ? weightedPick(real(HATS), want, r).id : 'none',
-            face: r() < 0.4 + t * 0.4 ? weightedPick(real(FACES), want, r).id : 'none',
-            trail: r() < 0.3 + t * 0.5 ? weightedPick(real(TRAILS), want, r).id : 'none',
+            skin: (r() < (flashy ? 0.9 : 0.35 + t * 0.2) ? weightedPick(skins.length ? skins : SKINS, want, r) : skinById('classic')).id,
+            hat: some(flashy ? 0.8 : 0.16 + t * 0.14, HATS),
+            face: some(flashy ? 0.6 : 0.1 + t * 0.12, FACES),
+            trail: some(flashy ? 0.5 : 0.04 + t * 0.1, TRAILS),
         };
     }
     function makeName(i, r, used) {

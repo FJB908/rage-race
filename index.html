@@ -12,6 +12,7 @@
 <title>RAGE RACE</title>
 <link rel="stylesheet" href="game.css">
 <link rel="stylesheet" href="src/ui/icons.css">
+<link rel="stylesheet" href="src/ui/boosters.css">
 <link rel="stylesheet" href="src/ui/lootbox.css">
 <link rel="stylesheet" href="src/ui/pass.css">
 <link rel="stylesheet" href="src/tutorial/tutorial.css">
@@ -35,6 +36,7 @@
         <button class="m-gems" type="button" id="btn-gems" aria-label="Gems, open the gem shop"><svg class="ico ico-gem" aria-hidden="true"><use href="#ico-gem"/></svg><span id="gem-num">0</span><span class="m-plus">+</span></button>
         <button class="m-gear" type="button" id="btn-settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
     </header>
+    <div id="m-boosts" hidden></div>
 
     <div class="m-body" id="m-body">
         <!-- HOME -->
@@ -338,6 +340,7 @@
 <script src="src/data/bot-names.js"></script>
 <script src="src/data/items.js"></script>
 <script src="src/ui/icons.js"></script>
+<script src="src/ui/boosters.js"></script>
 <script src="src/ui/trail-fx.js"></script>
 <script src="src/data/pass.js"></script>
 <script src="src/data/gems.js"></script>

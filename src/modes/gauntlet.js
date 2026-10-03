@@ -145,7 +145,10 @@
         if (sel.type === 'wager') { const w = $('gt-entry').querySelector('.gt-wager'), sc = $('gt-entry').querySelector('.gt-scroll'); if (w && sc) sc.scrollTop = sc.scrollHeight; }
     }
 
+    const UNLOCK_LEVEL = 5;                       // the Gauntlet opens at player level 5
+    const unlocked = () => levelInfo(prog().xp).lvl >= UNLOCK_LEVEL;
     function openEntry() {
+        if (!unlocked()) { toast('The Gauntlet unlocks at level ' + UNLOCK_LEVEL); return; }
         const g = pk_();
         if (sel.type === 'key' && g.keys < 1) sel.type = 'coins';
         else if (g.keys > 0 && !GT._entered) { sel.type = 'key'; }
@@ -761,7 +764,7 @@
         const reached = reachedStage(), win = reached === 3;
         const place = placeOf(lp);
         const pr = PRIZES[reached], e = gt.entry;
-        const coinBase = Math.round(pr.coins * e.mult);
+        const coinBase = window.Boost ? Boost.coins(Math.round(pr.coins * e.mult), gt.lootId) : Math.round(pr.coins * e.mult);   // coin booster
         const refund = e.stake && reached >= 2 ? e.stake : 0;
         let tier = pr.tier;
         if (tier && e.bump) tier = TIERS[Math.min(3, TIERS.indexOf(tier) + 1)];
@@ -853,9 +856,10 @@
     GT.open = openEntry;
     GT.refreshHome = function () {
         const g = prog().gt, el = $('m-gt-sub'), tag = $('m-gt-tag'), pcard = $('p-gt-sub');
-        if (el) el.textContent = g.crowned ? 'You hold the crown' : g.keys > 0 ? 'Free entry ready' : '32 players · 3 stages';
+        const lock = !unlocked(), card = $('btn-gauntlet'); if (card) card.classList.toggle('locked', lock);
+        if (el) el.textContent = lock ? 'Unlocks at level ' + UNLOCK_LEVEL : g.crowned ? 'You hold the crown' : g.keys > 0 ? 'Free entry ready' : '32 players · 3 stages';
         if (tag) { tag.innerHTML = g.keys > 0 ? icon('key') + '<b>' + g.keys + '</b>' : (g.crowned ? icon('crown') : icon('users')); }
-        if (pcard) pcard.textContent = g.keys > 0 ? 'Keys: ' + g.keys : 'Win 3 races in a row for a key: ' + g.streak + ' / 3';
+        if (pcard) pcard.textContent = lock ? 'Reach level ' + UNLOCK_LEVEL + ' to play' : g.keys > 0 ? 'Keys: ' + g.keys : 'Win 3 races in a row for a key: ' + g.streak + ' / 3';
     };
     GT.refreshHome();
 

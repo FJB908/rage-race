@@ -1,0 +1,10 @@
+.bo-art { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; }
+.bo-art svg { width: 100%; height: 100%; --ic: var(--bc); }
+.bo-art b { position: absolute; right: -6px; bottom: -4px; padding: 1px 6px; border-radius: 9px; background: var(--bc); color: #12161f; font-size: 13px; font-weight: 900; line-height: 1.3; box-shadow: 0 0 0 2px #12161f; }
+.bo-art.big { width: 84px; height: 84px; } .bo-art.big b { font-size: 17px; padding: 2px 8px; }
+.bo-sub { display: block; font-size: 10px; color: #8b95a7; margin-top: 1px; }
+#m-boosts { display: flex; gap: 8px; padding: 0 18px 4px; flex-wrap: wrap; }
+#m-boosts[hidden] { display: none; }
+.bo-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px 4px 6px; border-radius: 99px; background: rgba(255,255,255,.06); border: 1px solid var(--bc); }
+.bo-pill svg { width: 20px; height: 20px; --ic: var(--bc); } .bo-pill b { font-size: 13px; color: var(--bc); } .bo-pill small { font-size: 11px; color: #aab3c4; }
+.lb-pop.pop-boost { display: flex; align-items: center; gap: 12px; } .lb-pop.pop-boost b { font-size: 20px; }

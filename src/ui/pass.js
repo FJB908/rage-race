@@ -29,11 +29,13 @@
     function art(t, tierIdx) {
         if (t.t === 'coins') return '<div class="pz-art coin">' + icon('coin') + '</div>';
         if (t.t === 'drop') return '<div class="pz-art chest" style="--c:#35e0c8;--c2:#127b6c">' + LB_CHEST_SVG + '</div>';
+        if (t.t === 'boost') return '<div class="pz-art boost">' + Boost.art(t, true) + '</div>';
         return '<div class="pz-art item"><canvas width="140" height="140" data-tier="' + tierIdx + '"></canvas></div>';
     }
     function label(t) {
         if (t.t === 'coins') return R('coin', t.n);
         if (t.t === 'drop') return '<span class="pz-lbl">SUPPLY DROP</span>';
+        if (t.t === 'boost') return Boost.label(t);
         return '<span class="pz-lbl">' + itemOf(t).name.toUpperCase() + '</span>';
     }
     function paintItem(cv, t) {
@@ -58,7 +60,7 @@
         PASS_TIERS.forEach((t, i) => {
             const claimed = p.passClaimed.includes(i), ready = !claimed && i < st.done, isNext = i === st.done;
             const cos = t.t === 'item' ? itemOf(t) : null;
-            const col = cos ? rar(cos.rarity).color : t.t === 'drop' ? '#35e0c8' : '#ffcf3f';
+            const col = cos ? rar(cos.rarity).color : t.t === 'drop' ? '#35e0c8' : t.t === 'boost' ? Boost.KINDS[t.kind].color : '#ffcf3f';
             const cls = 'pz-col' + (claimed ? ' claimed' : ready ? ' ready' : i < st.done ? '' : ' locked') + (isNext ? ' next' : '') + (cos ? ' big' : '');
             const col_el = document.createElement('div');
             col_el.className = cls; col_el.dataset.i = i; col_el.style.setProperty('--rc', col);
@@ -107,6 +109,8 @@
         if (t.t === 'coins') {
             addCoins(t.n);
             await showRewardPops([{ type:'coin', n:t.n }]);
+        } else if (t.t === 'boost') {
+            await showRewardPops([Boost.pop(t)]);
         } else if (t.t === 'drop') {
             const drop = awardLootDrop(newLootId('pass'), { coins:60, xp:50, passPoints:0 });
             await new Promise(res => openLootbox(drop, { title:'SEASON DROP', onDone:res }));
