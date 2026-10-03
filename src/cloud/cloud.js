@@ -34,8 +34,12 @@
         FLAG_KEYS.forEach(k => { if (lsGet(k) === '1') d.flags[k] = 1; });
         return { v:1, ts:getMeta().localTs, d };
     }
+    // a profile nobody has played on (the game creates one with the name "Player" on first start): it must never beat a real save
+    function blank(p) {
+        return !p || (!num(p.xp) && !num(p.races) && !num(p.passPointsEarned) && (p.owned || []).length <= 1 && !num((p.rk || {}).matches) && !num((p.gt || {}).runs));
+    }
     function pristine(s) {
-        return !s.d.profile && !Object.values(s.d.nums).some(Boolean) && !s.d.time && !Object.keys(s.d.dims).length;
+        return blank(s.d.profile) && !Object.values(s.d.nums).some(Boolean) && !s.d.time && !Object.keys(s.d.dims).length;
     }
     function applySnapshot(s) {
         lsSet('rr_profile', s.d.profile ? JSON.stringify(s.d.profile) : null);
@@ -86,8 +90,8 @@
         out.stars = stars; out.best = best; return out;
     }
     function merge(a, b) {                       // a, b: snapshots; the result keeps the best of both
-        const aNewer = a.ts >= b.ts, out = { v:1, ts:Math.max(a.ts, b.ts), d:{ nums:{}, dims:{}, flags:{} } };
-        out.d.profile = mergeProfile(a.d.profile, b.d.profile, aNewer);
+        const aNewer = a.ts >= b.ts, pNewer = blank(a.d.profile) ? false : blank(b.d.profile) ? true : aNewer, out = { v:1, ts:Math.max(a.ts, b.ts), d:{ nums:{}, dims:{}, flags:{} } };
+        out.d.profile = mergeProfile(a.d.profile, b.d.profile, pNewer);
         NUM_KEYS.forEach(k => { out.d.nums[k] = Math.max(num(a.d.nums[k]), num(b.d.nums[k])); });
         const ta = num(a.d.time), tb = num(b.d.time); out.d.time = ta && tb ? Math.min(ta, tb) : (ta || tb);
         DIM_KEYS.forEach(k => { const m = mergeDim(a.d.dims[k], b.d.dims[k]); if (m) out.d.dims[k] = m; });
