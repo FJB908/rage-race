@@ -286,13 +286,13 @@
             '<div class="rk-scroll">' +
               '<div class="rk-hero" style="--tc:' + (s.placed ? T[s.tier].c1 : '#8b95a7') + '">' + emblem(s.tier, 150, { cls:'rk-float' }) +
                 '<h1>' + (s.placed ? s.rank.label : 'UNRANKED') + '</h1>' +
-                '<p>' + (s.placed ? 'Rank points <b>' + r.rp + '</b>' + (s.peakRank && s.peakRank.tier > s.rank.tier ? ' · Peak ' + s.peakRank.name : '') + (r.seasons.length ? ' · Last season ' + B.rankOf(r.seasons[0].rp).label : '') : s.left + ' placement ' + (s.left === 1 ? 'match' : 'matches') + ' to reveal your rank') + '</p>' +
+                '<p>' + (s.placed ? (s.peakRank.tier > s.rank.tier ? 'Season best <b>' + s.peakRank.label + '</b>' : r.matches + (r.matches === 1 ? ' match' : ' matches') + ' this season') + (r.seasons.length ? ' · Last season ' + B.rankOf(r.seasons[0].rp).label : '') : s.left + ' placement ' + (s.left === 1 ? 'match' : 'matches') + ' to reveal your rank') + '</p>' +
                 '<div class="rk-bar"><div class="rk-bar-top"><span>' + bar.from + '</span><span>' + bar.to + '</span></div><div class="rk-track"><i style="width:' + bar.fill + '%"></i>' + (s.placed ? '' : [1, 2, 3, 4].map(n => '<u style="left:' + (n * 20) + '%"></u>').join('')) + '</div></div>' +
               '</div>' +
-              '<h2 class="rk-h2">LAST MATCHES</h2><div class="rk-hist">' + hist + '</div>' +
-              '<div class="rk-stats"><div><small>MATCHES</small><b>' + r.matches + '</b></div><div><small>WIN RATE</small><b>' + (r.matches ? Math.round(100 * r.wins / r.matches) + '%' : '--') + '</b></div><div><small>STREAK</small><b>' + r.streak + '</b></div></div>' +
-              '<h2 class="rk-h2">SEASON REWARDS' + (can.length ? ' <i class="rk-n">' + can.length + '</i>' : '') + '</h2><div class="rk-track-rw">' + tierNodes + '</div>' +
-              '<h2 class="rk-h2">LEADERBOARD</h2><div class="rk-board" id="rk-board"></div>' +
+              '<h2 class="rk-h2">Last matches</h2><div class="rk-hist">' + hist + '</div>' +
+              '<div class="rk-stats"><div><small>Matches</small><b>' + r.matches + '</b></div><div><small>Win rate</small><b>' + (r.matches ? Math.round(100 * r.wins / r.matches) + '%' : '--') + '</b></div><div><small>Streak</small><b>' + r.streak + '</b></div></div>' +
+              '<h2 class="rk-h2">Season rewards' + (can.length ? ' <i class="rk-n">' + can.length + '</i>' : '') + '</h2><div class="rk-track-rw">' + tierNodes + '</div>' +
+              '<h2 class="rk-h2">Leaderboard</h2><div class="rk-board" id="rk-board"></div>' +
             '</div>' +
             '<div class="rk-cta"><button class="rk-go" type="button" id="rk-find"><span>FIND MATCH</span></button></div>';
         $('rk-back').onclick = () => hide($('rk-hub'));

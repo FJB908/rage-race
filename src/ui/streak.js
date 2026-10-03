@@ -26,7 +26,7 @@
     }
     function amount(r) {
         if (r.t === 'coin' || r.t === 'gem' || r.t === 'xp' || r.t === 'pass') return '<b class="a-' + r.t + '">' + r.n.toLocaleString('en-US') + '</b>';
-        if (r.t === 'boost') return '<b class="a-boost" style="color:' + Boost.KINDS[r.kind].color + '">x' + r.mult + ' <small>' + r.n + (r.kind === 'coin' ? (r.n === 1 ? ' match' : ' matches') : (r.n === 1 ? ' chest' : ' chests')) + '</small></b>';
+        if (r.t === 'boost') return '<b class="a-boost" style="color:' + Boost.KINDS[r.kind].color + '">' + r.n + (r.kind === 'coin' ? (r.n === 1 ? ' match' : ' matches') : (r.n === 1 ? ' chest' : ' chests')) + '</b>';
         if (r.t === 'drop') return '<b class="a-drop" style="color:' + TC[r.tier] + '">' + r.tier.toUpperCase() + '</b>';
         const it = itemOf(r); return '<b class="a-item" style="color:' + (r.t === 'prem' ? '#ff8ae6' : RARITY[it.rarity].color) + '">' + (r.t === 'prem' ? 'PREMIUM' : RARITY[it.rarity].label.toUpperCase()) + '</b>';
     }

@@ -1,6 +1,6 @@
 .lr-shell { width: 100%; height: 100%; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top) + 14px) 0 0; box-sizing: border-box; background: #0d1017; }
 .lr-top { display: flex; align-items: center; gap: 12px; padding: 0 16px 10px; }
-.lr-title small { display: block; font-size: 11px; letter-spacing: .14em; color: #8b95a7; font-weight: 800; } .lr-title h1 { margin: 2px 0 0; font-size: 24px; }
+.lr-title small { display: block; font-size: 11px; letter-spacing:.05em; color: #8b95a7; font-weight: 800; } .lr-title h1 { margin: 2px 0 0; font-size: 24px; }
 .lr-hero { display: flex; align-items: center; gap: 14px; margin: 4px 16px 12px; padding: 14px; border-radius: 20px; background: #161b24; border: 1px solid rgba(255,255,255,.08); }
 .lr-ring { --pct: 0; position: relative; width: 74px; height: 74px; flex: none; border-radius: 50%; background: conic-gradient(var(--accent) calc(var(--pct) * 1%), rgba(255,255,255,.1) 0); display: grid; place-items: center; }
 .lr-ring::before { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: #161b24; }

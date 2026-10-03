@@ -5,7 +5,7 @@
 .pz-top { display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:12px; padding:0 16px; }
 .pz-title { text-align:left; }
 .pz-title h1 { margin:2px 0 0; font:900 30px/1 "Bricolage Grotesque","Space Grotesk",system-ui,sans-serif; letter-spacing:.04em; color:#fff;
-  background:linear-gradient(90deg,#fff,#b3a9ff 60%,#35e0c8); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  color:#fff; }
 .pz-pts { padding:8px 14px; border-radius:999px; background:rgba(255,255,255,.07); border:1px solid rgba(179,169,255,.35); font-size:15px; }
 
 .pz-hero { display:flex; align-items:center; gap:16px; margin:16px 16px 6px; padding:14px 16px; border-radius:20px; border:1px solid rgba(179,169,255,.3);
@@ -13,10 +13,10 @@
 .pz-badge { position:relative; flex:none; width:78px; height:88px; display:grid; place-items:center; filter:drop-shadow(0 6px 10px rgba(60,40,200,.5)); }
 .pz-badge svg { position:absolute; inset:0; width:100%; height:100%; }
 .pz-badge b { position:relative; font:900 32px/1 "Bricolage Grotesque","Space Grotesk",system-ui,sans-serif; color:#fff; text-shadow:0 2px 0 rgba(28,20,80,.8); margin-top:-6px; }
-.pz-badge small { position:absolute; bottom:15px; font-size:9px; font-weight:900; letter-spacing:.22em; color:#d9d1ff; }
+.pz-badge small { position:absolute; bottom:15px; font-size:9px; font-weight:900; letter-spacing:.05em; color:#d9d1ff; }
 .pz-prog { flex:1; min-width:0; display:flex; flex-direction:column; gap:10px; }
 .pz-prog-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.pz-prog-top strong { font-size:13px; font-weight:900; letter-spacing:.14em; color:#d9d1ff; }
+.pz-prog-top strong { font-size:13px; font-weight:900; letter-spacing:.05em; color:#d9d1ff; }
 .pz-prog-top span { font-size:13px; }
 .pz-bar { height:16px; border-radius:99px; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.1); overflow:hidden; box-shadow:inset 0 2px 4px rgba(0,0,0,.5); }
 .pz-bar i { display:block; height:100%; width:0; border-radius:99px; background:linear-gradient(90deg,#35e0c8,#7c6bff); box-shadow:0 0 14px rgba(124,107,255,.7); transition:width .8s cubic-bezier(.2,.8,.2,1); position:relative; }
@@ -38,13 +38,13 @@
 .pz-card { position:relative; width:118px; height:214px; padding:22px 8px 10px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; border-radius:18px; color:#eef2f8; text-align:center;
   border:2px solid color-mix(in srgb,var(--rc) 45%,#232a3a); background:linear-gradient(170deg,color-mix(in srgb,var(--rc) 22%,#171c2a),#121723 70%); box-shadow:0 6px 0 #0a0d14; cursor:default; -webkit-tap-highlight-color:transparent; }
 .pz-col.big .pz-card { box-shadow:0 6px 0 #0a0d14,0 0 22px color-mix(in srgb,var(--rc) 30%,transparent); }
-.pz-rar { position:absolute; top:-1px; left:50%; transform:translate(-50%,-50%); padding:2px 8px; border-radius:99px; background:var(--rc); color:#0d1017; font-size:9px; font-weight:900; letter-spacing:.14em; white-space:nowrap; }
+.pz-rar { position:absolute; top:-1px; left:50%; transform:translate(-50%,-50%); padding:2px 8px; border-radius:99px; background:var(--rc); color:#0d1017; font-size:9px; font-weight:900; letter-spacing:.05em; white-space:nowrap; }
 .pz-art { flex:1; width:100%; display:grid; place-items:center; font-size:68px; }
 .pz-art.chest svg { width:96px; height:auto; }
 .pz-art canvas { width:112px; height:112px; }
 .pz-name { min-height:34px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; line-height:1.1; padding:0 2px; }
 .pz-lbl { letter-spacing:.04em; }
-.pz-claim, .pz-state { width:100%; margin-top:8px; padding:7px 0; border-radius:11px; font-size:12px; font-weight:900; letter-spacing:.14em; }
+.pz-claim, .pz-state { width:100%; margin-top:8px; padding:7px 0; border-radius:11px; font-size:12px; font-weight:900; letter-spacing:.05em; }
 .pz-claim { background:linear-gradient(#ffe27a,#f5a81c); color:#3a2400; box-shadow:0 3px 0 #8a5a00; }
 .pz-state { color:#5df0da; min-height:23px; }
 .pz-state.lock { color:#5b6479; font-size:13px; }
@@ -61,4 +61,4 @@
 .pz-claimall b { display:inline-grid; place-items:center; min-width:24px; height:24px; margin-left:8px; padding:0 6px; border-radius:99px; background:#3a2400; color:#ffe27a; font-size:13px; vertical-align:middle; }
 .m-pass-art.has-claim { box-shadow:0 0 0 2px #ffcf3f,0 0 14px rgba(255,207,63,.6); }
 
-.pz-eyebrow { display:block; font-size:11px; font-weight:800; letter-spacing:.16em; color:#c5bcff; }
+.pz-eyebrow { display:block; font-size:11px; font-weight:800; letter-spacing:.05em; color:#c5bcff; }

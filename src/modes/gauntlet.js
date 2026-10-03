@@ -115,18 +115,18 @@
               '<div class="gt-wallet"><span class="gt-w coin">' + icon('coin') + '<b>' + bal.toLocaleString('en-US') + '</b></span><span class="gt-w key">' + icon('key') + '<b>' + g.keys + '</b></span></div></div>' +
             '<div class="gt-scroll">' +
               '<div class="gt-hero"><div class="gt-crown">' + icon('crown') + '</div><h1>THE GAUNTLET</h1>' +
-                '<p>' + FIELD + ' players. Three stages. One crown.</p>' +
+                '<p>' + FIELD + ' players, 3 stages, 1 crown</p>' +
                 (g.crowned ? '<div class="gt-holder">' + icon('crown') + '<span>YOU HOLD THE CROWN. DEFEND IT.</span></div>' : '') + '</div>' +
               '<div class="gt-ladder">' + node(32, 'Stampede', 0) + '<i></i>' + node(16, 'Hazard Run', 1) + '<i></i>' + node(6, 'Crown Duel', 2) + '<i></i>' +
                 '<div class="gt-node s3"><b>' + icon('crown') + '</b><small>Crown</small></div></div>' +
-              '<h2 class="gt-h2">PRIZES</h2>' +
+              '<h2 class="gt-h2">Prizes</h2>' +
               '<div class="gt-prizes">' +
                 prize(0, 'Out in Stampede', R('coin', PRIZES[0].coins) + R('xp', PRIZES[0].xp), null) +
                 prize(1, 'Out in Hazard Run', 'Rare supply drop', 'rare') +
                 prize(2, 'Out in Crown Duel', 'Epic supply drop', 'epic') +
                 prize(3, 'Win the crown', 'Legendary supply drop', 'legendary') +
               '</div>' +
-              '<h2 class="gt-h2">ENTRY</h2>' +
+              '<h2 class="gt-h2">Entry</h2>' +
               '<div class="gt-opts">' +
                 opt('coins', 'coin', '<span class="gt-oi">' + icon('coin') + '</span><span class="gt-ot"><b>' + (ENTRY.coins || 'Free') + '</b><small>' + (ENTRY.coins ? 'Open to everyone' : 'Free while we test') + '</small></span>') +
                 opt('key', 'key' + (g.keys < 1 ? ' dim' : ''), '<span class="gt-oi">' + icon('key') + '</span><span class="gt-ot"><b>Key <em>x' + g.keys + '</em></b><small>Win 3 Quick matches in a row · ' + g.streak + ' / 3</small></span>') +
@@ -805,7 +805,7 @@
                 '<p>You placed <b>' + ord(r.place) + '</b> of ' + FIELD + (winner && !winner.local ? ' · Crown: ' + winner.name : '') + '</p></div>' +
               '<div class="gt-rsteps">' + steps + '</div>' +
               '<div class="gt-rewards">' +
-                '<h2 class="gt-h2">' + (r.drop && !r.drop.noDrop ? 'SUPPLY DROP' : 'REWARDS') + '</h2>' +
+                '<h2 class="gt-h2">' + (r.drop && !r.drop.noDrop ? 'Supply drop' : 'Rewards') + '</h2>' +
                 (r.drop && !r.drop.noDrop ? '<div class="loot-drop" id="gt-loot"></div>' : '<div class="gt-chips">' + R('coin', r.coinBase, { plus:true }) + R('xp', r.pr.xp, { plus:true }) + R('pass', r.pr.pass, { plus:true }) + '</div>') +
                 (r.e.stake ? '<p class="gt-stakeline ' + (r.refund ? 'ok' : 'lost') + '">' + icon('coin') + (r.refund ? '<span>Stake returned: <b>' + r.e.stake.toLocaleString('en-US') + '</b></span>' : '<span>Stake spent: <b>' + r.e.stake.toLocaleString('en-US') + '</b></span>') + '</p>' : '') +
                 (r.e.mult > 1 ? '<p class="gt-fine">Coin prizes x' + r.e.mult + ' from your wager.</p>' : '') +
