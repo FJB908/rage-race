@@ -530,3 +530,16 @@
 .nbadge { position:absolute; top:-6px; right:-4px; z-index:3; min-width:21px; height:21px; padding:0 5px; border-radius:11px; background:linear-gradient(180deg,#ff6a7a,#e8172f); color:#fff; font:800 12px/21px "Space Grotesk",system-ui,sans-serif; text-align:center; border:2px solid #0d1017; box-shadow:0 2px 8px rgba(255,59,79,.55); pointer-events:none; animation:nbPop .35s cubic-bezier(.3,1.8,.5,1); }
 .m-nav .nbadge { top:2px; right:calc(50% - 26px); }
 @keyframes nbPop { from { transform:scale(.3); } to { transform:scale(1); } }
+
+/* shop: compact three-column grid, rarity shown as a coloured top edge instead of a label */
+#m-skins.m-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+#m-skins .m-skin { gap: 5px; padding: 8px 8px 9px; border-radius: 12px; border: 1px solid rgba(255,255,255,.07); border-top: 3px solid var(--rc, #4a5366); background: #161b24; box-shadow: none; }
+#m-skins .m-skin.eq { border-color: var(--accent); border-top-color: var(--accent); }
+#m-skins .m-skin.leg, #m-skins .m-skin.prem { background: #161b24; box-shadow: none; border-color: rgba(255,255,255,.07); }
+#m-skins .m-skin.leg.eq, #m-skins .m-skin.prem.eq { border-color: var(--accent); }
+#m-skins .m-skin-pv { height: 64px; border-radius: 8px; }
+#m-skins .m-skin-pv canvas { width: 62px; height: 62px; }
+#m-skins .m-skin b { font-size: 12px; font-weight: 700; line-height: 1.15; text-align: left; }
+#m-skins .m-skin-f { font-size: 11px; justify-content: flex-start; }
+#m-skins .m-skin-f .eqd, #m-skins .m-skin-f .own { font-size: 10px; letter-spacing: .04em; }
+#m-skins .prem-tag { top: 6px; right: 6px; transform: scale(.7); transform-origin: top right; }

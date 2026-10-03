@@ -4350,7 +4350,7 @@ const CUSTOM_COSMETICS = {
   },
   {
    "id": "c-matrix",
-   "name": "Matrix",
+   "name": "Code",
    "color": "#03200c",
    "price": 1700,
    "rarity": "epic",
@@ -6059,7 +6059,7 @@ const CUSTOM_COSMETICS = {
   },
   {
    "id": "c-voltage",
-   "name": "Voltage",
+   "name": "Electric",
    "color": "#ffeb2e",
    "price": 450,
    "rarity": "common",
@@ -6434,7 +6434,7 @@ const CUSTOM_COSMETICS = {
   },
   {
    "id": "c-spectre",
-   "name": "Spectre",
+   "name": "Ghost",
    "color": "#f6f9ff",
    "price": 950,
    "rarity": "rare",
@@ -6668,7 +6668,7 @@ const CUSTOM_COSMETICS = {
   },
   {
    "id": "c-robot",
-   "name": "Mecha",
+   "name": "Robot",
    "color": "#a6b0c4",
    "price": 1500,
    "rarity": "epic",
@@ -16928,7 +16928,7 @@ const CUSTOM_COSMETICS = {
   },
   {
    "id": "c-void",
-   "name": "Event Horizon",
+   "name": "Dark Ring",
    "color": "#8a4bff",
    "price": 2400,
    "rarity": "legendary",

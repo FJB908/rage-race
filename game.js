@@ -3546,29 +3546,29 @@ const SKINS = [
     { id:'classic',  name:'Classic',     color:'#35e0c8', price:0,    rarity:'common',    pat:{k:'solid'} },
     { id:'lime',     name:'Lime',        color:'#9be15d', price:250,  rarity:'common',    pat:{k:'solid'} },
     { id:'ember',    name:'Ember',       color:'#ff9838', price:300,  rarity:'common',    pat:{k:'solid'} },
-    { id:'frost',    name:'Frostbite',   color:'#cfe9ff', price:300,  rarity:'common',    pat:{k:'solid'} },
+    { id:'frost',    name:'Frost',   color:'#cfe9ff', price:300,  rarity:'common',    pat:{k:'solid'} },
     { id:'rose',     name:'Rose',        color:'#ff7a90', price:450,  rarity:'common',    pat:{k:'solid'} },
     { id:'midnight', name:'Midnight',    color:'#5b8def', price:500,  rarity:'common',    pat:{k:'solid'} },
-    { id:'violet',   name:'Ultraviolet', color:'#b3a9ff', price:650,  rarity:'rare',      pat:{k:'solid'} },
+    { id:'violet',   name:'Violet', color:'#b3a9ff', price:650,  rarity:'rare',      pat:{k:'solid'} },
     { id:'polka',    name:'Polka',       color:'#ffcf3f', price:600,  rarity:'rare',      pat:{k:'dots', a:'#ffcf3f', b:'#fff4c2'} },
     { id:'sunset',   name:'Sunset',      color:'#ff7a5c', price:700,  rarity:'rare',      pat:{k:'grad', a:'#ffcf3f', b:'#ff5470'} },
     { id:'ocean',    name:'Ocean',       color:'#46b3e6', price:700,  rarity:'rare',      pat:{k:'grad', a:'#35e0c8', b:'#5b6ef0'} },
     { id:'candy',    name:'Candy',       color:'#ff8fb1', price:900,  rarity:'rare',      pat:{k:'stripes', a:'#ffffff', b:'#ff6f9c'} },
     { id:'camo',     name:'Camo',        color:'#6f8f4e', price:900,  rarity:'rare',      pat:{k:'camo', a:'#6f8f4e', b:'#4a6333', c:'#a3b87a'} },
     { id:'tiger',    name:'Tiger',       color:'#ff9838', price:1200, rarity:'epic',      pat:{k:'tiger', a:'#ff9838', b:'#1a1208'} },
-    { id:'checker',  name:'Finish Line', color:'#e8ecf2', price:1500, rarity:'epic',      pat:{k:'checker', a:'#f4f6fa', b:'#1a1d24'} },
-    { id:'lava',     name:'Magma',       color:'#ff5a36', price:1600, rarity:'epic',      pat:{k:'lava'} },
+    { id:'checker',  name:'Checkered', color:'#e8ecf2', price:1500, rarity:'epic',      pat:{k:'checker', a:'#f4f6fa', b:'#1a1d24'} },
+    { id:'lava',     name:'Lava',       color:'#ff5a36', price:1600, rarity:'epic',      pat:{k:'lava'} },
     { id:'galaxy',   name:'Galaxy',      color:'#6b4fd8', price:1800, rarity:'epic',      pat:{k:'galaxy'} },
     { id:'chrome',   name:'Chrome',      color:'#c9d1e3', price:2500, rarity:'legendary', pat:{k:'metal', stops:['#f7f9fc','#9aa4b8','#eef2f8','#6b7488']} },
-    { id:'gold',     name:'Gold Rush',   color:'#ffcf3f', price:3000, rarity:'legendary', pat:{k:'metal', stops:['#fff4c2','#e0a525','#ffe28a','#b07a14']} },
-    { id:'carbon',   name:'Carbon Apex',  color:'#dce5ed', price:1100, rarity:'epic',      pat:{k:'carbon', a:'#242d38', b:'#657481'} },
-    { id:'sakura',   name:'Sakura Drift', color:'#ff85b3', price:1250, rarity:'epic',      pat:{k:'petal', a:'#6f284e', b:'#ff85b3', c:'#ffe2ef'} },
-    { id:'monsoon',  name:'Monsoon Jade', color:'#54efd0', price:1400, rarity:'epic',      pat:{k:'waves', a:'#073b43', b:'#18a98f', c:'#a5fff0'} },
-    { id:'glacier',  name:'Glacier Core', color:'#bdefff', price:1750, rarity:'epic',      pat:{k:'marble', a:'#254966', b:'#bdefff', c:'#ffffff'} },
-    { id:'circuit',  name:'Circuit Saint',color:'#70ffbb', price:2200, rarity:'legendary', pat:{k:'circuit', a:'#092c2a', b:'#22d58e', c:'#fff27a'} },
-    { id:'eclipse',  name:'Black Eclipse',color:'#f0cbff', price:2600, rarity:'legendary', pat:{k:'holo', stops:['#171521','#552c72','#c14d91','#3ce0ca']} },
-    { id:'starforge',name:'Starforge',    color:'#ff9f5c', price:2900, rarity:'legendary', pat:{k:'holo', stops:['#35142c','#a82f52','#ff9f5c','#ffe59c']} },
-    { id:'deepsea',  name:'Abyssal Bloom',color:'#57c6ff', price:3400, rarity:'legendary', pat:{k:'petal', a:'#102e5b', b:'#397ee8', c:'#9bf0ff'} },
+    { id:'gold',     name:'Gold',   color:'#ffcf3f', price:3000, rarity:'legendary', pat:{k:'metal', stops:['#fff4c2','#e0a525','#ffe28a','#b07a14']} },
+    { id:'carbon',   name:'Carbon',  color:'#dce5ed', price:1100, rarity:'epic',      pat:{k:'carbon', a:'#242d38', b:'#657481'} },
+    { id:'sakura',   name:'Sakura', color:'#ff85b3', price:1250, rarity:'epic',      pat:{k:'petal', a:'#6f284e', b:'#ff85b3', c:'#ffe2ef'} },
+    { id:'monsoon',  name:'Jade', color:'#54efd0', price:1400, rarity:'epic',      pat:{k:'waves', a:'#073b43', b:'#18a98f', c:'#a5fff0'} },
+    { id:'glacier',  name:'Glacier', color:'#bdefff', price:1750, rarity:'epic',      pat:{k:'marble', a:'#254966', b:'#bdefff', c:'#ffffff'} },
+    { id:'circuit',  name:'Circuit',color:'#70ffbb', price:2200, rarity:'legendary', pat:{k:'circuit', a:'#092c2a', b:'#22d58e', c:'#fff27a'} },
+    { id:'eclipse',  name:'Eclipse',color:'#f0cbff', price:2600, rarity:'legendary', pat:{k:'holo', stops:['#171521','#552c72','#c14d91','#3ce0ca']} },
+    { id:'starforge',name:'Forge',    color:'#ff9f5c', price:2900, rarity:'legendary', pat:{k:'holo', stops:['#35142c','#a82f52','#ff9f5c','#ffe59c']} },
+    { id:'deepsea',  name:'Deep Sea',color:'#57c6ff', price:3400, rarity:'legendary', pat:{k:'petal', a:'#102e5b', b:'#397ee8', c:'#9bf0ff'} },
 ];
 const HATS = [
     { id:'none',       name:'None',        price:0,    rarity:'common' },
@@ -3587,12 +3587,12 @@ const HATS = [
     { id:'wizard',     name:'Wizard',      price:1300, rarity:'epic' },
     { id:'halo',       name:'Halo',        price:2200, rarity:'legendary' },
     { id:'crown',      name:'Crown',       price:3000, rarity:'legendary' },
-    { id:'flighthelm', name:'Aero Mk. IV',  price:1450, rarity:'epic' },
-    { id:'foxcrest',   name:'Foxfire Crest',price:1650, rarity:'epic' },
-    { id:'headband',   name:'Redline Wrap', price:1850, rarity:'epic' },
-    { id:'spacehelm',  name:'Orbit Helmet', price:2450, rarity:'legendary' },
-    { id:'petalcrown', name:'Sakura Crown', price:2750, rarity:'legendary' },
-    { id:'voidhorns',  name:'Void Antlers', price:3600, rarity:'legendary' },
+    { id:'flighthelm', name:'Pilot Helmet',  price:1450, rarity:'epic' },
+    { id:'foxcrest',   name:'Fox Hood',price:1650, rarity:'epic' },
+    { id:'headband',   name:'Headband', price:1850, rarity:'epic' },
+    { id:'spacehelm',  name:'Space Helmet', price:2450, rarity:'legendary' },
+    { id:'petalcrown', name:'Blossom Crown', price:2750, rarity:'legendary' },
+    { id:'voidhorns',  name:'Dark Antlers', price:3600, rarity:'legendary' },
 ];
 const FACES = [
     { id:'none',     name:'None',          price:0,    rarity:'common' },
@@ -3607,29 +3607,29 @@ const FACES = [
     { id:'bandit',   name:'Bandit Mask',   price:700,  rarity:'epic' },
     { id:'aviator',  name:'Aviators',      price:900,  rarity:'epic' },
     { id:'monocle',  name:'Monocle',       price:1200, rarity:'epic' },
-    { id:'visor',    name:'Cyber Visor',   price:2000, rarity:'legendary' },
-    { id:'hologlass',name:'Holo Lenses',    price:1450, rarity:'epic' },
-    { id:'startrace',name:'Star Tracer',    price:1750, rarity:'epic' },
-    { id:'frostmark',name:'Frost Sigil',    price:1950, rarity:'epic' },
-    { id:'foxmark',  name:'Foxfire Mark',   price:2300, rarity:'legendary' },
+    { id:'visor',    name:'Visor',   price:2000, rarity:'legendary' },
+    { id:'hologlass',name:'Holo Glasses',    price:1450, rarity:'epic' },
+    { id:'startrace',name:'Star Marks',    price:1750, rarity:'epic' },
+    { id:'frostmark',name:'Frost Marks',    price:1950, rarity:'epic' },
+    { id:'foxmark',  name:'Fox Marks',   price:2300, rarity:'legendary' },
     { id:'pixelheart',name:'Pixel Heart',   price:2650, rarity:'legendary' },
-    { id:'voidstitch',name:'Void Stitch',   price:3200, rarity:'legendary' },
+    { id:'voidstitch',name:'Stitches',   price:3200, rarity:'legendary' },
 ];
 const TRAILS = [
     { id:'none',       name:'No Trail',      color:'#8b95a7', price:0,    rarity:'common',    style:'none' },
-    { id:'afterglow',  name:'Afterglow',     color:'#35e0c8', price:500,  rarity:'rare',      style:'soft' },
-    { id:'cinder',     name:'Cinderwake',    color:'#ff8a52', price:800,  rarity:'epic',      style:'spark' },
+    { id:'afterglow',  name:'Glow',     color:'#35e0c8', price:500,  rarity:'rare',      style:'soft' },
+    { id:'cinder',     name:'Cinders',    color:'#ff8a52', price:800,  rarity:'epic',      style:'spark' },
     { id:'starlight',  name:'Starlight',     color:'#b3a9ff', price:1200, rarity:'epic',      style:'star' },
-    { id:'aurora',     name:'Aurora Veil',   color:'#67f0c1', price:2200, rarity:'legendary', style:'ribbon' },
-    { id:'prism',      name:'Prism Drive',   color:'#ffcf3f', price:3200, rarity:'legendary', style:'prism' },
-    { id:'blueprint',  name:'Blueprint',     color:'#64d9ff', price:950,  rarity:'epic',      style:'blueprint' },
-    { id:'comet',      name:'Comet Wake',    color:'#fff1a8', price:1450, rarity:'epic',      style:'comet' },
-    { id:'embers',     name:'Emberwake',     color:'#ff7954', price:1650, rarity:'epic',      style:'ember' },
-    { id:'glacierline',name:'Glacierline',   color:'#a7efff', price:1850, rarity:'epic',      style:'frost' },
-    { id:'shadowcode', name:'Shadowcode',    color:'#8c8dff', price:2500, rarity:'legendary', style:'glitch' },
-    { id:'nebula',     name:'Nebula Bloom',  color:'#ff71d2', price:2850, rarity:'legendary', style:'nebula' },
-    { id:'tidal',      name:'Tidal Current', color:'#62f5dc', price:3300, rarity:'legendary', style:'ribbon' },
-    { id:'goldenhour', name:'Golden Hour',   color:'#ffcc69', price:3900, rarity:'legendary', style:'star' },
+    { id:'aurora',     name:'Aurora',   color:'#67f0c1', price:2200, rarity:'legendary', style:'ribbon' },
+    { id:'prism',      name:'Rainbow Trail',   color:'#ffcf3f', price:3200, rarity:'legendary', style:'prism' },
+    { id:'blueprint',  name:'Chalk',     color:'#64d9ff', price:950,  rarity:'epic',      style:'blueprint' },
+    { id:'comet',      name:'Comet',    color:'#fff1a8', price:1450, rarity:'epic',      style:'comet' },
+    { id:'embers',     name:'Sparks',     color:'#ff7954', price:1650, rarity:'epic',      style:'ember' },
+    { id:'glacierline',name:'Ice',   color:'#a7efff', price:1850, rarity:'epic',      style:'frost' },
+    { id:'shadowcode', name:'Shadow',    color:'#8c8dff', price:2500, rarity:'legendary', style:'glitch' },
+    { id:'nebula',     name:'Nebula',  color:'#ff71d2', price:2850, rarity:'legendary', style:'nebula' },
+    { id:'tidal',      name:'Waves', color:'#62f5dc', price:3300, rarity:'legendary', style:'ribbon' },
+    { id:'goldenhour', name:'Gold Dust',   color:'#ffcc69', price:3900, rarity:'legendary', style:'star' },
 ];
 // Layered art for the built-in skins (src/data/skin-styles.js).
 if (typeof SKIN_STYLES !== 'undefined') for (const s of SKINS) if (SKIN_STYLES[s.id]) Object.assign(s, SKIN_STYLES[s.id]);
@@ -3663,8 +3663,8 @@ if (typeof PREMIUM_COSMETICS !== 'undefined'){
 const TRAIL_BY_ID = Object.fromEntries(TRAILS.map(trail => [trail.id, trail]));
 const COS_BY = { skin: SKINS, hat: HATS, face: FACES, trail: TRAILS };
 const RESOURCE_PACKS = [
-    { id:'field-notes', name:'Field Notes', price:80, xp:45, passPoints:30 },
-    { id:'supply-cache', name:'Supply Cache', price:240, xp:160, passPoints:120 },
+    { id:'field-notes', name:'Small Crate', price:80, xp:45, passPoints:30 },
+    { id:'supply-cache', name:'Supply Drop', price:240, xp:160, passPoints:120 },
     { id:'season-crate', name:'Season Crate', price:600, xp:450, passPoints:360 },
 ];
 const OUT = 'rgba(13,16,23,0.85)';
@@ -4336,10 +4336,10 @@ function renderShop(cat){
                 const owned = current.owned.includes(it.id);
                 const eq = current[cat] === it.id;
                 const b = document.createElement('button');
-                b.type = 'button';
+                b.type = 'button'; b.style.setProperty('--rc', RARITY[it.rarity].color); b.title = RARITY[it.rarity].label;
                 b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' ? ' leg' : '') + (it.premium ? ' prem' : '');
                 b.innerHTML = `<span class="m-skin-pv"><canvas width="160" height="160"></canvas></span>` +
-                    `<b>${it.name}</b><span class="m-rar" style="color:${RARITY[it.rarity].color}">${RARITY[it.rarity].label}</span>` +
+                    `<b>${it.name}</b>` +
                     (cat === 'trail' ? `<canvas class="tr-pv" width="300" height="100"></canvas>` : '') +
                     `<span class="m-skin-f"><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.premium ? R('gem', it.gemPrice) : R('coin', it.price)}</span></span>` + (it.premium ? `<span class="prem-tag">${icon('gem')}</span>` : '');
                 const preview = { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail };
@@ -4902,8 +4902,8 @@ const DIM2_LEVELS = [
     { name:'Freefall',    color:'#6b7ee8', seed:43303, pattern:'MTMnMFMTnMMFnTFMMnT',     gap:[115,250], width:[52,64], shift:[100,175], par3:58, par2:174 },
     { name:'Sheer Drop',  color:'#ff9838', seed:45505, pattern:'FTFnFFTnFFFTnFFn',        gap:[115,255], width:[50,62], shift:[105,180], par3:60, par2:180 },
     { name:'Deadlock',    color:'#ffcf3f', seed:48808, pattern:'MFTMFnMTFMFnMTFn',        gap:[115,250], width:[52,64], shift:[105,180], par3:74, par2:216 },
-    { name:'Razors Edge', color:'#35e0c8', seed:46606, pattern:'TnTFnTTnFTnTnFTTnTnFT',   gap:[120,260], width:[46,56], shift:[105,180], par3:168, par2:500 },
-    { name:'Abyssal',     color:'#ff5470', seed:49909, pattern:'IFTInIFTnIFTTInIFT',      gap:[120,258], width:[48,58], shift:[108,182], iceMin:62, par3:118, par2:360 },
+    { name:"Razor's Edge", color:'#35e0c8', seed:46606, pattern:'TnTFnTTnFTnTnFTTnTnFT',   gap:[120,260], width:[46,56], shift:[105,180], par3:168, par2:500 },
+    { name:'Bottomless', color:'#ff5470', seed:49909, pattern:'IFTInIFTnIFTTInIFT',      gap:[120,258], width:[48,58], shift:[108,182], iceMin:62, par3:118, par2:360 },
     { name:'Last Light',  color:'#ff2e5c', seed:50010, pattern:'XMIFTnXMFITnTMXFInMXFTnT', gap:[115,255], width:[50,62], shift:[105,180], iceMin:64, par3:108, par2:340 },
 ];
 const DIMENSIONS = [

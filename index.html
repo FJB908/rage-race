@@ -62,25 +62,25 @@
 
         <!-- PLAY -->
         <section class="m-tab" data-tab="play">
-            <h1 class="m-h1">Play</h1><p class="m-sub">Pick a mode, then press Play on the home screen.</p>
-            <button class="m-card ranked" type="button" id="btn-ranked" data-mode="ranked"><span class="mc-ico" aria-hidden="true"></span><span class="mc-copy"><b>Ranked</b><span>Season ladder · 4 players</span><small id="p-rk-sub"></small></span><em></em></button>
-            <button class="m-card teal" type="button" id="btn-find" data-mode="race"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-race"/></svg></span><span class="mc-copy"><b>Race</b><span>Quick match · 4 players · first to the top</span></span><em></em></button>
-            <button class="m-card gold" type="button" id="btn-gauntlet" data-mode="gauntlet"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-crown"/></svg></span><span class="mc-copy"><b>The Gauntlet</b><span>32 players · 3 stages · 1 crown</span><small id="p-gt-sub"></small></span><em></em></button>
-            <button class="m-card red" type="button" id="btn-escape" data-mode="escape"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-escape"/></svg></span><span class="mc-copy"><b>Escape</b><span>Survival · outrun the rising void</span></span><em id="start-best"></em></button>
+            <h1 class="m-h1">Play</h1>
+            <button class="m-card ranked" type="button" id="btn-ranked" data-mode="ranked"><span class="mc-ico" aria-hidden="true"></span><span class="mc-copy"><b>Ranked</b><span>Ranked, 4 players</span><small id="p-rk-sub"></small></span><em></em></button>
+            <button class="m-card teal" type="button" id="btn-find" data-mode="race"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-race"/></svg></span><span class="mc-copy"><b>Race</b><span>Quick match, 4 players</span></span><em></em></button>
+            <button class="m-card gold" type="button" id="btn-gauntlet" data-mode="gauntlet"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-crown"/></svg></span><span class="mc-copy"><b>The Gauntlet</b><span>32 players, 1 crown</span><small id="p-gt-sub"></small></span><em></em></button>
+            <button class="m-card red" type="button" id="btn-escape" data-mode="escape"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-escape"/></svg></span><span class="mc-copy"><b>Escape</b><span>Climb before the floor catches you</span></span><em id="start-best"></em></button>
             <button class="m-card violet stack" type="button" id="btn-parkour" data-mode="parkour">
-                <span class="m-card-top"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-levels"/></svg></span><span class="mc-copy"><b>Levels</b><span>Dimensions and the Tower</span></span><em id="start-pk"></em></span>
+                <span class="m-card-top"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-levels"/></svg></span><span class="mc-copy"><b>Levels</b><span>Dimensions and Tower</span></span><em id="start-pk"></em></span>
                 <span class="m-mini3">
                     <span><small>Dimension I</small><strong id="m-d1"><svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg> 0/30</strong></span>
                     <span id="m-d2box"><small>Dimension II</small><strong id="m-d2">28 <svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg></strong></span>
                     <span><small>The Tower</small><strong id="m-tower">--</strong></span>
                 </span>
             </button>
-            <button class="m-card violet" type="button" data-go="friends"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-users"/></svg></span><span class="mc-copy"><b>Party</b><span>Private room with friends</span></span><em>Soon</em></button>
+            <button class="m-card violet" type="button" data-go="friends"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-users"/></svg></span><span class="mc-copy"><b>Party</b><span>Play with friends</span></span><em>Soon</em></button>
         </section>
 
         <!-- SHOP -->
         <section class="m-tab" data-tab="shop">
-            <h1 class="m-h1">Shop</h1><p class="m-sub">Cosmetics, trails, and season supplies.</p>
+            <h1 class="m-h1">Shop</h1>
             <div class="m-pills">
                 <button class="m-pill on" type="button" data-cat="skin">Skins</button>
                 <button class="m-pill" type="button" data-cat="hat">Headwear</button>
@@ -176,7 +176,7 @@
 
 <!-- ESCAPE GAME OVER -->
 <div id="s-over" class="screen" style="display:none;opacity:0;background:radial-gradient(120% 80% at 50% 110%, rgba(255,84,112,.28), transparent 60%), rgba(13,16,23,.9)">
-    <div class="over-kicker">CAUGHT BY THE VOID</div>
+    <div class="over-kicker">GAME OVER</div>
     <div class="over-score"><span id="over-m">0</span></div>
     <div class="over-best" id="over-best">NEW BEST</div>
     <div class="over-stats">
