@@ -9,7 +9,7 @@
 .em-head { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .em-head b { font-size: 15px; } .em-head span { color: var(--muted); font-size: 13px; } .em-head small { flex-basis: 100%; color: var(--muted); font-size: 12px; }
 .em-slots { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 12px; border-radius: 14px; background: #161b24; min-height: 44px; margin-bottom: 4px; align-items: center; }
 .em-card .em-pv { display: grid; place-items: center; height: 64px; border-radius: 8px; background: #1d2330; overflow: hidden; } .em-card .em-pv .em-chip b { font-size: 14px; } 
-#m-skins .m-skin-pv canvas.fn-pv { width: 92px; height: 58px; } .fn-card .m-skin-pv { height: 64px; }
+#m-skins .m-skin-pv canvas.fn-pv { width: 100px; height: 76px; } .fn-card .m-skin-pv { height: 82px; }
 
 @keyframes emShake { 0%,100% { transform: skewX(-8deg) translate(0,0); } 25% { transform: skewX(-8deg) translate(-2px,1px); } 50% { transform: skewX(-8deg) translate(2px,-1px); } 75% { transform: skewX(-8deg) translate(-1px,-1px); } }
 @keyframes emPulse { 50% { transform: skewX(-8deg) scale(1.08); } }

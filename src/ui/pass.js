@@ -39,7 +39,7 @@
         if (t.t === 'drop') { const c = { rare:['#5eb4ff', '#1f5bd0'], epic:['#b3a9ff', '#5b46d6'], legendary:['#ffcf3f', '#b8651a'] }[t.tier] || ['#35e0c8', '#127b6c']; return '<div class="pz-art chest" style="--c:' + c[0] + ';--c2:' + c[1] + '">' + (window.LB_CHEST ? LB_CHEST('pz' + key, t.tier || 'common') : LB_CHEST_SVG) + '</div>'; }
         if (t.t === 'boost') return '<div class="pz-art boost">' + Boost.art(t, true) + '</div>';
         if (t.t === 'emote') { const e = emoOf(t); return '<div class="pz-art emote"><span style="background-image:' + GRAD(e.col) + '">' + e.text + '</span></div>'; }
-        if (t.t === 'finisher') { const f = finOf(t), c = rar({ rare:'rare' }[f.rarity] ? f.rarity : f.rarity).color; return '<div class="pz-art fin" style="--fc:' + c + '"><i></i><i></i><i></i><i></i><i></i><i></i><b></b></div>'; }
+        if (t.t === 'finisher') return '<div class="pz-art fin"><canvas width="220" height="170" data-fin="' + t.id + '"></canvas></div>';
         return '<div class="pz-art item"><canvas width="140" height="140" data-key="' + key + '"></canvas></div>';
     }
     function nameOf(t) {
@@ -68,7 +68,7 @@
         return '';
     }
     function paintItem(cv, t) {
-        const look = Object.assign({}, myLook(), { [t.cat]:t.id });
+        const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [t.cat]:t.id });
         try { renderLook(cv, look, { scale:.3, cy:.58 }); } catch (e) {}
     }
 
@@ -100,7 +100,8 @@
         el.type = 'button'; el.className = 'pz-card ' + cls; el.style.setProperty('--rc', colorOf(t));
         el.innerHTML = (tag ? '<span class="pz-rar">' + tag + '</span>' : '') + art(t, key) + '<div class="pz-name">' + nameOf(t) + '</div>' + extra;
         el.addEventListener('click', onClick);
-        const cv = el.querySelector('canvas'); if (cv) paintItem(cv, t);
+        const cv = el.querySelector('canvas:not([data-fin])'); if (cv) paintItem(cv, t);
+        const fc = el.querySelector('canvas[data-fin]'); if (fc) { try { Finishers.mount(fc, finOf(t), { span: (finOf(t).pv || 340) * 0.8, oy: .84 }); } catch (e) {} }
         return el;
     }
     window.renderPassScreen = function () {
@@ -193,8 +194,9 @@
     function showFinisherReward(f) {
         return new Promise(res => {
             const o = document.createElement('div'); o.className = 'pz-pop';
-            o.innerHTML = '<div class="pz-pop-in" style="--fc:' + rar(f.rarity).color + '"><small>NEW FINISHER</small><div class="pz-art fin big"><i></i><i></i><i></i><i></i><i></i><i></i><b></b></div><h3>' + f.name.toUpperCase() + '</h3><button type="button">COLLECT</button></div>';
+            o.innerHTML = '<div class="pz-pop-in" style="--fc:' + rar(f.rarity).color + '"><small>NEW FINISHER</small><canvas width="560" height="420" class="pz-pop-fin"></canvas><h3>' + f.name.toUpperCase() + '</h3><button type="button">COLLECT</button></div>';
             document.body.appendChild(o); sfx('finish');
+            try { Finishers.mount(o.querySelector('canvas'), f, { span: (f.pv || 340) * 0.85, oy: .82, hold: .5 }); } catch (e) {}
             o.querySelector('button').onclick = () => { o.remove(); res(); };
         });
     }

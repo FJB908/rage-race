@@ -2668,6 +2668,7 @@ function draw() {
     if (gameMode === 'escape') drawEscapeWorldFront();
     else if (gameMode === 'gauntlet') gtDrawWorldFront(viewTop, viewBottom);
     if (window.Emotes) Emotes.draw(ctx);                          // emote bubbles above players
+    if (window.Finishers) Finishers.draw(ctx);                    // your finish effect (world space)
     ctx.restore();
 
     if (VIEW_OX > 0.5){                              
@@ -3065,13 +3066,23 @@ function startGame() {
     }
     beginRound();
 }
+// Bots do not all react to GO at the same instant: a few are quick off the line, most take their time (a human aims during the countdown and fires at once).
+function staggerBotStarts(){
+    for (const p of players){
+        if (p.local || p.finished) continue;
+        const r = Math.random();
+        p.idleT = 1;                                        // the landing wait is already over at the start
+        p.thinkT = 0.18 + r * r * 1.35 + (p.thinkScale ? (p.thinkScale - 1) * 0.3 : 0);
+        p.hesitating = false;
+    }
+}
 function beginRound() {
     lastPlace = 0;
     hud.style.display='block';
     if (typeof SFX !== 'undefined' && SFX.music) SFX.music.set('race');
     dragging = false;
     cameraY = START_Y - VH*0.62;
-    particles=[]; floaters=[]; shots=[]; shockwaves=[]; shardParticles=[]; timeScale=1; itemHUD.key='';
+    particles=[]; floaters=[]; shots=[]; shockwaves=[]; shardParticles=[]; timeScale=1; itemHUD.key=''; if (window.Finishers) Finishers.clear();
     hintTimer=4; hintEl.style.opacity=1; hintEl.style.display='block';
 
     state='countdown';
@@ -3083,6 +3094,7 @@ function beginRound() {
             SFX.play(s[0]==='GO!' ? 'go' : 'count');
             if (s[0]==='GO!'){
                 state='playing'; matchStart=Date.now();
+                staggerBotStarts();
                 setTimeout(()=>countdownEl.style.display='none',600);
             }
         }, i*800);
@@ -4264,6 +4276,10 @@ function resolveDrop(id, tier){
     } else if (!drop.cosmetic){
         drop.coins += 100;
     }
+    if (!drop.cosmetic && window.Finishers && Math.random() < ({ common:0.02, rare:0.05, epic:0.1, legendary:0.22 }[tier] || 0)){      // chests can hold finishers too
+        const pool = Finishers.FINISHERS.filter(f => f.price > 0 && !f.premium && !p.owned.includes(f.id));
+        if (pool.length){ const f = pickCosmetic(pool, tier); p.owned.push(f.id); drop.finisher = { id:f.id, name:f.name, rarity:f.rarity }; }
+    }
     if (cm > 1){ drop.coins = Math.round(drop.coins * cm); drop.xp = Math.round(drop.xp * cm); drop.passPoints = Math.round(drop.passPoints * cm); drop.boost = cm; }
     p.xp += drop.xp;
     p.passPoints += drop.passPoints;
@@ -4297,6 +4313,7 @@ function renderLootDrop(containerId, drop){
             const chips = [R('coin', final.coins || 0, {plus:true}), R('xp', final.xp || 0, {plus:true})];
             if (final.passPoints) chips.push(R('pass', final.passPoints, {plus:true}));
             if (final.gems) chips.push(R('gem', final.gems, {plus:true}));
+            if (final.finisher) chips.push(`<span class="rwd rwd-fin" style="--rc:${RARITY[final.finisher.rarity].color}"><small>FINISHER</small><b>${final.finisher.name}</b></span>`);
             if (final.cosmetic) chips.push(`<span class="rwd rwd-item"><canvas class="mini-item" width="112" height="112" style="--rc:${RARITY[final.cosmetic.rarity].color}"></canvas></span>`);
             panel.classList.remove('big');
             panel.innerHTML = `<div class="loot-crate opened tier-${final.tier || tier}" aria-hidden="true">${icon('check')}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;

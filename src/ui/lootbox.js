@@ -181,6 +181,32 @@
             o.emit(big ? 110 : 60, { x:o.W / 2, y:o.H * .5, speed:620, size:10, colors:[rc, '#fff', rc, '#ffcf3f'], g:500 });
             await sleep(700);
         }
+        if (final.finisher) await revealFinisher(o, final.finisher, sleep);
+    }
+
+    // a finisher found in a chest: a looping preview of the effect instead of a character
+    async function revealFinisher(o, fin, sleep) {
+        await sleep(350);
+        const f = (window.Finishers && Finishers.BY[fin.id]) || fin, rc = RARITY[f.rarity].color, big = f.rarity === 'legendary' || f.rarity === 'epic';
+        o.el.style.setProperty('--c', rc);
+        const it = document.createElement('div'); it.className = 'lb-itempop lb-fin'; it.style.setProperty('--ic', rc);
+        it.innerHTML = '<i class="glow"></i><canvas width="600" height="440"></canvas><div class="rar">FINISHER</div><div class="nm">' + esc(f.name) + '</div><span class="new">NEW</span>';
+        o.$('.lb-pops').appendChild(it);
+        try { Finishers.mount(it.querySelector('canvas'), f, { span: (f.pv || 340) * 0.85, oy: .82, hold: .6 }); } catch (e) {}
+        void it.offsetWidth; o.flash(); o.shake(); buzz(big ? [30, 40, 60] : 40); sfx('finish'); if (big) sfx('boost');
+        o.el.classList.add('burst'); it.classList.add('show');
+        o.emit(big ? 110 : 60, { x:o.W / 2, y:o.H * .5, speed:620, size:10, colors:[rc, '#fff', rc, '#ffcf3f'], g:500 });
+        await sleep(700);
+    }
+    function addEquipFin(o, f) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'lb-equip'; b.innerHTML = 'EQUIP NOW';
+        o.el.appendChild(b); void b.offsetWidth; b.classList.add('show');
+        b.onclick = () => {
+            const q = prog(); q.finisher = f.id; saveProg(q); sfx('item'); buzz(25);
+            b.classList.add('done'); b.disabled = true; b.innerHTML = icon('check') + ' EQUIPPED';
+            try { refreshMenu(); } catch (e) {}
+        };
     }
 
     // "Equip now" for a cosmetic you just got
@@ -202,10 +228,10 @@
             if (document.getElementById('lootbox')) return res();
             const tier = opts.tier || 'common', o = makeOverlay(tier, '');
             let skipped = false; const btn = o.$('.lb-btn');
-            const final = { coins:0, xp:0, passPoints:0, gems:0, cosmetic:null, boosts:[] };
+            const final = { coins:0, xp:0, passPoints:0, gems:0, cosmetic:null, finisher:null, boosts:[] };
             for (const r of list) { if (r.type === 'coin') final.coins += r.n; else if (r.type === 'xp') final.xp += r.n; else if (r.type === 'pass') final.passPoints += r.n; else if (r.type === 'gem') final.gems += r.n; else if (r.type === 'boost') final.boosts.push(r); else if (r.type === 'item') final.cosmetic = r.item; }
             o.el.classList.add('burst'); o.flash(); sfx('finish');
-            revealRewards(o, final, () => skipped).then(() => { btn.classList.add('show'); if (final.cosmetic) addEquip(o, final.cosmetic); });
+            revealRewards(o, final, () => skipped).then(() => { btn.classList.add('show'); if (final.cosmetic) addEquip(o, final.cosmetic); else if (final.finisher) addEquipFin(o, Finishers.BY[final.finisher.id] || final.finisher); });
             o.$('.lb-skip').onclick = () => { skipped = true; };
             btn.onclick = () => { sfx('count'); o.close(res); };
         });
@@ -242,7 +268,7 @@
             await wait(skipped ? 100 : 850);
             stage.classList.add('away'); skipBtn.classList.add('show'); await wait(skipped ? 50 : 350);
             await revealRewards(o, final, () => skipped);
-            skipBtn.classList.remove('show'); btn.classList.add('show'); if (final.cosmetic) addEquip(o, final.cosmetic);
+            skipBtn.classList.remove('show'); btn.classList.add('show'); if (final.cosmetic) addEquip(o, final.cosmetic); else if (final.finisher) addEquipFin(o, Finishers.BY[final.finisher.id] || final.finisher);
             btn.onclick = () => { sfx('count'); o.close(() => { if (opts.onDone) opts.onDone(final); }); };
         }
         async function tap() { try { await tapInner(); } catch (e) { if (!opened) busy = false; } }      // an error mid-animation must never leave the crate stuck

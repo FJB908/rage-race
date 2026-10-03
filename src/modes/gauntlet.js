@@ -29,10 +29,9 @@
           wall:{ y0:START_Y + 330, v0:34, v1:62, ramp:70 },
           types:d => [['boost', .09 + d*.03], ['fragile', .17 + d*.10], ['moving', .24 + d*.10], ['ice', .15 + d*.06]] },
         { id:'duel', name:'CROWN DUEL', color:'#ffcf3f', bg:'#1b140a', field:6, need:1, height:7500, deck:false, band:.25,
-          blurb:'First to the crown wins. Last one standing wins too.',
+          blurb:'No wall, no mercy needed: the first to the crown wins.',
           gap:124, gapGrow:55, gapMax:212, w0:104, wShrink:30, wMin:72, skillMul:.9,
-          lanes:row => (row % 5 === 4 ? 1 : 2), boxEvery:2, safetyEvery:0, timeout:130,
-          wall:{ y0:START_Y + 260, v0:46, v1:84, ramp:45 },
+          lanes:row => (row % 5 === 4 ? 1 : 2), boxEvery:2, safetyEvery:0, timeout:150,
           types:d => [['boost', .08 + d*.03], ['fragile', .18 + d*.10], ['moving', .26 + d*.10], ['ice', .16 + d*.06]] },
     ];
 

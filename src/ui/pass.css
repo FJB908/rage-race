@@ -142,3 +142,8 @@
 .pz-art { min-height:0; overflow:hidden; } .pz-art.boost .bo-art { transform:scale(.62); }
 .pz-art.boost { overflow:visible; }
 .pz-art.boost .bo-art { transform:scale(.55) translateY(-8px); }
+
+.pz-art.fin { padding:0; } .pz-art.fin canvas { width:100%; height:100%; }
+.pz-pop-fin { width:min(78vw,300px); height:auto; aspect-ratio:560/420; }
+.rwd-fin { display:inline-flex; flex-direction:column; align-items:flex-start; gap:1px; padding:5px 10px; border-radius:10px; border:1px solid var(--rc); background:color-mix(in srgb,var(--rc) 14%,transparent); } .rwd-fin small { font-size:8px; font-weight:900; letter-spacing:.14em; color:var(--rc); } .rwd-fin b { font-size:13px; }
+.lb-fin canvas { width:min(86vw,360px); height:auto; aspect-ratio:600/440; }

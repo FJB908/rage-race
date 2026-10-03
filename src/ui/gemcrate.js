@@ -9,7 +9,7 @@
         epic:      { coins: 1800, xp: 300, gems: 15, boosts: [{ kind: 'coin', mult: 2, n: 5 }, { kind: 'chest', mult: 2, n: 3 }], bonus: ['rare'] },
         legendary: { coins: 1200, xp: 250, gems: 10, boosts: [{ kind: 'coin', mult: 2, n: 3 }], bonus: [] },
     };
-    const pool = (rar, p) => [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.rarity === rar && i.price > 0 && !i.premium && !i.exclusive && !i.priceLock && !p.owned.includes(i.id));
+    const pool = (rar, p) => [...SKINS, ...HATS, ...FACES, ...TRAILS, ...(window.Finishers ? Finishers.FINISHERS : [])].filter(i => i.id !== 'f-none').filter(i => i.rarity === rar && i.price > 0 && !i.premium && !i.exclusive && !i.priceLock && !p.owned.includes(i.id));
 
     function roll() {
         const p = prog(); let x = Math.random(), rar = 'rare';
@@ -24,12 +24,13 @@
         store('rr_gems', gemCount() - PRICE);
         const { rar, item } = roll(), ex = EXTRAS[rar], p = prog();
         let coins = ex.coins, second = null;
+        const isFin = !!(item && item.id[0] === 'f' && item.id[1] === '-');
         if (item) p.owned.push(item.id); else coins += { rare: 600, epic: 1500, legendary: 3500 }[rar];       // everything owned: coins instead
-        if (item && Math.random() < SECOND_CHANCE) { const l = pool('rare', p).concat(pool('epic', p)).filter(i => i.id !== item.id); if (l.length) { second = l[Math.floor(Math.random() * l.length)]; p.owned.push(second.id); } }
+        if (item && Math.random() < SECOND_CHANCE) { const l = pool('rare', p).concat(pool('epic', p)).filter(i => i.id !== item.id && !(i.id[0] === 'f' && i.id[1] === '-')); if (l.length) { second = l[Math.floor(Math.random() * l.length)]; p.owned.push(second.id); } }
         p.xp += ex.xp; saveProg(p);
         addCoins(coins); addGems(ex.gems);
         ex.boosts.forEach(b => Boost.grant(b.kind, b.mult, b.n));
-        const drop = { id: newLootId('gemcrate'), tier: rar, pending: false, coins, xp: ex.xp, passPoints: 0, gems: ex.gems, cosmetic: item, boosts: ex.boosts };
+        const drop = { id: newLootId('gemcrate'), tier: rar, pending: false, coins, xp: ex.xp, passPoints: 0, gems: ex.gems, cosmetic: isFin ? null : item, finisher: isFin ? { id: item.id, name: item.name, rarity: item.rarity } : null, boosts: ex.boosts };
         refreshMenu();
         openLootbox(drop, { fixed: true, variant: 'gem', onDone: async () => {
             refreshMenu();
