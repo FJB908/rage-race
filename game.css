@@ -543,3 +543,6 @@
 #m-skins .m-skin-f { font-size: 11px; justify-content: flex-start; }
 #m-skins .m-skin-f .eqd, #m-skins .m-skin-f .own { font-size: 10px; letter-spacing: .04em; }
 #m-skins .prem-tag { top: 6px; right: 6px; transform: scale(.7); transform-origin: top right; }
+
+.m-avatar { background: #1d2330; }
+.m-avatar canvas { width: 48px; height: 48px; flex: none; border-radius: 14px; display: block; }

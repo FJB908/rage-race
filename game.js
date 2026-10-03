@@ -4425,6 +4425,7 @@ function refreshMenu(){
     refreshShopBadge();
     renderLook(document.getElementById('m-hero'), myLook(), { scale:0.22, cy:0.62 });
     renderLook(document.getElementById('m-hero2'), myLook(), { scale:0.22, cy:0.62 });
+    renderLook(document.getElementById('m-av'), myLook(), { scale:0.2, cy:0.66 });
     const hat = HATS.find(h => h.id === p.hat) || HATS[0], face = FACES.find(f => f.id === p.face) || FACES[0];
     const trail = TRAIL_BY_ID[p.trail] || TRAILS[0];
     document.getElementById('m-eq-hat-n').textContent = hat.name;
