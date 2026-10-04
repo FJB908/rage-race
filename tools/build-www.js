@@ -3,6 +3,6 @@
 const fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..'), out = path.join(root, 'www');
 fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(out, { recursive: true });
-for (const f of ['index.html', 'game.js', 'game.css']) fs.copyFileSync(path.join(root, f), path.join(out, f));
+for (const f of ['index.html', 'game.js', 'game.css', 'privacy.html']) fs.copyFileSync(path.join(root, f), path.join(out, f));
 fs.cpSync(path.join(root, 'src'), path.join(out, 'src'), { recursive: true });
 console.log('www/ ready (' + fs.readdirSync(out).join(', ') + ')');

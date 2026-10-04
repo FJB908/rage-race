@@ -29,6 +29,7 @@ function resize() {
     canvas.width = Math.round(CW * DPR);
     canvas.height = Math.round(CH * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    _menuPainted = false;
 }
 window.addEventListener('resize', resize);
 resize();
@@ -2066,9 +2067,12 @@ function drawCosmeticTrails(viewTop, viewBottom){
     ctx.globalAlpha = 1;
 }
 
+var _menuPainted = false;                  // in the menu the world canvas is just a flat colour behind the UI: paint it once, not 60 times a second
 function draw() {
+    if (state==='menu' && _menuPainted) return;
     ctx.fillStyle = (gameMode === 'gauntlet' && window.GT_BG) || '#0d1017';   // Gauntlet stages tint the floor colour (a cheap sky)
     ctx.fillRect(0,0,CW,CH);
+    _menuPainted = state==='menu';
     if (state==='menu') return;
     if (gameMode === 'parkour') drawParkourSky();
     else if (gameMode === 'level') drawLevelSky();
@@ -2536,6 +2540,7 @@ function loop(t){
     for (const hz of SNAP_HZ){ const iv = 1/hz; if (Math.abs(dt - iv) < iv*0.06){ dt = iv; break; } }
     if (hitStop > 0){ hitStop -= dt; simAcc += dt * 0.2; }
     else simAcc += dt;
+    { const hide = state === 'menu'; if (canvas._hidden !== hide){ canvas._hidden = hide; canvas.style.visibility = hide ? 'hidden' : 'visible'; } }      // the menu covers the whole screen: no need to composite the world canvas behind it
     let steps = 0;
     while (simAcc >= SIM_DT - 1e-6 && steps < 10) { snapshotPrev(); update(SIM_DT); simAcc -= SIM_DT; steps++; }
     if (simAcc < 0) simAcc = 0;
@@ -2667,6 +2672,25 @@ document.getElementById('set-music-vol').addEventListener('input', e => SFX.setM
 document.getElementById('set-sfx-vol').addEventListener('input', e => { SFX.setSfxVol(e.target.value/100); });
 document.getElementById('set-sfx-vol').addEventListener('change', () => SFX.play('coin'));
 document.getElementById('set-test').addEventListener('click', () => SFX.play('finish'));
+document.getElementById('set-odds').addEventListener('click', () => { if (window.Odds) Odds.show(); });
+document.getElementById('set-privacy').addEventListener('click', () => { window.open('privacy.html', '_blank'); });
+document.getElementById('set-delete').addEventListener('click', () => {
+    const panel = document.querySelector('#s-settings .set-panel');
+    if (panel.querySelector('.set-confirm')) return;
+    const box = document.createElement('div'); box.className = 'set-confirm';
+    box.innerHTML = '<p>Delete your account for good? Your account, cloud save, profile and friends are removed and this phone is cleared. This cannot be undone.</p>';
+    const yes = document.createElement('button'); yes.className = 'btn'; yes.textContent = 'Yes, delete everything';
+    const no = document.createElement('button'); no.className = 'btn ghost'; no.style.marginTop = '10px'; no.textContent = 'Cancel';
+    yes.addEventListener('click', async () => {
+        yes.disabled = true; yes.textContent = 'Deleting...';
+        try {
+            if (window.Cloud && Cloud.deleteAccount) await Cloud.deleteAccount();
+            else { Object.keys(localStorage).filter(k => k.startsWith('rr_')).forEach(k => localStorage.removeItem(k)); location.reload(); }
+        } catch (e) { yes.disabled = false; yes.textContent = 'Yes, delete everything'; toast(e && e.code === 'auth/requires-recent-login' ? 'Sign in again, then retry' : 'Could not delete. Check your connection and try again'); }
+    });
+    no.addEventListener('click', () => box.remove());
+    box.appendChild(yes); box.appendChild(no); panel.appendChild(box);
+});
 document.getElementById('set-reset').addEventListener('click', () => {
     const panel = document.querySelector('#s-settings .set-panel');
     if (panel.querySelector('.set-confirm')) return;
@@ -4340,8 +4364,8 @@ function renderShop(cat){
     clearInterval(renderShop._anim);
     if (animated.length) renderShop._anim = setInterval(() => {
         const gr = document.getElementById('m-skins'); if (gr.hidden || !gr.offsetParent){ clearInterval(renderShop._anim); return; }
-        for (const [cv, look] of animated) renderLook(cv, look, { scale:look.costume && look.costume !== 'none' ? 0.2 : 0.22, cy:look.costume && look.costume !== 'none' ? 0.64 : 0.62, t:performance.now()/1000 });
-    }, 70);
+        for (const [cv, look] of animated){ const r = cv.getBoundingClientRect(); if (!r.width || r.bottom < 0 || r.top > innerHeight) continue; renderLook(cv, look, { scale:look.costume && look.costume !== 'none' ? 0.2 : 0.22, cy:look.costume && look.costume !== 'none' ? 0.64 : 0.62, t:performance.now()/1000 }); }
+    }, 90);
 }
 // Red number badge ("something to claim / new"). n = 0 hides it.
 function setBadge(el, n){
@@ -4426,7 +4450,7 @@ function refreshMenu(){
     if (window.Gauntlet) Gauntlet.refreshHome();
     refreshShopBadge();
     // these canvases are bigger than their frames (padding all round), so crowns, wings and flames are never cropped
-    const bigLook = (id, scale, cy, baseW) => { const cv = document.getElementById(id); if (!cv) return; const W = cv.width; renderLook(cv, myLook(), { scale:scale * baseW / W, cy:((W - baseW) / 2 + cy * baseW) / W }); };
+    const bigLook = (id, scale, cy, baseW) => { const cv = document.getElementById(id); if (!cv) return; const lk = myLook(), key = JSON.stringify(lk); if (cv._lk === key) return; cv._lk = key; const W = cv.width; renderLook(cv, lk, { scale:scale * baseW / W, cy:((W - baseW) / 2 + cy * baseW) / W }); };      // only redraw when the look really changed
     bigLook('m-hero', 0.22, 0.62, 360); bigLook('m-hero2', 0.22, 0.62, 200); bigLook('m-av', 0.25, 0.68, 96);
     let d1 = 0, d2 = 0;
     try { d1 = dimLoad(DIMENSIONS[0]).stars.reduce((a,b) => a+b, 0); d2 = dimLoad(DIMENSIONS[1]).stars.reduce((a,b) => a+b, 0); } catch(e){}

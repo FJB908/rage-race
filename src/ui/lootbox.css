@@ -8,10 +8,10 @@
 .lb.tier-epic { --c:#b3a9ff; --c2:#5a49c9; }
 .lb.tier-legendary { --c:#ffcf3f; --c2:#a86d00; }
 .lb-fx { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3; }
-.lb-rays { position:absolute; left:50%; top:42%; width:170vmax; height:170vmax; margin:-85vmax 0 0 -85vmax; opacity:0; pointer-events:none; z-index:0;
+.lb-rays { position:absolute; left:50%; top:42%; width:110vmax; height:110vmax; margin:-55vmax 0 0 -55vmax; opacity:0; will-change:opacity; pointer-events:none; z-index:0;
   background:repeating-conic-gradient(from 0deg, color-mix(in srgb,var(--c) 38%,transparent) 0 6deg, transparent 6deg 18deg);
   -webkit-mask-image:radial-gradient(circle, #000 0, transparent 46%); mask-image:radial-gradient(circle, #000 0, transparent 46%); }
-.lb.burst .lb-rays { animation:lbSpin 14s linear infinite, lbFade .6s ease forwards; }
+.lb.burst .lb-rays { animation:lbFade .6s ease forwards; }      /* no endless spin: rotating this huge masked layer made phones stutter */
 @keyframes lbSpin { to { transform:rotate(360deg); } }
 @keyframes lbFade { to { opacity:.85; } }
 .lb-flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:5; }
@@ -154,3 +154,5 @@ body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-ches
 .lbw .ico { width:22px; height:22px; }
 .lbw-coin b { color:#ffcf3f; } .lbw-gem b { color:#ff9be8; } .lbw-xp b { color:#6cc4ff; } .lbw-pass b { color:#b3a9ff; }
 .lbw.tick { animation:lbwtick .22s ease-out; } @keyframes lbwtick { 40% { transform:scale(1.12); border-color:rgba(255,255,255,.5); } }
+
+.lb-odds { position:absolute; z-index:8; left:14px; top:calc(14px + env(safe-area-inset-top,0px)); padding:7px 12px; border-radius:99px; border:1px solid rgba(255,255,255,.2); background:rgba(13,16,23,.6); color:#cfd6e4; font:800 11px/1 system-ui; letter-spacing:.08em; }

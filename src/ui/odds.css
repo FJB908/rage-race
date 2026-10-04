@@ -1,0 +1,10 @@
+/* chest drop rates panel */
+#odds-root { position:fixed; inset:0; z-index:10000; background:#0a0d14; overflow-y:auto; padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; align-items:center; gap:14px; text-align:left; color:#e9edf5; }
+#odds-root h2 { margin:0; font:900 26px/1.1 "Bricolage Grotesque",system-ui,sans-serif; text-align:center; }
+#odds-root .od-sub { margin:0; font-size:12px; color:#8b95a7; text-align:center; max-width:380px; line-height:1.4; }
+.od-card { width:100%; max-width:400px; border-radius:16px; background:#161b24; border:1px solid rgba(255,255,255,.1); padding:12px 14px; }
+.od-card h3 { margin:0 0 8px; font-size:14px; letter-spacing:.06em; color:#ff8ae6; }
+.od-row { display:flex; align-items:center; gap:10px; padding:5px 0; font-size:14px; border-top:1px solid rgba(255,255,255,.06); } .od-row:first-of-type { border-top:0; }
+.od-row b { margin-left:auto; font-variant-numeric:tabular-nums; } .od-row i { width:10px; height:10px; border-radius:50%; background:var(--c); flex:none; }
+.od-note { margin:8px 0 0; font-size:12px; color:#8b95a7; line-height:1.4; }
+#odds-root button.od-x { width:100%; max-width:400px; margin-top:4px; }

@@ -32,9 +32,21 @@ Houd je **keystore** (de sleutel waarmee je tekent) veilig en maak een back-up: 
 2. Je kunt pas testen als de app (ook als intern testspoor) in de Play Console staat en je jezelf als tester toevoegt (*Settings > License testing*).
 3. Let op: de aankopen worden nu op de telefoon verwerkt. Voor serieus geld hoort een **server-controle** erbij (anders kan iemand valsspelen). In `native.js` staat een TODO.
 
+## Inloggen met Google in de app (verplicht om te doen, anders zwart scherm)
+In de app kan de gewone Google-popup niet werken. De game gebruikt daarom het native Google-inlogscherm van Android (plugin `@capacitor-firebase/authentication`, al ingebouwd). Jij moet de app één keer bij Firebase aanmelden:
+1. Haal je **SHA-1** op: in Android Studio rechts op **Gradle** > *app* > *Tasks* > *android* > dubbelklik **signingReport**. Onderin staat bij `Variant: debug` een regel `SHA1: ...`. Kopieer die.
+2. Firebase console (console.firebase.google.com) > je project `rage-race` > tandwiel > *Project settings* > *Add app* > Android. Package name: `com.fjb908.ragerace`. Plak de SHA-1. Klik door en **download `google-services.json`**.
+3. Zet dat bestand in de map `android/app/` (naast `build.gradle`).
+4. Firebase > *Authentication* > *Sign-in method* > Google moet aan staan (staat al aan voor het web).
+5. `npm run sync`, en opnieuw Run in Android Studio.
+Later, voor de Play Store, voeg je in Firebase ook de **SHA-1 van de Play-ondertekening** toe (Play Console > *Setup > App signing*), anders werkt inloggen niet in de store-versie.
+
+## Wat er al klaar staat voor de store
+- Scherm met de **kansen in kisten** (Settings > Chest drop rates, en knop "Drop rates" in een open kist en bij de gem chest).
+- **Account verwijderen**: Settings > Delete my account and data (verwijdert cloud-save, profiel, vriendschappen en het account zelf). Daarvoor moet je `firestore.rules` opnieuw publiceren (er zijn delete-regels bijgekomen).
+- **Privacybeleid**: `privacy.html`. Vul bovenin je e-mailadres in (zoek `[YOUR E-MAIL ADDRESS]`). Na het mergen naar de hoofdbranch staat hij op `https://fjb908.github.io/rage-race/privacy.html`: die link vul je in de Play Console in.
+
 ## Nog op te lossen voor de store
 - Privacybeleid (URL), *Data safety*-formulier, content rating, store-teksten en screenshots (minimaal 2).
 - Een Play-ontwikkelaarsaccount ($25 eenmalig). Persoonlijke accounts moeten vaak eerst ~12 testers 14 dagen laten testen.
-- **Kansen in kisten tonen** (Google eist dat bij loot boxes) en een manier om je account te verwijderen.
-- **Inloggen met Google**: in een WebView werkt de pop-up van Firebase meestal niet. Voeg later de plugin `@capacitor-firebase/authentication` toe (native Google-login).
 - `firestore.rules` opnieuw publiceren en de Cloud Functions online zetten (zie docs/SERVER.md).

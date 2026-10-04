@@ -103,8 +103,9 @@
     function makeOverlay(tier, inner) {
         const el = document.createElement('div');
         el.id = 'lootbox'; el.className = 'lb tier-' + tier;
-        el.innerHTML = '<div class="lb-rays"></div><canvas class="lb-fx"></canvas><div class="lb-flash"></div>' + inner + '<div class="lb-pops"></div><button class="lb-skip" type="button">SKIP</button><button class="lb-btn" type="button">COLLECT</button>';
+        el.innerHTML = '<div class="lb-rays"></div><canvas class="lb-fx"></canvas><div class="lb-flash"></div>' + inner + '<div class="lb-pops"></div><button class="lb-odds" type="button">DROP RATES</button><button class="lb-skip" type="button">SKIP</button><button class="lb-btn" type="button">COLLECT</button>';
         document.body.appendChild(el);
+        const od = el.querySelector('.lb-odds'); if (od) od.onclick = e => { e.stopPropagation(); if (window.Odds) Odds.show(); };
         // iOS Safari zooms the page on a quick second tap or a pinch; tapping the crate repeatedly must never do that
         let lastEnd = 0;
         el.addEventListener('touchend', e => { const n = Date.now(); if (n - lastEnd < 450) e.preventDefault(); lastEnd = n; }, { passive:false });
@@ -126,10 +127,12 @@
             flash() { const f = el.querySelector('.lb-flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); },
             close(cb) { if (closed) return; closed = true; cancelAnimationFrame(raf); removeEventListener('resize', fit); el.classList.remove('in'); setTimeout(() => { el.remove(); if (cb) cb(); }, 350); },
         };
-        let lastT = performance.now();
+        let lastT = performance.now(), dirty = true;
         (function tick(t) {
             if (closed) return;
-            const dt = Math.min(.05, (t - lastT) / 1000); lastT = t; g.clearRect(0, 0, W, H);
+            const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
+            if (!parts.length) { if (dirty) { g.clearRect(0, 0, W, H); dirty = false; } raf = requestAnimationFrame(tick); return; }      // nothing flying: leave the full-screen canvas alone (redrawing it every frame made phones lag)
+            g.clearRect(0, 0, W, H); dirty = true;
             let k = 0;
             for (const p of parts) {
                 p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; p.life -= p.decay * dt;

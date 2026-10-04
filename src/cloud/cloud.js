@@ -191,7 +191,7 @@
         busy = false;
     }
     async function push() {
-        if (!ready || !user || busy) return;
+        if (!ready || !user || busy || deleting) return;
         const meta = getMeta(); if (!meta.dirty && !meta.force) return;
         busy = true; emit('syncing');
         try {
@@ -205,21 +205,51 @@
     }
 
     /* --------------------------------------------------------------- public API ---- */
+    // Inside the Android app the web pop-up cannot work (it redirects to a blank page), so Google sign-in is done natively
+    // (plugin @capacitor-firebase/authentication, see docs/ANDROID.md) and the resulting token is handed to the web SDK.
+    const nativeApp = () => { const c = window.Capacitor; return !!(c && c.isNativePlatform && c.isNativePlatform()); };
+    async function nativeGoogleCredential() {
+        const FA = window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseAuthentication;
+        if (!FA) throw new Error('native-auth-missing');
+        const r = await FA.signInWithGoogle({ skipNativeAuth: true });
+        const idToken = r && r.credential && r.credential.idToken;
+        if (!idToken) throw new Error('no-token');
+        return fb.auth.GoogleAuthProvider.credential(idToken);
+    }
     async function signInGoogle() {
         if (!fb || !user) throw new Error('not-ready');
         const provider = new fb.auth.GoogleAuthProvider();
         try {
-            if (user.isAnonymous) await fb.auth.linkWithPopup(user, provider);    // keeps this account and its data
-            else return;
+            if (!user.isAnonymous) return;
+            if (nativeApp()) await fb.auth.linkWithCredential(user, await nativeGoogleCredential());
+            else await fb.auth.linkWithPopup(user, provider);                      // keeps this account and its data
         } catch (e) {
-            if (e && e.code === 'auth/credential-already-in-use') {              // this Google account already has a save: switch to it and merge
-                const cred = fb.auth.GoogleAuthProvider.credentialFromError(e);
+            if (e && e.code === 'auth/credential-already-in-use') {                // this Google account already has a save: switch to it and merge
+                const cred = (e.credential) || fb.auth.GoogleAuthProvider.credentialFromError(e);
                 if (!cred) throw e;
                 ready = false; await fb.auth.signInWithCredential(fb.au, cred); return;
             }
             throw e;
         }
         user = fb.au.currentUser; C.email = user.email || ''; C.anon = false; emit('ok'); ready = true; touch(); push();
+    }
+    // Delete the account for good (Google Play requires this): the cloud save, the public profile, friendships, the sign-in itself, then this device.
+    let deleting = false;
+    async function deleteAccount() {
+        if (!fb || !user) throw new Error('not-ready');
+        deleting = true; clearTimeout(timer); ready = false;
+        const f = fb.fs, uid = user.uid;
+        try {
+            if (!user.isAnonymous) {                                               // a recent sign-in is needed to delete a real account
+                try { if (nativeApp()) await fb.auth.reauthenticateWithCredential(user, await nativeGoogleCredential()); else await fb.auth.reauthenticateWithPopup(user, new fb.auth.GoogleAuthProvider()); } catch (e) { deleting = false; throw e; }
+            }
+            try { const q = f.query(f.collection(fb.db, 'friendships'), f.where('members', 'array-contains', uid)); const snap = await f.getDocs(q); await Promise.all(snap.docs.map(d => f.deleteDoc(d.ref))); } catch (e) {}
+            await Promise.all(['users', 'profiles', 'ranked'].map(c => f.deleteDoc(f.doc(fb.db, c, uid)).catch(() => {})));
+            await fb.auth.deleteUser(user);
+        } catch (e) { deleting = false; throw e; }
+        const keys = []; try { for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i)); } catch (e) {}
+        keys.filter(k => k && k.startsWith('rr_')).forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+        location.reload();
     }
     // Callable Cloud Functions (europe-west1). The SDK is only loaded when something calls one.
     let fnMod = null, fnApi = null;
@@ -257,7 +287,7 @@
 
     Object.assign(C, {
         config: FIREBASE_CONFIG, sdk: SDK,
-        touch, afterReset, signOut, call, api: () => (fb && user) ? { fb, user } : null, signInGoogle, sync: () => { ready = false; return sync(); },
+        touch, afterReset, signOut, deleteAccount, call, api: () => (fb && user) ? { fb, user } : null, signInGoogle, sync: () => { ready = false; return sync(); },
         on: f => C.listeners.push(f),
         _merge:merge, _snapshot:snapshot,
     });

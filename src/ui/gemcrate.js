@@ -57,6 +57,7 @@
             clearTimeout(t); armed = false; b.classList.remove('arm'); open();
         };
         const grid = box.querySelector('.gem-grid'); box.insertBefore(b, grid || null);
+        const od = document.createElement('button'); od.type = 'button'; od.className = 'gc-odds'; od.textContent = 'Drop rates'; od.onclick = () => { if (window.Odds) Odds.show(); }; box.insertBefore(od, grid || null);
     }
     window.GemCrate = { open, give, render, roll, EXTRAS };
 })();
