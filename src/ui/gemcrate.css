@@ -1,0 +1,10 @@
+.gc-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; margin: 6px 0 22px; padding: 18px 12px 16px; border: 1px solid rgba(255,138,230,.4); border-radius: 22px; background: radial-gradient(90% 70% at 50% 28%, rgba(255,138,230,.22), transparent 70%), linear-gradient(180deg, #1c1430, #12101f); color: inherit; font: inherit; overflow: hidden; }
+.gc-chest { display: block; width: min(56vw, 230px); animation: gcBob 2.6s ease-in-out infinite; filter: drop-shadow(0 0 18px rgba(255,138,230,.6)); --c: #ff8ae6; --c2: #a0128a; }
+.gc-chest svg { display: block; width: 100%; height: auto; overflow: visible; }
+.gc-chest .lb-leak { animation: lootLeak 2.2s ease-in-out infinite; }
+.gc-tx { display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; } .gc-tx b { font-size: 22px; } .gc-tx small { font-size: 12px; color: #aab3c4; max-width: 280px; line-height: 1.35; }
+.gc-price { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 10px 18px; border-radius: 14px; background: #ff8ae6; color: #2a0c24; font-weight: 900; font-size: 18px; } .gc-price .ico { width: 20px; height: 20px; }
+.gc-hero.arm { border-color: #ff8ae6; box-shadow: 0 0 22px -4px #ff8ae6; } .gc-hero.arm .gc-tx small { color: #ffd6f7; }
+@keyframes gcBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+.gc-odds { display:block; margin:-4px auto 10px; padding:4px 12px; border:0; background:none; color:#8b95a7; font:700 12px system-ui; text-decoration:underline; }

@@ -1,0 +1,30 @@
+/* Currency icons: sized by font-size, so they scale with whatever text they sit in. */
+.ico { display:inline-block; width:1.15em; height:1.15em; flex:none; vertical-align:-.22em; filter:drop-shadow(0 1px 1px rgba(0,0,0,.45)); }
+.rwd { display:inline-flex; align-items:center; gap:.3em; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.rwd b { font-weight:800; }
+.rwd + .rwd { margin-left:.7em; }
+.rwd-coin b { color:#ffcf3f; } .rwd-xp b { color:#7cc8ff; } .rwd-pass b { color:#b3a9ff; } .rwd-gem b { color:#ff8ae6; }
+.m-coins .ico, .esc-pill .ico { width:20px; height:20px; vertical-align:middle; }
+.resource-balance .ico { width:20px; height:20px; vertical-align:middle; }
+.m-stat small .ico, .stat .k .ico, .pass-screen-balance .ico { width:18px; height:18px; vertical-align:middle; }
+.resource-pack small, .resource-pack .pack-cost { display:flex; align-items:center; }
+.loot-copy .rwd { margin-right:.2em; }
+.resource-pack .pack-cost, .pass-reward b { display:flex; align-items:center; gap:.4em; }
+.m-skin-f .price { display:inline-flex; align-items:center; gap:.3em; }
+
+.ico-star, .ico-lock, .ico-check, .ico-chev-l, .ico-chev-r, .ico-arrow-up, .ico-arrow-down, .ico-home { filter:none; width:1em; height:1em; vertical-align:-.12em; }
+.star .ico-star, .s .ico-star { width:1em; height:1em; vertical-align:middle; }
+
+.ico-drop, .ico-drop-common, .ico-drop-rare, .ico-drop-epic, .ico-drop-legendary { filter:none; width:1.15em; height:1.15em; }
+.loot-ico { width:100%; height:100%; filter:drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+.loot-open { display:inline-flex; align-items:center; gap:8px; font-size:16px; }
+.loot-open .ico { width:22px; height:22px; filter:none; }
+.rwd-item b { font-weight:800; }
+
+.m-gems .ico, .m-streak .ico { width:20px; height:20px; vertical-align:middle; }
+.ico-flame { filter:none; }
+
+.ico-crown, .ico-key, .ico-users { filter:none; }
+.rwd-key b { color:#5eead4; } .rwd-crown b { color:#ffc83a; }
+
+.ico-mode-race, .ico-mode-escape, .ico-mode-levels { filter:none; }

@@ -1,16 +1,35 @@
-inder<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <!-- The game has its own fixed colours. "only light" is the official opt-out: the browser must not force its
      own dark mode onto the page (which was dimming the bright colours: teal to dark green, gold to brown). -->
 <meta name="color-scheme" content="only light">
 <meta name="supported-color-schemes" content="light">
 <meta name="theme-color" content="#0d1017">
+<script>/* first launch: keep the menu hidden until the "new player / sign in" card is up, so it never flashes */try{if(!localStorage.getItem("rr_acct_choice")){var p=JSON.parse(localStorage.getItem("rr_profile")||"null");if(!(p&&(p.xp>0||p.races>0||p.passPointsEarned>0))){document.documentElement.className+=" acct-pending";setTimeout(function(){document.documentElement.classList.remove("acct-pending")},4000)}}}catch(e){}</script>
+<style>html.acct-pending #s-start{visibility:hidden}</style>
 <meta name="darkreader-lock">
 <title>RAGE RACE</title>
-<link rel="stylesheet" href="game.css">
+<link rel="stylesheet" href="game.css?v=10041448">
+<link rel="stylesheet" href="src/ui/icons.css?v=10041448">
+<link rel="stylesheet" href="src/ui/boosters.css?v=10041448">
+<link rel="stylesheet" href="src/ui/levelrewards.css?v=10041448">
+<link rel="stylesheet" href="src/ui/gemcrate.css?v=10041448">
+<link rel="stylesheet" href="src/ui/emotes.css?v=10041448">
+<link rel="stylesheet" href="src/ui/lootbox.css?v=10041448">
+<link rel="stylesheet" href="src/ui/pass.css?v=10041448">
+<link rel="stylesheet" href="src/ui/odds.css?v=10041448">
+<link rel="stylesheet" href="src/modes/builder.css?v=10041448">
+<link rel="stylesheet" href="src/ui/missions.css?v=10041448">
+<link rel="stylesheet" href="src/tutorial/tutorial.css?v=10041448">
+<link rel="stylesheet" href="src/ui/streak.css?v=10041448">
+<link rel="stylesheet" href="src/modes/gauntlet.css?v=10041448">
+<link rel="stylesheet" href="src/modes/ranked.css?v=10041448">
+<link rel="stylesheet" href="src/cloud/cloud.css?v=10041448">
+<link rel="stylesheet" href="src/ads/ads.css?v=10041448">
+<link rel="stylesheet" href="src/social/social.css?v=10041448">
 </head>
 <body>
 
@@ -19,133 +38,120 @@ inder<!DOCTYPE html>
 <!-- START / MAIN MENU -->
 <div id="s-start" class="screen menu">
     <header class="m-top">
-        <button class="m-avatar" type="button" data-go="profile" aria-label="Open profile"><i></i><i></i><span class="m-lvl" id="m-lvl">1</span></button>
+        <button class="m-avatar" type="button" data-go="profile" aria-label="Open profile"><canvas id="m-av" width="160" height="160"></canvas><span class="m-lvl" id="m-lvl">1</span></button>
         <div class="m-who"><div class="m-name" id="m-name">Player</div><div class="m-xpbar"><div id="m-xpfill"></div></div></div>
-        <button class="m-coins" type="button" data-go="shop" aria-label="Coins, open the shop"><span class="coin-dot"></span><span id="wallet-num">0</span><span class="m-plus">+</span></button>
-        <button class="m-gear" type="button" id="btn-settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
+        <button class="m-coins" type="button" data-go="shop" aria-label="Coins, open the shop"><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg><span id="wallet-num">0</span><span class="m-plus">+</span></button>
+        <button class="m-gems" type="button" id="btn-gems" aria-label="Gems, open the gem shop"><svg class="ico ico-gem" aria-hidden="true"><use href="#ico-gem"/></svg><span id="gem-num">0</span><span class="m-plus">+</span></button>
+        <button class="m-gear" type="button" id="btn-settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.40 4.47 L10.58 1.90 L13.42 1.90 L13.60 4.47 A7.7 7.7 0 0 1 16.19 5.54 L16.19 5.54 L18.14 3.85 L20.15 5.86 L18.46 7.81 A7.7 7.7 0 0 1 19.53 10.40 L19.53 10.40 L22.10 10.58 L22.10 13.42 L19.53 13.60 A7.7 7.7 0 0 1 18.46 16.19 L18.46 16.19 L20.15 18.14 L18.14 20.15 L16.19 18.46 A7.7 7.7 0 0 1 13.60 19.53 L13.60 19.53 L13.42 22.10 L10.58 22.10 L10.40 19.53 A7.7 7.7 0 0 1 7.81 18.46 L7.81 18.46 L5.86 20.15 L3.85 18.14 L5.54 16.19 A7.7 7.7 0 0 1 4.47 13.60 L4.47 13.60 L1.90 13.42 L1.90 10.58 L4.47 10.40 A7.7 7.7 0 0 1 5.54 7.81 L5.54 7.81 L3.85 5.86 L5.86 3.85 L7.81 5.54 A7.7 7.7 0 0 1 10.40 4.47 Z"/><circle cx="12" cy="12" r="3.1"/></svg></button>
     </header>
+    <div id="m-boosts" hidden></div>
 
     <div class="m-body" id="m-body">
         <!-- HOME -->
         <section class="m-tab on" data-tab="home">
-            <button class="m-strip" type="button" data-go="shop">
-                <span class="m-strip-l"><span class="m-kick gold">NEXT UNLOCK</span><span class="m-strip-t" id="m-next">Skins in the shop</span></span>
-                <span class="m-strip-sw" id="m-next-sw"></span>
-            </button>
-            <div class="m-stage">
+            <div class="m-split">
+                <button class="m-pass-entry m-half" type="button" id="btn-pass-open">
+                    <span class="m-pass-art" aria-hidden="true">00</span>
+                    <span class="m-pass-copy"><small>Rage pass</small><strong id="m-pass-progress">Tier 0</strong><i class="m-pass-meter"><b id="m-pass-meter-fill"></b></i><em class="m-pass-next" id="m-pass-next"></em></span>
+                </button>
+                <button class="m-ico-btn m-streak" type="button" id="btn-streak-open" aria-label="Daily rewards"><svg class="ico ico-calendar" aria-hidden="true"><use href="#ico-calendar"/></svg><span class="ms-day" hidden></span><svg class="ico ico-flame ms-fire" aria-hidden="true"><use href="#ico-flame"/></svg><i class="ms-dot" hidden></i></button>
+                <button class="m-ico-btn m-missbtn" type="button" id="btn-missions" aria-label="Missions"><svg class="ico ico-missions" aria-hidden="true"><use href="#ico-missions"/></svg><i class="mm-dots"><u></u><u></u><u></u></i></button>
+            </div>
+            <div class="m-stage" data-shop="skin" role="button" aria-label="Customize your player">
                 <div class="m-halo" id="m-halo"></div>
-                <canvas class="m-hero-c" id="m-hero" width="360" height="360"></canvas>
+                <canvas class="m-hero-c" id="m-hero" width="420" height="420"></canvas>
                 <div class="m-shadow"></div>
+                <button class="m-adpill" type="button" id="btn-ad-home" hidden aria-label="Watch a video ad for 500 free coins"><span class="ap-art"><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg><svg class="ico ico-video" aria-hidden="true"><use href="#ico-video"/></svg><i class="ad-free">FREE</i></span><span class="ap-tx"><b>+500</b><small>COINS</small></span></button>
             </div>
-            <button class="m-row" type="button" data-go="play"><span><span class="m-kick">MODE</span><span class="m-row-t" id="m-mode">Race · Quick match</span></span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button class="m-row" type="button" data-go="play"><span class="m-row-l"><span class="m-row-ico" id="m-mode-ico"></span><span><span class="m-kick">MODE</span><span class="m-row-t" id="m-mode">Race · Quick match</span></span></span><span class="m-row-chg">Change<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
             <button class="m-play" type="button" id="btn-home-play">PLAY</button>
-            <button class="m-pass-entry" type="button" id="btn-pass-open">
-                <span class="m-pass-art" aria-hidden="true">01</span>
-                <span class="m-pass-copy"><small>FREE SEASON PASS</small><strong>Season 01 · Afterglow</strong><span id="m-pass-progress">0 / 3 rewards claimed</span><i class="m-pass-meter"><b id="m-pass-meter-fill"></b></i></span>
-                <span class="m-pass-arrow" aria-hidden="true">›</span>
-            </button>
-            <div class="m-two">
-                <button class="m-tile violet" type="button" data-go="friends"><b>Party</b><span>Race with friends</span></button>
-                <button class="m-tile gold" type="button" id="m-tile-parkour"><b>Parkour</b><span id="m-tile-pk">Levels &amp; the Tower</span></button>
-            </div>
+
+
+
         </section>
 
         <!-- PLAY -->
         <section class="m-tab" data-tab="play">
-            <h1 class="m-h1">Play</h1><p class="m-sub">Pick how you want to race.</p>
-            <h2 class="m-h2">RACE</h2>
-            <button class="m-card teal" type="button" id="btn-find"><span><b>Quick match</b><span>4 players · first to the top</span></span><em>Play</em></button>
-            <button class="m-card violet" type="button" data-go="friends"><span><b>Party</b><span>Private room with friends</span></span><em>Soon</em></button>
-            <h2 class="m-h2">SURVIVAL</h2>
-            <button class="m-card red" type="button" id="btn-escape"><span><b>Escape</b><span>4 players · outrun the rising void</span></span><em id="start-best"></em></button>
-            <h2 class="m-h2">SOLO</h2>
-            <button class="m-card gold stack" type="button" id="btn-parkour">
-                <span class="m-card-top"><b>Parkour</b><em id="start-pk"></em></span>
-                <span class="m-mini3">
-                    <span><small>Dimension I</small><strong id="m-d1">★ 0/30</strong></span>
-                    <span id="m-d2box"><small>Dimension II</small><strong id="m-d2">28★</strong></span>
-                    <span><small>The Tower</small><strong id="m-tower">--</strong></span>
-                </span>
-            </button>
-            <h2 class="m-h2">COMING LATER</h2>
-            <div class="m-two">
-                <div class="m-card locked"><span><b>Ranked</b><span>Seasonal ladder</span></span></div>
-                <div class="m-card locked"><span><b>Events</b><span>Limited-time rules</span></span></div>
+            <button class="m-card teal big" type="button" id="btn-find" data-mode="race"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-race"/></svg></span><span class="mc-copy"><b>Quick race</b><span>4 players</span></span><em></em></button>
+            <button class="m-card pink wide" type="button" id="btn-build" data-mode="build"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-build"/></svg></span><span class="mc-copy"><b>Build Race</b><span>Place a trap, then race</span></span><em class="new-tag">NEW</em></button>
+            <div class="m-pair">
+                <button class="m-card ranked sm" type="button" id="btn-ranked" data-mode="ranked"><span class="mc-ico" aria-hidden="true"></span><span class="mc-copy"><b>Ranked</b><span>Climb the ranks</span><small id="p-rk-sub"></small></span><em></em></button>
+                <button class="m-card gold sm" type="button" id="btn-gauntlet" data-mode="gauntlet"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-crown"/></svg></span><span class="mc-copy"><b>Gauntlet</b><span>32 players</span><small id="p-gt-sub"></small></span><em></em></button>
             </div>
+            <div class="m-pair">
+                <button class="m-card violet sm" type="button" id="btn-parkour" data-mode="parkour"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-levels"/></svg></span><span class="mc-copy"><b>Levels</b><span>Dimensions</span><small id="start-pk"></small></span><em></em></button>
+                <button class="m-card red sm" type="button" id="btn-escape" data-mode="escape"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-escape"/></svg></span><span class="mc-copy"><b>Escape</b><span>Climb or fall</span><small id="start-best"></small></span><em></em></button>
+            </div>
+            <div class="m-mini3" hidden><strong id="m-d1"></strong><span id="m-d2box"><strong id="m-d2"></strong></span><strong id="m-tower"></strong></div>
         </section>
 
         <!-- SHOP -->
         <section class="m-tab" data-tab="shop">
-            <h1 class="m-h1">Shop</h1><p class="m-sub">Cosmetics, trails, and season supplies.</p>
             <div class="m-pills">
                 <button class="m-pill on" type="button" data-cat="skin">Skins</button>
                 <button class="m-pill" type="button" data-cat="hat">Headwear</button>
                 <button class="m-pill" type="button" data-cat="face">Face</button>
                 <button class="m-pill" type="button" data-cat="trail">Trails</button>
-                <button class="m-pill" type="button" data-cat="resources">Resources</button>
+                <button class="m-pill" type="button" data-cat="costume">Costumes</button>
+                <button class="m-pill" type="button" data-cat="finisher">Finishers</button>
+                <button class="m-pill" type="button" data-cat="emote">Emotes</button>
+                <button class="m-pill" type="button" data-cat="resources"><svg class="ico ico-gem" aria-hidden="true"><use href="#ico-gem"/></svg> Gems</button>
             </div>
             <div class="m-grid" id="m-skins"></div>
-            <div class="m-resource-shop" id="m-resource-shop" hidden>
-                <div class="resource-balance"><span>AVAILABLE</span><strong><i class="coin-dot"></i><b id="resource-coins">0</b> COINS</strong><strong><b id="resource-pass">0</b> PASS POINTS</strong></div>
-                <div class="resource-grid" id="resource-grid"></div>
-                <section class="pass-track" aria-labelledby="pass-track-title">
-                    <div class="pass-track-head"><strong id="pass-track-title">SEASON 01 REWARDS</strong><span>Redeem Pass Points</span></div>
-                    <div class="pass-reward-grid" id="pass-reward-grid"></div>
-                </section>
-                <button class="resource-locked" type="button" disabled>REWARDED VIDEO · ANDROID BUILD ONLY</button>
-                <button class="resource-locked" type="button" disabled>PLAY STORE PACKS · BILLING NOT CONNECTED</button>
-                <p class="m-note">Video rewards and real-money purchases stay unavailable until their native services are connected.</p>
-            </div>
-            <p class="m-note">Earn Coins and Pass Points from reward drops. Redeem Pass Points for Season 01 cosmetics.</p>
+            <div class="m-resource-shop" id="m-resource-shop" hidden></div>
+            
         </section>
 
         <!-- FRIENDS -->
         <section class="m-tab" data-tab="friends">
-            <h1 class="m-h1">Friends</h1>
-            <div class="m-party">
-                <div class="m-party-h"><b>Your party</b><span>1 / 4</span></div>
-                <div class="m-slots">
-                    <div class="m-slot you"><span class="m-slot-av" id="m-party-av"><i></i><i></i></span><strong>You</strong><small>HOST</small></div>
-                    <div class="m-slot empty">Invite</div><div class="m-slot empty">Invite</div><div class="m-slot empty">Invite</div>
-                </div>
-                <div class="m-code"><span>Room code</span><strong>· · · · ·</strong></div>
-                <button class="m-party-go" type="button" disabled>PARTY RACES COMING SOON</button>
-            </div>
-            <div class="m-empty">
-                <b>Online play is on its way</b>
-                <span>Party rooms and a friends list arrive with online races. Until then, jump into a Quick match.</span>
-                <button class="m-link" type="button" id="m-friends-race">Play a Quick match</button>
+            <div id="soc-root" class="off">
+                <div id="soc-status">Connecting...</div>
+                <div id="soc-code"></div>
+                <div id="soc-inv"></div>
+                <div class="so-inline"><input id="soc-add" maxlength="9" placeholder="Friend code" autocomplete="off" spellcheck="false"><button type="button" id="soc-add-go">ADD</button></div>
+                <div id="soc-req"></div>
+                <div id="soc-party"></div>
+                <div class="so-inline"><input id="soc-join" maxlength="5" placeholder="Party code" autocomplete="off" spellcheck="false"><button type="button" id="soc-join-go">JOIN</button></div>
+                <div id="soc-list"></div>
             </div>
         </section>
 
         <!-- PROFILE -->
         <section class="m-tab" data-tab="profile">
-            <div class="m-pcard">
-                <canvas class="m-hero-c sm" id="m-hero2" width="200" height="200"></canvas>
-                <div class="m-pinfo">
+            <div class="pf-hero">
+                <span class="pf-av"><canvas id="m-hero2" width="340" height="340"></canvas></span>
+                <div class="pf-id">
                     <label class="m-namelbl" for="m-name-input">Name</label>
-                    <input class="m-nameinp" id="m-name-input" maxlength="16" autocomplete="off" spellcheck="false">
-                    <span class="m-plvl" id="m-plvl">Level 1 · 0 / 120 XP</span>
-                    <div class="m-xpbar"><div id="m-xpfill2"></div></div>
+                    <span class="pf-namerow"><input class="m-nameinp" id="m-name-input" maxlength="16" autocomplete="off" spellcheck="false" readonly><button type="button" class="pf-edit" id="pf-name-edit" aria-label="Change name"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z M13.5 6.5l4 4"/></svg></button></span><small class="pf-hint" id="pf-name-hint" hidden></small>
+                    <span class="pf-rank" id="pf-rank"></span>
                 </div>
             </div>
-            <h2 class="m-h2">EQUIPPED</h2>
-            <div class="m-two">
-                <button class="m-eq" type="button" data-shop="skin"><i id="m-eq-skin"></i><span><small>Skin</small><strong id="m-eq-skin-n">Classic</strong></span></button>
-                <button class="m-eq" type="button" data-shop="hat"><i id="m-eq-hat"></i><span><small>Headwear</small><strong id="m-eq-hat-n">None</strong></span></button>
-                <button class="m-eq" type="button" data-shop="face"><i id="m-eq-face"></i><span><small>Face</small><strong id="m-eq-face-n">None</strong></span></button>
-                <button class="m-eq" type="button" data-shop="trail"><i id="m-eq-trail"></i><span><small>Trail</small><strong id="m-eq-trail-n">None</strong></span></button>
+            <button class="pf-level" type="button" id="pf-level" aria-label="Level rewards">
+                <span class="pf-lv-n" id="pf-lv-n">1</span>
+                <span class="pf-lv-t"><span class="pf-lv-top"><b id="m-plvl">Level 1</b><em id="pf-lv-xp"></em></span><span class="m-xpbar"><span id="m-xpfill2"></span></span></span>
+                <svg class="ico ico-chev-r" aria-hidden="true"><use href="#ico-chev-l"/></svg>
+            </button>
+            <div class="m-acct" id="m-acct">
+                <span class="ma-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.75 4.75 0 0 1 .5 9.5z"/></svg></span>
+                <span class="ma-txt"><b id="ma-title">Cloud save</b><span id="ma-sub">Connecting...</span></span>
+                <button type="button" id="ma-btn" hidden>SIGN IN</button>
             </div>
-            <h2 class="m-h2">STATS</h2>
+            <h2 class="m-h2">Loadout</h2>
+            <div class="pf-eq">
+                <button class="pf-slot" type="button" data-shop="skin"><canvas id="pf-c-skin" width="120" height="120"></canvas><small>Skin</small><b id="pf-n-skin">Classic</b></button>
+                <button class="pf-slot" type="button" data-shop="hat"><canvas id="pf-c-hat" width="120" height="120"></canvas><small>Headwear</small><b id="pf-n-hat">None</b></button>
+                <button class="pf-slot" type="button" data-shop="face"><canvas id="pf-c-face" width="120" height="120"></canvas><small>Face</small><b id="pf-n-face">None</b></button>
+                <button class="pf-slot" type="button" data-shop="costume"><canvas id="pf-c-costume" width="120" height="120"></canvas><small>Costume</small><b id="pf-n-costume">None</b></button>
+                <button class="pf-slot" type="button" data-shop="trail"><canvas id="pf-c-trail" width="240" height="120"></canvas><small>Trail</small><b id="pf-n-trail">None</b></button>
+            </div>
+            <h2 class="m-h2">Career</h2>
             <div class="m-three">
                 <div class="m-stat"><small>Races</small><strong id="m-s-races">0</strong></div>
                 <div class="m-stat"><small>Wins</small><strong id="m-s-wins">0</strong></div>
                 <div class="m-stat"><small>Win rate</small><strong id="m-s-rate">--</strong></div>
-                <div class="m-stat"><small>Escape best</small><strong id="m-s-esc">--</strong></div>
-                <div class="m-stat"><small>Parkour</small><strong id="m-s-pk">★ 0</strong></div>
-                <div class="m-stat"><small>Tower best</small><strong id="m-s-tower">--</strong></div>
-                <div class="m-stat"><small>Pass points</small><strong id="m-s-pass">0</strong></div>
             </div>
+            <h2 class="m-h2">Records</h2>
+            <div class="pf-rec" id="pf-rec"></div>
         </section>
     </div>
 
@@ -176,12 +182,12 @@ inder<!DOCTYPE html>
 
 <!-- ESCAPE GAME OVER -->
 <div id="s-over" class="screen" style="display:none;opacity:0;background:radial-gradient(120% 80% at 50% 110%, rgba(255,84,112,.28), transparent 60%), rgba(13,16,23,.9)">
-    <div class="over-kicker">CAUGHT BY THE VOID</div>
+    <div class="over-kicker">GAME OVER</div>
     <div class="over-score"><span id="over-m">0</span></div>
     <div class="over-best" id="over-best">NEW BEST</div>
     <div class="over-stats">
         <div class="stat"><span class="k">Height</span><span class="v" id="over-height">0 m</span></div>
-        <div class="stat"><span class="k">Coins</span><span class="v" id="over-coins">+0</span></div>
+        <div class="stat"><span class="k"><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg></span><span class="v" id="over-coins">+0</span></div>
         <div class="stat"><span class="k">Top combo</span><span class="v" id="over-combo">×1</span></div>
     </div>
     <div class="board" id="esc-board"></div>
@@ -192,24 +198,27 @@ inder<!DOCTYPE html>
 
 <!-- FREE SEASON PASS -->
 <div id="s-pass" class="screen pass-screen" style="display:none;opacity:0">
-    <section class="pass-screen-shell">
-        <header class="pass-screen-header">
-            <button class="pass-back" type="button" id="btn-pass-back" aria-label="Back to home">‹</button>
-            <div><span class="pass-eyebrow">FREE SEASON PASS</span><h1>AFTERGLOW</h1></div>
-            <div class="pass-screen-balance"><span>YOUR POINTS</span><strong id="pass-screen-balance">0</strong></div>
+    <section class="pz-shell">
+        <header class="pz-top">
+            <button class="pass-back" type="button" id="btn-pass-back" aria-label="Back to home"><svg class="ico ico-chev-l" aria-hidden="true"><use href="#ico-chev-l"/></svg></button>
+            <div class="pz-title"><span class="pz-eyebrow">Season 1</span><h1>Rage pass</h1></div>
+            <div class="pz-pts" id="pz-pts"></div>
         </header>
-        <div class="pass-progress-panel">
-            <div class="pass-progress-top"><strong id="pass-screen-claimed">0 / 3 REWARDS CLAIMED</strong><span id="pass-screen-next">Earn Pass Points from reward drops</span></div>
-            <div class="pass-progress-track"><i id="pass-screen-meter"></i></div>
+        <div class="pz-hero">
+            <div class="pz-badge"><svg viewBox="0 0 100 112" aria-hidden="true"><defs><linearGradient id="pzHex" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b3a9ff"/><stop offset=".55" stop-color="#7c6bff"/><stop offset="1" stop-color="#3a2aa8"/></linearGradient></defs><path d="M50 4 L94 29 V83 L50 108 L6 83 V29 Z" fill="url(#pzHex)" stroke="#1c1450" stroke-width="5" stroke-linejoin="round"/><path d="M50 14 L85 34 V78 L50 98 L15 78 V34 Z" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="2"/></svg><b id="pz-lvl">0</b><small>TIER</small></div>
+            <div class="pz-prog"><div class="pz-prog-top"><strong id="pz-next-txt"></strong><span id="pz-prog-num"></span></div><div class="pz-bar"><i id="pz-bar-fill"></i></div></div>
         </div>
-        <div class="pass-screen-rewards" id="pass-screen-rewards"></div>
+        <div class="pz-rage" id="pz-rage"></div>
+        <div class="pz-track" id="pz-track"></div>
+        <footer class="pz-foot"><button class="pz-claimall" id="pz-claimall" type="button" hidden>CLAIM ALL</button></footer>
     </section>
 </div>
 
 <!-- LEVELS: select -->
 <div id="s-levels" class="screen" style="display:none;opacity:0">
+    <header class="scr-head lv-head"><button class="pass-back" type="button" id="btn-lv-back2" aria-label="Back"><svg class="ico ico-chev-l" aria-hidden="true"><use href="#ico-chev-l"/></svg></button><div class="scr-title"><h1>Levels</h1></div></header>
     <div class="over-kicker" id="lv-hub-title" style="color:var(--violet)">DIMENSION I</div>
-    <div class="lv-total"><span class="star on">★</span><span id="lv-total">0</span><small id="lv-total-max">/30</small></div>
+    <div class="lv-total"><span class="star on"><svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg></span><span id="lv-total">0</span><small id="lv-total-max">/30</small></div>
     <div class="dim-tabs" id="dim-tabs"></div>
     <div class="lv-grid" id="lv-grid"></div>
     <button class="tower-tile" id="btn-tower">
@@ -284,8 +293,16 @@ inder<!DOCTYPE html>
             </div>
         </div>
         <div class="set-group">
+            <div class="set-row">
+                <label for="set-haptics">Vibration</label>
+                <button class="set-toggle" id="set-haptics" role="switch" type="button"><span></span></button>
+            </div>
+            <button class="set-line" type="button" id="set-tutorial">Play tutorial</button>
             <button class="set-line" type="button" id="set-test">Play a test sound</button>
+            <button class="set-line" type="button" id="set-odds">Chest drop rates</button>
+            <button class="set-line" type="button" id="set-privacy">Privacy policy</button>
             <button class="set-line danger" type="button" id="set-reset">Reset all progress</button>
+            <button class="set-line danger" type="button" id="set-delete">Delete my account and data</button>
         </div>
         <p class="set-ver">Rage Race · v1.0</p>
         <button class="btn" id="set-close" style="margin-top:6px">Done</button>
@@ -303,23 +320,24 @@ inder<!DOCTYPE html>
     <div class="hud-top">
         <div class="place p1" id="pos-pill"><span id="pos-num">1</span><span id="pos-suf">st</span></div>
         <div class="pos-pill esc-pill"><span id="esc-score">0</span></div>
-        <div class="pos-pill esc-pill coin" id="esc-coin-pill"><span class="coin-dot"></span><span id="esc-coins">0</span></div>
+        <div class="pos-pill esc-pill coin" id="esc-coin-pill"><svg class="ico ico-coin" aria-hidden="true"><use href="#ico-coin"/></svg><span id="esc-coins">0</span></div>
         <div class="pos-pill lv-pill"><small>LV</small><span id="lv-num-hud">1</span></div>
         <div class="pos-pill lv-pill time"><span id="lv-time">0:00.0</span></div>
-        <div class="pos-pill lv-pill falls" id="lv-falls-pill"><span class="fall-ico">↓</span><span id="lv-falls">0</span></div>
+        <div class="pos-pill lv-pill falls" id="lv-falls-pill"><span class="fall-ico"><svg class="ico ico-arrow-down" aria-hidden="true"><use href="#ico-arrow-down"/></svg></span><span id="lv-falls">0</span></div>
         <div class="pos-pill pk-pill"><span id="pk-height">0</span><small>m</small></div>
-        <div class="pos-pill pk-pill falls" id="pk-falls-pill"><span class="fall-ico">↓</span><span id="pk-falls">0</span></div>
+        <div class="pos-pill pk-pill falls" id="pk-falls-pill"><span class="fall-ico"><svg class="ico ico-arrow-down" aria-hidden="true"><use href="#ico-arrow-down"/></svg></span><span id="pk-falls">0</span></div>
         <div class="pos-pill pk-pill time"><span id="pk-time">0:00</span></div>
         <div class="pos-pill esc-pill combo" id="esc-combo" style="display:none"><span id="esc-combo-x">×1</span><span class="combo-bar"><span id="esc-combo-fill"></span></span></div>
-        <div class="hint-bubble" id="hint">Drag & release ↑</div>
+        <div class="hint-bubble" id="hint">Drag & release <svg class="ico ico-arrow-up" aria-hidden="true"><use href="#ico-arrow-up"/></svg></div>
         <button class="hud-btn" id="btn-mute" aria-label="Sound"></button>
         <button class="hud-btn" id="btn-pause" aria-label="Pause"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.6"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.6"/></svg></button>
     </div>
-    <div id="falltoast">FELL!</div>
+    
+    <button id="finish-menu" type="button" style="display:none"><svg class="ico ico-crown" aria-hidden="true"><use href="#ico-crown"/></svg><span>RESULTS</span></button>
     <div id="spectate-bar" style="display:none">
-        <button id="spectate-prev" type="button" aria-label="Previous player">◄</button>
-        <div class="spectate-mid"><span class="spectate-eye">SPECTATING</span><span id="spectate-name">—</span></div>
-        <button id="spectate-next" type="button" aria-label="Next player">►</button>
+        <button id="spectate-prev" type="button" aria-label="Previous player"><svg class="ico ico-chev-l" aria-hidden="true"><use href="#ico-chev-l"/></svg></button>
+        <div class="spectate-mid"><span class="spectate-eye" id="spectate-eye">SPECTATING</span><span id="spectate-name">—</span></div>
+        <button id="spectate-next" type="button" aria-label="Next player"><svg class="ico ico-chev-r" aria-hidden="true"><use href="#ico-chev-r"/></svg></button>
     </div>
     <button id="item-slot" class="item-slot empty" aria-label="Use item">
         <span class="item-icon" id="item-icon"></span>
@@ -329,7 +347,43 @@ inder<!DOCTYPE html>
     <div id="countdown">3</div>
 </div>
 
-<!-- Load the main game logic as an ES module -->
-<script type="module" src="game.js"></script>
+<script src="src/constants/values.js?v=10041448"></script>
+<script src="src/data/bot-names.js?v=10041448"></script>
+<script src="src/data/items.js?v=10041448"></script>
+<script src="src/ui/icons.js?v=10041448"></script>
+<script src="src/ui/boosters.js?v=10041448"></script>
+<script src="src/ui/trail-fx.js?v=10041448"></script>
+<script src="src/data/pass.js?v=10041448"></script>
+<script src="src/data/gems.js?v=10041448"></script>
+<script src="src/data/streak.js?v=10041448"></script>
+<script src="src/data/levelrewards.js?v=10041448"></script>
+<script src="src/data/skin-styles.js?v=10041448"></script>
+<script src="src/data/trail-styles.js?v=10041448"></script>
+<script src="src/data/accessory-styles.js?v=10041448"></script>
+<script src="src/data/custom-cosmetics.js?v=10041448"></script>
+<script src="src/data/premium-cosmetics.js?v=10041448"></script>
+<script src="src/ui/pass.js?v=10041448"></script>
+<script src="src/audio/sfx.js?v=10041448"></script>
+<script src="game.js?v=10041448"></script>
+<script src="src/ui/lootbox.js?v=10041448"></script>
+<script src="src/modes/roster.js?v=10041448"></script>
+<script src="src/modes/gauntlet.js?v=10041448"></script>
+<script src="src/modes/builder.js?v=10041448"></script>
+<script src="src/modes/ranked.js?v=10041448"></script>
+<script src="src/ads/ads.js?v=10041448"></script>
+<script src="src/cloud/cloud.js?v=10041448"></script>
+<script src="src/social/social.js?v=10041448"></script>
+<script src="src/cloud/account.js?v=10041448"></script>
+<script src="src/tutorial/tutorial.js?v=10041448"></script>
+<script src="src/ui/streak.js?v=10041448"></script>
+<script src="src/ui/levelrewards.js?v=10041448"></script>
+<script src="src/ui/gemcrate.js?v=10041448"></script>
+<script src="src/ui/emotes.js?v=10041448"></script>
+<script src="src/ui/costumes.js?v=10041448"></script>
+<script src="src/ui/finishers.js?v=10041448"></script>
+<script src="src/ui/missions.js?v=10041448"></script>
+<script src="src/ui/collection.js?v=10041448"></script>
+<script src="src/ui/odds.js?v=10041448"></script>
+<script src="src/native/native.js?v=10041448"></script>
 </body>
 </html>

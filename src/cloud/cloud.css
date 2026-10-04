@@ -1,0 +1,18 @@
+.m-acct { display:flex; align-items:center; gap:12px; margin-top:12px; padding:14px 16px; border-radius:18px; background:#161b24; border:1px solid rgba(255,255,255,.08); }
+.m-acct .ma-ico { width:38px; height:38px; flex:none; border-radius:12px; display:grid; place-items:center; background:rgba(255,255,255,.06); }
+.m-acct .ma-ico svg { width:20px; height:20px; fill:none; stroke:#8b95a7; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.m-acct.ok .ma-ico svg { stroke:#31e0c4; }
+.m-acct.err .ma-ico svg { stroke:#ff6b7a; }
+.m-acct .ma-txt { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.m-acct .ma-txt b { font-size:14px; letter-spacing:.2px; }
+.m-acct .ma-txt span { font-size:12px; color:#8b95a7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.m-acct button { flex:none; padding:10px 14px; border-radius:12px; border:0; font:inherit; font-weight:800; font-size:12px; letter-spacing:.4px; color:#06201b; background:#31e0c4; }
+.m-acct button[hidden] { display:none; }
+.m-acct button:disabled { opacity:.5; }
+
+#acct-choose { position: fixed; inset: 0; z-index: 20000; background: #0d1017; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.ac-card { width: min(100%, 340px); display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.ac-card h1 { margin: 0 0 6px; font-size: 40px; letter-spacing: -.02em; } .ac-card p { margin: 0 0 12px; color: #8b95a7; }
+.ac-card button { padding: 16px; border-radius: 14px; border: 0; font: inherit; font-weight: 800; font-size: 15px; letter-spacing: .04em; }
+.ac-new { background: #35e0c8; color: #06201b; } .ac-g { background: #fff; color: #1b1f2a; } .ac-card button:disabled { opacity: .45; }
+.ac-note { color: #8b95a7; font-size: 12px; margin-top: 4px; }

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RAGE RACE</string>
+    <string name="title_activity_main">RAGE RACE</string>
+    <string name="package_name">com.fjb908.ragerace</string>
+    <string name="custom_url_scheme">com.fjb908.ragerace</string>
+</resources>

@@ -1,1 +1,10 @@
+node_modules/
+www/
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+*.keystore
+*.jks
+__pycache__/
 .aider*

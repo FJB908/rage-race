@@ -1,0 +1,25 @@
+.bo-art { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; }
+.bo-art svg { width: 100%; height: 100%; --ic: var(--bc); }
+.bo-art b { position: absolute; right: -6px; bottom: -4px; padding: 1px 6px; border-radius: 9px; background: var(--bc); color: #12161f; font-size: 13px; font-weight: 900; line-height: 1.3; box-shadow: 0 0 0 2px #12161f; }
+.bo-art.big { width: 84px; height: 84px; } .bo-art.big b { font-size: 17px; padding: 2px 8px; }
+.bo-sub { display: block; font-size: 10px; color: #8b95a7; margin-top: 1px; }
+#m-boosts { display: flex; gap: 14px; padding: 0 20px 2px; flex-wrap: wrap; }
+#m-boosts[hidden] { display: none; }
+.bo-pill { display: inline-flex; align-items: center; gap: 4px; padding: 0; background: none; border: 0; }
+.bo-pill svg { width: 24px; height: 24px; --ic: var(--bc); } .bo-pill b { font-size: 15px; font-weight: 900; color: var(--bc); } .bo-pill small { font-size: 12px; color: #8b95a7; }
+.lb-pop.pop-boost { display: flex; align-items: center; gap: 12px; } .lb-pop.pop-boost b { font-size: 20px; }
+
+.bo-banner { position:fixed; top:calc(64px + env(safe-area-inset-top,0px)); left:50%; z-index:20000; display:flex; align-items:center; gap:12px; padding:8px 18px 8px 10px; border-radius:99px; background:linear-gradient(120deg,color-mix(in srgb,var(--bc) 28%,#161b24),#161b24); border:1px solid var(--bc); box-shadow:0 8px 30px rgba(0,0,0,.5),0 0 22px -4px var(--bc); animation:boBanner 2.9s ease both; pointer-events:none; transform:translateX(-50%); }
+.bo-banner .bo-art { width:40px; height:40px; } .bo-banner span { display:flex; flex-direction:column; text-align:left; } .bo-banner b { font-size:15px; letter-spacing:.05em; color:#fff; } .bo-banner small { font-size:11px; font-weight:700; color:var(--bc); }
+@keyframes boBanner { 0% { opacity:0; transform:translate(-50%,-24px) scale(.9); } 12% { opacity:1; transform:translate(-50%,0) scale(1.04); } 20% { transform:translate(-50%,0) scale(1); } 85% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-10px); } }
+.lb-boostbadge { position:absolute; top:calc(14px + env(safe-area-inset-top,0px)); left:50%; transform:translateX(-50%); z-index:6; display:flex; align-items:center; gap:10px; padding:6px 16px 6px 8px; border-radius:99px; background:rgba(13,16,23,.82); border:1px solid #35e0c8; box-shadow:0 0 18px -4px #35e0c8; animation:lootTap 1.6s ease-in-out infinite; }
+.lb-boostbadge .bo-art { width:34px; height:34px; } .lb-boostbadge span { display:flex; flex-direction:column; text-align:left; } .lb-boostbadge b { font-size:12px; letter-spacing:.08em; color:#fff; } .lb-boostbadge small { font-size:10px; font-weight:800; color:#35e0c8; }
+.lb-pop .bx { font-style:normal; margin-left:8px; padding:2px 9px; border-radius:99px; background:#35e0c8; color:#0d1017; font-size:15px; font-weight:900; align-self:center; }
+
+/* clearer multipliers: glowing art with a bold xN badge, and one card per active boost on the home screen */
+.bo-art svg { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--bc) 65%, transparent)); }
+.bo-art b { background: linear-gradient(135deg, #fff3b0, var(--bc) 60%); letter-spacing: .02em; }
+#m-boosts { gap: 8px; padding: 2px 18px 8px; flex-wrap: nowrap; }
+.bo-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 8px; border-radius: 16px; border: 1.5px solid color-mix(in srgb, var(--bc) 70%, transparent); background: linear-gradient(120deg, color-mix(in srgb, var(--bc) 24%, #141a24), #141a24 72%); box-shadow: 0 0 18px -7px var(--bc); }
+.bo-card .bo-art { width: 38px; height: 38px; flex: none; } .bo-card .bo-art b { right: -7px; bottom: -5px; font-size: 12px; padding: 1px 6px; }
+.bo-txt { display: flex; flex-direction: column; min-width: 0; text-align: left; } .bo-txt b { font: 900 12px/1.1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .08em; color: var(--bc); } .bo-txt small { margin-top: 2px; font-size: 11px; font-weight: 700; color: #d6dbe6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

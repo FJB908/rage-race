@@ -1,0 +1,41 @@
+.streak-screen { justify-content:flex-start; align-items:stretch; padding:0; overflow:hidden; background:radial-gradient(90% 40% at 50% -5%, rgba(255,138,30,.22), transparent 60%), radial-gradient(70% 40% at 100% 100%, rgba(124,107,255,.14), transparent 60%), #0d1017; }
+.sk-shell { display:flex; flex-direction:column; width:100%; height:100%; padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px)); gap:12px; }
+.sk-top { display:grid; grid-template-columns:44px 1fr; gap:12px; align-items:center; }
+.sk-title { text-align:left; }
+.sk-eyebrow { display:block; font-size:11px; font-weight:800; letter-spacing:.05em; color:#ffb347; }
+.sk-title h1 { margin:2px 0 0; display:flex; align-items:center; gap:8px; font:900 28px/1 "Bricolage Grotesque","Space Grotesk",system-ui,sans-serif; color:#fff; }
+.sk-title h1 .ico { width:30px; height:30px; } .sk-title h1 b { color:#ffcf3f; } .sk-title h1 .sk-lbl { font-size:14px; color:#8b95a7; } .sk-flame { display:inline-flex; } .sk-flame[hidden] { display:none; } .sk-title h1 .sk-flame .ico { width:26px; height:26px; margin:0 -2px 0 -4px; }
+.sk-grid { flex:1; min-height:0; overflow-y:auto; display:grid; grid-template-columns:repeat(5,1fr); gap:8px; align-content:start; padding:4px 2px 8px; scrollbar-width:none; }
+.sk-grid::-webkit-scrollbar { display:none; }
+.sk-tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:space-between; gap:3px; min-height:92px; padding:5px 3px 6px; border-radius:14px; border:1px solid rgba(255,255,255,.1); background:linear-gradient(170deg,#1a2030,#121723); box-shadow:0 4px 0 #0a0d14; }
+.sk-tile small { font-size:10px; font-weight:900; letter-spacing:.1em; color:#8b95a7; }
+.sk-art { flex:1; display:grid; place-items:center; font-size:30px; width:100%; }
+.sk-art .ico { width:32px; height:32px; } .sk-art canvas { width:52px; height:52px; } .sk-chest .ico { width:36px; height:36px; }
+.sk-tile b { font-size:12px; font-weight:900; font-variant-numeric:tabular-nums; } .sk-tile b.a-coin { color:#ffd45e; } .sk-tile b.a-gem { color:#ff8ae6; } .sk-tile b.a-xp { color:#8fd2ff; } .sk-tile b.a-pass { color:#c9c0ff; }
+.sk-tile b.a-drop, .sk-tile b.a-item { font-size:8.5px; letter-spacing:.06em; }
+.sk-tile.mile { border-color:rgba(255,207,63,.55); background:linear-gradient(170deg,rgba(255,207,63,.14),#121723 70%); box-shadow:0 4px 0 #0a0d14,0 0 14px rgba(255,207,63,.15); }
+.sk-tile.prem { border-color:rgba(255,138,230,.75); background:linear-gradient(170deg,rgba(255,138,230,.22),#121723 70%); box-shadow:0 4px 0 #0a0d14,0 0 20px rgba(255,138,230,.35); }
+.sk-tile.claimed { opacity:.5; }
+.sk-check { position:absolute; inset:0; display:grid; place-items:center; color:#5df0da; font-size:30px; text-shadow:0 2px 6px rgba(0,0,0,.6); }
+.sk-check .ico { width:30px; height:30px; }
+.sk-tile.today { border-color:#ffcf3f; background:linear-gradient(170deg,rgba(255,207,63,.25),#1a2030 70%); animation:skGlow 1.4s ease-in-out infinite; transform:translateY(-2px); }
+@keyframes skGlow { 50% { box-shadow:0 4px 0 #0a0d14,0 0 24px rgba(255,207,63,.6); } }
+.sk-foot { display:flex; justify-content:center; }
+.sk-claim { width:100%; max-width:380px; min-height:56px; border:0; border-radius:16px; background:#2a3142; color:#8b95a7; font:900 17px/1 "Space Grotesk",system-ui,sans-serif; letter-spacing:.1em; display:flex; align-items:center; justify-content:center; gap:8px; }
+.sk-claim.ready { background:linear-gradient(#ffe27a,#f5a81c); color:#3a2400; box-shadow:0 6px 0 #8a5a00; animation:skPulse 1.4s ease-in-out infinite; }
+.sk-claim.ready:active { transform:translateY(3px); box-shadow:0 3px 0 #8a5a00; }
+@keyframes skPulse { 50% { filter:brightness(1.12); } }
+.sk-claim .ico { width:20px; height:20px; }
+/* home entry */
+.m-streak { position:relative; display:flex; align-items:center; gap:12px; width:100%; padding:10px 14px; border-radius:16px; border:1px solid rgba(255,179,71,.35); background:linear-gradient(135deg,rgba(255,138,30,.16),#141925 65%); color:#eef2f8; font-family:inherit; text-align:left; cursor:pointer; }
+.m-streak .ico { width:34px; height:34px; }
+.m-streak .ms-text { flex:1; display:flex; flex-direction:column; gap:2px; }
+.m-streak small { font-size:10px; font-weight:800; letter-spacing:.05em; color:#ffb347; } .m-streak strong { font-size:15px; }
+.m-streak .ms-dot { width:12px; height:12px; border-radius:50%; background:#ff3b4f; box-shadow:0 0 10px #ff3b4f; animation:skGlow 1.2s infinite; } .m-streak .ms-dot[hidden] { display:none; }
+.m-streak.ready { border-color:#ffcf3f; }
+
+.ms-day .ms-fire { width:15px !important; height:15px !important; vertical-align:-2px; margin-right:1px; }
+
+.sk-save { display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 8px; padding: 11px 14px; border: 1px solid rgba(255,138,230,.35); border-radius: 14px; background: rgba(255,138,230,.07); color: #fff; font: inherit; font-weight: 700; font-size: 14px; }
+.sk-save[hidden] { display: none; } .sk-save .ico-flame { width: 22px; height: 22px; } .sk-save span { flex: 1; text-align: left; } .sk-save b { display: inline-flex; align-items: center; gap: 4px; color: #ff8ae6; } .sk-save b .ico { width: 16px; height: 16px; }
+.sk-save.arm { border-color: #ff8ae6; background: rgba(255,138,230,.16); }

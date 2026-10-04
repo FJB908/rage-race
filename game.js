@@ -1,18 +1,26 @@
-// Import the ParticlePool instance from helpers and create an alias to its internal array.
-import { particlePool as particlePoolInstance } from './src/utils/helpers.js';
-const particlePool = particlePoolInstance.pool; // array of particles for fast access
+"use strict";
+const particlePool = [];                      // recycle bin for dead particles (see burst())
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let CW = 0, CH = 0, DPR = 1;
+// Adaptive quality: phones render 2-3x more pixels than needed, and canvas glow (shadowBlur) is
+// very costly on mobile GPUs. Start capped and step down automatically if frames run slow.
+const QUALITY_STEPS = [{dpr:1.5, glow:1}, {dpr:1.25, glow:0.5}, {dpr:1, glow:0}];
+let qLevel = 0, dprCap = QUALITY_STEPS[0].dpr, glowK = 1;
+const _sbDesc = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'shadowBlur');
+Object.defineProperty(CanvasRenderingContext2D.prototype, 'shadowBlur', {
+    get(){ return _sbDesc.get.call(this); },
+    set(v){ _sbDesc.set.call(this, v * glowK); }
+});
 const SIDEBAR = 34;                           // right-hand progress rail (screen px) — defined before the first resize()
 // The WORLD is always WORLD_W wide, on every device — so every track, tower and level is
 // identical for everyone. The view scales it uniformly to fit the screen (capped, and
 // centred on very wide screens) instead of stretching the world to the screen.
-const WORLD_W = 356;
+let WORLD_W = 356;
 let VIEW_K = 1, VIEW_OX = 0, VH = 0;                 // scale, x-offset, visible world height
 
 function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    DPR = Math.min(window.devicePixelRatio || 1, dprCap);
     CW = window.innerWidth; CH = window.innerHeight;
     const avail = CW - SIDEBAR;
     VIEW_K = Math.max(0.6, Math.min(1.3, avail / WORLD_W));
@@ -21,20 +29,15 @@ function resize() {
     canvas.width = Math.round(CW * DPR);
     canvas.height = Math.round(CH * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    _menuPainted = false;
 }
 window.addEventListener('resize', resize);
 resize();
 
 /* ---------- Constants ---------- */
-const GRAVITY = 2400;
-const MAX_DRAG = 150;
-const POWER = 9.5;              // max launch speed ~1425
 const PLAY_W = () => WORLD_W;                  // world units (identical on every device)
 const SCREEN_PW = () => CW - SIDEBAR;           // screen pixels of the play area (for overlays)
 
-const FINISH_Y = 400;
-const START_Y = 13000;
-const TRACK = START_Y - FINISH_Y;
 
 // One shared pool of realistic player handles — standard and human-profile bots use the
 // SAME style of name, because in a real lobby every "player" would. The behavior split
@@ -43,73 +46,6 @@ const TRACK = START_Y - FINISH_Y;
 // actually see on a mobile leaderboard or Discord: first name + numbers, dotted/underscored
 // handles, the odd xX...Xx or misspelled-on-purpose one, across several languages so it
 // doesn't read as one generated batch. No two bots in a race repeat, so it holds up.
-const BOT_NAMES = [
-    // English-style
-    "Jake_92","liam.k","sophie_r","noah.b","emma99","Ryan_M","oliver_p","mia.t","ethan_c","ava.w",
-    "lucas91","zoe_h","noahp22","kayla.b","dylan_v","mrx.tyler","chloe.m","brandon07","haley_j","jordan.k",
-    "xX_Kyle_Xx","MadisonB","tyler.exe","BrookeXO","cody_1998","peyton.r","garrett07","laurenn_",
-    // Spanish / Latin American
-    "mateo_g","valentina.p","santi23","camila_r","alejandrooo","luciaaa","javi_m","paulinaG",
-    "carlos.dev","nicolas99","danielarz","fer_lopez",
-    // German
-    "lukas_wr","JanaMuel","tobi.k","LenaSchmidt","MaxHoff","annika_b","finn_92","LauraW.",
-    // French
-    "hugo.marti","camillefr","theo_92","lea.duboisz","nathanb","juliette__",
-    // Portuguese / Brazilian
-    "gui_santos","biaoliveira","pedrohsc","larissaM","matheus22","juuh.costa",
-    // Nordic
-    "erik.lund","frejaam","oskar_99","sofie","magnus_k","emmi.laine",
-    // Eastern European
-    "kasia_w","dawid.nowak","irynaK","marek_92","zuzka.b","viktor.pl",
-    // Asian-diaspora / mixed transliterations
-    "minjun.k","yuki_t","weiwei99","hana_s","daniel.oh","aiko.m","kenji_r","seo.yeon",
-    // Classic gamer-tag nonsense: leetspeak, xX...Xx, keyboard-mash, bragging, misspelled on purpose
-    "xXProGamerXx","xX_Slayer_Xx","xXDarkNinjaXx","xX_Reaper_Xx","xXNoScopeXx","xX_ShadowWolf_Xx",
-    "TTVxSpeedy","iiTzVortex","xXxDEMONxXx","BlazeRunner_07","pickle_enjoyer","GamerBoy2007","GamerGirl_xoxo",
-    "n00b_sl4y3r","l33tHax0r","Pr0Sn1p3r","xXGodOfWarXx","YEETMASTER3000","YeetLord_99","bruhmoment123",
-    "sk8rboi2004","xX_Kitty_Xx","EpicGamer_Moment","poggers_99","sadboi_xoxo","depresso_espresso",
-    "jfjfjfj","kjhkjhas","asdfasdf22","qwertyuiop7","zxcvb_99","hjkhjk1","asdqwe123","ghfghfgh",
-    "lofi_beats_kid","not_a_bot_123","definitely_human","ImNotARobot99","totally_legit_gamer",
-    "your_mom_lol","urlocalgremlin","potato_enjoyer","chairforce1","BigChungus_Real","Skibidi_Rizzler",
-    "Cr1ngeLord","MoistToast_","DoritosDust","MtnDewAddict","EnergyDrinkGoblin","4amInsomniac",
-    "bored_at_3am","school_tomorrow_ugh","stillinmy_pjs","procrastinator99","exam_in_2hrs_lol",
-    "toaster_bath","feralcatgirl","angryraccoon22","chaosgremlin_","unemployedwizard","brokecollegekid",
-    "questionmark_?","period.period.","underscore__guy","xX_x_Xx","ayo_the_pizza_here","fortnite_dad55",
-    "Grandma_Gamer","dad_of_3_kids","office_worker99","lunchbreak_grind","monday_hater_2024",
-    "rngesus_hates_me","onemorematchbro","tilt_incoming","copium_supplier","hardstuck_bronze",
-    "MLG_Doritos","QuickscopeQueen","noobmaster_og","the_real_noobmaster",
-    "definitely_not_afk","afk_farming","ping_9999","lag_switch_lol","desync_deluxe",
-    "z","xd","lol123","idk_anymore","whatusernamedoIpick","thiswasnttaken","username_taken_47",
-    "guest_2847583","player_one_go","insertnamehere","temp_account_9","altaccount_02",
-    "Pxx_Wolf","V1PER_","N1GHTMARE_x","Cursed_Waffle","SpicyMemeLord","DankMemeDealer99",
-    "Blursed_Pigeon","Crustacean_King","Goblin_Mode_On","FeralHogRider","SwampThing_88",
-    // more scraped-feeling chaos: random caps, numbers in weird spots, half-finished words
-    "kK_Reece_Kk","T0aster_Strudel","x_mochi_x","Yeeted_Goose","gremlin.exe","404_user_not_found",
-    "still_loading...","BuyMoreVBucks","RIPheadphones","cracked_screen_life","3am_thoughts",
-    "SnackAttack247","cerealwithoutmilk","microwave_burrito","expired_yogurt","fridge_raider99",
-    "wifi_password_wrong","router_reset_guy","404_wifi_not_found","ethernet_enjoyer",
-    "hex_xX90Xx","_-_shadow_-_","-.-.-Vex-.-.-","~*~Luna~*~","xX~Frost~Xx","**Blaze**",
-    "iiPandaii","iiFoxii_","iixMoonii","xXiiSkyiiXx","OwO_whats_this","UwU_gamer",
-    "bepis_enjoyer","among_us_fan_2021","sus_crewmate","impostor_was_me","emergency_meeting_caller",
-    "clout_chaser99","ratio_machine","L_taker","W_giver","touch_grass_never","basement_dweller_pro",
-    "wireless_mouse_dying","keyboard_smash_kjfh","mouse2_broken","monitor_flicker_gang",
-    "3_hours_of_sleep","finals_week_zombie","group_project_carrier","the_one_who_did_nothing",
-    "vending_machine_stuck","printer_jam_rage","stapler_thief_99","office_chair_spinner",
-    "left_on_read_again","typing_bubble_ghost","seen_2hrs_ago","last_online_never",
-    "randomdude5827","player_x_47281","user9284718","guest8827364","anon_2847",
-    "IIIIIIIlllIII","OOOO0OOOO","1l1l1l1l1","0O0O0O0O",
-    "banana_for_scale","spoon_theory_99","fork_in_the_road","the_last_cookie_thief",
-    "wrong_lobby_guy","accidentally_here","clicked_wrong_button","how_did_i_get_here",
-    "pls_send_help","this_username_sucks","couldntThinkOfAName","xXNameTakenXx2",
-    "the_username_gremlin","pls_no_bully","dont_report_me","report_button_broken",
-    "carpal_tunnel_gang","rsi_survivor","numb_fingers_99","blister_thumb_pro",
-    "static_shock_guy","cable_management_lol","rgb_doesnt_help_fps","overclocked_potato",
-    "60fps_dreamer","1080p_peasant","4k_flex_account","vsync_off_chaos",
-    "input_lag_excuse","connection_timeout_guy","host_migration_L","server_browser_ghost",
-    "muted_mic_forever","push_to_talk_fail","discord_kicked_me","voice_chat_static",
-    "the_fifth_wheel","carried_or_carrying","one_trick_pony_99","meta_slave_2024",
-    "off_meta_hipster","patch_notes_reader","balance_pls_dev","nerf_this_pls",
-];
 
 // Bot difficulty presets. skill affects aim accuracy; think affects reaction speed;
 // errMul scales the random aim error. Higher skill + lower think = tougher bots.
@@ -132,6 +68,8 @@ const PLAT = {
 /* ---------- State ---------- */
 let state = 'menu';            // menu, countdown, playing, finished
 let last = 0, cameraY = 0, camShake = 0;
+let hapticsOn = true; try { hapticsOn = localStorage.getItem('rr_haptics') !== '0'; } catch(e){}
+function haptic(p){ if (hapticsOn){ try { navigator.vibrate && navigator.vibrate(p); } catch(e){} } }
 let platforms = [], players = [], particles = [], floaters = [];
 let finishPlatform = null;
 let ufos = [];                // active UFO abductions (and ones flying away)   // cached finish platform for this race, found by type not array index
@@ -142,6 +80,13 @@ let hintTimer = 4;
 
 /* input */
 let dragging = false, sx=0, sy=0, cx=0, cy=0;
+// Free camera: once you've finished (or been knocked out) you can drag the screen to look over the rest of the course.
+let freeCam = false, panDrag = null;
+function canFreeCam(){
+    const p = players[0];
+    return !!p && state === 'playing' && (gameMode === 'race' || gameMode === 'gauntlet') && (p.finished || p.gone);
+}
+function clampFreeCam(y){ return Math.max(FINISH_Y - VH*0.35, Math.min(START_Y + 140 - VH*0.7, y)); }
 
 /* ---------- DOM ---------- */
 const S = {
@@ -161,16 +106,16 @@ const hud = document.getElementById('hud');
 const countdownEl = document.getElementById('countdown');
 const posNum = document.getElementById('pos-num');
 const hintEl = document.getElementById('hint');
-const fallToast = document.getElementById('falltoast');
 
 let screenTransition = 0;
 function showScreen(name) {
+    { const fm = document.getElementById('finish-menu'); if (fm) fm.style.display = 'none'; }   // only shown right after you finish
     const transition = ++screenTransition;
     if (typeof SFX !== 'undefined' && SFX.music){
-        if (name === 'start') SFX.music.set('menu');
+        if (name === 'start') SFX.music.set('menu'); else if (name === 'levels') SFX.music.set('levels');
     }
-    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings'].forEach(k => {
-        const el = S[k];
+    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings','streak','lvr','missions','collection'].forEach(k => {
+        const el = S[k]; if (!el) return;
         if (k === name) {
             el.style.display = 'flex';
             requestAnimationFrame(() => { el.style.opacity = 1; });
@@ -183,6 +128,8 @@ function showScreen(name) {
 
 /* ---------- Particles / floaters ---------- */
 function burst(cx, cy, color, count, speed) {
+    if (particles.length > 400) return;
+    if (gameMode === 'gauntlet'){ if (cy < cameraY - 400 || cy > cameraY + VH + 400) return; count = Math.ceil(count * 0.6); }
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const spd = Math.random() * speed;
@@ -195,15 +142,15 @@ function burst(cx, cy, color, count, speed) {
         if (particlePool.length > 0) {
             const p = particlePool.pop();
             p.x = cx; p.y = cy; p.vx = vx; p.vy = vy;
-            p.life = 1; p.decay = decay; p.color = color; p.s = s;
+            p.life = 1; p.decay = decay; p.color = color; p.size = s;
             particles.push(p);
         } else {
             // Alleen een nieuw object maken als de pool helemaal leeg is
-            particles.push({ x: cx, y: cy, vx, vy, life: 1, decay, color, s });
+            particles.push({ x: cx, y: cy, vx, vy, life: 1, decay, color, size: s });
         }
     }
 }
-function floatText(x,y,text,color){ floaters.push({x,y,text,color,life:1}); }
+function floatText(){}   // on-screen pop-up words were removed on purpose; icons and sound carry the feedback
 
 // Angular, rotating debris — reads as broken stone/ice, distinct from the round spark
 // particles used everywhere else. A ceiling shattering is a one-time, memorable event.
@@ -211,290 +158,6 @@ let shardParticles = [];
 /* =====================================================================
    SFX — tiny synthesized sounds (Web Audio, no files needed)
    ===================================================================== */
-const SFX = (() => {
-    let ac = null, comp = null, sfxBus = null, musBus = null, verbIn = null, dly = null, duck = null, noiseBuf = null, muted = false;
-    let sfxVol = 0.5, musVol = 0.5, lastBump = 0;
-    try { muted = localStorage.getItem('rr_mute') === '1'; } catch(e){}
-    try { const v = localStorage.getItem('rr_sfxvol'); if (v !== null) sfxVol = Math.max(0, Math.min(1, +v)); } catch(e){}
-    try { const v = localStorage.getItem('rr_musvol'); if (v !== null) musVol = Math.max(0, Math.min(1, +v)); } catch(e){}
-    const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
-    let active = 0;   // sound sources currently playing: lets us cap the load so the audio thread never chokes
-    function track(n){ active++; n.onended = () => { active--; }; }
-
-    function ctx(){
-        if (!ac){
-            const AC = (typeof window !== 'undefined') && (window.AudioContext || window.webkitAudioContext);
-            if (!AC) return null;
-            try { ac = new AC({ latencyHint: 'interactive' }); } catch(e){ ac = new AC(); }
-            // master chain: everything -> compressor -> out
-            // Master chain with ZERO added latency: a static gain into a soft clipper that only rounds off
-            // the very loudest peaks. (A DynamicsCompressor here added ~9 ms of built-in lookahead delay to
-            // every single sound, which is exactly the "sound comes a beat late" feeling.)
-            comp = ac.createGain(); comp.gain.value = 1.6;
-            try {
-                const shaper = ac.createWaveShaper(), cv = new Float32Array(4096);
-                for (let i = 0; i < 4096; i++){ const x = i/2047.5 - 1, a = Math.abs(x); cv[i] = a < 0.6 ? x : Math.sign(x) * (0.6 + 0.4*Math.tanh((a - 0.6)/0.4)); }
-                shaper.curve = cv; shaper.oversample = 'none';
-                const out = ac.createGain(); out.gain.value = 0.95; comp.connect(shaper); shaper.connect(out); out.connect(ac.destination);
-            } catch(e){ comp.connect(ac.destination); }
-            sfxBus = ac.createGain(); sfxBus.gain.value = sfxVol; sfxBus.connect(comp);
-            musBus = ac.createGain(); musBus.gain.value = 0.0001; musBus.connect(comp);
-            duck = ac.createGain(); duck.gain.value = 1; duck.connect(musBus);          // sidechain "pump" for the music
-            // reverb: generated impulse response
-            try {
-                const len = Math.floor(ac.sampleRate * 0.8), ir = ac.createBuffer(1, len, ac.sampleRate);
-                const d = ir.getChannelData(0); for (let i = 0; i < len; i++){ const x = 1 - i/len; d[i] = (Math.random()*2 - 1) * x*x*x; }
-                const verb = ac.createConvolver(); verb.buffer = ir;
-                verbIn = ac.createGain(); verbIn.gain.value = 1; const vOut = ac.createGain(); vOut.gain.value = 0.32;
-                verbIn.connect(verb); verb.connect(vOut); vOut.connect(comp);
-            } catch(e){ verbIn = comp; }
-            // music echo (dotted eighth-ish), fed from music voices
-            try {
-                dly = ac.createDelay(1.0); dly.delayTime.value = 0.32;
-                const fb = ac.createGain(); fb.gain.value = 0.32; const dOut = ac.createGain(); dOut.gain.value = 0.28;
-                const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
-                dly.connect(lp); lp.connect(fb); fb.connect(dly); lp.connect(dOut); dOut.connect(musBus);
-            } catch(e){ dly = null; }
-            const n = Math.floor(ac.sampleRate * 1.5); noiseBuf = ac.createBuffer(1, n, ac.sampleRate);
-            const nd = noiseBuf.getChannelData(0); for (let i = 0; i < n; i++) nd[i] = Math.random()*2 - 1;
-        }
-        if (ac.state !== 'running'){ try { const r = ac.resume(); if (r && r.catch) r.catch(() => {}); } catch(e){} }
-        return ac;
-    }
-    function send(g, amt, target){ if (!amt || !target) return; const s = ac.createGain(); s.gain.value = amt; g.connect(s); s.connect(target); }
-    function envelope(g, t0, peak, a, dur, rel, hold){
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.linearRampToValueAtTime(peak, t0 + a);
-        if (hold) g.gain.setValueAtTime(peak * hold, t0 + a + 0.001);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur + rel);
-    }
-    // one synth voice: oscillator(s) -> optional filter sweep -> envelope -> bus (+ reverb/echo sends)
-    function voice(o){
-        const A = ctx(); if (!A) return;
-        const isMus = o.bus === 'mus'; if (!isMus && muted) return;
-        const t0 = (o.when !== undefined ? o.when : A.currentTime) + (o.at || 0), dur = o.t || 0.2, rel = o.r || 0.06;
-        const g = A.createGain();
-        let head = g;
-        if (o.filter){
-            const f = A.createBiquadFilter(); f.type = o.filter.type || 'lowpass'; f.Q.value = o.filter.q || 0.8;
-            f.frequency.setValueAtTime(o.filter.f, t0);
-            if (o.filter.f2) f.frequency.exponentialRampToValueAtTime(o.filter.f2, t0 + (o.filter.time || dur));
-            f.connect(g); head = f;
-        }
-        const detunes = o.unison ? [-o.unison, o.unison] : [0];
-        for (const dt of detunes){
-            const osc = A.createOscillator(); osc.type = o.type || 'sine';
-            osc.frequency.setValueAtTime(o.f, t0); if (osc.detune) osc.detune.value = dt;
-            if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t0 + (o.glide || dur));
-            if (o.vib){ const l = A.createOscillator(), lg = A.createGain(); l.frequency.value = o.vibRate || 6; lg.gain.value = o.vib; l.connect(lg); lg.connect(osc.frequency); track(l); l.start(t0); l.stop(t0 + dur + rel + 0.02); }
-            osc.connect(head); track(osc); osc.start(t0); osc.stop(t0 + dur + rel + 0.02);
-        }
-        envelope(g, t0, (o.v || 0.2) / detunes.length, o.a || 0.004, dur, rel, o.hold);
-        g.connect(isMus ? (o.duck ? duck : musBus) : sfxBus);
-        if (!isMus) send(g, o.verb, verbIn); if (isMus) send(g, o.echo, dly);
-    }
-    function noise(o){
-        const A = ctx(); if (!A) return;
-        const isMus = o.bus === 'mus'; if (!isMus && muted) return;
-        const t0 = (o.when !== undefined ? o.when : A.currentTime) + (o.at || 0), dur = o.t || 0.2;
-        const src = A.createBufferSource(); src.buffer = noiseBuf;
-        const f = A.createBiquadFilter(); f.type = o.type || 'bandpass'; f.Q.value = o.q || 0.8;
-        f.frequency.setValueAtTime(o.f || 1200, t0); if (o.f2) f.frequency.exponentialRampToValueAtTime(o.f2, t0 + dur);
-        const g = A.createGain(); envelope(g, t0, o.v || 0.2, o.a || 0.003, dur, o.r || 0.04);
-        src.connect(f); f.connect(g); g.connect(isMus ? musBus : sfxBus); send(g, o.verb, verbIn);
-        track(src); src.start(t0, Math.random() * 0.5); src.stop(t0 + dur + (o.r || 0.04) + 0.02);
-    }
-    // Bell: FM for the shiny ones, or "lite" (one oscillator) for frequent/layered chimes — half the cost
-    function bell(f, o = {}){
-        const A = ctx(); if (!A || muted) return;
-        const t0 = A.currentTime + (o.at || 0), dur = o.t || 0.5;
-        const g = A.createGain(), car = A.createOscillator();
-        g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(o.v || 0.15, t0 + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-        if (o.lite){
-            car.type = 'sine'; car.frequency.setValueAtTime(f * 1.012, t0); car.frequency.exponentialRampToValueAtTime(f, t0 + 0.05);
-            car.connect(g); track(car);
-            g.connect(sfxBus); send(g, o.verb === undefined ? 0.25 : o.verb, verbIn);
-            car.start(t0); car.stop(t0 + dur + 0.02); return;
-        }
-        const mod = A.createOscillator(), mg = A.createGain();
-        car.frequency.value = f; mod.frequency.value = f * (o.ratio || 3.5);
-        mg.gain.setValueAtTime(f * (o.index || 2), t0); mg.gain.exponentialRampToValueAtTime(1, t0 + dur);
-        mod.connect(mg); mg.connect(car.frequency); car.connect(g);
-        g.connect(sfxBus); send(g, o.verb === undefined ? 0.3 : o.verb, verbIn);
-        track(car); track(mod);
-        car.start(t0); mod.start(t0); car.stop(t0 + dur + 0.02); mod.stop(t0 + dur + 0.02);
-    }
-
-    const P = {
-        jump(k = 0.6){ voice({type:'triangle', f:220 + 160*k, f2:520 + 380*k, t:0.1, v:0.22, glide:0.08});
-                       noise({f:900, f2:2600, t:0.07, v:0.06, q:0.6}); },
-        boost(){ voice({type:'sawtooth', f:220, f2:880, t:0.25, v:0.12, filter:{f:600, f2:5000}, verb:0.2});
-                 bell(1318.5, {at:0.08, t:0.4, v:0.08, lite:true}); noise({f:1500, f2:6000, t:0.25, v:0.08}); },
-        land(){ voice({f:130, f2:55, t:0.09, v:0.3}); noise({type:'lowpass', f:1800, t:0.035, v:0.08}); },
-        bump(){ const n = performance.now(); if (n - lastBump < 120) return; lastBump = n;
-                voice({type:'square', f:170, f2:90, t:0.08, v:0.08, filter:{f:900}}); noise({f:500, t:0.05, v:0.1}); },
-        pickup(){ [0, 4, 7].forEach((s, i) => bell(mtof(84 + s), {at: i*0.06, t: 0.4, v: 0.1, lite:true})); },
-        item(){ voice({type:'sawtooth', f:330, f2:990, t:0.18, v:0.1, filter:{f:800, f2:4000}, verb:0.25}); },
-        rocket(){ noise({f:300, f2:3500, t:0.55, v:0.3, q:0.7, verb:0.15});
-                  voice({type:'sawtooth', f:80, f2:520, t:0.5, v:0.16, filter:{f:300, f2:3000}});
-                  voice({f:60, f2:40, t:0.3, v:0.25}); },
-        giant(){ voice({type:'square', f:70, f2:210, t:0.55, v:0.15, filter:{f:200, f2:1600}, verb:0.2});
-                 voice({f:55, f2:40, t:0.5, v:0.28}); bell(262, {at:0.35, t:0.6, v:0.07, lite:true}); },
-        bounce(){ [0, 0.14].forEach((d, i) => voice({type:'triangle', f:190 + i*80, f2:720 + i*260, t:0.11, v:0.17, at:d, vib:30, vibRate:22})); },
-        chain(){ [0, 0.06, 0.13].forEach((d, i) => bell(1600 + i*230, {at:d, t:0.16, v:0.065, ratio:2.76, index:4, verb:0.1}));
-                 noise({type:'highpass', f:4000, t:0.3, v:0.06}); },
-        quake(){ noise({type:'lowpass', f:400, f2:90, t:0.9, v:0.35, q:1.2, verb:0.2});
-                 voice({type:'sawtooth', f:55, f2:30, t:0.8, v:0.16, filter:{f:240}}); voice({f:48, f2:32, t:0.7, v:0.3}); },
-        shield(){ P.pop(); [0, 7, 12].forEach((s, i) => voice({f:mtof(67 + s), t:0.55, v:0.075, a:0.06, at:i*0.03, verb:0.45})); },
-        block(){ bell(2093, {t:0.35, v:0.1, ratio:2, index:1.5, verb:0.35}); },
-        wind(){ P.pop(); noise({f:400, f2:1800, t:0.9, v:0.18, q:2.5, a:0.25, verb:0.3}); noise({f:900, f2:500, t:0.7, v:0.08, q:3, at:0.2}); },
-        ufo(){ P.pop(); voice({f:520, f2:880, t:1.5, v:0.12, a:0.1, vib:45, vibRate:9, glide:1.3, verb:0.35});
-               voice({type:'sawtooth', f:110, t:1.4, v:0.05, a:0.2, filter:{f:500}}); },
-        coin(){ bell(1975.5, {t:0.12, v:0.11, verb:0.12, lite:true}); bell(2637, {at:0.06, t:0.35, v:0.12, ratio:2, index:1.2, verb:0.2}); },
-        combo(){ [0, 4, 7, 12].forEach((s, i) => bell(mtof(79 + s), {at: i*0.045, t:0.28, v:0.075, lite:true})); },
-        fall(){ voice({type:'sine', f:900, f2:180, t:0.55, v:0.14, vib:14, vibRate:7, glide:0.55}); },
-        stumble(){ voice({f:120, f2:45, t:0.25, v:0.3}); noise({type:'lowpass', f:900, t:0.25, v:0.2});
-                   voice({type:'sawtooth', f:400, f2:120, t:0.35, v:0.08, filter:{f:1200}}); },
-        fail(){ [64, 63, 62, 59].forEach((m, i) => voice({type:'sawtooth', f:mtof(m-12), t: i === 3 ? 0.6 : 0.22, v:0.1, at:i*0.24, filter:{f:900}, verb:0.2})); },
-        count(){ voice({type:'square', f:660, t:0.09, v:0.07, filter:{f:2500}}); },
-        pop(){ voice({type:'sine', f:1500, f2:700, t:0.04, v:0.11, a:0.001, r:0.02}); },
-        go(){ [0, 4, 7].forEach(s => voice({type:'sawtooth', f:mtof(72 + s), t:0.35, v:0.075, filter:{f:3000}, verb:0.3})); },
-        finish(){ [[72,0],[76,0.09],[79,0.18],[84,0.27]].forEach(([m,d]) => voice({type:'sawtooth', f:mtof(m), t:0.3, v:0.08, at:d, filter:{f:2800}, verb:0.35}));
-                  [60, 64, 67].forEach(m => voice({type:'triangle', f:mtof(m), t:0.9, v:0.05, at:0.36, a:0.02, verb:0.5}));
-                  bell(2093, {at:0.36, t:0.9, v:0.08, lite:true}); },
-        shatter(){ noise({type:'highpass', f:3000, t:0.3, v:0.25, verb:0.2});
-                   for (let i = 0; i < 3; i++) bell(2500 + Math.random()*3000, {at: i*0.03, t:0.22, v:0.04, ratio:1.41, index:3, verb:0.2}); },
-        star(i = 0){ bell(mtof(79 + [0, 4, 7][i % 3]), {t:0.5, v:0.1}); },
-    };
-    // Spammy sounds get a minimum gap; when the audio thread is busy only the important ones still play.
-    const COOLDOWN = { coin:45, land:70, pickup:90, item:70, combo:120, shatter:150, chain:200, block:200, jump:40 };
-    const CRITICAL = new Set(['jump','land','finish','go','count','fail','boost','stumble']);
-    const lastPlay = {};
-
-    /* ---- music: step sequencer (16th notes), 4-bar songs with drums, bass, chords, arp and lead ---- */
-    const TRACKS = {
-        menu: { bpm: 86, swing: 0.16,
-            chords: [[57,60,64,67],[53,57,60,64],[48,52,55,59],[55,59,62,64]],     // Am7 · Fmaj7 · Cmaj7 · G6
-            roots:  [45, 41, 48, 43],
-            kick:  'x.........x.....', snare: '....x.......x...', hat: '..x...x...x...x.',
-            bass:  'x.........x.....',
-            lead: [76,null,null,72,null,null,74,null,76,null,null,null,79,null,76,null,
-                   77,null,null,76,null,null,72,null,null,null,69,null,null,null,null,null,
-                   72,null,null,74,null,null,76,null,79,null,null,77,null,76,null,74,
-                   74,null,null,null,71,null,72,null,74,null,null,null,null,null,null,null],
-            pad: 'rhodes' },
-        race: { bpm: 138, swing: 0.02,
-            chords: [[64,67,71],[60,64,67],[67,71,74],[62,66,69]],                   // Em · C · G · D
-            roots:  [40, 36, 43, 38],
-            kick:  'x...x...x...x...', snare: '....x.......x...', hat: '..x...x...x...x.',
-            bass:  '.x.x.x.x.x.x.x.x',
-            lead: [76,null,79,null,83,null,81,79,null,76,null,74,76,null,null,null,
-                   72,null,76,null,79,null,77,76,null,72,null,71,72,null,null,null,
-                   79,null,83,null,86,null,83,81,null,79,null,78,79,null,null,null,
-                   78,null,76,null,74,null,76,78,null,81,null,79,78,null,74,null],
-            pad: 'saw' },
-    };
-    const MUSIC = (() => {
-        let musicOn = true; try { musicOn = localStorage.getItem('rr_music') !== '0'; } catch(e){}
-        let cur = null, timer = null, step = 0, nextTime = 0;
-        function drum(kind, w, T){
-            if (kind === 'k'){ voice({bus:'mus', when:w, f:150, f2:42, glide:0.12, t:0.28, v: T.pad === 'saw' ? 0.55 : 0.4});
-                if (T.pad === 'saw'){ duck.gain.cancelScheduledValues(w); duck.gain.setValueAtTime(0.35, w); duck.gain.linearRampToValueAtTime(1, w + 0.2); } }
-            if (kind === 's'){ noise({bus:'mus', when:w, f:1900, t:0.14, v: T.pad === 'saw' ? 0.22 : 0.12, q:0.7}); voice({bus:'mus', when:w, type:'triangle', f:200, f2:150, t:0.08, v:0.1}); }
-            if (kind === 'h'){ noise({bus:'mus', when:w, type:'highpass', f:7500, t:0.035, v: T.pad === 'saw' ? 0.07 : 0.05}); }
-        }
-        function schedule(){
-            const A = ctx(); if (!A || !cur) return;
-            const T = TRACKS[cur], s16 = 60 / T.bpm / 4;
-            while (nextTime < A.currentTime + 0.35){
-                const i = step % 16, bar = Math.floor(step / 16) % 4;
-                const w = nextTime + (i % 2 === 1 ? T.swing * s16 : 0);
-                if (T.kick[i] === 'x') drum('k', w, T);
-                if (T.snare[i] === 'x') drum('s', w, T);
-                if (T.hat[i] === 'x') drum('h', w, T);
-                const root = T.roots[bar], ch = T.chords[bar];
-                if (T.bass[i] === 'x'){
-                    const oct = (T.pad === 'saw' && i % 4 === 3) ? 12 : 0;
-                    voice({bus:'mus', duck:true, when:w, type: T.pad === 'saw' ? 'sawtooth' : 'triangle', unison: 0,
-                           f: mtof(root + oct), t: T.pad === 'saw' ? s16*1.6 : s16*8, v: T.pad === 'saw' ? 0.16 : 0.22,
-                           filter: T.pad === 'saw' ? {f:1400, f2:300, time:s16*1.5, q:3} : {f:700} });
-                }
-                if (i === 0){                                            // chord pad at the top of each bar
-                    ch.forEach(m => T.pad === 'saw'
-                        ? voice({bus:'mus', duck:true, when:w, type:'sawtooth', unison:0, f:mtof(m), t:s16*15, v:0.045, a:0.05})
-                        : voice({bus:'mus', when:w, type:'sine', f:mtof(m), t:s16*14, v:0.07, a:0.02, vib:2.5, vibRate:5, verb:0.35}));
-                    if (T.pad !== 'saw') ch.forEach(m => voice({bus:'mus', when:w, type:'triangle', f:mtof(m+12), t:s16*3, v:0.025, verb:0.3}));
-                }
-                if (T.pad === 'saw' && i % 4 === 2){                   // driving arp in the race track
-                    const m = ch[(Math.floor(i / 2)) % ch.length] + 12;
-                    voice({bus:'mus', when:w, type:'square', f:mtof(m), t:s16*0.9, v:0.03, echo:0.5});
-                }
-                const note = T.lead[step % 64];
-                if (note) voice({bus:'mus', when:w, type: T.pad === 'saw' ? 'sawtooth' : 'triangle', unison: 0,
-                                 f: mtof(note), t: s16*1.7, v: T.pad === 'saw' ? 0.06 : 0.09,
-                                 echo:0.45, vib: T.pad === 'saw' ? 0 : 3});
-                step++; nextTime += s16;
-            }
-        }
-        function level(to){ const A = ctx(); if (!A) return; const g = musBus.gain;
-            try { g.cancelScheduledValues(A.currentTime); } catch(e){}
-            g.setValueAtTime(Math.max(0.0001, g.value), A.currentTime); g.linearRampToValueAtTime(Math.max(0.0001, to), A.currentTime + 0.6); }
-        return {
-            get on(){ return musicOn; },
-            set(track){
-                if (true){ this.stop(); return; }   // background music disabled for now (kept for later; a real audio file can go here)
-                if (!musicOn || muted || track === null){ this.stop(); return; }
-                const A = ctx(); if (!A) return;
-                if (cur === track && timer) return;
-                cur = track; step = 0; nextTime = A.currentTime + 0.1;
-                level(musVol * 0.6);
-                if (!timer) timer = setInterval(schedule, 90);
-                schedule();
-            },
-            stop(){ if (timer){ clearInterval(timer); timer = null; } cur = null; if (musBus) level(0); },
-            setVol(v){ if (cur && musBus) level(v * 0.6); },
-            toggle(){ musicOn = !musicOn; try { localStorage.setItem('rr_music', musicOn ? '1' : '0'); } catch(e){}
-                if (!musicOn) this.stop(); return musicOn; }
-        };
-    })();
-
-    return {
-        play(name, arg){ try {
-            const now = performance.now(), cd = COOLDOWN[name] || 0;
-            if (cd && now - (lastPlay[name] || -1e9) < cd) return;
-            if (active > 36 && !CRITICAL.has(name)) return;
-            lastPlay[name] = now;
-            if (P[name]) P[name](arg);
-        } catch(e){} },
-        toggle(){ muted = !muted; try { localStorage.setItem('rr_mute', muted ? '1' : '0'); } catch(e){} return muted; },
-        get muted(){ return muted; },
-        setMuted(v){ muted = !!v; try { localStorage.setItem('rr_mute', muted ? '1' : '0'); } catch(e){} },
-        get sfxVol(){ return sfxVol; },
-        get musVol(){ return musVol; },
-        setSfxVol(v){ sfxVol = Math.max(0, Math.min(1, v)); try { localStorage.setItem('rr_sfxvol', sfxVol); } catch(e){} if (sfxBus){ try { sfxBus.gain.setTargetAtTime(sfxVol, ac.currentTime, 0.02); } catch(e){ sfxBus.gain.value = sfxVol; } } },
-        setMusVol(v){ musVol = Math.max(0, Math.min(1, v)); try { localStorage.setItem('rr_musvol', musVol); } catch(e){} MUSIC.setVol(musVol); },
-        unlock(){ try { ctx(); } catch(e){} },
-        music: MUSIC,
-    };
-})();
-if (typeof window !== 'undefined' && window.addEventListener){
-    // Browsers won't let audio play until the first user gesture, so the very first tap or
-    // key press unlocks the engine and kicks off the music for wherever you are.
-    let kicked = false;
-    const unlockOnce = () => {
-        SFX.unlock();
-        if (!kicked){
-            kicked = true;
-            try { SFX.music.set((typeof state !== 'undefined' && state !== 'menu') ? 'race' : 'menu'); } catch(e){}
-        }
-    };
-    window.addEventListener('pointerdown', unlockOnce, { passive: true });
-    window.addEventListener('keydown', unlockOnce);
-    window.addEventListener('touchend', unlockOnce, { passive: true });
-    window.addEventListener('click', unlockOnce);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) SFX.unlock(); });
-}
-
 function shatterCeiling(x, y, w){
     if (y > cameraY - 60 && y < cameraY + VH + 60) SFX.play('shatter');   // only when it happens on screen
     const n = Math.max(10, Math.min(22, Math.round(w/9)));
@@ -509,7 +172,7 @@ function shatterCeiling(x, y, w){
             color: Math.random()<0.5 ? '#8a93a8' : '#5b6272'
         });
     }
-    if (shardParticles.length > 220) shardParticles.splice(0, shardParticles.length-220);
+    { const maxS = [140, 80, 40][qLevel]; if (shardParticles.length > maxS) shardParticles.splice(0, shardParticles.length-maxS); }
     ring(x, y, '#c9d1e3', 60, true);
     burst(x, y, '#eef2f8', 10, 160);
 }
@@ -647,6 +310,32 @@ function generateLevelTrack() {
     }
 }
 
+// One player object. Shared by the 4-player race and the 32-player Gauntlet.
+function makePlayer(o){
+    const local = !!o.local;
+    return {
+        id:o.id, name:o.name, local,
+        color:o.color,
+        x:o.x, y:o.y,
+        vx:0, vy:0, r:12,
+        mode:'idle', plat: platforms[0],
+        finished:false, finishTime:0,
+        best: START_Y,            // highest point reached (min y)
+        thinkT: o.thinkT === undefined ? 0.2 : o.thinkT,
+        botType:o.botType || null, afk:!!o.afk, afkT: 0,
+        look:o.look,
+        trailSamples:[], trailEmit:0,
+        skill:o.skill,
+        errMul: local ? 0 : 1,
+        hesitating: false, hesitateFor: 0, catchUpNext: false,
+        fumbleBias: rnd(-1, 1),                // human-only: a personal lean (over- or under-shoots)
+        charged:false, squash:1, botBestY:START_Y, stuckCount:0,
+        item:null, itemState:null, itemRoll:0, itemDelay:0, itemHold:0,
+        giantT:0, rv:0, bounceT:0, chainT:0, chainPts:null, chainBy:null, rocketFx:0, rocketTrail:null,
+        quakePending:0, quakeDrop:0, quakeShakeT:0, shieldT:0, windT:0, windSeed:Math.random()*1000, windPushX:0, windDir:1
+    };
+}
+
 function initPlayers() {
     players = []; finishedCount = 0;
     const pw = PLAY_W();
@@ -663,44 +352,30 @@ function initPlayers() {
         const local = i===0;
         const botType = local ? null : (i === humanSlot ? 'human' : 'standard');
         const afk = !local && Math.random() < 0.01;   // 1%: this player just stands there... at first
-        players.push({
+        players.push(makePlayer({
             id:i, name: local?"YOU":names[i-1], local,
             color: local ? skinColor() : (PCOL[i] === skinColor() ? '#35e0c8' : PCOL[i]),
             x: pw/2 + (i-1.5)*46, y: START_Y - 30,
-            vx:0, vy:0, r:12,
-            mode:'idle', plat: platforms[0],
-            finished:false, finishTime:0,
-            best: START_Y,            // highest point reached (min y)
-            thinkT: 0.2,
-            botType, afk, afkT: 0,
+            botType, afk,
             look: local ? myLook() : randomBotLook(),
-            trailSamples:[], trailEmit:0,
-            skill: local ? 1 : rnd(0.82, 1.15),   // per-bot variation on the base
-            errMul: local ? 0 : 1,
-            hesitating: false, hesitateFor: 0, catchUpNext: false,
-            fumbleBias: rnd(-1, 1),                // human-only: a personal lean (over- or under-shoots)
-            charged:false, squash:1, botBestY:START_Y, stuckCount:0,
-            item:null, itemState:null, itemRoll:0, itemDelay:0, itemHold:0,
-            giantT:0, rv:0, bounceT:0, chainT:0, chainPts:null, chainBy:null, rocketFx:0, rocketTrail:null,
-            quakePending:0, quakeDrop:0, quakeShakeT:0, shieldT:0, windT:0, windSeed:Math.random()*1000, windPushX:0, windDir:1
-        });
+            skill: local ? 1 : rnd(0.82, 1.15) * newPlayerEase(),   // per-bot variation, easier for your first races
+        }));
     }
 }
 
 /* ---------- Launch ---------- */
-const BOOST_MULT = 1.45;
 // A hard ceiling on how fast you can ever be launched upward. Individual abilities (Boost,
 // Rocket, Super Bounce) are each tuned to feel right on their own, but stacking them — e.g.
 // a charged Boost jump immediately followed by a Rocket — could add their velocities
 // together into an absurd, unfair skip up the track. This clamp only ever kicks in on that
 // kind of stack; it never touches a normal jump.
-const MAX_UP_VEL = 2400;   // just above a fully-charged Boost jump (~2066) alone, so a normal
                             // boosted jump is never touched — only a jump THEN a Rocket stacked
                             // on top of it (which would otherwise reach ~3700) gets reined in
 function capUpwardVelocity(p){
     if (p.vy < -MAX_UP_VEL) p.vy = -MAX_UP_VEL;
 }
 function launchPlayer(p, dx, dy) {
+    if (p.local && window.Missions) Missions.event('jump');
     const mult = playerPowMul(p, false);
     // Launch purely from the drag: don't inherit the moving platform's velocity,
     // otherwise the aim flips the instant the platform reverses at its limit.
@@ -712,7 +387,9 @@ function launchPlayer(p, dx, dy) {
     }
     p.mode = 'air';
     p.plat = null;
-    p.squash = 1.4;
+    const pull = Math.min(1, Math.hypot(dx, dy) / MAX_DRAG);
+    p.squash = 1.22 + pull * 0.32;                       // stronger stretch for a harder pull
+    if (p.local){ haptic(p.charged ? [14, 20, 22] : 8 + Math.round(pull * 10)); camShake = Math.max(camShake, 1 + pull * 2); }
     if (p.local) SFX.play(p.charged ? 'boost' : 'jump', Math.min(1, Math.hypot(dx, dy) / MAX_DRAG));
     if (p.charged) {
         burst(p.x, p.y, PLAT.boost, 22, 260);
@@ -724,22 +401,6 @@ function launchPlayer(p, dx, dy) {
 }
 
 /* ================= ABILITIES / ITEM BOXES ================= */
-const ITEMS = {
-    rocket: { name:'ROCKET!',       color:'#ff7a3d' },
-    giant:  { name:'GIANT!',        color:'#ffcf3f' },
-    bounce: { name:'SUPER BOUNCE!', color:'#35e0c8' },
-    chain:  { name:'CHAIN!',        color:'#c9d1e3' },
-    quake:  { name:'EARTHQUAKE!',   color:'#ff5470' },
-    shield: { name:'SHIELD!',       color:'#7ee787' },
-    wind:   { name:'GUST!',         color:'#8fd6ff' },
-    ufo:    { name:'UFO!',          color:'#7CFF6B' },
-};
-const ITEM_KEYS = Object.keys(ITEMS);
-const ROLL_TIME = 1.1;
-const BASE_R = 12, GIANT_TIME = 8, GIANT_SCALE = 3;
-const BOUNCE_TIME = 5, BOUNCE_RESTITUTION = 1.45, BOUNCE_MAXV = 3200, BOUNCE_KICK = 1500, BOUNCE_MIN_VY = 1150;
-const BALL_R = 10;
-const CHAIN_TIME = 5.5, CHAIN_POW = 0.8, CHAIN_GRAV = 1.25, CHAIN_LINKS = 8, CHAIN_SEG = 7;
 
 // Per-player physics modifiers (used by the game, the aim preview AND the bot solver)
 function playerG(p){ return GRAVITY * (p.chainT > 0 ? CHAIN_GRAV : 1); }
@@ -779,7 +440,9 @@ function updateShockwaves(dt){
 function updateWindFx(dt){
     for (const p of players){
         if (!(p.windT > 0) || p.finished) continue;
-        if (Math.random() < dt*16){
+        const crowd = gameMode === 'gauntlet';                               // 31 players can be hit at once: only draw streaks where they are seen
+        if (crowd && (p.y < cameraY - 80 || p.y > cameraY + VH + 80 || windParticles.length > 90)) continue;
+        if (Math.random() < dt*(crowd ? 7 : 16)){
             const dir = p.windDir;
             windParticles.push({
                 x: p.x - dir*44, y: p.y + rnd(-26,26), vx: dir*rnd(280,440), vy: rnd(-8,8),
@@ -787,21 +450,25 @@ function updateWindFx(dt){
             });
         }
     }
-    for (let i=windParticles.length-1;i>=0;i--){
+    let k = 0;
+    for (let i=0;i<windParticles.length;i++){
         const w = windParticles[i];
         w.x += w.vx*dt; w.y += w.vy*dt; w.life -= w.decay*dt;
-        if (w.life <= 0) windParticles.splice(i,1);
+        if (w.life > 0) windParticles[k++] = w;
     }
+    windParticles.length = k;
 }
 function drawWindFx(){
+    if (!windParticles.length) return;
     ctx.save(); ctx.lineCap='round';
+    ctx.globalAlpha = 0.35; ctx.strokeStyle = ITEMS.wind.color; ctx.lineWidth = 2;
+    ctx.beginPath();                                   // one path for every streak: a single stroke instead of one per particle
     for (const w of windParticles){
         if (w.y < cameraY-60 || w.y > cameraY+VH+60) continue;
         const dir = Math.sign(w.vx) || 1;
-        ctx.globalAlpha = Math.max(0, w.life) * 0.5;
-        ctx.strokeStyle = ITEMS.wind.color; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x - dir*w.len, w.y); ctx.stroke();
+        ctx.moveTo(w.x, w.y); ctx.lineTo(w.x - dir*w.len, w.y);
     }
+    ctx.stroke();
     ctx.restore(); ctx.globalAlpha = 1;
 }
 // A single soft edge-glow on the side the wind is coming FROM, plus a small arrow-cluster
@@ -853,13 +520,14 @@ function rollItem(p){
     const isLeader = !players.some(o => o !== p && !o.finished && o.y < p.y);
     // Quake needs SOME gap to the leader before it can appear (never in 1st), then ramps up:
     // a real but modest chance in 2nd, growing into a strong comeback tool in 3rd/4th.
-    const quakeW = others ? Math.max(0, f - 0.18) * 1.1 : 0;
+    let quakeW = others ? Math.max(0, f - 0.18) * 1.1 : 0;
+    if (gameMode === 'gauntlet') quakeW = 0;                      // no earthquakes in the Gauntlet
     // Shield is defensive: more useful (and more common) the further ahead you are —
     // you're the one everyone else's attacks are aimed at.
     const shieldW = 0.16 + 0.16*(1-f);
     // Wind is a mild offensive tool for whoever's behind: it doesn't touch the caster,
     // and a modest chance even near the front keeps it from feeling exclusively "loser-only".
-    const windW = others ? 0.10 + 0.20*f : 0;
+    const windW = (others && gameMode !== 'gauntlet') ? 0.10 + 0.20*f : 0;     // and no wind there either
     // UFO is a comeback lifeline: last place (or near it), and the further you've fallen
     // behind the next player up, the likelier it gets.
     let ufoW = 0;
@@ -900,9 +568,10 @@ function updateItemBoxes(dt){
         if (!b.alive){ b.respawn -= dt; if (b.respawn <= 0){ b.alive = true; b.appear = 0; } continue; }
         if (b.appear < 1) b.appear = Math.min(1, b.appear + dt*2.5);
         for (const p of players){
-            if (p.finished || p.itemState || p.itemCool > 0) continue;   // one item at a time + short cooldown
+            if (p.finished || p.remote || p.itemState || p.itemCool > 0) continue;   // one item at a time + short cooldown (a friend's pickup arrives as an event)
             if (Math.abs(p.x - b.x) < p.r + 15 && Math.abs(p.y - b.y) < p.r + 15){
                 b.alive = false; b.respawn = 9;
+                if (window.partyMatch && partyMatch.live && (p.local || p.hostedBot)) Social.emitBox(itemBoxes.indexOf(b));
                 p.item = rollItem(p); p.itemState = 'rolling'; p.itemRoll = ROLL_TIME;
                 if (p.local) SFX.play('pickup');
                 for (let i=0;i<14;i++) burst(b.x, b.y, `hsl(${(i*26)%360},90%,65%)`, 1, 230);
@@ -984,7 +653,7 @@ function tickAbilities(p, dt){
         }
     } else if (p.itemState === 'ready'){
         p.itemHold += dt;
-        if (!p.local){ p.itemDelay -= dt; if (p.itemDelay <= 0 && botWantsItem(p)) activateItem(p); }
+        if (!p.local && !p.remote){ p.itemDelay -= dt; if (p.itemDelay <= 0 && botWantsItem(p)) activateItem(p); }
     }
     // GIANT: springy grow/shrink, feet stay planted on the platform
     if (p.giantT > 0){
@@ -1044,9 +713,11 @@ function botWantsItem(p){
 function activateItem(p){
     if (p.itemState !== 'ready' || p.finished || p.ufoHold || state !== 'playing') return false;
     const it = p.item;
+    if (p.local && window.Missions) Missions.event('item');
         const chainTarget = it === 'chain' ? pickChainTarget(p) : null;
     if (it === 'chain' && !chainTarget) return false;
     p.item = null; p.itemState = null; p.itemCool = 4;
+    const evx = {};
     if (p.local) SFX.play({rocket:'rocket', shield:'shield', wind:'wind', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce'}[it] || 'item');
     if (it === 'rocket') startRocket(p);
     else if (it === 'giant'){
@@ -1073,8 +744,9 @@ function activateItem(p){
         if (p.chainT > 0) releaseChain(p);
         ring(p.x, p.y, ITEMS.shield.color, 50);
     } else if (it === 'wind'){
-        startWind(p);
+        evx.dir = startWind(p);
     }
+    if (window.partyMatch && partyMatch.live && (p.local || p.hostedBot)) Social.emitItem(p, it, evx, chainTarget);   // party race: tell the other phones
     if (p.local) itemHUD.key = '';           // force a HUD refresh
     return true;
 }
@@ -1091,9 +763,9 @@ const SHIELD_TIME = 6;   // a full protective bubble for its whole duration, so 
 const WIND_TIME = 6, WIND_FORCE = 380, WIND_AIM_ERR = 85;   // a light, readable crosswind — nudges your jump, never wrecks it
 // WIND: everyone EXCEPT the caster gets buffeted — their aim goes slightly random and
 // they drift sideways while airborne, like an actual gust of crosswind. A shield blocks it.
-function startWind(p){
+function startWind(p, forcedDir){
     let hit = 0;
-    const dir = Math.random() < 0.5 ? -1 : 1;      // one real crosswind direction, shared by everyone it hits
+    const dir = forcedDir || (Math.random() < 0.5 ? -1 : 1);      // one real crosswind direction, shared by everyone it hits
     for (const o of players){
         if (o === p || o.finished) continue;
         if (shieldBlocks(o)){ if (p.local) floatText(o.x, o.y - o.r - 18, 'BLOCKED!', ITEMS.shield.color); continue; }
@@ -1106,6 +778,7 @@ function startWind(p){
     burst(p.x, p.y, ITEMS.wind.color, 16, 200);
     if (p.local) camShake = Math.max(camShake, 3);
     if (p.local && !hit) floatText(p.x, p.y - p.r - 18, 'NO TARGETS', ITEMS.wind.color);
+    return dir;
 }
 function startQuake(p){
     const alive = players.filter(o => !o.finished);
@@ -1116,7 +789,7 @@ function startQuake(p){
     const margin = 260;
     const candidates = platforms.filter(pl =>
         pl.active && pl.type !== 'safety' && pl.type !== 'finish' && pl.type !== 'moving' &&
-        pl !== p.plat && pl.y < avgY - margin && pl.y > avgY - margin - 900);
+        pl !== p.plat && !players.some(o => o.plat === pl && o.mode === 'idle') && pl.y < avgY - margin && pl.y > avgY - margin - 900);
     candidates.sort((a,b) => b.y - a.y);              // closest-above first
     const hitList = candidates.slice(0, 6);
     for (const pl of hitList){ pl.quakeWarn = QUAKE_WARN; pl.quakeDown = 0; }
@@ -1125,19 +798,7 @@ function startQuake(p){
     // actually FALLS a bounded distance — no teleport, you can see it happen. A short
     // warning shake plays first, then gravity does the rest at a boosted fall speed so
     // it reads as "the ground gave way", not a random jump in position.
-    let shaken = 0;
-    for (const o of alive){
-        if (o === p) continue;
-        const lead = p.y - o.y;                        // how far ahead o is of the caster
-        if (lead < margin) continue;
-        if (shieldBlocks(o)){ if (p.local) floatText(o.x, o.y - o.r - 18, 'BLOCKED!', ITEMS.shield.color); continue; }
-        const drop = Math.min(QUAKE_DROP, lead * 0.55);
-        o.quakePending = QUAKE_WARN;                    // warning shake first, THEN the fall triggers
-        o.quakeDrop = drop;
-        o.quakeShakeT = QUAKE_WARN;                      // visual shake while pending
-        shaken++;
-    }
-
+    const shaken = 0;                                  // nobody is knocked off their platform any more: the quake only shakes empty platforms
     ring(p.x, p.y, ITEMS.quake.color, 70);
     burst(p.x, p.y, ITEMS.quake.color, 20, 220);
     if (p.local) camShake = Math.max(camShake, 6);
@@ -1147,6 +808,7 @@ function startQuake(p){
 // Resolves the queued fall once the warning shake has played out.
 function triggerQueuedQuakeFall(o){
     o.quakePending = 0;
+    if (o.mode !== 'idle') return;                       // already airborne by now: leave the jump alone
     o.mode = 'air'; o.plat = null;
     o.vy = Math.max(o.vy, 0) + o.quakeDrop / QUAKE_FALL_T;   // reach the drop distance in QUAKE_FALL_T seconds
     camShake = Math.max(camShake, o.local ? 8 : 0);
@@ -1158,9 +820,10 @@ function updateQuakes(dt){
         if (pl.quakeWarn > 0){
             pl.quakeWarn -= dt;
             if (pl.quakeWarn <= 0){
-                pl.quakeWarn = 0; pl.quakeDown = QUAKE_DOWN; pl.active = false; pl.respawn = 0;
+                pl.quakeWarn = 0;
+                if (players.some(o => o.plat === pl && o.mode === 'idle')) continue;          // somebody stands on it: it stays
+                pl.quakeDown = QUAKE_DOWN; pl.active = false; pl.respawn = 0;
                 burst(pl.x, pl.y, ITEMS.quake.color, 18, 200);
-                for (const p of players) if (p.mode === 'idle' && p.plat === pl){ p.mode='air'; p.plat=null; }
             }
         } else if (pl.quakeDown > 0){
             pl.quakeDown -= dt;
@@ -1446,10 +1109,12 @@ canvas.addEventListener('pointerdown', e => {
     if (state !== 'playing' && state !== 'countdown') return;
     if (e.clientX > CW - SIDEBAR) return;
     const p = players[0];
+    if (canFreeCam()){ panDrag = { y0: e.clientY, cam0: cameraY }; freeCam = true; return; }
     if (p.finished || p.mode !== 'idle') return;
     dragging = true; sx=cx=e.clientX; sy=cy=e.clientY;
 });
 canvas.addEventListener('pointermove', e => {
+    if (panDrag){ cameraY = clampFreeCam(panDrag.cam0 - (e.clientY - panDrag.y0) / VIEW_K); return; }
     if (!dragging) return;
     cx=e.clientX; cy=e.clientY;
 });
@@ -1467,8 +1132,8 @@ function endDrag(){
         hintEl.style.display='none';
     }
 }
-canvas.addEventListener('pointerup', endDrag);
-canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('pointerup', () => { panDrag = null; endDrag(); });
+canvas.addEventListener('pointercancel', () => { panDrag = null; endDrag(); });
 
 /* ---------- Bot AI (smart) ---------- */
 // Given a target dx (horizontal) and dy (vertical, negative = up), find a launch
@@ -1597,7 +1262,7 @@ function updateBot(p, dt) {
     // half a second; the old countdown could be stale (after a slide, a fall or a rush) and fire one frame after landing.
     p.idleT = (p.idleT || 0) + dt;
     const standing = p.plat && p.plat.type;
-    const minWait = (standing === 'fragile' ? 0.34 : standing === 'ice' ? 0.42 : 0.55) + (p.extraWait || 0);
+    const minWait = (standing === 'fragile' ? 0.34 : standing === 'ice' ? 0.42 : 0.55) * (p.waitScale || 1) + (p.extraWait || 0);
     if (p.thinkT > 0 || p.idleT < minWait) return;
 
     // Track stagnation: how many think-cycles without gaining height
@@ -1610,7 +1275,7 @@ function updateBot(p, dt) {
     // Consider platforms in a reachable window above
     let best = null, secondBest = null, nearest = null, nearestD = Infinity;
     for (const pl of platforms) {
-        if (!pl.active) continue;
+        if (!pl.active || pl.type === 'spike') continue;
         if (pl === p.plat) continue;
         if (pl.y >= p.y - 20) continue;               // must be above
         if (pl.y < p.y - BOT_BASE.reach) continue;    // beyond this bot's ambition
@@ -1626,11 +1291,25 @@ function updateBot(p, dt) {
     // Fallback: if nothing above is reachable, hop to the best nearby platform
     if (!best) {
         for (const pl of platforms) {
-            if (!pl.active || pl === p.plat) continue;
+            if (!pl.active || pl === p.plat || pl.type === 'spike') continue;
             if (Math.abs(pl.y - p.y) > 300) continue;
             const e = evalTarget(p, pl, ceilings);
             if (!e) continue;
             if (!best || e.score > best.score) best = e;
+        }
+    }
+    // Chained (slower, heavier): nothing may be reachable any more, e.g. the last platform before the finish. A player would still
+    // try with everything they have rather than stand there, so jump at the closest platform above at full power.
+    if (!best && p.chainT > 0) {
+        let tgt = null, td = Infinity;
+        for (const pl of platforms) {
+            if (!pl.active || pl === p.plat || pl.y >= p.y - 20) continue;
+            const d = Math.hypot(pl.x - p.x, pl.y - p.y) - (pl.type === 'finish' ? 400 : 0);
+            if (d < td && Math.hypot(pl.x - p.x, pl.y - p.y) < 900) { td = d; tgt = pl; }
+        }
+        if (tgt) {
+            const tx = Math.max(tgt.x - tgt.w / 2 + 20, Math.min(tgt.x + tgt.w / 2 - 20, p.x)), dx = tx - p.x, dy = (tgt.y - tgt.h / 2 - p.r) - p.y - 30, len = Math.hypot(dx, dy) || 1, mv = playerMaxV(p, !!p._air) * 0.97;
+            best = { score:0, pl:tgt, sol:{ vx:dx / len * mv, vy:dy / len * mv, t:1 } };
         }
     }
     if (!best) { p.thinkT = rnd(0.2, 0.4); return; }
@@ -1641,9 +1320,13 @@ function updateBot(p, dt) {
     // HUMAN: sometimes goes for the platform that just LOOKS closest/easiest rather than
     // the mathematically optimal one — a believable, low-stakes misjudgment, never one
     // that's actively bad (it still has to be a real, reachable platform).
-    if (isHuman && nearest && nearest !== best && Math.random() < 0.22) best = nearest;
+    const mistakeP = isHuman ? 0.22 : (p.mistake || 0);          // roster bots: weaker ones misjudge routes more often
+    if (mistakeP && nearest && nearest !== best && Math.random() < mistakeP) best = nearest;
 
     let { vx, vy } = best.sol;
+    if (window.buildMatch && window.Build && window.Build.arcHitsSpike(p, vx, vy)) {            // Build Race: look before you jump
+        if (secondBest && !window.Build.arcHitsSpike(p, secondBest.sol.vx, secondBest.sol.vy)) { best = secondBest; vx = best.sol.vx; vy = best.sol.vy; }
+    }
 
     // Rubber-banding: keep the race close to the human so you actually meet the bots.
     // HUMAN bots are deliberately exempt — the whole point is that they read as a real
@@ -1655,12 +1338,13 @@ function updateBot(p, dt) {
         if (human && !human.local) { /* sim / spectator: no banding */ }
         else if (human && !human.finished) {
             const lead = human.y - p.y;
+            const bandK = gameMode === 'gauntlet' ? GT_BAND : (window.RACE_BAND === undefined ? 1 : window.RACE_BAND);   // Ranked turns the rubber band off
             if (lead > 250) {                       // ahead: ease off
-                const k = Math.min(1, (lead - 250) / 900);
+                const k = Math.min(1, (lead - 250) / 900) * bandK;
                 thinkMul = 1 + k * 2.8;             // up to 3.8x longer pauses
                 aimMul   = 1 + k * 1.0;             // up to 2x sloppier aim
             } else if (lead < -250) {               // behind: hurry up
-                const k = Math.min(1, (-lead - 250) / 900);
+                const k = Math.min(1, (-lead - 250) / 900) * bandK;
                 thinkMul = 1 - k * 0.25;            // down to 0.75x pauses (never robotic-fast)
             }
         }
@@ -1695,7 +1379,7 @@ function updateBot(p, dt) {
     // SPRINT: once you've finished, nobody's actually being raced against anymore — so bots
     // stop being cautious and just close the race out quickly and cleanly, rather than
     // dragging on with their usual human-like misses and pauses.
-    const sprintFinish = players[0] && players[0].finished;
+    const sprintFinish = gameMode !== 'gauntlet' && !window.rankedMatch && players[0] && players[0].finished;
     const sprintMul = sprintFinish ? 0.35 : 1;
     const sprintThink = sprintFinish ? 0.6 : 1;
 
@@ -1723,33 +1407,44 @@ function updateBot(p, dt) {
     if (wasCharged) { p.charged = false; burst(p.x, p.y, PLAT.boost, 12, 200); }
     else burst(p.x, p.y, p.color, 8, 140);
 
-    p.thinkT = rnd(BOT_BASE.thinkMin, BOT_BASE.thinkMax) * (p.thinkMul || 1) * sprintThink;
+    p.thinkT = rnd(BOT_BASE.thinkMin, BOT_BASE.thinkMax) * (p.thinkMul || 1) * sprintThink * (p.thinkScale || 1);
 }
 
 /* ---------- Collision (swept, no tunneling) ---------- */
 function landOn(p, pl) {
-    if (p.local) SFX.play('land');
+    const impact = Math.abs(p.vy);
+    if (p.local){ SFX.play('land'); haptic(impact > 1100 ? [12, 16, 10] : 7); if (impact > 1000) camShake = Math.max(camShake, Math.min(6, impact / 450)); }
+    // dust puff where the feet hit the platform; harder landings throw more
+    burst(p.x, pl.y - pl.h / 2, '#c9d1e3', 3 + Math.min(8, Math.round(impact / 260)), 70 + Math.min(120, impact / 12));
+    if (impact > 1300) ring(p.x, pl.y - pl.h / 2, '#c9d1e3', 34 + Math.min(30, impact / 60), true);
     p.idleT = 0;
     p.extraWait = (!p.local && pl.type !== 'fragile' && !(players[0] && players[0].finished) && Math.random() < 0.10) ? rnd(0.4, 1.0) : 0;
     p.y = pl.y - pl.h/2 - p.r;
-    p.vy = 0; p.mode='idle'; p.plat=pl; p.squash=0.7;
+    p.vy = 0; p.mode='idle'; p.plat=pl; p.squash = Math.max(0.55, 0.78 - impact / 9000);
 }
 
 function handleFinish(p) {
     if (gameMode === 'parkour'){ pkSummit(p); return; }
     if (gameMode === 'level'){ lvComplete(p); return; }
+    if (gameMode === 'gauntlet'){ gtFinish(p); return; }
     p.finished = true;
     p.finishTime = (Date.now()-matchStart)/1000;
     finishedCount++;
+    if (p.local && window.partyMatch && window.Social){ Social.onPartyFinish(p.finishTime, finishedCount); if (window.Missions) Missions.race(finishedCount, true); }
     burst(p.x, p.y, p.color, 30, 260);
-    if (p.local){ floatText(p.x, p.y-30, "FINISH!", p.color); SFX.play('finish'); }
+    if (window.Finishers) Finishers.play(p);                           // your equipped finisher (and the bots' own)
+    if (p.local){ SFX.play('finish'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
+    if (window.rankedMatch){ if (p.local) Ranked.onLocalFinish(finishedCount); return; }   // Ranked ends the moment YOU cross the line: nobody after you can pass you
     checkEnd();
     maybePromptBotsDone();
 }
 
+const SUPPORT_K = 0.3;      // how far the centre may hang past a platform edge (fraction of the radius) and still be standing on it
 function stepPlayer(p, dt) {
+    if (p.remote){ Social.stepRemote(p, dt); return; }
     if (p.finished) return;
     if (p.ufoHold) return;                         // being carried: the UFO owns your position
+    if (p.dropT > 0) p.dropT -= dt;                // briefly ignores the platform it was stomped through
     const pw = PLAY_W();
     tickAbilities(p, dt);
 
@@ -1759,17 +1454,17 @@ function stepPlayer(p, dt) {
             const pl = p.plat;
             if (pl.type==='moving') {
                 p.x += pl.speed*pl.dir*dt; p.vx = pl.speed*pl.dir;
-                if (p.x < pl.x-pl.w/2 || p.x > pl.x+pl.w/2){ p.mode='air'; p.plat=null; }
             } else if (pl.type==='ice') {
                 p.x += p.vx*dt; p.vx *= 0.985;
-                if (p.x < pl.x-pl.w/2 || p.x > pl.x+pl.w/2){ p.mode='air'; p.plat=null; }
             } else {
                 p.x += p.vx*dt; p.vx *= 0.55;
                 if (Math.abs(p.vx) < 4) p.vx = 0;
             }
+            // You only stand where your centre is (nearly) over the platform; landing uses the same rule, so nobody hovers beside an edge.
+            if (Math.abs(p.x - pl.x) > pl.w / 2 + SUPPORT_K * p.r){ p.mode='air'; p.plat=null; }
             // fragile trigger
-            if (pl.type==='fragile' && !pl.breaking){ pl.breaking=true; pl.breakT=0.9; }
-            if (!p.local) updateBot(p, dt);
+            else if (pl.type==='fragile' && !pl.breaking){ pl.breaking=true; pl.breakT=0.9; }
+            if (p.mode === 'idle' && !p.local) updateBot(p, dt);
         }
     }
 
@@ -1857,10 +1552,11 @@ function stepPlayer(p, dt) {
             const pBottomNow  = p.y + p.r;
             for (const pl of platforms) {
                 if (!pl.active) continue;
-                if (pl.type==='finish') continue;    // finishing is handled unconditionally above
+                if (pl.type==='finish' || pl.type==='spike') continue;    // finishing is handled unconditionally above; spikes are a hazard, never a floor
+                if (pl === p.dropPlat && p.dropT > 0) continue;   // stomped through this one
                 const top = pl.y - pl.h/2;
                 if (pBottomPrev <= top + 2 && pBottomNow >= top) {
-                    if (p.x + p.r > pl.x - pl.w/2 && p.x - p.r < pl.x + pl.w/2) {
+                    if (Math.abs(p.x - pl.x) < pl.w/2 + SUPPORT_K * p.r) {
                         // Super Bounce: rebound off the platform at 110% instead of landing
                         if (p.bounceT > 0 && pl.type !== 'finish' && p.vy > 60){
                             p.y = top - p.r; p.vy = bounceVy(p.vy);
@@ -1892,16 +1588,7 @@ function stepPlayer(p, dt) {
 }
 
 let lastFallToast = 0;
-function showFall(txt="FELL!") {
-    SFX.play('fall');
-    const now = Date.now();
-    if (now - lastFallToast < 900) return;
-    lastFallToast = now;
-    fallToast.textContent = txt;
-    fallToast.style.opacity = 1;
-    clearTimeout(showFall._t);
-    showFall._t = setTimeout(()=> fallToast.style.opacity = 0, 700);
-}
+function showFall() { SFX.play('fall'); }
 
 /* ---------- Player-vs-player bumping ---------- */
 function massOf(p){ return (p.r/BASE_R)**2 * (p.giantT > 0 ? 30 : 1) * ((p.rocketFx||0) > 0 ? 6 : 1); }
@@ -1914,10 +1601,11 @@ function startUfo(p){
     // Who's the first player above you? (finished players count as sitting at the finish.)
     let above = null;
     for (const o of players){
-        if (o === p) continue;
+        if (o === p || (gameMode === 'gauntlet' && o.gone)) continue;   // Gauntlet: players who left the stage don't count as "above"
         const oy = o.finished ? FINISH_Y - 30 : o.y;
         if (oy < p.y - 60 && (!above || oy > above.y)) above = { y: oy, finished: o.finished };
     }
+    if (gameMode === 'gauntlet' && !above) return;                      // nobody to be set down beside: the item simply fizzles
     const toFinish = !above || above.finished;
     let dropX, dropY;
     if (toFinish){
@@ -2079,44 +1767,79 @@ function drawUfoCraft(){
     }
 }
 
+// Player-vs-player bumping.
+//  - Ordinary players still shove each other apart (heavier ones, e.g. in a rocket boost, move less).
+//  - A player standing on a platform is never pushed up or down, so someone landing on top of them cannot press them
+//    through the platform: the lander is deflected sideways and slides off.
+//  - A GIANT dominates: it is never moved by ordinary players, and anyone it hits is thrown away with a hop. A giant is
+//    only pushed back by another giant or by a shield.
+let bumpTick = 0;
 function resolveBumps() {
+    bumpTick++;
     for (let i = 0; i < players.length; i++) {
+        const p1 = players[i];
+        if (p1.dead || p1.gone || p1.finished || p1.ufoHold) continue;
         for (let j = i + 1; j < players.length; j++) {
-            const p1 = players[i];
             const p2 = players[j];
-
-            // Negeer botsingen als een van de spelers dood is of niet botst
-            if (p1.dead || p2.dead) continue;
-
-            const dx = p2.x - p1.x;
-            const dy = p2.y - p1.y;
-            
-            // OPTIMALISATIE: Gebruik (dx*dx + dy*dy) in plaats van Math.sqrt
+            if (p2.dead || p2.gone || p2.finished || p2.ufoHold) continue;
+            const dx = p2.x - p1.x, dy = p2.y - p1.y, rs = p1.r + p2.r;
             const distSq = dx * dx + dy * dy;
-            const radiusSom = p1.r + p2.r;
-            const radiusSomSq = radiusSom * radiusSom;
-
-            // Pas als de gekwadrateerde afstand kleiner is dan de gekwadrateerde radius, 
-            // is er een botsing en rekenen we de echte afstand uit om ze te corrigeren.
-            if (distSq < radiusSomSq && distSq > 0) {
-                const dist = Math.sqrt(distSq); 
-                const overlap = radiusSom - dist;
-                
-                // Normaliseer vectoren en duw ze uit elkaar
-                const nx = dx / dist;
-                const ny = dy / dist;
-                
-                p1.x -= nx * overlap * 0.5;
-                p1.y -= ny * overlap * 0.5;
-                p2.x += nx * overlap * 0.5;
-                p2.y += ny * overlap * 0.5;
-                
-                // Simpele bounce toevoegen aan snelheid (vx)
-                p1.vx -= nx * 0.5;
-                p2.vx += nx * 0.5;
+            if (distSq >= rs * rs || distSq === 0) continue;
+            if (p1.giantT > 0 || p2.giantT > 0) { giantHit(p1, p2, dx); continue; }
+            const dist = Math.sqrt(distSq), overlap = rs - dist;
+            const idle1 = p1.mode === 'idle', idle2 = p2.mode === 'idle';
+            if (idle1 && idle2) {                         // two standing players: nudge apart sideways only
+                const s = dx !== 0 ? Math.sign(dx) : (Math.random() < 0.5 ? -1 : 1), push = Math.min(overlap, rs - Math.abs(dx)) * 0.5;
+                p1.x -= s * push; p2.x += s * push; p1.vx -= s * 0.5; p2.vx += s * 0.5;
+            } else if (idle1 !== idle2) {                 // one stands, one is in the air: only the flyer gives way
+                const S = idle1 ? p1 : p2, F = idle1 ? p2 : p1;
+                // STOMP: landing on someone's head knocks them down through the platform they stand on
+                if (F.vy > 150 && F.y < S.y - 4 && Math.abs(F.x - S.x) < rs * 0.8 && S.plat && !S.plat.ground && !(S._stompTick && bumpTick - S._stompTick < 30)) {
+                    if (shieldBlocks(S)) { F.vy = -260; F.vx += (F.x >= S.x ? 1 : -1) * 120; continue; }
+                    S._stompTick = bumpTick;
+                    S.dropPlat = S.plat; S.dropT = 0.6;
+                    S.mode = 'air'; S.plat = null; S.charged = false; S.vx *= 0.3; S.vy = Math.max(620, F.vy); S.squash = 0.6;
+                    F.vy = -260; F.squash = 1.3;
+                    burst(S.x, S.y + S.r, '#ffffff', 12, 220); ring(S.x, S.y, '#ffffff', 55);
+                    if (S.local) { SFX.play('stumble'); haptic([30, 30, 70]); camShake = Math.max(camShake, 7); }
+                    else if (F.local) { SFX.play('shatter'); haptic(20); }
+                    continue;
+                }
+                const side = F.x !== S.x ? Math.sign(F.x - S.x) : (Math.random() < 0.5 ? -1 : 1);
+                const need = Math.sqrt(Math.max(0, rs * rs - (F.y - S.y) * (F.y - S.y))) + 0.5;   // sideways distance that clears the overlap
+                F.x = S.x + side * Math.max(need, Math.abs(F.x - S.x));
+                F.vx += side * 80;
+                if (F.vy > 0) F.vy *= 0.5;                // soften the fall onto the person below
+            } else {                                      // both airborne: classic mass-weighted shove
+                const m1 = massOf(p1), m2 = massOf(p2), w1 = m2 / (m1 + m2), w2 = m1 / (m1 + m2);
+                const nx = dx / dist, ny = dy / dist;
+                p1.x -= nx * overlap * w1; p1.y -= ny * overlap * w1;
+                p2.x += nx * overlap * w2; p2.y += ny * overlap * w2;
+                p1.vx -= nx * 0.5 * w1 * 2; p2.vx += nx * 0.5 * w2 * 2;
             }
         }
     }
+}
+function giantHit(p1, p2, dx) {
+    const a = p1.giantT > 0 ? p1 : p2, v = a === p1 ? p2 : p1;
+    if (v._knockTick && bumpTick - v._knockTick < 24 && !(v.giantT > 0)) return;
+    if (a._knockTick && bumpTick - a._knockTick < 24 && v.giantT > 0) return;
+    const speed = Math.hypot(a.vx, a.vy);
+    const dir = Math.abs(dx) > 4 ? Math.sign(v.x - a.x) : (a.vx !== 0 ? Math.sign(a.vx) : (Math.random() < 0.5 ? -1 : 1));
+    if (v.giantT > 0) { knockAway(v, dir, speed, a); knockAway(a, -dir, speed, v); return; }   // giant against giant: both fly
+    if (shieldBlocks(v)) { a._knockTick = bumpTick; knockAway(a, -dir, speed * 0.6, v); return; }   // a shield bounces the giant back
+    if (p_isRocket(v)) return;                                                                 // too fast to be shoved
+    knockAway(v, dir, speed, a);
+}
+function knockAway(v, dir, srcSpeed, src) {
+    v._knockTick = bumpTick;
+    v.vx = dir * (520 + Math.min(900, srcSpeed * 0.9)) * (v.giantT > 0 ? 0.55 : 1);
+    v.vy = -(430 + Math.min(420, srcSpeed * 0.3));
+    v.mode = 'air'; v.plat = null; v.charged = false; v.squash = 1.3;
+    if (v.chainT > 0) releaseChain(v);
+    burst(v.x, v.y, src.color, 14, 260); ring(v.x, v.y, '#ffffff', 60);
+    if (v.local) { SFX.play('stumble'); haptic([40, 30, 60]); camShake = Math.max(camShake, 8); }
+    else if (src.local) { SFX.play('shatter'); haptic(25); camShake = Math.max(camShake, 4); }
 }
 
 function p_isRocket(p){ return (p.rocketFx||0) > 0.4; }   // mid-boost: too fast to be knocked off course
@@ -2127,19 +1850,21 @@ function updateCosmeticTrails(dt){
     for (const p of players){
         const trail = TRAIL_BY_ID[p.look && p.look.trail];
         const samples = p.trailSamples || (p.trailSamples = []);
+        if (p._lod || p._off){ if (samples.length) samples.length = 0; continue; }   // Gauntlet: nobody sees these
         p.trailEmit -= dt;
         for (const sample of samples) sample.age += dt;
-        while (samples.length && samples[0].age > 0.52) samples.shift();
+        const tLife = trailLife(trail);
+        while (samples.length && samples[0].age > tLife) samples.shift();
         if (!trail || trail.style === 'none' || p.finished || p.ufoHold || Math.hypot(p.vx,p.vy) < 90 || p.trailEmit > 0) continue;
-        samples.push({x:p.x,y:p.y,age:0});
-        if (samples.length > 14) samples.shift();
-        p.trailEmit = 0.035;
+        samples.push({x:p.x,y:p.y,age:0,s:Math.random()});
+        if (samples.length > trailMax(trail)) samples.shift();
+        p.trailEmit = trailRate(trail);
     }
 }
 function update(dt) {
     // Pausing just puts a menu on screen — the race itself keeps running underneath,
     // exactly like unpaused play, so nothing about the world or your own square freezes.
-    const bgRacing = state === 'paused' && gameMode === 'race';
+    const bgRacing = state === 'paused' && (gameMode === 'race' || gameMode === 'gauntlet');
     if (state !== 'playing' && !bgRacing) return;
 
     // platforms
@@ -2173,6 +1898,7 @@ function update(dt) {
 
     // Player-vs-player collisions (square bumping)
     resolveBumps();
+    for (const q of players) if (!q.remote && !q.ufoHold && !q.gone){ const w = PLAY_W(); if (q.x < q.r) q.x = q.r; else if (q.x > w - q.r) q.x = w - q.r; }   // bumps and shoves must never push anyone past the side walls (out of view)
     updateItemBoxes(dt);
     updateShots(dt);
     updateChains(dt);
@@ -2184,14 +1910,20 @@ function update(dt) {
     if (gameMode === 'escape') updateEscape(dt);
     else if (gameMode === 'parkour') updateParkour(dt);
     else if (gameMode === 'level') updateLevel(dt);
+    else if (gameMode === 'gauntlet') updateGauntlet(dt);
+    else if (window.buildMatch && window.Build) Build.update(dt);
 
     // camera — follows you normally, or the player you're spectating after you've finished
     const escapeSpectate = gameMode === 'escape' && players[0].escape.dead
         ? players.reduce((best, p) => !p.escape.dead && (!best || p.y < best.y) ? p : best, null)
         : null;
-    const camP = (spectating && spectateTarget && !spectateTarget.finished) ? spectateTarget : (escapeSpectate || players[0]);
-    const targetCam = camP.y - VH*0.62;
-    cameraY += (targetCam - cameraY) * Math.min(1, 12*dt);
+    const camP = (spectating && spectateTarget && !spectateTarget.finished) ? spectateTarget : (gameMode === 'gauntlet' ? gtCamTarget() : (escapeSpectate || players[0]));
+    if (freeCam && !canFreeCam()) freeCam = false;
+    if (!freeCam){
+        const targetCam = camP.y - VH*0.62;
+        cameraY += (targetCam - cameraY) * Math.min(1, 12*dt);
+    }
+    refreshWatchBar();
     if (camShake > 0.1) camShake *= Math.pow(0.001, dt); else camShake = 0;
     if (spectating) updateSpectate();
 
@@ -2212,6 +1944,9 @@ function update(dt) {
         }
     }
     particles.length = pIdx;
+    // Cap live particles (lower on slower quality levels) — the oldest are recycled first.
+    const maxP = [320, 180, 100][qLevel] * (gameMode === 'gauntlet' ? 0.5 : 1);
+    if (particles.length > maxP) { const dead = particles.splice(0, particles.length - maxP); for (const q of dead) particlePool.push(q); }
 
     // floaters
     let fIdx = 0;
@@ -2247,6 +1982,7 @@ function updatePosition() {
 
 /* ---------- End game ---------- */
 function checkEnd() {
+    if (window.buildMatch && window.Build) return Build.checkEnd();
     if (finishedCount >= 4) {
         state = 'finished';
         setTimeout(showResults, 1100);
@@ -2266,7 +2002,14 @@ function showResults() {
     const msgs = ["Unbeatable.","Silver, so close.","Bronze, solid.","Fourth. Rage!"];
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
-    sub.textContent = (msgs[you-1] || "") + `  ·  +${rw.coins} coins  ·  +${rw.xp} XP  ·  +${rw.passPoints} pass`;
+    sub.innerHTML = (msgs[you-1] || "") + (rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
+    { const me = sorted.find(p => p.local);                      // how close it was
+      if (me && me.finished){
+        let line = '';
+        if (you > 1 && sorted[0].finished) line = (me.finishTime - sorted[0].finishTime).toFixed(2) + ' s behind 1st';
+        else if (you === 1 && sorted[1] && sorted[1].finished) line = 'Won by ' + (sorted[1].finishTime - me.finishTime).toFixed(2) + ' s';
+        if (line) sub.innerHTML += '<span class="near">' + line + '</span>';
+      } }
     sub.style.color = you===1 ? 'var(--gold)' : 'var(--muted)';
 
     const board = document.getElementById('board');
@@ -2280,17 +2023,19 @@ function showResults() {
             <span>${p.name}</span><span class="time">${t}</span>`;
         board.appendChild(row);
     });
-    renderLootDrop('loot-race', rw);
+    if (rw.noDrop) document.getElementById('loot-race').innerHTML = ''; else renderLootDrop('loot-race', rw);
     showScreen('results');
 }
 
 /* ---------- Draw ---------- */
 function drawCosmeticTrails(viewTop, viewBottom){
     for (const p of players){
+        if (p._lod || p._off) continue;
         const trail = TRAIL_BY_ID[p.look && p.look.trail];
         const samples = p.trailSamples;
         if (!trail || trail.style === 'none' || !samples || !samples.length) continue;
         const visible = samples.filter(sample => sample.y >= viewTop && sample.y <= viewBottom);
+        if (trail.fx){ drawTrailFx(ctx, trail, visible, p.id); continue; }
         if ((trail.style === 'ribbon' || trail.style === 'comet') && visible.length > 1){
             ctx.save(); ctx.globalAlpha = 0.36; ctx.strokeStyle = trail.color; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
             ctx.beginPath(); visible.forEach((sample,i) => i ? ctx.lineTo(sample.x,sample.y) : ctx.moveTo(sample.x,sample.y)); ctx.stroke(); ctx.restore();
@@ -2312,7 +2057,7 @@ function drawCosmeticTrails(viewTop, viewBottom){
             } else if (trail.style === 'glitch'){
                 const jitter=((Math.floor(sample.age*90)+p.id)%3-1)*size*.65;ctx.fillRect(sample.x+jitter-size*.55,sample.y-size*.25,size*1.1,size*.5);
             } else if (trail.style === 'orbit'){
-                ctx.beginPath();ctx.ellipse(sample.x,sample.y,size*.8,size*.38,sample.age*7,0,Math.PI*2);ctx.strokeStyle=trail.color;ctx.lineWidth=.8*k;ctx.stroke();
+                ctx.beginPath();ctx.ellipse(sample.x,sample.y,size*.8,size*.38,sample.age*7,0,Math.PI*2);ctx.strokeStyle=trail.color;ctx.lineWidth=.8;ctx.stroke();
                 ctx.beginPath();ctx.arc(sample.x+Math.cos(sample.age*7)*size*.7,sample.y+Math.sin(sample.age*7)*size*.35,size*.2,0,7);ctx.fill();
             } else {
                 ctx.beginPath(); ctx.arc(sample.x,sample.y,size/2,0,Math.PI*2); ctx.fill();
@@ -2322,12 +2067,16 @@ function drawCosmeticTrails(viewTop, viewBottom){
     ctx.globalAlpha = 1;
 }
 
+var _menuPainted = false;                  // in the menu the world canvas is just a flat colour behind the UI: paint it once, not 60 times a second
 function draw() {
-    ctx.fillStyle = '#0d1017';
+    if (state==='menu' && _menuPainted) return;
+    ctx.fillStyle = (gameMode === 'gauntlet' && window.GT_BG) || '#0d1017';   // Gauntlet stages tint the floor colour (a cheap sky)
     ctx.fillRect(0,0,CW,CH);
+    _menuPainted = state==='menu';
     if (state==='menu') return;
     if (gameMode === 'parkour') drawParkourSky();
     else if (gameMode === 'level') drawLevelSky();
+    else if (gameMode === 'gauntlet') gtDrawSky();
 
     ctx.save();
     const shakeX = (Math.random()-0.5)*camShake;
@@ -2418,6 +2167,15 @@ function draw() {
             ctx.fillStyle=PLAT.fragile; roundRect(-pl.w/2,-pl.h/2,pl.w,pl.h,4); ctx.fill();
             ctx.globalAlpha=1; ctx.restore(); continue;
         }
+        if (pl.piece === 'saw' && window.Build && Build.drawSaw(ctx, pl)){ ctx.restore(); continue; }
+        if (pl.type === 'spike'){
+            const n = Math.max(4, Math.round(pl.w/14)), tw = pl.w/n, h = pl.h;
+            ctx.shadowBlur = 10; ctx.shadowColor = '#ff5470'; ctx.fillStyle = '#ff5470';
+            for (let i = 0; i < n; i++){ ctx.beginPath(); ctx.moveTo(-pl.w/2 + i*tw, h/2); ctx.lineTo(-pl.w/2 + (i+0.5)*tw, -h*0.95); ctx.lineTo(-pl.w/2 + (i+1)*tw, h/2); ctx.closePath(); ctx.fill(); }
+            ctx.shadowBlur = 0; ctx.fillStyle = '#7a1230'; ctx.fillRect(-pl.w/2, h/2 - 4, pl.w, 5);
+            if (pl.owner !== undefined){ ctx.fillStyle = PCOL[pl.owner]; ctx.fillRect(-pl.w/2, h/2 + 3, pl.w, 3); }
+            ctx.restore(); continue;
+        }
         // Draw the slide-range track for moving platforms (in world space, before local translate)
         if (pl.type==='moving' && pl.range>0){
             ctx.save();
@@ -2447,6 +2205,8 @@ function draw() {
         ctx.fillStyle=col;
         roundRect(-pl.w/2,-pl.h/2,pl.w,pl.h,5); ctx.fill();
         ctx.shadowBlur=0;
+        if ((pl.foundation || pl.piece === 'blink') && window.Build) Build.drawOverlay(ctx, pl);      // Build Race: stone foundation, flickering blink blocks
+        if (pl.owner !== undefined){ ctx.fillStyle = PCOL[pl.owner]; ctx.fillRect(-pl.w/2 + 5, pl.h/2 - 4, pl.w - 10, 3); }    // Build Race: who placed it
 
         if (pl.ceiling){
             const uh = 18, w = pl.w;
@@ -2523,13 +2283,13 @@ function draw() {
     drawItemBoxes();
     if (gameMode === 'escape') drawEscapeWorldBack();
     else if (gameMode === 'parkour') drawParkourWorldBack();
+    else if (gameMode === 'gauntlet') gtDrawWorldBack(viewTop, viewBottom);
     drawShockwaves();
     drawChains();
     drawWindFx();
     drawUfoBeams();
 
     // OPTIMALISATIE DEELTJES (Particles)
-    particlePoolInstance.update(dt);
     for (const q of particles){
         // Negeer deeltjes die buiten beeld vallen
         if (q.y < viewTop || q.y > viewBottom) continue;
@@ -2538,7 +2298,8 @@ function draw() {
         // Vierkanten (fillRect) zijn enorm veel sneller dan cirkels (arc)
         ctx.fillRect(q.x - q.size/2, q.y - q.size/2, q.size, q.size);
     }
-
+    ctx.globalAlpha=1;
+    drawShards();
 
     // floaters
     for (const f of floaters){
@@ -2553,6 +2314,7 @@ function draw() {
 
     // players
     const nowT = performance.now()/1000;
+    if (gameMode === 'gauntlet') gtPrepareDraw(viewTop, viewBottom);
     for (const p of players){
         if (p.finished) continue;
         
@@ -2584,7 +2346,6 @@ function draw() {
 
         // glow
         if (p.quakePending > 0 && Math.floor(p.quakePending*10)%2===0){ ctx.shadowBlur=24; ctx.shadowColor=ITEMS.quake.color; }
-        else if (p.charged){ ctx.shadowBlur=22; ctx.shadowColor=PLAT.boost; }
         else if (p.giantT > 0){ ctx.shadowBlur=26; ctx.shadowColor=ITEMS.giant.color; }
         else if (p.shieldT > 0){ ctx.shadowBlur=16+4*Math.sin(nowT*6); ctx.shadowColor=ITEMS.shield.color; }
         else if (p.windT > 0){ ctx.shadowBlur=14+8*Math.abs(Math.sin(nowT*8)); ctx.shadowColor=ITEMS.wind.color; }
@@ -2594,8 +2355,16 @@ function draw() {
 
         // SQUARE body
         const s = p.r;
-        if (!p.charged && p.look && p.look.skin){ drawSkinBody(ctx, s, k, skinById(p.look.skin)); }
-        else { ctx.fillStyle = p.charged ? PLAT.boost : p.color; roundRect(-s, -s, s*2, s*2, 4*k); ctx.fill(); }
+        if (p._lod && p._spr){
+            // Gauntlet crowd: a cached picture of the whole look (body, face, hat) instead of re-drawing every layer
+            const f = s / GT_SPRITE.half;
+            ctx.drawImage(p._spr, -GT_SPRITE.w / 2 * f, -GT_SPRITE.cy * f, GT_SPRITE.w * f, GT_SPRITE.h * f);
+        } else {
+        const cs = (p.look && p.look.costume && p.look.costume !== 'none' && window.Costumes && Costumes.has(p.look.costume)) ? p.look.costume : null;     // full-body costume
+        if (cs){ ctx.shadowBlur = 0; Costumes.back(ctx, s, k, cs, nowT); }
+        if (cs && Costumes.body(ctx, s, k, cs, nowT)){ /* the costume is the body */ }
+        else if (p.look && p.look.skin){ drawSkinBody(ctx, s, k, skinById(p.look.skin)); }
+        else { ctx.fillStyle = p.color; roundRect(-s, -s, s*2, s*2, 4*k); ctx.fill(); }
         ctx.shadowBlur=0;
         if (p.chainT > 0){ ctx.fillStyle='rgba(17,20,28,0.30)'; roundRect(-s,-s,s*2,s*2,4*k); ctx.fill(); }
         ctx.strokeStyle='rgba(13,16,23,0.55)'; ctx.lineWidth=2*Math.sqrt(k);
@@ -2604,12 +2373,15 @@ function draw() {
         // eyes
         ctx.fillStyle='#0d1017';
         const lx=Math.max(-3,Math.min(3,p.vx/500))*k, ly=Math.max(-2,Math.min(2,p.vy/900))*k;
-        ctx.beginPath(); ctx.arc(-4*k+lx,-2*k+ly,2.4*k,0,7); ctx.arc(4*k+lx,-2*k+ly,2.4*k,0,7); ctx.fill();
+        if (!(cs && Costumes.eyes(ctx, s, k, cs, nowT, lx, ly))){ ctx.beginPath(); ctx.arc(-4*k+lx,-2*k+ly,2.4*k,0,7); ctx.arc(4*k+lx,-2*k+ly,2.4*k,0,7); ctx.fill(); }
         if (p.chainT > 0){          
             ctx.strokeStyle='#0d1017'; ctx.lineWidth=1.6*k; ctx.beginPath();
             ctx.moveTo(-7*k,-7*k); ctx.lineTo(-2*k,-5.5*k); ctx.moveTo(7*k,-7*k); ctx.lineTo(2*k,-5.5*k); ctx.stroke();
         }
         if (p.look){ drawFaceAcc(ctx, s, k, p.look.face); drawHatAcc(ctx, s, k, p.look.hat, nowT); }
+        if (cs) Costumes.front(ctx, s, k, cs, nowT);
+        }
+        ctx.shadowBlur=0;
         
         // SHIELD
         if (p.shieldT > 0){
@@ -2637,14 +2409,19 @@ function draw() {
             tagY -= 16;
         }
         // name tag
-        if (!p.local){
+        if (!p.local && !p._lod && !p._noName){
             const hatLift = (p.look && p.look.hat && p.look.hat !== 'none') ? 12 * (p.r / 12) : 0;
             ctx.globalAlpha=0.65; ctx.fillStyle='#fff'; ctx.font='700 10px Space Grotesk'; ctx.textAlign='center';
-            ctx.fillText(p.name, p.x, tagY - hatLift); ctx.globalAlpha=1;
+            ctx.fillText(p.name, p.x, tagY - hatLift);
+            if (p.rkColor){ const tw = ctx.measureText(p.name).width / 2 + 7; ctx.fillStyle = p.rkColor; ctx.beginPath(); ctx.moveTo(p.x - tw, tagY - hatLift - 8); ctx.lineTo(p.x - tw + 3.5, tagY - hatLift - 4.5); ctx.lineTo(p.x - tw, tagY - hatLift - 1); ctx.lineTo(p.x - tw - 3.5, tagY - hatLift - 4.5); ctx.closePath(); ctx.fill(); }
+            ctx.globalAlpha=1;
         }
     }
     drawUfoCraft();
     if (gameMode === 'escape') drawEscapeWorldFront();
+    else if (gameMode === 'gauntlet') gtDrawWorldFront(viewTop, viewBottom);
+    if (window.Emotes) Emotes.draw(ctx);                          // emote bubbles above players
+    if (window.Finishers) Finishers.draw(ctx);                    // your finish effect (world space)
     ctx.restore();
 
     if (VIEW_OX > 0.5){                              
@@ -2658,6 +2435,7 @@ function draw() {
     if (gameMode === 'escape'){ drawEscapeOverlay(); drawEscapeGauge(); }
     else if (gameMode === 'parkour') drawParkourGauge();
     else if (gameMode === 'level') drawLevelGauge();
+    else if (gameMode === 'gauntlet'){ gtDrawOverlay(); gtDrawGauge(); }
     else drawMinimap();
 }
 
@@ -2718,20 +2496,64 @@ function drawMinimap() {
 /* ---------- Loop ---------- */
 let simAcc = 0, hitStop = 0, drewOnce = false;
 const SNAP_HZ = [30, 60, 90, 120, 144];
+/* ---------- Render interpolation ---------- */
+let prevCam = 0;
+function snapshotPrev(){
+    for (const p of players){ p._px = p.x; p._py = p.y; }
+    for (const pl of platforms){ if (pl.type === 'moving') pl._px = pl.x; }
+    prevCam = cameraY;
+}
+function applyInterp(a){
+    const saved = [];
+    for (const p of players){
+        if (p._px === undefined || Math.abs(p.x - p._px) > 150 || Math.abs(p.y - p._py) > 150) continue;   // teleport/respawn: no blend
+        saved.push(p, p.x, p.y);
+        p.x = p._px + (p.x - p._px) * a; p.y = p._py + (p.y - p._py) * a;
+    }
+    const sp = [];
+    for (const pl of platforms){
+        if (pl.type !== 'moving' || pl._px === undefined || Math.abs(pl.x - pl._px) > 150) continue;
+        sp.push(pl, pl.x); pl.x = pl._px + (pl.x - pl._px) * a;
+    }
+    const realCam = cameraY;
+    if (Math.abs(cameraY - prevCam) < 150) cameraY = prevCam + (cameraY - prevCam) * a;
+    return () => {
+        for (let i = 0; i < saved.length; i += 3){ saved[i].x = saved[i+1]; saved[i].y = saved[i+2]; }
+        for (let i = 0; i < sp.length; i += 2) sp[i].x = sp[i+1];
+        cameraY = realCam;
+    };
+}
+
+let qSlow = 0, qFast = 0;
+function adaptQuality(rawDt){
+    if (rawDt > 0.1) return;                          // tab switch / hitch, ignore
+    if (rawDt > 0.024) { qSlow++; qFast = 0; } else { qFast++; qSlow = Math.max(0, qSlow - 1); }
+    if (qSlow >= 45 && qLevel < QUALITY_STEPS.length - 1) {   // ~45 slow frames: step down
+        qLevel++; dprCap = QUALITY_STEPS[qLevel].dpr; glowK = QUALITY_STEPS[qLevel].glow;
+        qSlow = 0; resize();
+    }
+}
 function loop(t){
     let dt=(t-last)/1000; last=t;
-    if (dt>0.1) dt=0.1;              // avoid spiral on lag
+    adaptQuality(dt);
+    if (dt>0.25) dt=0.25;            // tab switch / long hitch: don't try to catch up more than this
     for (const hz of SNAP_HZ){ const iv = 1/hz; if (Math.abs(dt - iv) < iv*0.06){ dt = iv; break; } }
     if (hitStop > 0){ hitStop -= dt; simAcc += dt * 0.2; }
     else simAcc += dt;
+    { const hide = state === 'menu'; if (canvas._hidden !== hide){ canvas._hidden = hide; canvas.style.visibility = hide ? 'hidden' : 'visible'; } }      // the menu covers the whole screen: no need to composite the world canvas behind it
     let steps = 0;
-    while (simAcc >= SIM_DT - 1e-6 && steps < 6) { update(SIM_DT); simAcc -= SIM_DT; steps++; }
+    while (simAcc >= SIM_DT - 1e-6 && steps < 10) { snapshotPrev(); update(SIM_DT); simAcc -= SIM_DT; steps++; }
     if (simAcc < 0) simAcc = 0;
-    if (steps === 6) simAcc = 0;
-    
-    draw(); // Altijd tekenen voor vloeiende 120Hz/144Hz animaties
+    if (steps === 10) simAcc %= SIM_DT;   // only throw away whole steps we truly can't afford
+
+    // The simulation runs at a fixed 60 Hz, but screens refresh at 60/90/120 Hz and frame times
+    // jitter. Draw the world blended between the last two sim states so motion stays even.
+    const a = Math.min(1, simAcc / SIM_DT);
+    const restore = applyInterp(a);
+    draw();
+    restore();
     drewOnce = true;
-    
+
     requestAnimationFrame(loop);
 }
 
@@ -2782,29 +2604,40 @@ function openPrompt(title, sub, buttons) {
 }
 function resumeRace() {
     showScreen('');
-    matchStart += Date.now() - pauseStart;   // paused time doesn't count
+    if (state === 'paused' && pauseStart > 0){ matchStart += Date.now() - pauseStart; pauseStart = 0; }   // paused time doesn't count (and never from a pause that didn't happen: that made finish times hugely negative)
     state = 'playing';
 }
 function quitToMenu() {
+    if (window.buildMatch && window.Build){ Build.leave(true); return; }
     if (typeof stopSpectate === 'function') stopSpectate();
     state = 'menu'; dragging = false;
     hud.style.display = 'none';
     if (gameMode === 'parkour') pkWriteSave();          // leaving mid-climb keeps your spot
-    gameMode = 'race'; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level'); lv = null;
+    if (window.rankedMatch) Ranked.forfeit(true);
+    if (gameMode === 'gauntlet') gtLeave(true);
+    gameMode = 'race'; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level', 'mode-gauntlet'); lv = null;
     refreshStartMeta();
     showScreen('start');
 }
+function grantFinishedRaceReward(){            // a finished race always pays out (its chest waits in the queue until the home screen)
+    if (gameMode !== 'race' || window.rankedMatch || !players[0] || !players[0].finished) return;
+    const order = [...players].sort((a,b) => a.finished && b.finished ? a.finishTime-b.finishTime : a.finished ? -1 : b.finished ? 1 : a.y-b.y);
+    try { rewardRace(order.indexOf(players[0]) + 1, true, matchLootId); } catch(e){}
+}
 function restartRace() {
+    if (window.buildMatch && window.Build){ Build.leave(false); window.buildQueued = true; startMatchmaking(); return; }
+    grantFinishedRaceReward();
     if (typeof stopSpectate === 'function') stopSpectate();
     state = 'menu'; dragging = false;
     hud.style.display = 'none';
     if (gameMode === 'escape') startEscape();
     else if (gameMode === 'parkour') { pkClearSave(); pkStart(null); }   // "Restart" = a fresh climb from the ground
     else if (gameMode === 'level') lvStart(lv.idx);
+    else if (gameMode === 'gauntlet') gtForfeit();
     else startMatchmaking();
 }
 function giveUpToResults() {
-    state = 'finished';
+    state = 'finished'; if (typeof showFinishMenu === 'function') showFinishMenu(false);
     showScreen('');
     showResults();
 }
@@ -2812,6 +2645,7 @@ function syncSettingsUI(){
     const mOn = SFX.music.on, sOn = !SFX.muted;
     document.getElementById('set-music-on').classList.toggle('on', mOn);
     document.getElementById('set-sfx-on').classList.toggle('on', sOn);
+    document.getElementById('set-haptics').classList.toggle('on', hapticsOn);
     document.getElementById('set-music-vol').value = Math.round(SFX.musVol * 100);
     document.getElementById('set-sfx-vol').value = Math.round(SFX.sfxVol * 100);
 }
@@ -2819,20 +2653,44 @@ let settingsReturn = 'start';
 function openSettings(from){ settingsReturn = from || 'start'; syncSettingsUI(); showScreen('settings'); }
 document.getElementById('btn-settings').addEventListener('click', () => openSettings('start'));
 document.getElementById('set-close').addEventListener('click', () => showScreen(settingsReturn));
+document.getElementById('btn-gems').addEventListener('click', () => { menuTab('shop'); renderShop('resources'); SFX.play('count'); });
+document.getElementById('set-haptics').addEventListener('click', () => {
+    hapticsOn = !hapticsOn; try { localStorage.setItem('rr_haptics', hapticsOn ? '1' : '0'); } catch(e){}
+    document.getElementById('set-haptics').classList.toggle('on', hapticsOn); if (hapticsOn) haptic(30);
+});
 document.getElementById('set-music-on').addEventListener('click', () => {
     const on = SFX.music.toggle();
-    if (on){ SFX.setMuted(false); SFX.music.set(state === 'menu' ? 'menu' : 'race'); }
+    if (on){ SFX.setMuted(false); SFX.music.set(SFX.trackFor()); }
     syncSettingsUI(); syncMuteBtn();
 });
 document.getElementById('set-sfx-on').addEventListener('click', () => {
     SFX.setMuted(!SFX.muted);
-    if (!SFX.muted) SFX.play('item'); else SFX.music.set(SFX.music.on ? (state==='menu'?'menu':'race') : null);
+    if (!SFX.muted) SFX.play('item'); else SFX.music.set(SFX.music.on ? SFX.trackFor() : null);
     syncSettingsUI(); syncMuteBtn();
 });
 document.getElementById('set-music-vol').addEventListener('input', e => SFX.setMusVol(e.target.value/100));
 document.getElementById('set-sfx-vol').addEventListener('input', e => { SFX.setSfxVol(e.target.value/100); });
 document.getElementById('set-sfx-vol').addEventListener('change', () => SFX.play('coin'));
 document.getElementById('set-test').addEventListener('click', () => SFX.play('finish'));
+document.getElementById('set-odds').addEventListener('click', () => { if (window.Odds) Odds.show(); });
+document.getElementById('set-privacy').addEventListener('click', () => { window.open('privacy.html', '_blank'); });
+document.getElementById('set-delete').addEventListener('click', () => {
+    const panel = document.querySelector('#s-settings .set-panel');
+    if (panel.querySelector('.set-confirm')) return;
+    const box = document.createElement('div'); box.className = 'set-confirm';
+    box.innerHTML = '<p>Delete your account for good? Your account, cloud save, profile and friends are removed and this phone is cleared. This cannot be undone.</p>';
+    const yes = document.createElement('button'); yes.className = 'btn'; yes.textContent = 'Yes, delete everything';
+    const no = document.createElement('button'); no.className = 'btn ghost'; no.style.marginTop = '10px'; no.textContent = 'Cancel';
+    yes.addEventListener('click', async () => {
+        yes.disabled = true; yes.textContent = 'Deleting...';
+        try {
+            if (window.Cloud && Cloud.deleteAccount) await Cloud.deleteAccount();
+            else { Object.keys(localStorage).filter(k => k.startsWith('rr_')).forEach(k => localStorage.removeItem(k)); location.reload(); }
+        } catch (e) { yes.disabled = false; yes.textContent = 'Yes, delete everything'; toast(e && e.code === 'auth/requires-recent-login' ? 'Sign in again, then retry' : 'Could not delete. Check your connection and try again'); }
+    });
+    no.addEventListener('click', () => box.remove());
+    box.appendChild(yes); box.appendChild(no); panel.appendChild(box);
+});
 document.getElementById('set-reset').addEventListener('click', () => {
     const panel = document.querySelector('#s-settings .set-panel');
     if (panel.querySelector('.set-confirm')) return;
@@ -2843,6 +2701,7 @@ document.getElementById('set-reset').addEventListener('click', () => {
     const no = document.createElement('button'); no.className = 'btn ghost'; no.style.marginTop = '10px'; no.textContent = 'Cancel';
     yes.addEventListener('click', () => {
         ['rr_coins','rr_profile','rr_esc_best_score','rr_pk_best','rr_pk_best_time','rr_pk_save_v1','rr_pk_levels_v1','rr_pk_levels_v2'].forEach(k => { try { localStorage.removeItem(k); } catch(e){} });
+        if (window.Cloud) Cloud.afterReset();
         refreshStartMeta(); showScreen('start');
     });
     no.addEventListener('click', () => box.remove());
@@ -2851,12 +2710,25 @@ document.getElementById('set-reset').addEventListener('click', () => {
     try { box.scrollIntoView({ block:'nearest' }); } catch(e){}
 });
 document.getElementById('btn-pause').addEventListener('click', () => {
-    openPrompt('PAUSED', 'Catch your breath.', [
+    if (gameMode === 'gauntlet'){ gtPauseMenu(); return; }
+    if (window.rankedMatch){ Ranked.pauseMenu(); return; }
+    const btns = [
         ['Resume', resumeRace],
         ['Settings', () => openSettings('pause'), true],
-        ['Restart', restartRace, true],
+        ['Play again', restartRace, true],
         ['Main menu', quitToMenu, true],
-    ]);
+    ];
+    if (gameMode === 'level' && lv && dimLoad(DIMENSIONS[curDim]).stars[lv.idx] === 0) {       // stuck on a level: skip it (no stars) for gems
+        let armed = false;
+        btns.splice(2, 0, ['Skip level · ' + SKIP_LEVEL_GEMS + ' gems', function () {
+            if (!armed) { armed = true; this.textContent = 'Tap again to skip'; return; }
+            if (gemCount() < SKIP_LEVEL_GEMS) { toast('You need ' + SKIP_LEVEL_GEMS + ' gems'); return; }
+            store('rr_gems', gemCount() - SKIP_LEVEL_GEMS);
+            const dm = DIMENSIONS[curDim], d = dimLoad(dm); d.skipped = d.skipped || []; d.skipped[lv.idx] = true; dimSave(dm, d);
+            showScreen(''); state = 'playing'; quitToMenu(); openLevels(); toast('Level skipped');
+        }, true]);
+    }
+    openPrompt('PAUSED', 'Catch your breath.', btns);
 });
 function ordinal(n){ return n===1?'1st':n===2?'2nd':n===3?'3rd':n+'th'; }
 let spectating = false, spectateTarget = null;
@@ -2864,25 +2736,40 @@ function stillRacing(){ return players.filter(p => !p.local && !p.finished); }
 function setSpectate(target){
     spectateTarget = target;
     const bar = document.getElementById('spectate-bar');
-    if (target){ document.getElementById('spectate-name').textContent = target.name; bar.style.display = 'flex'; }
+    if (target){ document.getElementById('spectate-name').textContent = target.name; const ey = document.getElementById('spectate-eye'); if (ey) ey.textContent = 'SPECTATING'; bar.style.display = 'flex'; }
     else bar.style.display = 'none';
 }
+// The bar is also shown to a finished/knocked-out player who is not spectating: it then offers 'follow' arrows next to the free camera.
+function refreshWatchBar(){
+    const bar = document.getElementById('spectate-bar'); if (!bar) return;
+    const want = spectating ? true : canFreeCam();
+    if (!spectating){
+        const eye = document.getElementById('spectate-eye'), nm = document.getElementById('spectate-name');
+        const txt = freeCam ? 'FREE VIEW' : 'WATCHING', sub = freeCam ? 'Tap arrow: follow' : 'Drag to look';
+        if (eye && eye.textContent !== txt) eye.textContent = txt;
+        if (nm && nm.textContent !== sub && (freeCam || !spectateTarget)) nm.textContent = sub;
+    }
+    if (bar.style.display !== (want ? 'flex' : 'none')) bar.style.display = want ? 'flex' : 'none';
+}
 function cycleSpectate(dir){
+    if (!spectating){ freeCam = false; panDrag = null; SFX.play('count'); return; }
     const list = stillRacing();
     if (!list.length){ return; }
+    freeCam = false;
     let i = list.indexOf(spectateTarget);
     i = (i + dir + list.length) % list.length;
     setSpectate(list[i]);
     SFX.play('count');
 }
 function startSpectate(){
-    spectating = true;
+    spectating = true; freeCam = false;
     resumeRace();                                   // unpause and let the race keep running
+    showFinishMenu(true);
     const list = stillRacing();
     setSpectate(list[0] || null);
 }
 function stopSpectate(){
-    spectating = false; spectateTarget = null;
+    spectating = false; spectateTarget = null; freeCam = false; panDrag = null;
     const bar = document.getElementById('spectate-bar');
     if (bar) bar.style.display = 'none';
 }
@@ -2900,8 +2787,21 @@ function updateSpectate(){
 document.getElementById('spectate-prev').addEventListener('click', (e) => { e.stopPropagation(); cycleSpectate(-1); });
 document.getElementById('spectate-next').addEventListener('click', (e) => { e.stopPropagation(); cycleSpectate(1); });
 
+// "Main menu" button that appears the moment YOU finish a race. Your rewards are still granted.
+const finishMenuBtn = document.getElementById('finish-menu');
+function showFinishMenu(on){ finishMenuBtn.style.display = on ? 'flex' : 'none'; }
+function leaveRaceToMenu(){
+    const order = [...players].sort((a,b) => a.finished && b.finished ? a.finishTime-b.finishTime : a.finished ? -1 : b.finished ? 1 : a.y-b.y);
+    const place = order.indexOf(players[0]) + 1;
+    try { rewardRace(place, !!players[0].finished, matchLootId); } catch(e){}
+    stopSpectate(); showFinishMenu(false);
+    state = 'menu'; gameMode = 'race'; hud.style.display = 'none';
+    document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level');
+    refreshStartMeta(); showScreen('start');
+}
+finishMenuBtn.addEventListener('click', e => { e.stopPropagation(); SFX.play('count'); giveUpToResults(); });      // while spectating: jump to the results (play again / main menu are there)
 function maybePromptBotsDone() {
-    if (botsDonePrompted || !players[0].finished) return;   // only makes sense once YOU'RE already done
+    if (window.buildMatch || botsDonePrompted || !players[0].finished) return;   // only makes sense once YOU'RE already done
     if (players.slice(1).every(b => b.finished)) return;    // everyone's in — the race is just ending normally
     botsDonePrompted = true;
     const place = [...players].sort((a,b)=>{
@@ -2909,13 +2809,12 @@ function maybePromptBotsDone() {
         return a.finished ? -1 : b.finished ? 1 : a.y - b.y;
     }).indexOf(players[0]) + 1;
     setTimeout(() => openPrompt('YOU FINISHED ' + ordinal(place).toUpperCase(), "The others are still racing. What do you want to do?", [
-        ['Keep watching', startSpectate],
+        ['Play again', restartRace],
         ['View results', giveUpToResults, true],
-        ['Restart', restartRace, true],
+        ['Spectate', startSpectate, true],
     ]), 900);
 }
 
-document.getElementById('btn-find').addEventListener('click', startMatchmaking);
 document.getElementById('btn-again').addEventListener('click', startMatchmaking);
 document.getElementById('btn-results-menu').addEventListener('click', () => {
     state = 'menu'; gameMode = 'race'; hud.style.display = 'none';
@@ -2928,6 +2827,8 @@ let matchBotNames = [];   // the 3 bot names for THIS match (index 1..3)
 let matchHumanSlot = 0;    // 0 = no human-profile bot this race; 1-3 = which slot has one
 
 function startMatchmaking() {
+    window.rankedMatch = false; window.RACE_BAND = undefined; window.matchBots = null; window.partyMatch = null;   // a normal quick match
+    window.buildMatch = !!window.buildQueued; window.buildQueued = false; if (!window.buildMatch && window.Build) Build.leave(false);
     matchLootId = newLootId('race');
     // Decide ONCE, before the lobby even builds, whether this match has a "human" bot and
     // who it is — so the name shown in the lobby always matches who behaves that way in
@@ -2951,16 +2852,33 @@ function startMatchmaking() {
 function startGame() {
     gameMode = 'race'; esc = null; pk = null; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level'); lv = null;
     showScreen(''); // hide all overlays
+    if (window.buildMatch && window.Build) return Build.begin();                 // Build Race makes its own course
     generateLevel(matchSeed); initPlayers(); botsDonePrompted = false;
+    if (window.matchBots && window.BotRoster) BotRoster.applyTo(players.slice(1), window.matchBots);   // Ranked: roster opponents with their own skill
+    // Quick match: now and then one bot is genuinely good (a roster bot rated like a top player), so wins are earned. Not for beginners.
+    else if (!window.rankedMatch && !window.partyMatch && window.BotRoster && prog().races >= 5 && Math.random() < 0.35) {
+        const slot = 1 + Math.floor(Math.random() * 3), rb = BotRoster.pick(1, { mmr: 1450 + Math.random() * 250, spread: 50 })[0];
+        if (rb) BotRoster.applyTo([players[slot]], [Object.assign({}, rb, { name: players[slot].name, look: players[slot].look })], { color: false });
+    }
     beginRound();
+}
+// Bots do not all react to GO at the same instant: a few are quick off the line, most take their time (a human aims during the countdown and fires at once).
+function staggerBotStarts(){
+    for (const p of players){
+        if (p.local || p.finished) continue;
+        const r = Math.random();
+        p.idleT = 1;                                        // the landing wait is already over at the start
+        p.thinkT = 0.18 + r * r * 1.35 + (p.thinkScale ? (p.thinkScale - 1) * 0.3 : 0);
+        p.hesitating = false;
+    }
 }
 function beginRound() {
     lastPlace = 0;
     hud.style.display='block';
-    if (typeof SFX !== 'undefined' && SFX.music) SFX.music.set('race');
+    if (typeof SFX !== 'undefined' && SFX.music) SFX.music.set(SFX.trackFor(true));
     dragging = false;
     cameraY = START_Y - VH*0.62;
-    particles=[]; floaters=[]; shots=[]; shockwaves=[]; shardParticles=[]; timeScale=1; itemHUD.key='';
+    particles=[]; floaters=[]; shots=[]; shockwaves=[]; shardParticles=[]; timeScale=1; itemHUD.key=''; if (window.Finishers) Finishers.clear();
     hintTimer=4; hintEl.style.opacity=1; hintEl.style.display='block';
 
     state='countdown';
@@ -2972,6 +2890,7 @@ function beginRound() {
             SFX.play(s[0]==='GO!' ? 'go' : 'count');
             if (s[0]==='GO!'){
                 state='playing'; matchStart=Date.now();
+                staggerBotStarts();
                 setTimeout(()=>countdownEl.style.display='none',600);
             }
         }, i*800);
@@ -2988,7 +2907,26 @@ const ESC_PICKUPS = { rocket:0.40, shield:0.32, giant:0.28 };   // no Super Boun
 const ESC_WIDTH_MUL = 1.3;      // wider platforms than the race
 const ESC_METERS = 10;          // px per displayed meter
 
-function store(k, v){ try { localStorage.setItem(k, String(v)); } catch(e){} }
+function store(k, v){
+    try { localStorage.setItem(k, String(v)); } catch(e){}
+    if (k === 'rr_coins' || k === 'rr_gems') paintWallet(k);          // the top bar changes the moment you spend or earn
+    if (window.Cloud) Cloud.touch();
+}
+let _walletPrev = {};
+setInterval(() => { for (const k of ['rr_coins', 'rr_gems']) { const v = Math.max(0, +localStorage.getItem(k) || 0); if (_walletPrev[k] !== undefined && _walletPrev[k] !== v) paintWallet(k); } }, 250);       // safety net: the top bar always follows the real value
+// not enough gems: take the player to the gem shop
+function goGemShop(){
+    showScreen('start'); try { menuTab('shop'); renderShop('resources'); } catch(e){}
+}
+function paintWallet(k){
+    const isC = k === 'rr_coins', el = document.getElementById(isC ? 'wallet-num' : 'gem-num'); if (!el) return;
+    const v = Math.max(0, +localStorage.getItem(k) || 0), prev = _walletPrev[k];
+    el.textContent = isC ? String(v) : v.toLocaleString('en-US');
+    _walletPrev[k] = v;
+    if (prev === undefined || prev === v) return;
+    const pill = el.closest('button'); if (!pill) return;
+    pill.classList.remove('w-up', 'w-down'); void pill.offsetWidth; pill.classList.add(v > prev ? 'w-up' : 'w-down');
+}
 function load(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : Number(v); } catch(e){ return d; } }
 
 // Canvas-ready copies of the item icons, so power-ups on the map use the exact same art as the HUD
@@ -3085,6 +3023,7 @@ function startEscape(){
     matchHumanSlot = 0;
     matchBotNames = [];
     initPlayers();
+    if (window.BotRoster) BotRoster.applyTo(players.slice(1), BotRoster.pick(3, { mmr:Math.max(1200, prog().rk.mmr + 100), spread:260 }));   // named roster bots, some of them good
     for (const p of players) p.escape = escRunnerState();
     players[0].x = pw/2;
     beginRound();
@@ -3416,7 +3355,8 @@ function drawEscapeOverlay(){
         ctx.strokeStyle = 'rgba(255,84,112,0.55)'; ctx.lineWidth = 1.2;
         roundRect(cx-34, by-13, 68, 26, 13); ctx.stroke();
         ctx.fillStyle = '#ff5470'; ctx.font = '700 12px Space Grotesk'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('▼ ' + mDown + ' m', cx, by+1);
+        ctx.fillText(mDown + ' m', cx + 7, by+1);
+        ctx.beginPath(); ctx.moveTo(cx-24, by-3); ctx.lineTo(cx-14, by-3); ctx.lineTo(cx-19, by+4); ctx.closePath(); ctx.fill();
         ctx.textBaseline = 'alphabetic';
     }
 }
@@ -3466,35 +3406,36 @@ const RARITY = {
     common:    { label:'Common',    color:'#9aa3b5' },
     rare:      { label:'Rare',      color:'#5b8def' },
     epic:      { label:'Epic',      color:'#b3a9ff' },
+    mythic:    { label:'Mythic',    color:'#ff4d7d' },       // between epic and legendary
     legendary: { label:'Legendary', color:'#ffcf3f' },
 };
 const SKINS = [
     { id:'classic',  name:'Classic',     color:'#35e0c8', price:0,    rarity:'common',    pat:{k:'solid'} },
     { id:'lime',     name:'Lime',        color:'#9be15d', price:250,  rarity:'common',    pat:{k:'solid'} },
     { id:'ember',    name:'Ember',       color:'#ff9838', price:300,  rarity:'common',    pat:{k:'solid'} },
-    { id:'frost',    name:'Frostbite',   color:'#cfe9ff', price:300,  rarity:'common',    pat:{k:'solid'} },
+    { id:'frost',    name:'Frost',   color:'#cfe9ff', price:300,  rarity:'common',    pat:{k:'solid'} },
     { id:'rose',     name:'Rose',        color:'#ff7a90', price:450,  rarity:'common',    pat:{k:'solid'} },
     { id:'midnight', name:'Midnight',    color:'#5b8def', price:500,  rarity:'common',    pat:{k:'solid'} },
-    { id:'violet',   name:'Ultraviolet', color:'#b3a9ff', price:650,  rarity:'rare',      pat:{k:'solid'} },
+    { id:'violet',   name:'Violet', color:'#b3a9ff', price:650,  rarity:'rare',      pat:{k:'solid'} },
     { id:'polka',    name:'Polka',       color:'#ffcf3f', price:600,  rarity:'rare',      pat:{k:'dots', a:'#ffcf3f', b:'#fff4c2'} },
     { id:'sunset',   name:'Sunset',      color:'#ff7a5c', price:700,  rarity:'rare',      pat:{k:'grad', a:'#ffcf3f', b:'#ff5470'} },
     { id:'ocean',    name:'Ocean',       color:'#46b3e6', price:700,  rarity:'rare',      pat:{k:'grad', a:'#35e0c8', b:'#5b6ef0'} },
     { id:'candy',    name:'Candy',       color:'#ff8fb1', price:900,  rarity:'rare',      pat:{k:'stripes', a:'#ffffff', b:'#ff6f9c'} },
     { id:'camo',     name:'Camo',        color:'#6f8f4e', price:900,  rarity:'rare',      pat:{k:'camo', a:'#6f8f4e', b:'#4a6333', c:'#a3b87a'} },
     { id:'tiger',    name:'Tiger',       color:'#ff9838', price:1200, rarity:'epic',      pat:{k:'tiger', a:'#ff9838', b:'#1a1208'} },
-    { id:'checker',  name:'Finish Line', color:'#e8ecf2', price:1500, rarity:'epic',      pat:{k:'checker', a:'#f4f6fa', b:'#1a1d24'} },
-    { id:'lava',     name:'Magma',       color:'#ff5a36', price:1600, rarity:'epic',      pat:{k:'lava'} },
+    { id:'checker',  name:'Checkered', color:'#e8ecf2', price:1500, rarity:'epic',      pat:{k:'checker', a:'#f4f6fa', b:'#1a1d24'} },
+    { id:'lava',     name:'Lava',       color:'#ff5a36', price:1600, rarity:'epic',      pat:{k:'lava'} },
     { id:'galaxy',   name:'Galaxy',      color:'#6b4fd8', price:1800, rarity:'epic',      pat:{k:'galaxy'} },
     { id:'chrome',   name:'Chrome',      color:'#c9d1e3', price:2500, rarity:'legendary', pat:{k:'metal', stops:['#f7f9fc','#9aa4b8','#eef2f8','#6b7488']} },
-    { id:'gold',     name:'Gold Rush',   color:'#ffcf3f', price:3000, rarity:'legendary', pat:{k:'metal', stops:['#fff4c2','#e0a525','#ffe28a','#b07a14']} },
-    { id:'carbon',   name:'Carbon Apex',  color:'#dce5ed', price:1100, rarity:'epic',      pat:{k:'carbon', a:'#242d38', b:'#657481'} },
-    { id:'sakura',   name:'Sakura Drift', color:'#ff85b3', price:1250, rarity:'epic',      pat:{k:'petal', a:'#6f284e', b:'#ff85b3', c:'#ffe2ef'} },
-    { id:'monsoon',  name:'Monsoon Jade', color:'#54efd0', price:1400, rarity:'epic',      pat:{k:'waves', a:'#073b43', b:'#18a98f', c:'#a5fff0'} },
-    { id:'glacier',  name:'Glacier Core', color:'#bdefff', price:1750, rarity:'epic',      pat:{k:'marble', a:'#254966', b:'#bdefff', c:'#ffffff'} },
-    { id:'circuit',  name:'Circuit Saint',color:'#70ffbb', price:2200, rarity:'legendary', pat:{k:'circuit', a:'#092c2a', b:'#22d58e', c:'#fff27a'} },
-    { id:'eclipse',  name:'Black Eclipse',color:'#f0cbff', price:2600, rarity:'legendary', pat:{k:'holo', stops:['#171521','#552c72','#c14d91','#3ce0ca']} },
-    { id:'starforge',name:'Starforge',    color:'#ff9f5c', price:2900, rarity:'legendary', pat:{k:'holo', stops:['#35142c','#a82f52','#ff9f5c','#ffe59c']} },
-    { id:'deepsea',  name:'Abyssal Bloom',color:'#57c6ff', price:3400, rarity:'legendary', pat:{k:'petal', a:'#102e5b', b:'#397ee8', c:'#9bf0ff'} },
+    { id:'gold',     name:'Gold',   color:'#ffcf3f', price:3000, rarity:'legendary', pat:{k:'metal', stops:['#fff4c2','#e0a525','#ffe28a','#b07a14']} },
+    { id:'carbon',   name:'Carbon',  color:'#dce5ed', price:1100, rarity:'epic',      pat:{k:'carbon', a:'#242d38', b:'#657481'} },
+    { id:'sakura',   name:'Sakura', color:'#ff85b3', price:1250, rarity:'epic',      pat:{k:'petal', a:'#6f284e', b:'#ff85b3', c:'#ffe2ef'} },
+    { id:'monsoon',  name:'Jade', color:'#54efd0', price:1400, rarity:'epic',      pat:{k:'waves', a:'#073b43', b:'#18a98f', c:'#a5fff0'} },
+    { id:'glacier',  name:'Glacier', color:'#bdefff', price:1750, rarity:'epic',      pat:{k:'marble', a:'#254966', b:'#bdefff', c:'#ffffff'} },
+    { id:'circuit',  name:'Circuit',color:'#70ffbb', price:2200, rarity:'legendary', pat:{k:'circuit', a:'#092c2a', b:'#22d58e', c:'#fff27a'} },
+    { id:'eclipse',  name:'Eclipse',color:'#f0cbff', price:2600, rarity:'legendary', pat:{k:'holo', stops:['#171521','#552c72','#c14d91','#3ce0ca']} },
+    { id:'starforge',name:'Forge',    color:'#ff9f5c', price:2900, rarity:'legendary', pat:{k:'holo', stops:['#35142c','#a82f52','#ff9f5c','#ffe59c']} },
+    { id:'deepsea',  name:'Deep Sea',color:'#57c6ff', price:3400, rarity:'legendary', pat:{k:'petal', a:'#102e5b', b:'#397ee8', c:'#9bf0ff'} },
 ];
 const HATS = [
     { id:'none',       name:'None',        price:0,    rarity:'common' },
@@ -3513,12 +3454,12 @@ const HATS = [
     { id:'wizard',     name:'Wizard',      price:1300, rarity:'epic' },
     { id:'halo',       name:'Halo',        price:2200, rarity:'legendary' },
     { id:'crown',      name:'Crown',       price:3000, rarity:'legendary' },
-    { id:'flighthelm', name:'Aero Mk. IV',  price:1450, rarity:'epic' },
-    { id:'foxcrest',   name:'Foxfire Crest',price:1650, rarity:'epic' },
-    { id:'headband',   name:'Redline Wrap', price:1850, rarity:'epic' },
-    { id:'spacehelm',  name:'Orbit Helmet', price:2450, rarity:'legendary' },
-    { id:'petalcrown', name:'Sakura Crown', price:2750, rarity:'legendary' },
-    { id:'voidhorns',  name:'Void Antlers', price:3600, rarity:'legendary' },
+    { id:'flighthelm', name:'Pilot Helmet',  price:1450, rarity:'epic' },
+    { id:'foxcrest',   name:'Fox Hood',price:1650, rarity:'epic' },
+    { id:'headband',   name:'Headband', price:1850, rarity:'epic' },
+    { id:'spacehelm',  name:'Space Helmet', price:2450, rarity:'legendary' },
+    { id:'petalcrown', name:'Blossom Crown', price:2750, rarity:'legendary' },
+    { id:'voidhorns',  name:'Dark Antlers', price:3600, rarity:'legendary' },
 ];
 const FACES = [
     { id:'none',     name:'None',          price:0,    rarity:'common' },
@@ -3533,41 +3474,69 @@ const FACES = [
     { id:'bandit',   name:'Bandit Mask',   price:700,  rarity:'epic' },
     { id:'aviator',  name:'Aviators',      price:900,  rarity:'epic' },
     { id:'monocle',  name:'Monocle',       price:1200, rarity:'epic' },
-    { id:'visor',    name:'Cyber Visor',   price:2000, rarity:'legendary' },
-    { id:'hologlass',name:'Holo Lenses',    price:1450, rarity:'epic' },
-    { id:'startrace',name:'Star Tracer',    price:1750, rarity:'epic' },
-    { id:'frostmark',name:'Frost Sigil',    price:1950, rarity:'epic' },
-    { id:'foxmark',  name:'Foxfire Mark',   price:2300, rarity:'legendary' },
+    { id:'visor',    name:'Visor',   price:2000, rarity:'legendary' },
+    { id:'hologlass',name:'Holo Glasses',    price:1450, rarity:'epic' },
+    { id:'startrace',name:'Star Marks',    price:1750, rarity:'epic' },
+    { id:'frostmark',name:'Frost Marks',    price:1950, rarity:'epic' },
+    { id:'foxmark',  name:'Fox Marks',   price:2300, rarity:'legendary' },
     { id:'pixelheart',name:'Pixel Heart',   price:2650, rarity:'legendary' },
-    { id:'voidstitch',name:'Void Stitch',   price:3200, rarity:'legendary' },
+    { id:'voidstitch',name:'Stitches',   price:3200, rarity:'legendary' },
 ];
 const TRAILS = [
     { id:'none',       name:'No Trail',      color:'#8b95a7', price:0,    rarity:'common',    style:'none' },
-    { id:'afterglow',  name:'Afterglow',     color:'#35e0c8', price:500,  rarity:'rare',      style:'soft' },
-    { id:'cinder',     name:'Cinderwake',    color:'#ff8a52', price:800,  rarity:'epic',      style:'spark' },
+    { id:'afterglow',  name:'Glow',     color:'#35e0c8', price:500,  rarity:'rare',      style:'soft' },
+    { id:'cinder',     name:'Cinders',    color:'#ff8a52', price:800,  rarity:'epic',      style:'spark' },
     { id:'starlight',  name:'Starlight',     color:'#b3a9ff', price:1200, rarity:'epic',      style:'star' },
-    { id:'aurora',     name:'Aurora Veil',   color:'#67f0c1', price:2200, rarity:'legendary', style:'ribbon' },
-    { id:'prism',      name:'Prism Drive',   color:'#ffcf3f', price:3200, rarity:'legendary', style:'prism' },
-    { id:'blueprint',  name:'Blueprint',     color:'#64d9ff', price:950,  rarity:'epic',      style:'blueprint' },
-    { id:'comet',      name:'Comet Wake',    color:'#fff1a8', price:1450, rarity:'epic',      style:'comet' },
-    { id:'embers',     name:'Emberwake',     color:'#ff7954', price:1650, rarity:'epic',      style:'ember' },
-    { id:'glacierline',name:'Glacierline',   color:'#a7efff', price:1850, rarity:'epic',      style:'frost' },
-    { id:'shadowcode', name:'Shadowcode',    color:'#8c8dff', price:2500, rarity:'legendary', style:'glitch' },
-    { id:'nebula',     name:'Nebula Bloom',  color:'#ff71d2', price:2850, rarity:'legendary', style:'nebula' },
-    { id:'tidal',      name:'Tidal Current', color:'#62f5dc', price:3300, rarity:'legendary', style:'ribbon' },
-    { id:'goldenhour', name:'Golden Hour',   color:'#ffcc69', price:3900, rarity:'legendary', style:'star' },
+    { id:'aurora',     name:'Aurora',   color:'#67f0c1', price:2200, rarity:'legendary', style:'ribbon' },
+    { id:'prism',      name:'Rainbow Trail',   color:'#ffcf3f', price:3200, rarity:'legendary', style:'prism' },
+    { id:'blueprint',  name:'Chalk',     color:'#64d9ff', price:950,  rarity:'epic',      style:'blueprint' },
+    { id:'comet',      name:'Comet',    color:'#fff1a8', price:1450, rarity:'epic',      style:'comet' },
+    { id:'embers',     name:'Sparks',     color:'#ff7954', price:1650, rarity:'epic',      style:'ember' },
+    { id:'glacierline',name:'Ice',   color:'#a7efff', price:1850, rarity:'epic',      style:'frost' },
+    { id:'shadowcode', name:'Shadow',    color:'#8c8dff', price:2500, rarity:'legendary', style:'glitch' },
+    { id:'nebula',     name:'Nebula',  color:'#ff71d2', price:2850, rarity:'legendary', style:'nebula' },
+    { id:'tidal',      name:'Waves', color:'#62f5dc', price:3300, rarity:'legendary', style:'ribbon' },
+    { id:'goldenhour', name:'Gold Dust',   color:'#ffcc69', price:3900, rarity:'legendary', style:'star' },
 ];
+// Layered art for the built-in skins (src/data/skin-styles.js).
+if (typeof SKIN_STYLES !== 'undefined') for (const s of SKINS) if (SKIN_STYLES[s.id]) Object.assign(s, SKIN_STYLES[s.id]);
+if (typeof TRAIL_FX !== 'undefined') for (const t of TRAILS) if (TRAIL_FX[t.id]) t.fx = TRAIL_FX[t.id];
+if (typeof ACCESSORY_STYLES !== 'undefined'){
+    for (const h of HATS) if (ACCESSORY_STYLES.hats[h.id]) Object.assign(h, ACCESSORY_STYLES.hats[h.id]);
+    for (const f of FACES) if (ACCESSORY_STYLES.faces[f.id]) Object.assign(f, ACCESSORY_STYLES.faces[f.id]);
+}
+// Items made in tools/designer.html (src/data/custom-cosmetics.js) join the built-in lists here.
+if (typeof CUSTOM_COSMETICS !== 'undefined'){
+    for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
+        for (const it of (CUSTOM_COSMETICS[key] || [])) if (!arr.some(x => x.id === it.id)) arr.push(Object.assign({ custom:true }, it));
+}
+// MYTHIC sits between epic and legendary: the cheaper half of what used to be legendary moves up a step here (ids picked by hand).
+const MYTHIC_IDS = new Set(['circuit', 'eclipse', 'starforge', 'c-prism', 'halo', 'spacehelm', 'petalcrown', 'c-knight', 'visor', 'foxmark', 'aurora', 'shadowcode', 'nebula', 'c-void',
+    'p-liquidgold', 'p-holochrome', 'p-glitch', 'p-streaker', 'p-starhalo', 'p-storm', 'p-laser', 'p-nova', 'p-scanner', 'p-thunder', 'p-solar']);
+for (const arr of [SKINS, HATS, FACES, TRAILS]) for (const it of arr) if (MYTHIC_IDS.has(it.id) && it.rarity === 'legendary') it.rarity = 'mythic';
+// Prices follow rarity, not the order items were written in: items inside a rarity are ranked by their listed
+// price and spread across that rarity's range. Epic and legendary are deliberately a very long grind.
+// Set priceLock:true on an item (designer: "Lock exact price") to keep its own price.
+const PRICE_RANGES = { common:[250, 700], rare:[1800, 4200], epic:[7000, 14000], mythic:[18000, 30000], legendary:[35000, 70000] };
+for (const arr of [SKINS, HATS, FACES, TRAILS]){
+    for (const r of Object.keys(PRICE_RANGES)){
+        const items = arr.filter(i => i.rarity === r && i.price > 0 && !i.priceLock).sort((a, b) => a.price - b.price || a.name.localeCompare(b.name));
+        items.forEach((it, k) => {
+            const t = items.length > 1 ? k / (items.length - 1) : 0, raw = PRICE_RANGES[r][0] + (PRICE_RANGES[r][1] - PRICE_RANGES[r][0]) * t;
+            const step = raw < 2000 ? 50 : raw < 10000 ? 250 : 1000; it.price = Math.round(raw / step) * step;
+        });
+    }
+}
+if (typeof PREMIUM_COSMETICS !== 'undefined'){
+    for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
+        for (const it of (PREMIUM_COSMETICS[key] || [])) if (!arr.some(x => x.id === it.id)) arr.push(Object.assign({ premium:true, rarity:MYTHIC_IDS.has(it.id) ? 'mythic' : 'legendary' }, it, it.gemPrice ? { gemPrice:Math.round(it.gemPrice * 0.75 / 50) * 50 } : {}));
+}
 const TRAIL_BY_ID = Object.fromEntries(TRAILS.map(trail => [trail.id, trail]));
 const COS_BY = { skin: SKINS, hat: HATS, face: FACES, trail: TRAILS };
 const RESOURCE_PACKS = [
-    { id:'field-notes', name:'Field Notes', price:80, xp:45, passPoints:30 },
-    { id:'supply-cache', name:'Supply Cache', price:240, xp:160, passPoints:120 },
+    { id:'field-notes', name:'Small Crate', price:80, xp:45, passPoints:30 },
+    { id:'supply-cache', name:'Chest', price:240, xp:160, passPoints:120 },
     { id:'season-crate', name:'Season Crate', price:600, xp:450, passPoints:360 },
-];
-const PASS_REWARDS = [
-    { category:'skin', id:'violet', cost:100 },
-    { category:'trail', id:'afterglow', cost:180 },
-    { category:'hat', id:'crown', cost:300 },
 ];
 const OUT = 'rgba(13,16,23,0.85)';
 
@@ -3594,7 +3563,7 @@ function drawSkinBody(c, s, k, def){
     else c.fillStyle = P.a || def.color;
     c.fill();
     c.shadowBlur = 0;
-    if (P.k === 'solid' || P.k === 'grad') return;
+    if (P.k === 'solid' || P.k === 'grad'){ skinDecals(c, s, k, def); return; }
     c.save(); rrPath(c, -s, -s, s*2, s*2, 4*k); c.clip();
     if (P.k === 'stripes'){ c.fillStyle = P.b; for (let x = -s*3; x < s*3; x += 7*k){ c.beginPath(); c.moveTo(x, -s); c.lineTo(x + 3.5*k, -s); c.lineTo(x + 3.5*k - s*2, s); c.lineTo(x - s*2, s); c.closePath(); c.fill(); } }
     if (P.k === 'dots'){ c.fillStyle = P.b; for (let y = -s + 3*k, r = 0; y < s; y += 6*k, r++) for (let x = -s + (r%2 ? 6 : 3)*k; x < s; x += 6*k){ c.beginPath(); c.arc(x, y, 1.5*k, 0, 7); c.fill(); } }
@@ -3607,11 +3576,74 @@ function drawSkinBody(c, s, k, def){
     if (P.k === 'lava'){ for (const [x, y, r] of [[-6,-5,2.4],[5,-2,3],[-2,6,2.6],[8,7,1.8],[-9,4,1.6],[2,-9,1.6]]){ const g = c.createRadialGradient(x*k, y*k, 0, x*k, y*k, r*k); g.addColorStop(0, '#ffe38a'); g.addColorStop(0.5, '#ff8a2a'); g.addColorStop(1, 'rgba(255,90,40,0)'); c.fillStyle = g; c.beginPath(); c.arc(x*k, y*k, r*k, 0, 7); c.fill(); } }
     if (P.k === 'metal'){ c.globalAlpha = 0.55; c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(-s, -s*0.2); c.lineTo(-s*0.2, -s); c.lineTo(s*0.15, -s); c.lineTo(-s, s*0.15); c.closePath(); c.fill(); c.globalAlpha = 1; }
     c.restore();
+    skinDecals(c, s, k, def);
+}
+function skinDecals(c, s, k, def){
+    if (!def.layers || !def.layers.length) return;
+    c.save(); rrPath(c, -s, -s, s*2, s*2, 4*k); c.clip(); drawCustomLayers(c, s, k, def.layers); c.restore();
 }
 
 // ---- headwear ----
+// Shape-layer cosmetics from the designer (hats, faces, skin decals). Units: the body spans -12..12, y up is negative.
+// Layer: {t:'rect'|'ellipse'|'poly', x,y, w,h,r | rx,ry | pts, rot, fill, fill2 (vertical gradient), stroke, sw, alpha, smooth, open, hidden}
+function polyPath(c, pts, k, smooth, open){
+    const P = pts.map(([x, y]) => [x*k, y*k]), n = P.length;
+    if (!smooth || n < 3){ P.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); if (!open) c.closePath(); return; }
+    const mid = (a, b) => [(a[0] + b[0])/2, (a[1] + b[1])/2];
+    if (open){
+        c.moveTo(P[0][0], P[0][1]);
+        for (let i = 1; i < n - 1; i++){ const m = mid(P[i], P[i+1]); c.quadraticCurveTo(P[i][0], P[i][1], m[0], m[1]); }
+        c.lineTo(P[n-1][0], P[n-1][1]); return;
+    }
+    const s0 = mid(P[n-1], P[0]); c.moveTo(s0[0], s0[1]);
+    for (let i = 0; i < n; i++){ const m = mid(P[i], P[(i+1) % n]); c.quadraticCurveTo(P[i][0], P[i][1], m[0], m[1]); }
+    c.closePath();
+}
+function layerCentre(L){ if (L.t !== 'poly') return [L.x, L.y]; if (!L._c){ let x = 0, y = 0; for (const p of L.pts){ x += p[0]; y += p[1]; } L._c = [x / L.pts.length, y / L.pts.length]; } return L._c; }
+// Animation fields (premium cosmetics): spin (deg/s about the shape's centre), orbit (deg/s about pivot [px,py], default origin),
+// bob {x,y,f,p} (sine drift), pulse {a,f,p} (opacity breathing), rainbow (hue cycle speed).
+function drawCustomLayers(c, s, k, layers){
+    const T = performance.now() / 1000;
+    c.save();
+    for (const L of layers){
+        if (L.hidden) continue;
+        c.save();
+        let al = L.alpha === undefined ? 1 : L.alpha;
+        if (L.orbit){ const pv = L.pivot || [0, 0]; c.translate(pv[0]*k, pv[1]*k); c.rotate(L.orbit * T * Math.PI / 180); c.translate(-pv[0]*k, -pv[1]*k); }
+        if (L.bob){ const f = (L.bob.f || 1) * 6.2832, ph = L.bob.p || 0; c.translate(Math.sin(T*f + ph) * (L.bob.x || 0) * k, Math.sin(T*f + ph + 1.5708) * (L.bob.y || 0) * k); }
+        if (L.pulse) al *= 1 - (L.pulse.a === undefined ? .3 : L.pulse.a) * (.5 + .5 * Math.sin(T * (L.pulse.f || 1) * 6.2832 + (L.pulse.p || 0)));
+        c.globalAlpha = al;
+        const spinRot = L.spin ? L.spin * T : 0;
+        c.beginPath();
+        let y0 = -1, y1 = 1;
+        if (L.t === 'rect'){
+            c.translate(L.x*k, L.y*k); c.rotate(((L.rot || 0) + spinRot)*Math.PI/180);
+            rrPathAdd(c, -L.w/2*k, -L.h/2*k, L.w*k, L.h*k, Math.min(L.r || 0, L.w/2, L.h/2)*k); y0 = -L.h/2; y1 = L.h/2;
+        } else if (L.t === 'ellipse'){
+            c.translate(L.x*k, L.y*k); c.rotate(((L.rot || 0) + spinRot)*Math.PI/180);
+            c.ellipse(0, 0, Math.max(.1, L.rx)*k, Math.max(.1, L.ry)*k, 0, 0, 7); y0 = -L.ry; y1 = L.ry;
+        } else if (L.t === 'poly' && L.pts && L.pts.length >= (L.open ? 2 : 3)){
+            if (spinRot){ const cc = layerCentre(L); c.translate(cc[0]*k, cc[1]*k); c.rotate(spinRot*Math.PI/180); c.translate(-cc[0]*k, -cc[1]*k); }
+            polyPath(c, L.pts, k, L.smooth, L.open);
+            if (L._y0 === undefined){ L._y0 = Infinity; L._y1 = -Infinity; for (const p of L.pts){ if (p[1] < L._y0) L._y0 = p[1]; if (p[1] > L._y1) L._y1 = p[1]; } }
+            y0 = L._y0; y1 = L._y1;
+        } else { c.restore(); continue; }
+        let fill = L.fill, fill2 = L.fill2;
+        if (L.rainbow){ const h = (T * L.rainbow * 60 + (L.hue || 0)) % 360; fill = 'hsl(' + h.toFixed(0) + ',92%,62%)'; if (fill2) fill2 = 'hsl(' + ((h + 50) % 360).toFixed(0) + ',92%,48%)'; }
+        if (!L.open && fill && fill !== 'none'){
+            if (fill2){ const g = c.createLinearGradient(0, y0*k, 0, y1*k); g.addColorStop(0, fill); g.addColorStop(1, fill2); c.fillStyle = g; }
+            else c.fillStyle = fill;
+            c.fill();
+        }
+        if (L.stroke){ c.strokeStyle = L.rainbow && L.open ? fill : L.stroke; c.lineWidth = (L.sw || 1)*k; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke(); }
+        c.restore();
+    }
+    c.restore();
+}
+function customLayers(list, id){ const d = list.find(x => x.id === id); return d && d.layers ? d.layers : null; }
 function drawHatAcc(c, s, k, id, t){
     if (!id || id === 'none') return;
+    { const L = customLayers(HATS, id); if (L){ drawCustomLayers(c, s, k, L); return; } }
     const top = -s;
     c.save();
     if (id === 'cap'){
@@ -3787,11 +3819,52 @@ function drawHatAcc(c, s, k, id, t){
             c.beginPath(); c.moveTo(x, y - r*2); c.lineTo(x + r*0.5, y - r*0.5); c.lineTo(x + r*2, y); c.lineTo(x + r*0.5, y + r*0.5); c.lineTo(x, y + r*2); c.lineTo(x - r*0.5, y + r*0.5); c.lineTo(x - r*2, y); c.lineTo(x - r*0.5, y - r*0.5); c.closePath(); c.fill(); }
     }
     if (id === 'crown'){
-        const g = c.createLinearGradient(0, top - 11*k, 0, top + 1*k); g.addColorStop(0, '#fff1a8'); g.addColorStop(0.5, '#ffcf3f'); g.addColorStop(1, '#c98c14');
-        c.fillStyle = g; c.beginPath(); c.moveTo(-s*0.85, top + 1*k); c.lineTo(-s*0.85, top - 7*k); c.lineTo(-s*0.45, top - 3*k); c.lineTo(0, top - 11*k); c.lineTo(s*0.45, top - 3*k); c.lineTo(s*0.85, top - 7*k); c.lineTo(s*0.85, top + 1*k); c.closePath(); c.fill(); outline(c, k);
-        c.fillStyle = '#b8781a'; c.fillRect(-s*0.85, top - 1.5*k, s*1.7, 2*k);
-        for (const [x, y, col] of [[0, -11, '#ff5470'], [-s*0.85/k, -7, '#5b8def'], [s*0.85/k, -7, '#5b8def']]){ c.fillStyle = col; c.beginPath(); c.arc(x*k, top + y*k, 1.5*k, 0, 7); c.fill(); outline(c, k, 0.7); }
-        c.fillStyle = '#35e0c8'; c.beginPath(); c.arc(0, top - 0.5*k, 1.3*k, 0, 7); c.fill();
+        // the legendary crown: a tall five-point gold crown on a velvet cap, pearls on every tip, jewels that pulse, a light sweeping across the gold, a halo and orbiting sparkles
+        const tt = t || 0, pulse = 0.5 + 0.5*Math.sin(tt*2.6);
+        const px = [-0.95, -0.48, 0, 0.48, 0.95].map(v => v*s), ph = [10, 15.5, 21, 15.5, 10].map(v => v*k), vy = 5*k;          // tip x, tip height, valley height
+        const hy = top - 6*k;
+        const glow = c.createRadialGradient(0, hy, s*0.2, 0, hy, s*1.9); glow.addColorStop(0, 'rgba(255,214,90,' + (0.42 + 0.18*pulse) + ')'); glow.addColorStop(1, 'rgba(255,214,90,0)');
+        c.fillStyle = glow; c.beginPath(); c.arc(0, hy, s*1.9, 0, 7); c.fill();
+        // velvet inside, visible between the points
+        const vg = c.createLinearGradient(0, top - 14*k, 0, top + 2*k); vg.addColorStop(0, '#c2193a'); vg.addColorStop(1, '#5a0a1c');
+        c.fillStyle = vg; c.beginPath(); c.moveTo(-s*0.9, top + 1*k); c.lineTo(-s*0.9, top - 9*k); c.quadraticCurveTo(0, top - 17*k, s*0.9, top - 9*k); c.lineTo(s*0.9, top + 1*k); c.closePath(); c.fill();
+        // gold body of the crown
+        const crownPath = () => {
+            c.beginPath(); c.moveTo(-s, top + 2.5*k); c.lineTo(-s, top - ph[0]);
+            for (let i = 0; i < 5; i++){ c.lineTo(px[i], top - ph[i]); if (i < 4) c.lineTo((px[i] + px[i+1])/2, top - vy); }
+            c.lineTo(s, top - ph[4]); c.lineTo(s, top + 2.5*k); c.closePath();
+        };
+        const gg = c.createLinearGradient(0, top - 22*k, 0, top + 3*k); gg.addColorStop(0, '#fff7c4'); gg.addColorStop(0.35, '#ffd24a'); gg.addColorStop(0.75, '#e0a01c'); gg.addColorStop(1, '#a8680c');
+        c.shadowBlur = 10*k; c.shadowColor = 'rgba(255,205,70,0.9)'; c.fillStyle = gg; crownPath(); c.fill(); c.shadowBlur = 0; outline(c, k, 1.1);
+        // light sweeping across (clipped to the crown)
+        c.save(); crownPath(); c.clip();
+        const sx = -s*1.6 + ((tt*0.55) % 1.6) * s*2.2;
+        const sg = c.createLinearGradient(sx - 4*k, 0, sx + 4*k, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(0.5, 'rgba(255,255,255,0.8)'); sg.addColorStop(1, 'rgba(255,255,255,0)');
+        c.fillStyle = sg; c.fillRect(sx - 6*k, top - 24*k, 12*k, 30*k);
+        c.restore();
+        // engraved band with five jewels
+        c.fillStyle = '#9a5c08'; c.fillRect(-s, top - 3*k, s*2, 3.2*k);
+        c.fillStyle = 'rgba(255,240,170,0.7)'; c.fillRect(-s, top - 3*k, s*2, 0.9*k);
+        const jc = ['#ff3d63', '#4fa2ff', '#43e08a', '#4fa2ff', '#ff3d63'];
+        for (let i = 0; i < 5; i++){
+            const jx = px[i]*0.92, jp = 0.55 + 0.45*Math.sin(tt*3 + i*1.3);
+            c.fillStyle = jc[i]; c.shadowBlur = (3 + 4*jp)*k; c.shadowColor = jc[i]; c.beginPath(); c.arc(jx, top - 1.4*k, 1.7*k, 0, 7); c.fill(); c.shadowBlur = 0; outline(c, k, 0.6);
+            c.fillStyle = 'rgba(255,255,255,' + (0.5 + 0.4*jp) + ')'; c.beginPath(); c.arc(jx - 0.5*k, top - 2*k, 0.6*k, 0, 7); c.fill();
+        }
+        // big diamond on the middle point and a pearl on every tip
+        const dy = top - 15*k, dg = c.createLinearGradient(0, dy - 4*k, 0, dy + 4*k); dg.addColorStop(0, '#ffffff'); dg.addColorStop(1, '#7fe3ff');
+        c.fillStyle = dg; c.shadowBlur = 8*k; c.shadowColor = '#9fefff'; c.beginPath(); c.moveTo(0, dy - 4.2*k); c.lineTo(3*k, dy); c.lineTo(0, dy + 4.2*k); c.lineTo(-3*k, dy); c.closePath(); c.fill(); c.shadowBlur = 0; outline(c, k, 0.7);
+        for (let i = 0; i < 5; i++){
+            const bx = px[i], by = top - ph[i] - 1.2*k, br = (i === 2 ? 2.5 : 1.9)*k, pg = c.createRadialGradient(bx - br*0.3, by - br*0.3, 0.2*k, bx, by, br);
+            pg.addColorStop(0, '#ffffff'); pg.addColorStop(1, '#d6d0e8'); c.fillStyle = pg; c.beginPath(); c.arc(bx, by, br, 0, 7); c.fill(); outline(c, k, 0.6);
+        }
+        // sparkles that drift around it
+        for (let i = 0; i < 5; i++){
+            const a = tt*0.9 + i*1.26, rx = s*(1.25 + 0.08*Math.sin(i*2.1)), x = Math.cos(a)*rx, y = top - 9*k + Math.sin(a)*(7*k) - 3*k, tw = 0.5 + 0.5*Math.sin(tt*5 + i*2), r = (0.8 + 1.6*tw)*k;
+            c.globalAlpha = 0.35 + 0.65*tw; c.fillStyle = '#fff8d0';
+            c.beginPath(); c.moveTo(x, y - r*2); c.lineTo(x + r*0.5, y - r*0.5); c.lineTo(x + r*2, y); c.lineTo(x + r*0.5, y + r*0.5); c.lineTo(x, y + r*2); c.lineTo(x - r*0.5, y + r*0.5); c.lineTo(x - r*2, y); c.lineTo(x - r*0.5, y - r*0.5); c.closePath(); c.fill();
+        }
+        c.globalAlpha = 1;
     }
     if (id === 'flighthelm'){
         const g=c.createLinearGradient(0,top-11*k,0,top+3*k);g.addColorStop(0,'#e7f0f5');g.addColorStop(.5,'#9daeba');g.addColorStop(1,'#4e626f');
@@ -3834,6 +3907,7 @@ function drawHatAcc(c, s, k, id, t){
 
 // ---- face accessories (drawn over the eyes at (±4k, -2k)) ----
 function drawFaceAcc(c, s, k, id){
+    { const L = id && customLayers(FACES, id); if (L){ drawCustomLayers(c, s, k, L); return; } }
     if (!id || id === 'none') return;
     const ey = -2*k;
     c.save();
@@ -3919,19 +3993,44 @@ function renderLook(cv, look, opts){
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
     const s = W * ((opts && opts.scale) || 0.24), k = s/12;
     c.translate(W/2, H * ((opts && opts.cy) || 0.6));
-    const def = skinById(look.skin);
-    drawSkinBody(c, s, k, def);
+    const def = skinById(look.skin), tt = (opts && opts.t != null) ? opts.t : 0.3;
+    const cs = (look.costume && look.costume !== 'none' && window.Costumes && Costumes.has(look.costume)) ? look.costume : null;
+    if (cs) Costumes.back(c, s, k, cs, tt);
+    if (!(cs && Costumes.body(c, s, k, cs, tt))) drawSkinBody(c, s, k, def);
     rrPath(c, -s, -s, s*2, s*2, 4*k); c.strokeStyle = 'rgba(13,16,23,0.55)'; c.lineWidth = 2*k*0.6; c.stroke();
-    c.fillStyle = '#0d1017'; c.beginPath(); c.arc(-4*k, -2*k, 2.4*k, 0, 7); c.arc(4*k, -2*k, 2.4*k, 0, 7); c.fill();
+    c.fillStyle = '#0d1017';
+    if (!(cs && Costumes.eyes(c, s, k, cs, tt, 0, 0))){ c.beginPath(); c.arc(-4*k, -2*k, 2.4*k, 0, 7); c.arc(4*k, -2*k, 2.4*k, 0, 7); c.fill(); }
     drawFaceAcc(c, s, k, look.face);
-    drawHatAcc(c, s, k, look.hat, 0.3);
+    drawHatAcc(c, s, k, look.hat, tt);
+    if (cs) Costumes.front(c, s, k, cs, tt);
 }
+// Bots start a bit weaker and reach full strength after about 15 races, so beginners can actually win.
+function newPlayerEase(){ let r = 0; try { r = prog().races || 0; } catch(e){} return 0.86 + 0.14 * Math.min(1, r / 15); }
 function randomBotLook(){
-    const pick = arr => arr[1 + Math.floor(Math.random() * (arr.length - 1))].id;
-    return { skin: null, hat: Math.random() < 0.55 ? pick(HATS) : 'none', face: Math.random() < 0.35 ? pick(FACES) : 'none' };
+    // Bots wear everything: plain skins, but also epic, legendary and gem cosmetics, trails and a finish effect.
+    const real = arr => arr.filter(i => i.id !== 'none' && !i.exclusive);
+    const rare = arr => real(arr).filter(i => i.premium || i.rarity === 'epic' || i.rarity === 'mythic' || i.rarity === 'legendary');
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)].id;
+    const flashy = Math.random() < 0.4;
+    const slot = (arr, chance) => {
+        if (Math.random() >= (flashy ? Math.min(1, chance * 2.4) : chance)) return 'none';
+        const r = rare(arr); return pick(Math.random() < (flashy ? 0.7 : 0.22) && r.length ? r : real(arr));
+    };
+    const fins = window.Finishers ? Finishers.FINISHERS.filter(f => f.id !== 'f-none') : [];
+    return {
+        skin: Math.random() < (flashy ? 0.95 : 0.5) ? pick(Math.random() < (flashy ? 0.7 : 0.2) && rare(SKINS).length ? rare(SKINS) : SKINS) : null,
+        hat: slot(HATS, 0.3), face: slot(FACES, 0.22), trail: slot(TRAILS, 0.18), costume: (flashy && window.Costumes && Math.random() < 0.3) ? pick(Costumes.COSTUMES.filter(c => c.id !== 'none')) : 'none',
+        finisher: fins.length && Math.random() < (flashy ? 0.85 : 0.3) ? pick(fins) : 'f-none',
+    };
 }
 
-const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Parkour · Levels' };
+const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
+const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
+let _freeIds = null;
+function freeItemIds(){
+    if (!_freeIds) _freeIds = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.price === 0 && !i.premium && !i.exclusive && !i.priceLock).map(i => i.id);
+    return _freeIds;
+}
 function prog(){
     let d = {}; try { d = JSON.parse(localStorage.getItem('rr_profile')) || {}; } catch(e){}
     if (!d.name) d.name = 'Player';
@@ -3941,73 +4040,187 @@ function prog(){
     if (!Number.isFinite(d.passPoints)) d.passPoints = 0;
     if (!Number.isFinite(d.passPointsEarned)) d.passPointsEarned = d.passPoints;
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
+    if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
+    if (!Array.isArray(d.lvClaimed)) d.lvClaimed = [];
+    if (!Array.isArray(d.rageClaimed)) d.rageClaimed = [];
+    d.rage = !!d.rage;
+    if (!Array.isArray(d.emotes)) d.emotes = ['gg', 'gl', 'wp', 'oops'];
+    if (!Array.isArray(d.emoteLoadout)) d.emoteLoadout = ['gg', 'gl', 'wp', 'oops'];
+    if (typeof d.finisher !== 'string') d.finisher = 'f-none';
+    if (!d.streak || typeof d.streak !== 'object') d.streak = { n:0, last:'' };
+    d.gt = Object.assign({ runs:0, wins:0, best:0, crowned:false, keys:0, streak:0 }, (d.gt && typeof d.gt === 'object') ? d.gt : {});   // Gauntlet record
+    for (const k of ['runs', 'wins', 'best', 'keys', 'streak']) if (!Number.isFinite(d.gt[k])) d.gt[k] = 0;
+    d.gt.crowned = !!d.gt.crowned;
+    d.rk = Object.assign({ mmr:1000, rp:0, placed:0, peak:0, season:0, hist:[], claimed:[], protect:0, streak:0, matches:0, wins:0, dropDay:'', dropN:0, sm:0, lastPlayed:-1, seasons:[] }, (d.rk && typeof d.rk === 'object') ? d.rk : {});   // Ranked record
+    if (!Array.isArray(d.rk.hist)) d.rk.hist = []; if (!Array.isArray(d.rk.claimed)) d.rk.claimed = [];
+    if (!d.pendingDrops || typeof d.pendingDrops !== 'object') d.pendingDrops = {};
+    d.ads = Object.assign({ day:'', coin:0, drop:0, last:0, since:0, lastCoin:0, lastDrop:0 }, (d.ads && typeof d.ads === 'object') ? d.ads : {});
     if (!Array.isArray(d.owned)) d.owned = ['classic'];
     if (!d.owned.includes('classic')) d.owned.push('classic');
+    for (const id of freeItemIds()) if (!d.owned.includes(id)) d.owned.push(id);              // everything that costs 0 coins is yours from the start
     if (!d.trail || !TRAILS.some(trail => trail.id === d.trail)) d.trail = 'none';
+    if (typeof d.costume !== 'string' || (window.Costumes && d.costume !== 'none' && !Costumes.BY[d.costume])) d.costume = 'none';
     if (!d.lootGrants || typeof d.lootGrants !== 'object') d.lootGrants = {};
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
     if (!d.hat || !HATS.some(h => h.id === d.hat)) d.hat = 'none';
     if (!d.face || !FACES.some(f => f.id === d.face)) d.face = 'none';
-    if (!['race', 'escape', 'parkour'].includes(d.lastMode)) d.lastMode = 'race';
+    if (!['race', 'escape', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';
     return d;
 }
-function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} }
+function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} if (window.Cloud) Cloud.touch(); }
 function levelInfo(xp){
     let lvl = 1, need = 120, into = Math.max(0, xp);
     while (into >= need){ into -= need; lvl++; need = 120 + (lvl-1)*40; }
     return { lvl, into, need };
 }
 function skinById(id){ return SKINS.find(s => s.id === id) || SKINS[0]; }
-function myLook(){ const p = prog(); return { skin: p.skin, hat: p.hat, face: p.face, trail:p.trail }; }
+function myLook(){ const p = prog(); return { skin: p.skin, hat: p.hat, face: p.face, trail:p.trail, costume: p.costume || 'none' }; }
 function skinColor(){ return skinById(prog().skin).color; }
 function addXp(n){ const p = prog(); p.xp += Math.max(0, Math.round(n)); saveProg(p); }
+function gemCount(){ return load('rr_gems', 0); }
+function addGems(n){ store('rr_gems', gemCount() + Math.max(0, Math.round(n))); }
 function addCoins(n){ store('rr_coins', load('rr_coins', 0) + Math.max(0, Math.round(n))); }
 function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Math.random().toString(36).slice(2, 9); }
-function awardLootDrop(id, base){
+// ---------- Supply drops ----------
+// A drop is a pending ticket until it is opened. Opening (see src/ui/lootbox.js) lets the player tap it to
+// level its rarity up; the final tier then decides the rewards (resolveDrop).
+const DROP_TIERS = ['common', 'rare', 'epic', 'mythic', 'legendary'];
+const DROP_COIN_MULT = { common:1, rare:1.75, epic:3, mythic:5.5, legendary:9 };
+const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, mythic:2.4, legendary:3.2 };
+const DROP_COSMETIC_CHANCE = { common:0.022, rare:0.06, epic:0.14, mythic:0.34, legendary:0.6 };
+const DROP_RARITY_WEIGHTS = {
+    common:    { common:60, rare:28, epic:9,  mythic:2.4, legendary:0.6 },
+    rare:      { common:36, rare:40, epic:18, mythic:4.5, legendary:1.5 },
+    epic:      { common:14, rare:34, epic:36, mythic:11,  legendary:5 },
+    mythic:    { common:8,  rare:26, epic:36, mythic:20,  legendary:10 },
+    legendary: { common:12, rare:24, epic:28, mythic:22,  legendary:14 },
+};
+function pickCosmetic(available, tier){
+    const W = DROP_RARITY_WEIGHTS[tier] || DROP_RARITY_WEIGHTS.common, by = {};
+    for (const it of available) (by[it.rarity] = by[it.rarity] || []).push(it);
+    const rars = Object.keys(by);
+    let x = Math.random() * rars.reduce((a, r) => a + (W[r] || 1), 0);
+    for (const r of rars){ x -= (W[r] || 1); if (x <= 0) return by[r][Math.floor(Math.random() * by[r].length)]; }
+    return available[0];
+}
+function awardLootDrop(id, base, opts){
     const p = prog();
     if (p.lootGrants[id]) return p.lootGrants[id];
+    if (p.pendingDrops[id]) return p.pendingDrops[id];
+    const r = Math.random();
     const drop = {
-        coins:Math.max(0, Math.round(base.coins || 0)),
-        xp:Math.max(0, Math.round(base.xp || 0)),
-        passPoints:Math.max(0, Math.round(base.passPoints || 0)),
-        cosmetic:null, pity:0,
+        id, pending:true, tier: (opts && opts.tier) || (r < 0.01 ? 'epic' : r < 0.13 ? 'rare' : 'common'),
+        base:{ coins:Math.max(0, Math.round(base.coins || 0)), xp:Math.max(0, Math.round(base.xp || 0)), passPoints:Math.max(0, Math.round(base.passPoints || 0)) },
     };
+    p.pendingDrops[id] = drop;
+    saveProg(p);
+    return drop;
+}
+// Turn a pending drop into rewards at the given final tier. Safe to call twice (second call returns the stored result).
+function resolveDrop(id, tier){
+    const p0 = prog();
+    if (p0.lootGrants[id]) return p0.lootGrants[id];
+    if (!p0.pendingDrops[id]) return null;
+    const cm = window.Boost ? Boost.chest(id) : 1;                    // chest booster (asked BEFORE the profile is loaded: it saves the profile itself)
+    const p = prog(), pend = p.pendingDrops[id];
+    tier = DROP_TIERS.includes(tier) ? tier : pend.tier;
+    const drop = {
+        id, tier,
+        coins:Math.round(pend.base.coins * DROP_COIN_MULT[tier]),
+        xp:Math.round(pend.base.xp * DROP_XP_MULT[tier]),
+        passPoints:pend.base.passPoints,
+        cosmetic:null,
+    };
+    // Gems are very rare: only epic and legendary drops can hold them, and only a legendary one can hold a premium (gem) cosmetic.
+    drop.gems = 0;
+    if (Math.random() < ({ epic:0.012, mythic:0.08, legendary:0.22 }[tier] || 0)) drop.gems = tier === 'legendary' ? 5 + Math.floor(Math.random() * 16) : tier === 'mythic' ? 5 + Math.floor(Math.random() * 6) : 5;
+    if (tier === 'legendary' && Math.random() < 0.004){
+        const prem = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.premium && i.gemPrice && !i.exclusive && !p.owned.includes(i.id));
+        if (prem.length){ drop.cosmetic = prem[Math.floor(Math.random() * prem.length)]; p.owned.push(drop.cosmetic.id); }
+    }
+    if (drop.gems) addGems(drop.gems);
     const available = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(item => item.price > 0 && !p.owned.includes(item.id));
-    if (available.length && (p.cosmeticPity >= 24 || Math.random() < 0.035)){
-        drop.cosmetic = available[Math.floor(Math.random() * available.length)];
+    if (!drop.cosmetic && available.length && (p.cosmeticPity >= 32 || Math.random() < DROP_COSMETIC_CHANCE[tier])){
+        drop.cosmetic = pickCosmetic(available, tier);
         p.owned.push(drop.cosmetic.id);
         p.cosmeticPity = 0;
-    } else if (available.length){
+    } else if (!drop.cosmetic && available.length){
         p.cosmeticPity++;
-    } else {
+    } else if (!drop.cosmetic){
         drop.coins += 100;
     }
-    drop.pity = p.cosmeticPity;
+    if (!drop.cosmetic && window.Finishers && Math.random() < ({ common:0.02, rare:0.05, epic:0.1, mythic:0.15, legendary:0.22 }[tier] || 0)){      // chests can hold finishers too
+        const pool = Finishers.FINISHERS.filter(f => f.price > 0 && !f.premium && !p.owned.includes(f.id));
+        if (pool.length){ const f = pickCosmetic(pool, tier); p.owned.push(f.id); drop.finisher = { id:f.id, name:f.name, rarity:f.rarity }; }
+    }
+    if (tier === 'legendary'){                                      // legendary chests are rare, so they pay well: a coin booster on top
+        drop.boosts = [{ type:'boost', kind:'coin', mult:2, n:3 }]; if (window.Boost) Boost.grant('coin', 2, 3);
+    }
+    if (cm > 1){ drop.coins = Math.round(drop.coins * cm); drop.xp = Math.round(drop.xp * cm); drop.passPoints = Math.round(drop.passPoints * cm); drop.boost = cm; }
     p.xp += drop.xp;
     p.passPoints += drop.passPoints;
     p.passPointsEarned += drop.passPoints;
     store('rr_coins', load('rr_coins', 0) + drop.coins);
+    delete p.pendingDrops[id];
     p.lootGrants[id] = drop;
+    if (window.Missions && !/^(mission|weekly|pass|streak)/.test(id)) setTimeout(() => Missions.event('chest'), 0);
     const grantIds = Object.keys(p.lootGrants);
     for (const oldId of grantIds.slice(0, Math.max(0, grantIds.length - 40))) delete p.lootGrants[oldId];
     saveProg(p);
     return drop;
 }
+// Anything left unopened is paid out at its starting tier whenever the player is back on the home screen.
+// Chests you won but did not open (left early, closed the game, synced from the cloud) open one after another as soon as you are on the home screen.
+let _openingPending = false;
+async function openPendingChests(){
+    if (_openingPending || document.getElementById('lootbox') || typeof state === 'undefined' || state !== 'menu') return;
+    if (!prog().pendingDrops || !Object.keys(prog().pendingDrops).length) return;
+    if (S.start && getComputedStyle(S.start).display === 'none') return;
+    _openingPending = true;
+    try {
+        for (const id of Object.keys(prog().pendingDrops)){
+            const d = prog().pendingDrops[id]; if (!d) continue;
+            if (state !== 'menu') break;
+            await new Promise(res => openLootbox(d, { onDone: res }));
+            refreshMenu();
+        }
+    } finally { _openingPending = false; }
+}
+function settlePendingDrops(){ clearTimeout(settlePendingDrops._t); settlePendingDrops._t = setTimeout(openPendingChests, 500); }
 function renderLootDrop(containerId, drop){
     const panel = document.getElementById(containerId);
     if (!panel || !drop) return;
-    panel.classList.remove('opening');
-    panel.innerHTML = `<div class="loot-crate" aria-hidden="true"><span class="loot-box-art"></span></div><div class="loot-info"><strong class="loot-title">SUPPLY DROP READY</strong><span class="loot-copy">Guaranteed Coins, XP and Pass Points. Cosmetic chance: 3.5%.</span><button class="loot-open" type="button">OPEN DROP</button></div>`;
-    panel.querySelector('.loot-open').addEventListener('click', event => {
+    const tier = drop.tier || 'common';
+    const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' };
+    panel.classList.remove('opening'); panel.classList.add('big');
+    // after a match the only thing to press is VIEW RESULTS: it opens the chest straight away, then the results and the other buttons appear
+    document.body.classList.add('await-chest');
+    clearInterval(renderLootDrop._wd);
+    renderLootDrop._wd = setInterval(() => { if (!panel.isConnected || !panel.querySelector('.loot-view')) { document.body.classList.remove('await-chest'); clearInterval(renderLootDrop._wd); } }, 800);
+    panel.innerHTML = `<button class="loot-big loot-view tier-${tier}" type="button" aria-label="View results"><span class="lb-view">VIEW RESULTS</span></button>`;
+    panel.querySelector('.loot-view').addEventListener('click', event => {
         const button = event.currentTarget;
-        button.disabled = true; button.textContent = 'OPENING'; panel.classList.add('opening');
-        setTimeout(() => {
-            const rewards = [`+${drop.coins} Coins`, `+${drop.xp} XP`, `+${drop.passPoints} Pass Points`];
-            if (drop.cosmetic) rewards.push(`<span class="loot-item cosmetic" style="--loot-color:${drop.cosmetic.color || RARITY[drop.cosmetic.rarity].color}">${drop.cosmetic.rarity.toUpperCase()} · ${drop.cosmetic.name} added</span>`);
-            else rewards.push(`<span class="loot-item">Cosmetic pity ${drop.pity}/25</span>`);
-            panel.classList.remove('opening');
-            panel.innerHTML = `<div class="loot-crate opened" aria-hidden="true">✓</div><div class="loot-info"><strong class="loot-title">DROP OPENED</strong><div class="loot-items">${rewards.map(reward => reward.startsWith('<span') ? reward : `<span class="loot-item">${reward}</span>`).join('')}</div></div>`;
-        }, 760);
+        if (button.disabled) return;
+        button.disabled = true; button.classList.add('go');
+        openLootbox(drop, { onDone: final => {
+            document.body.classList.remove('await-chest'); clearInterval(renderLootDrop._wd);
+            final = final || drop;
+            const chips = [R('coin', final.coins || 0, {plus:true}), R('xp', final.xp || 0, {plus:true})];
+            if (final.passPoints) chips.push(R('pass', final.passPoints, {plus:true}));
+            if (final.gems) chips.push(R('gem', final.gems, {plus:true}));
+            if (final.finisher) chips.push(`<span class="rwd rwd-fin" style="--rc:${RARITY[final.finisher.rarity].color}"><small>FINISHER</small><b>${final.finisher.name}</b></span>`);
+            if (final.cosmetic) chips.push(`<span class="rwd rwd-item"><canvas class="mini-item" width="112" height="112" style="--rc:${RARITY[final.cosmetic.rarity].color}"></canvas></span>`);
+            panel.classList.remove('big');
+            panel.innerHTML = `<div class="loot-crate opened tier-${final.tier || tier}" aria-hidden="true">${icon('check')}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;
+            panel.querySelector('.loot-crate').style.setProperty('--ic', TC[final.tier || tier]);
+            const mc = panel.querySelector('canvas.mini-item');
+            if (mc && final.cosmetic){
+                const slot = ['skin', 'hat', 'face', 'trail'].find(k => COS_BY[k].some(i => i.id === final.cosmetic.id)) || 'skin';
+                if (slot === 'trail'){ mc.width = 180; mc.height = 112; mc.classList.add('wide'); try { drawTrailPreview(mc, final.cosmetic); } catch(e){} }
+                else try { renderLook(mc, Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [slot]:final.cosmetic.id }), { scale:.42, cy:.58 }); } catch(e){}
+            }
+            refreshMenu();
+        } });
     });
 }
 function escGameOver(p){
@@ -4018,6 +4231,7 @@ function escGameOver(p){
         SFX.play('fail');
         const prevBest = load('rr_esc_best_score', 0);
         if (run.score > prevBest) store('rr_esc_best_score', run.score);
+        if (window.Missions) Missions.event('escape', run.score);
     }
     burst(p.x, p.y, p.color, 40, 320);
     burst(p.x, p.y, '#ff5470', 30, 260);
@@ -4058,88 +4272,26 @@ function escGameOver(p){
         showScreen('over');
     }, 1100);
 }
+function toast(msg){
+    let t = document.getElementById('toast'); if (!t){ t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+    t.textContent = msg; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
 function renderResourceShop(){
-    const profile = prog(), grid = document.getElementById('resource-grid');
-    document.getElementById('resource-coins').textContent = load('rr_coins', 0).toLocaleString('en-US');
-    document.getElementById('resource-pass').textContent = profile.passPoints.toLocaleString('en-US');
-    grid.innerHTML = '';
-    for (const pack of RESOURCE_PACKS){
-        const button = document.createElement('button');
-        button.type = 'button'; button.className = 'resource-pack';
-        button.innerHTML = `<b>${pack.name}</b><small>+${pack.xp} XP</small><small>+${pack.passPoints} Pass Points</small><span class="pack-cost">${pack.price} COINS · BUY</span>`;
-        button.addEventListener('click', () => {
-            const coins = load('rr_coins', 0);
-            if (coins < pack.price){ button.animate([{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}], {duration:220}); return; }
-            const next = prog();
-            store('rr_coins', coins - pack.price);
-            next.xp += pack.xp; next.passPoints += pack.passPoints; next.passPointsEarned += pack.passPoints;
-            saveProg(next); SFX.play('coin'); refreshMenu(); renderShop('resources');
+    const box = document.getElementById('m-resource-shop'); box.innerHTML = '';
+    const head = document.createElement('div'); head.className = 'gem-head'; head.innerHTML = `<span>${R('gem', gemCount())}</span>`; box.appendChild(head);
+    const grid = document.createElement('div'); grid.className = 'gem-grid'; box.appendChild(grid);
+    for (const pack of GEM_PACKS){
+        const card = document.createElement('button'); card.type = 'button'; card.className = 'gem-pack';
+        card.innerHTML = `<span class="gp-art">${icon('gem').repeat(pack.icons)}</span><b>${pack.gems.toLocaleString('en-US')}</b><span class="gp-price">${pack.price}</span>`;
+        card.addEventListener('click', () => {
+            if (window.GEM_STORE && typeof window.GEM_STORE.buy === 'function'){ window.GEM_STORE.buy(pack, n => { addGems(n); SFX.play('finish'); refreshMenu(); renderResourceShop(); }); }
+            else { toast('Store not connected yet'); SFX.play('fall'); }
         });
-        grid.appendChild(button);
+        grid.appendChild(card);
     }
-    renderPassRewards();
-}
-function passProgressState(profile){
-    const claimed = PASS_REWARDS.filter(reward => profile.owned.includes(reward.id)).length;
-    const nextIndex = PASS_REWARDS.findIndex(reward => !profile.owned.includes(reward.id));
-    if (nextIndex < 0) return {claimed,next:null,progress:1,earnedInTier:0};
-    const threshold = PASS_REWARDS.slice(0,nextIndex).reduce((sum,reward)=>sum+reward.cost,0);
-    const next = PASS_REWARDS[nextIndex];
-    const earnedInTier = Math.max(0,Math.min(next.cost,profile.passPointsEarned-threshold));
-    return {claimed,next,progress:earnedInTier/next.cost,earnedInTier};
-}
-function renderPassHome(profile){
-    const progress = passProgressState(profile);
-    document.getElementById('m-pass-progress').textContent = progress.next
-        ? `${progress.claimed} / ${PASS_REWARDS.length} claimed · ${profile.passPoints.toLocaleString('en-US')} pts available`
-        : 'All Season 01 rewards claimed';
-    document.getElementById('m-pass-meter-fill').style.width = (progress.progress*100)+'%';
-}
-function claimPassReward(reward){
-    const profile = prog();
-    if (profile.owned.includes(reward.id) || profile.passPoints < reward.cost) return false;
-    const passScreenOpen = getComputedStyle(S.pass).display !== 'none';
-    const resourceShopOpen = getComputedStyle(document.getElementById('m-resource-shop')).display !== 'none';
-    profile.passPoints -= reward.cost;
-    profile.owned.push(reward.id);
-    saveProg(profile); SFX.play('pickup'); refreshMenu();
-    if (passScreenOpen) renderPassScreen();
-    if (resourceShopOpen) renderShop('resources');
-    return true;
-}
-function renderPassScreen(){
-    const profile = prog(), progress = passProgressState(profile);
-    document.getElementById('pass-screen-balance').textContent = profile.passPoints.toLocaleString('en-US');
-    document.getElementById('pass-screen-claimed').textContent = `${progress.claimed} / ${PASS_REWARDS.length} REWARDS CLAIMED`;
-    document.getElementById('pass-screen-next').textContent = progress.next
-        ? `${progress.earnedInTier} / ${progress.next.cost} lifetime points · ${profile.passPoints} available to redeem · NEXT: ${COS_BY[progress.next.category].find(item=>item.id===progress.next.id).name}`
-        : 'Season 01 complete · every reward claimed';
-    document.getElementById('pass-screen-meter').style.width = (progress.progress*100)+'%';
-    const grid = document.getElementById('pass-screen-rewards'); grid.innerHTML = '';
-    PASS_REWARDS.forEach((reward,index)=>{
-        const item = COS_BY[reward.category].find(cosmetic=>cosmetic.id===reward.id);
-        const owned = profile.owned.includes(reward.id);
-        const button = document.createElement('button');
-        button.type='button'; button.className='pass-screen-reward'+(owned?' claimed':'')+(profile.passPoints>=reward.cost&&!owned?' ready':'');
-        button.disabled=owned||profile.passPoints<reward.cost;
-        button.innerHTML=`<span class="pass-step">${String(index+1).padStart(2,'0')}</span><span class="pass-item-art" style="--pass-item-color:${item.color||RARITY[item.rarity].color}">${reward.category==='trail'?'〰':reward.category==='hat'?'♛':'◆'}</span><small>${reward.category.toUpperCase()} · ${RARITY[item.rarity].label}</small><strong>${item.name}</strong><span class="pass-cost">${owned?'CLAIMED':profile.passPoints>=reward.cost?'READY TO CLAIM':`${reward.cost-profile.passPoints} POINTS TO GO`}</span>`;
-        button.addEventListener('click',()=>claimPassReward(reward));
-        grid.appendChild(button);
-    });
-}
-function renderPassRewards(){
-    const profile = prog(), grid = document.getElementById('pass-reward-grid');
-    grid.innerHTML = '';
-    PASS_REWARDS.forEach((reward, index) => {
-        const item = COS_BY[reward.category].find(cosmetic => cosmetic.id === reward.id);
-        const owned = profile.owned.includes(reward.id);
-        const button = document.createElement('button');
-        button.type = 'button'; button.className = 'pass-reward' + (owned ? ' owned' : '');
-        button.disabled = owned || profile.passPoints < reward.cost;
-        button.innerHTML = `<small>TIER ${index+1} · ${reward.category.toUpperCase()}</small><strong>${item.name}</strong><span style="color:${RARITY[item.rarity].color}">${RARITY[item.rarity].label}</span><b>${owned ? 'CLAIMED' : reward.cost + ' PASS POINTS · REDEEM'}</b>`;
-        button.addEventListener('click', () => claimPassReward(reward));
-        grid.appendChild(button);
-    });
+    if (window.GemCrate) GemCrate.render(box);
+    if (window.Ads) Ads.renderShop(box);
 }
 function renderShop(cat){
     const grid = document.getElementById('m-skins'), resources = document.getElementById('m-resource-shop');
@@ -4147,27 +4299,53 @@ function renderShop(cat){
     grid.hidden = cat === 'resources'; resources.hidden = cat !== 'resources';
     document.querySelectorAll('.m-pill[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
     if (cat === 'resources'){ renderResourceShop(); return; }
-    const rarityOrder = {common:0, rare:1, epic:2, legendary:3};
-    const items = [...(COS_BY[cat] || SKINS)].sort((a,b) => rarityOrder[a.rarity]-rarityOrder[b.rarity] || a.price-b.price || a.name.localeCompare(b.name));
+    if (cat === 'emote'){ if (window.Emotes) Emotes.renderShop(grid); return; }
+    if (cat === 'finisher'){ if (window.Finishers) Finishers.renderShop(grid); return; }
+    const rarityOrder = {common:0, rare:1, epic:2, mythic:3, legendary:4};
+    // order: gem items first (they stay on top, owned or not), then everything you own, then what is still for sale
+    const grp = it => it.premium ? 0 : current.owned.includes(it.id) ? 1 : 2;
+    const items = [...(COS_BY[cat] || SKINS)].filter(it => !it.exclusive || current.owned.includes(it.id)).sort((a,b) => grp(a) - grp(b) || (grp(a) === 1 ? ((a.price === 0 ? 0 : 1) - (b.price === 0 ? 0 : 1)) || current.owned.indexOf(b.id) - current.owned.indexOf(a.id) : 0) || rarityOrder[a.rarity]-rarityOrder[b.rarity] || (a.price || a.gemPrice || 0)-(b.price || b.gemPrice || 0) || a.name.localeCompare(b.name));
+    const animated = [];
     grid.innerHTML = '';
+    grid.classList.toggle('trails', cat === 'trail');
+    let lastGrp = -1;
+    const GRP_LABEL = ['Gems', 'Owned', 'Coins'];
     for (const it of items){
+                if (grp(it) !== lastGrp){ lastGrp = grp(it); const lb = document.createElement('div'); lb.className = 'm-grp'; lb.textContent = GRP_LABEL[lastGrp]; grid.appendChild(lb); }
                 const owned = current.owned.includes(it.id);
                 const eq = current[cat] === it.id;
                 const b = document.createElement('button');
-                b.type = 'button';
-                b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' ? ' leg' : '');
+                b.type = 'button'; b.style.setProperty('--rc', RARITY[it.rarity].color); b.title = RARITY[it.rarity].label; b.dataset.tid = it.id;
+                b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' || it.rarity === 'mythic' ? ' leg' : '') + (it.premium ? ' prem' : '');
                 b.innerHTML = `<span class="m-skin-pv"><canvas width="160" height="160"></canvas></span>` +
-                    `<b>${it.name}</b><span class="m-rar" style="color:${RARITY[it.rarity].color}">${RARITY[it.rarity].label}</span>` +
-                    (cat === 'trail' ? `<span class="trail-sample trail-${it.style}" style="--trail-color:${it.color}"><i></i><i></i><i></i></span>` : '') +
-                    `<span class="m-skin-f"><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.price + ' coins'}</span></span>`;
-                const preview = { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail };
-                renderLook(b.querySelector('canvas'), preview, { scale:0.22, cy:0.62 });
+                    `<b>${it.name}</b>` +
+                    (cat === 'trail' ? `<canvas class="tr-pv" width="400" height="200"></canvas>` : '') +
+                    `<span class="m-skin-f"><span class="buy-hint">Tap again</span><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.premium ? R('gem', it.gemPrice) : R('coin', it.price)}</span></span>` + (it.premium ? `<span class="prem-tag">${icon('gem')}</span>` : '');
+                const preview = cat === 'costume' ? { skin:current.skin, hat:'none', face:'none', trail:'none', costume:it.id } : { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail, costume:'none' };
+                renderLook(b.querySelector('canvas'), preview, { scale:cat === 'costume' ? 0.2 : 0.22, cy:cat === 'costume' ? 0.64 : 0.62 });
+                { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it, undefined, 1.7); }
+                if ((it.premium || it.id === 'crown' || cat === 'costume') && cat !== 'trail') animated.push([b.querySelector('canvas'), preview]);
                 b.addEventListener('click', () => {
                     const q = prog();
                     const slot = cat;
                     if (owned){
                         if (eq && slot !== 'skin') q[slot] = 'none'; else q[slot] = it.id;
                         saveProg(q); SFX.play('item'); refreshMenu(); renderShop(cat); return;
+                    }
+                    // buying takes two taps: the first one arms the item (quiet highlight, "Tap again"), the second confirms
+                    const afford = it.premium ? gemCount() >= it.gemPrice : load('rr_coins', 0) >= it.price;
+                    if (afford && !b.classList.contains('arm')) {
+                        grid.querySelectorAll('.m-skin.arm').forEach(x => x.classList.remove('arm'));
+                        b.classList.add('arm'); SFX.play('count');
+                        clearTimeout(renderShop._armT); renderShop._armT = setTimeout(() => b.classList.remove('arm'), 2600);
+                        return;
+                    }
+                    if (it.premium){
+                        const gh = gemCount();
+                        if (gh < it.gemPrice){ b.classList.remove('m-shake'); void b.offsetWidth; b.classList.add('m-shake'); SFX.play('fall'); renderShop('resources'); return; }
+                        store('rr_gems', gh - it.gemPrice);
+                        q.owned.push(it.id); q[slot] = it.id; saveProg(q);
+                        SFX.play('pickup'); SFX.play('finish'); refreshMenu(); renderShop(cat); return;
                     }
                     const have = load('rr_coins', 0);
                     if (have < it.price){ b.classList.remove('m-shake'); void b.offsetWidth; b.classList.add('m-shake'); SFX.play('fall'); return; }
@@ -4178,8 +4356,42 @@ function renderShop(cat){
                 });
                 grid.appendChild(b);
     }
+    cancelAnimationFrame(renderShop._trRaf);
+    if (cat === 'trail'){                                   // trail previews play as a loop
+        const tps = [...grid.querySelectorAll('canvas.tr-pv')];
+        const byCanvas = new Map(); grid.querySelectorAll('.m-skin').forEach((card, i) => { const cv = card.querySelector('canvas.tr-pv'); if (cv) byCanvas.set(cv, card.dataset.tid); });
+        const loop = now => {
+            if (grid.hidden || !grid.isConnected || !grid.classList.contains('trails')) return;
+            for (const cv of tps){ const r = cv.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight || !r.width) continue; const tr = TRAIL_BY_ID[byCanvas.get(cv)]; if (tr) { try { drawTrailPreview(cv, tr, now / 1000, 1.7, true); } catch (e) {} } }
+            renderShop._trRaf = requestAnimationFrame(loop);
+        };
+        renderShop._trRaf = requestAnimationFrame(loop);
+    }
+    clearInterval(renderShop._anim);
+    if (animated.length) renderShop._anim = setInterval(() => {
+        const gr = document.getElementById('m-skins'); if (gr.hidden || !gr.offsetParent){ clearInterval(renderShop._anim); return; }
+        for (const [cv, look] of animated){ const r = cv.getBoundingClientRect(); if (!r.width || r.bottom < 0 || r.top > innerHeight) continue; renderLook(cv, look, { scale:look.costume && look.costume !== 'none' ? 0.2 : 0.22, cy:look.costume && look.costume !== 'none' ? 0.64 : 0.62, t:performance.now()/1000 }); }
+    }, 90);
 }
+// Red number badge ("something to claim / new"). n = 0 hides it.
+function setBadge(el, n){
+    if (!el) return;
+    let b = el.querySelector(':scope > .nbadge');
+    if (!n){ if (b) b.remove(); return; }
+    if (!b){ b = document.createElement('b'); b.className = 'nbadge'; el.appendChild(b); }
+    b.textContent = n > 99 ? '99+' : n;
+}
+// Shop items you have not seen yet (new releases). Everything that exists on the first launch counts as seen.
+function shopItems(){ return [...SKINS, ...HATS, ...FACES, ...TRAILS, ...(COS_BY.costume || [])].filter(i => i.price > 0 || i.premium); }
+function refreshShopBadge(){
+    const p = prog(), ids = shopItems().map(i => i.id);
+    if (!Array.isArray(p.shopSeen)){ p.shopSeen = ids; saveProg(p); }
+    const fresh = ids.filter(id => !p.shopSeen.includes(id) && !p.owned.includes(id)).length;
+    setBadge(document.querySelector('.m-nav [data-go="shop"]'), fresh + (window.Ads ? Ads.ready() : 0));
+}
+function markShopSeen(){ const p = prog(); p.shopSeen = shopItems().map(i => i.id); saveProg(p); refreshShopBadge(); }
 function menuTab(tab){
+    if (tab === 'shop') setTimeout(markShopSeen, 600);
     document.querySelectorAll('.m-tab').forEach(el => el.classList.toggle('on', el.dataset.tab === tab));
     document.querySelectorAll('.m-nav [data-go]').forEach(el => el.classList.toggle('on', el.dataset.go === tab));
     document.getElementById('m-body').scrollTop = 0;
@@ -4190,6 +4402,37 @@ function setLastMode(mode){
     else if (mode === 'parkour') openLevels();
     else startMatchmaking();
 }
+// ---- Profile tab ----
+function renderProfile(p, L, stars){
+    const slotCanvas = (id, look, scale) => { const cv = document.getElementById(id); if (cv) renderLook(cv, look, { scale:scale || 0.3, cy:0.62 }); };
+    const base = { skin:'classic', hat:'none', face:'none', trail:'none' };
+    slotCanvas('pf-c-skin', Object.assign({}, base, { skin:p.skin }));
+    slotCanvas('pf-c-hat', Object.assign({}, base, { hat:p.hat }), 0.26);
+    slotCanvas('pf-c-face', Object.assign({}, base, { face:p.face }));
+    if (document.getElementById('pf-c-costume')) { slotCanvas('pf-c-costume', Object.assign({}, base, { skin:p.skin, costume:p.costume || 'none' }), (p.costume && p.costume !== 'none') ? 0.2 : 0.3); const cn = document.getElementById('pf-n-costume'); if (cn) cn.textContent = ((COS_BY.costume || []).find(c => c.id === (p.costume || 'none')) || { name:'None' }).name; }
+    const trail = TRAIL_BY_ID[p.trail] || TRAILS[0], tc = document.getElementById('pf-c-trail');
+    if (tc){ const g = tc.getContext('2d'); g.clearRect(0, 0, tc.width, tc.height); if (trail.id !== 'none'){ try { drawTrailPreview(tc, trail); } catch(e){} } }
+    document.getElementById('pf-n-skin').textContent = skinById(p.skin).name;
+    document.getElementById('pf-n-hat').textContent = (HATS.find(h => h.id === p.hat) || HATS[0]).name;
+    document.getElementById('pf-n-face').textContent = (FACES.find(f => f.id === p.face) || FACES[0]).name;
+    document.getElementById('pf-n-trail').textContent = trail.name;
+    document.getElementById('pf-lv-n').textContent = L.lvl;
+    document.getElementById('pf-lv-xp').innerHTML = R('xp', L.into + ' / ' + L.need);
+    if (window.LevelRewards) setBadge(document.getElementById('pf-lv-n'), LevelRewards.claimable().length);
+    // rank chip
+    const rkEl = document.getElementById('pf-rank');
+    if (rkEl && window.Ranked){ const s = Ranked.state(); rkEl.innerHTML = s.placed ? Ranked.emblem(s.tier, 22) + '<b>' + s.rank.label + '</b><small>' + s.rk.rp + ' RP</small>' : '<small>Unranked</small>'; }
+    // records
+    const bestT = load('rr_pk_best_time', 0), bestM = load('rr_pk_best', 0), esc = load('rr_esc_best_score', 0), passTier = Math.min(30, passTiersDone(p.passPointsEarned || 0));
+    const rows = [
+        ['crown', 'Crowns', p.gt.wins],
+        ['mode-escape', 'Escape best', esc ? esc.toLocaleString('en-US') : '--'],
+        ['star', 'Level stars', stars + ' / 60'],
+        ['mode-levels', 'Tower best', bestT ? pkFmtTime(bestT) : bestM ? bestM + ' m' : '--'],
+    ];
+    document.getElementById('pf-rec').innerHTML = rows.map(r => '<div class="pf-r">' + icon(r[0]) + '<span>' + r[1] + '</span><b>' + r[2] + '</b></div>').join('');
+}
+const RENAME_GEMS = 50, SKIP_LEVEL_GEMS = 20;
 function refreshMenu(){
     const p = prog(), L = levelInfo(prog().xp), sk = skinById(p.skin);
     const root = document.getElementById('s-start');
@@ -4198,58 +4441,60 @@ function refreshMenu(){
     document.getElementById('m-name').textContent = p.name;
     document.getElementById('m-xpfill').style.width = (100*L.into/L.need).toFixed(1) + '%';
     document.getElementById('m-xpfill2').style.width = (100*L.into/L.need).toFixed(1) + '%';
-    document.getElementById('m-plvl').textContent = `Level ${L.lvl} · ${L.into} / ${L.need} XP`;
+    document.getElementById('m-plvl').textContent = 'Level ' + L.lvl;
     const inp = document.getElementById('m-name-input');
     if (document.activeElement !== inp) inp.value = p.name;
     document.getElementById('m-mode').textContent = MODE_LABEL[p.lastMode] || MODE_LABEL.race;
+    document.getElementById('m-mode-ico').innerHTML = (p.lastMode === 'ranked' && window.Ranked) ? Ranked.emblem(Ranked.state().tier, 30) : icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
+    if (window.Ranked) Ranked.refreshHome();
+    document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));
     renderPassHome(p);
-    const all = [...SKINS, ...HATS, ...FACES].filter(it => it.id !== 'none' && it.price > 0);
-    const next = all.filter(it => !p.owned.includes(it.id)).sort((a,b) => a.price - b.price)[0];
-    const coins = load('rr_coins', 0);
-    document.getElementById('m-next').textContent = next
-        ? (coins >= next.price ? `${next.name}: ready to buy` : `${next.name} · ${(next.price-coins).toLocaleString('en-US')} coins to go`)
-        : 'You own every skin';
-    document.getElementById('m-next-sw').style.background = next ? (next.color || RARITY[next.rarity].color) : '#232a37';
-    renderLook(document.getElementById('m-hero'), myLook(), { scale:0.22, cy:0.62 });
-    renderLook(document.getElementById('m-hero2'), myLook(), { scale:0.22, cy:0.62 });
-    const hat = HATS.find(h => h.id === p.hat) || HATS[0], face = FACES.find(f => f.id === p.face) || FACES[0];
-    const trail = TRAIL_BY_ID[p.trail] || TRAILS[0];
-    document.getElementById('m-eq-hat-n').textContent = hat.name;
-    document.getElementById('m-eq-face-n').textContent = face.name;
-    document.getElementById('m-eq-hat').style.background = hat.id === 'none' ? '#232a37' : RARITY[hat.rarity].color;
-    document.getElementById('m-eq-face').style.background = face.id === 'none' ? '#232a37' : RARITY[face.rarity].color;
-    document.getElementById('m-eq-trail-n').textContent = trail.name;
-    document.getElementById('m-eq-trail').style.background = trail.color;
+    if (window.Boost) Boost.refreshHome();
+    if (window.LevelRewards) LevelRewards.refreshHome();
+    if (window.Ads) Ads.refreshHome();
+    if (window.Streak) Streak.refreshHome();
+    if (window.Gauntlet) Gauntlet.refreshHome();
+    refreshShopBadge();
+    // these canvases are bigger than their frames (padding all round), so crowns, wings and flames are never cropped
+    const bigLook = (id, scale, cy, baseW) => { const cv = document.getElementById(id); if (!cv) return; const lk = myLook(), key = JSON.stringify(lk); if (cv._lk === key) return; cv._lk = key; const W = cv.width; renderLook(cv, lk, { scale:scale * baseW / W, cy:((W - baseW) / 2 + cy * baseW) / W }); };      // only redraw when the look really changed
+    bigLook('m-hero', 0.22, 0.62, 360); bigLook('m-hero2', 0.22, 0.62, 200); bigLook('m-av', 0.25, 0.68, 96);
     let d1 = 0, d2 = 0;
     try { d1 = dimLoad(DIMENSIONS[0]).stars.reduce((a,b) => a+b, 0); d2 = dimLoad(DIMENSIONS[1]).stars.reduce((a,b) => a+b, 0); } catch(e){}
-    document.getElementById('m-d1').textContent = `★ ${d1}/30`;
-    document.getElementById('m-d2').textContent = (d1+d2) >= 28 ? `★ ${d2}/30` : '28★ to unlock';
+    document.getElementById('m-d1').innerHTML = `${icon('star')} ${d1}/30`;
+    document.getElementById('m-d2').innerHTML = (d1+d2) >= 28 ? `${icon('star')} ${d2}/30` : `28 ${icon('star')} to unlock`;
     document.getElementById('m-d2box').classList.toggle('locked', d1+d2 < 28);
-    document.getElementById('m-tile-pk').textContent = `★ ${d1+d2} / 60`;
     const save = pkLoadSave(), bestM = load('rr_pk_best', 0), bestT = load('rr_pk_best_time', 0);
     document.getElementById('m-tower').textContent = bestT ? pkFmtTime(bestT) : save ? `${save.m || 0} m` : bestM ? `${bestM} m` : '--';
-    document.getElementById('m-eq-skin').style.background = sk.color;
-    document.getElementById('m-eq-skin-n').textContent = sk.name;
     document.getElementById('m-s-races').textContent = p.races;
     document.getElementById('m-s-wins').textContent = p.wins;
     document.getElementById('m-s-rate').textContent = p.races ? Math.round(100*p.wins/p.races) + '%' : '--';
-    const esc = load('rr_esc_best_score', 0);
-    document.getElementById('m-s-esc').textContent = esc ? esc.toLocaleString('en-US') : '--';
-    document.getElementById('m-s-pk').textContent = `★ ${d1 + d2}`;
-    document.getElementById('m-s-tower').textContent = bestT ? pkFmtTime(bestT) : bestM ? `${bestM} m` : '--';
-    document.getElementById('m-s-pass').textContent = p.passPoints.toLocaleString('en-US');
+    renderProfile(p, L, d1 + d2);
     renderShop('skin');
 }
 
 // Rewards after a race (place-based), shown on the results screen
 function rewardRace(place, finished, lootId){
-    const coins = finished ? [60, 40, 25, 15][place-1] || 10 : 10;
+    const id = lootId || newLootId('race');
+    const coins0 = finished ? [60, 40, 25, 15][place-1] || 10 : 10;
+    const coins = window.Boost ? Boost.coins(coins0, id) : coins0;       // coin booster
     const xp    = finished ? [60, 45, 35, 25][place-1] || 15 : 15;
     const passPoints = finished ? [50, 40, 32, 25][place-1] || 20 : 15;
-    const id = lootId || newLootId('race');
-    const alreadyGranted = !!prog().lootGrants[id];
-    const drop = awardLootDrop(id, {coins, xp, passPoints});
-    if (!alreadyGranted){ const p = prog(); p.races++; if (finished && place === 1) p.wins++; saveProg(p); }
+    const pp = prog(), alreadyGranted = !!(pp.lootGrants[id] || pp.pendingDrops[id]);
+    // Only the winner earns a chest; everyone else gets the base rewards straight away.
+    let drop = null;
+    if (place === 1 && finished) drop = awardLootDrop(id, {coins, xp, passPoints});
+    else if (!alreadyGranted){
+        const q = prog(); q.xp += xp; q.passPoints += passPoints; q.passPointsEarned += passPoints;
+        q.lootGrants[id] = { id, tier:'common', coins, xp, passPoints, cosmetic:null, noDrop:true }; saveProg(q); store('rr_coins', load('rr_coins', 0) + coins);
+    }
+    if (!drop) drop = { noDrop:true, coins, xp, passPoints };
+    rewardRace.keyEarned = false;
+    if (!alreadyGranted){
+        const p = prog(); p.races++; if (finished && place === 1) p.wins++;
+        if (window.Missions && gameMode === 'race' && !window.rankedMatch) Missions.race(place, finished);
+        else p.gt.streak = 0;
+        saveProg(p);
+    }
     refreshMenu();
     return drop;
 }
@@ -4258,37 +4503,60 @@ function rewardRace(place, finished, lootId){
 document.querySelectorAll('#s-start [data-go]').forEach(b => b.addEventListener('click', () => { menuTab(b.dataset.go); SFX.play('count'); }));
 document.querySelectorAll('#s-start .m-pill[data-cat]').forEach(b => b.addEventListener('click', () => { renderShop(b.dataset.cat); SFX.play('count'); }));
 document.querySelectorAll('#s-start [data-shop]').forEach(b => b.addEventListener('click', () => { menuTab('shop'); renderShop(b.dataset.shop); }));
-document.getElementById('btn-home-play').addEventListener('click', () => {
+// Tap a mode on the Play tab to select it (it shows on the home screen), then press PLAY there.
+function selectMode(mode){
+    const p = prog(); p.lastMode = mode; saveProg(p);
+    refreshMenu(); menuTab('home'); SFX.play('count');
+}
+function playSelected(){
     const m = prog().lastMode;
-    if (m === 'escape') startEscape(); else if (m === 'parkour') openLevels(); else startMatchmaking();
-});
-document.getElementById('btn-pass-open').addEventListener('click', () => { renderPassScreen(); showScreen('pass'); });
+    if (m === 'escape') startEscape();
+    else if (m === 'parkour') openLevels();
+    else if (m === 'gauntlet') Gauntlet.open();
+    else if (m === 'ranked') Ranked.open();
+    else if (m === 'build') Build.open();
+    else startMatchmaking();
+}
+document.getElementById('btn-home-play').addEventListener('click', playSelected);
+document.getElementById('btn-pass-open').addEventListener('click', openPass);
+document.getElementById('pz-claimall').addEventListener('click', claimAllPass);
 document.getElementById('btn-pass-back').addEventListener('click', () => showScreen('start'));
-document.getElementById('btn-find').addEventListener('click', () => setLastMode('race'));
-document.getElementById('btn-escape').addEventListener('click', () => setLastMode('escape'));
-document.getElementById('btn-parkour').addEventListener('click', () => setLastMode('parkour'));
-document.getElementById('m-tile-parkour').addEventListener('click', () => { setLastMode('parkour'); openLevels(); });
-document.getElementById('m-friends-race').addEventListener('click', () => { setLastMode('race'); startMatchmaking(); });
+document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.addEventListener('click', () => selectMode(c.dataset.mode)));
 {
     const inp = document.getElementById('m-name-input');
+    // The first rename is free, every later one costs RENAME_GEMS. The field is locked until you tap the pencil.
+    const hint = document.getElementById('pf-name-hint'), editBtn = document.getElementById('pf-name-edit');
+    const showHint = () => { const p = prog(); hint.textContent = (p.nameChanges || 0) >= 1 ? 'Changing your name costs ' + RENAME_GEMS + ' gems' : 'Your first change is free'; };
+    const lock = () => { inp.readOnly = true; editBtn.hidden = false; hint.hidden = true; };
     const commit = () => {
-        const v = inp.value.replace(/[^\p{L}\p{N}_.\- ]/gu, '').trim().slice(0, 16);
-        const p = prog(); p.name = v || 'Player'; saveProg(p); refreshMenu();
+        if (inp.readOnly) return;
+        const v = inp.value.replace(/[^\p{L}\p{N}_.\- ]/gu, '').trim().slice(0, 16) || 'Player';
+        const p = prog();
+        if (v !== p.name) {
+            const cost = (p.nameChanges || 0) >= 1 ? RENAME_GEMS : 0;
+            if (cost && gemCount() < cost) { toast('You need ' + cost + ' gems'); inp.value = p.name; lock(); goGemShop(); return; }
+            if (cost) store('rr_gems', gemCount() - cost);
+            const q = prog(); q.name = v; q.nameChanges = (q.nameChanges || 0) + 1; saveProg(q); toast('Name changed');
+        }
+        lock(); refreshMenu();
     };
-    inp.addEventListener('change', commit);
+    editBtn.addEventListener('click', () => { inp.readOnly = false; editBtn.hidden = true; hint.hidden = false; showHint(); inp.focus(); inp.select(); });
     inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') inp.blur(); });
     inp.addEventListener('blur', commit);
 }
 
 /* ---- menu meta (best + wallet) ---- */
 function refreshStartMeta(){
+    settlePendingDrops();
     const best = load('rr_esc_best_score', 0), coins = load('rr_coins', 0);
     document.getElementById('start-best').textContent = best > 0 ? 'Best ' + best.toLocaleString('en-US') : '';
     document.getElementById('wallet-num').textContent = coins;
+    document.getElementById('gem-num').textContent = gemCount().toLocaleString('en-US');
+    _walletPrev = { rr_coins: +coins || 0, rr_gems: gemCount() };
     try {
         const tot = dimTotalStars();
-        const max = DIMENSIONS.reduce((a,dm) => a + dm.levels.length*3, 0);
-        document.getElementById('start-pk').textContent = tot ? '★ ' + tot + '/' + max : '';
+        const max = DIMENSIONS.filter(dm => !dm.hidden).reduce((a,dm) => a + dm.levels.length*3, 0);
+        document.getElementById('start-pk').innerHTML = tot ? icon('star') + ' ' + tot + '/' + max : '';
     } catch(e){}
     const pkEl = document.getElementById('start-pk');
     const save = (typeof pkLoadSave === 'function') ? pkLoadSave() : null;
@@ -4616,7 +4884,6 @@ const pkHeightEl = document.getElementById('pk-height');
 const pkFallsEl = document.getElementById('pk-falls');
 const pkFallsPill = document.getElementById('pk-falls-pill');
 const pkTimeEl = document.getElementById('pk-time');
-document.getElementById('btn-parkour').addEventListener('click', () => openLevels());
 document.getElementById('btn-pk-continue').addEventListener('click', () => pkStart(pkLoadSave()));
 document.getElementById('btn-pk-new').addEventListener('click', () => { pkClearSave(); pkStart(null); });
 document.getElementById('btn-pk-back').addEventListener('click', () => openLevels());
@@ -4664,8 +4931,8 @@ const DIM2_LEVELS = [
     { name:'Freefall',    color:'#6b7ee8', seed:43303, pattern:'MTMnMFMTnMMFnTFMMnT',     gap:[115,250], width:[52,64], shift:[100,175], par3:58, par2:174 },
     { name:'Sheer Drop',  color:'#ff9838', seed:45505, pattern:'FTFnFFTnFFFTnFFn',        gap:[115,255], width:[50,62], shift:[105,180], par3:60, par2:180 },
     { name:'Deadlock',    color:'#ffcf3f', seed:48808, pattern:'MFTMFnMTFMFnMTFn',        gap:[115,250], width:[52,64], shift:[105,180], par3:74, par2:216 },
-    { name:'Razors Edge', color:'#35e0c8', seed:46606, pattern:'TnTFnTTnFTnTnFTTnTnFT',   gap:[120,260], width:[46,56], shift:[105,180], par3:168, par2:500 },
-    { name:'Abyssal',     color:'#ff5470', seed:49909, pattern:'IFTInIFTnIFTTInIFT',      gap:[120,258], width:[48,58], shift:[108,182], iceMin:62, par3:118, par2:360 },
+    { name:"Razor's Edge", color:'#35e0c8', seed:46606, pattern:'TnTFnTTnFTnTnFTTnTnFT',   gap:[120,260], width:[46,56], shift:[105,180], par3:168, par2:500 },
+    { name:'Bottomless', color:'#ff5470', seed:49909, pattern:'IFTInIFTnIFTTInIFT',      gap:[120,258], width:[48,58], shift:[108,182], iceMin:62, par3:118, par2:360 },
     { name:'Last Light',  color:'#ff2e5c', seed:50010, pattern:'XMIFTnXMFITnTMXFInMXFTnT', gap:[115,255], width:[50,62], shift:[105,180], iceMin:64, par3:108, par2:340 },
 ];
 const DIMENSIONS = [
@@ -4677,6 +4944,7 @@ function dimTotalStars(){
     // total stars across ALL dimensions — this is what unlocks the next one
     let sum = 0;
     for (const dm of DIMENSIONS){
+        if (dm.hidden) continue;
         const d = dimLoad(dm);
         sum += d.stars.reduce((a,b)=>a+b, 0);
     }
@@ -4687,7 +4955,7 @@ function dimLoad(dm){
     try { const d = JSON.parse(localStorage.getItem(dm.key)); if (d && Array.isArray(d.stars)) return d; } catch(e){}
     return { stars: dm.levels.map(() => 0), best: dm.levels.map(() => 0) };
 }
-function dimSave(dm, d){ try { localStorage.setItem(dm.key, JSON.stringify(d)); } catch(e){} }
+function dimSave(dm, d){ try { localStorage.setItem(dm.key, JSON.stringify(d)); } catch(e){} if (window.Cloud) Cloud.touch(); }
 
 
 function lvReach(ax, aw, ay, bx, bw, by, mult){
@@ -4705,6 +4973,7 @@ function lvPairOK(a, b, mult){
 
 function lvGenerate(i){
     const L = DIMENSIONS[curDim].levels[i], R = pkRng(L.seed), rr = (a,b) => a + R()*(b-a);
+    if (L.build){ L.build(); return; }
     const pw = PLAY_W();
     platforms = []; itemBoxes = []; finishPlatform = null;
     const ground = {x:pw/2, y:START_Y, w:pw, h:40, type:'normal', active:true, ground:true, quakeWarn:0, quakeDown:0, range:0, baseX:pw/2};
@@ -4771,12 +5040,14 @@ function lvGenerate(i){
 
 function lvLoad(){ return dimLoad(DIMENSIONS[curDim]); }
 function lvSave(d){ dimSave(DIMENSIONS[curDim], d); }
-function lvUnlocked(d, i){ return i === 0 || d.stars[i-1] > 0; }
+function lvUnlocked(d, i){ return i === 0 || d.stars[i-1] > 0 || !!(d.skipped && d.skipped[i-1]); }
 function lvStarsFor(i, t){ const L = DIMENSIONS[curDim].levels[i]; return t <= L.par3 ? 3 : t <= L.par2 ? 2 : 1; }
 
 /* ---- level select ---- */
 const LOCK_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 function openLevels(gotoDim){
+    if (DIMENSIONS[curDim] && DIMENSIONS[curDim].hidden) curDim = 0;
+    if (window.Tutorial) Tutorial.stop();
     if (gotoDim !== undefined) curDim = gotoDim;
     if (!dimUnlocked(curDim)) curDim = 0;              // safety: never land on a locked dimension
     const dim = DIMENSIONS[curDim];
@@ -4789,8 +5060,10 @@ function openLevels(gotoDim){
         const b = document.createElement('button');
         b.className = 'lv-tile' + (open ? '' : ' locked') + (d.stars[i] ? ' done' : '');
         b.style.setProperty('--lv', L.color);
-        const stars = [0,1,2].map(k => `<span class="s${k < d.stars[i] ? ' on' : ''}">★</span>`).join('');
-        b.innerHTML = `<span class="lv-num">${i+1}</span><span class="lv-name">${L.name}</span>` +
+        const stars = [0,1,2].map(k => `<span class="s${k < d.stars[i] ? ' on' : ''}">${icon('star')}</span>`).join('');
+        const tc = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' }[lvDropTier(curDim, i)];
+        const chest = d.stars[i] >= 3 ? '' : `<span class="lv-drop" title="3 stars: chest" style="--ic:${tc}">${icon('drop-' + lvDropTier(curDim, i))}</span>`;   // shown until you have earned it, also on locked levels
+        b.innerHTML = chest + `<span class="lv-num">${i+1}</span><span class="lv-name">${L.name}</span>` +
                       (open ? `<span class="lv-stars">${stars}</span>` : `<span class="lv-lock">${LOCK_SVG}</span>`);
         b.addEventListener('click', () => {
             if (open) lvStart(i);
@@ -4806,10 +5079,11 @@ function openLevels(gotoDim){
     tabsEl.innerHTML = '';
     const totalStars = dimTotalStars();
     DIMENSIONS.forEach((dm, di) => {
+        if (dm.hidden) return;
         const unlocked = dimUnlocked(di);
         const t = document.createElement('button');
         t.className = 'dim-tab' + (di === curDim ? ' active' : '') + (unlocked ? '' : ' locked');
-        t.innerHTML = unlocked ? dm.name : `${LOCK_SVG} ${dm.unlockStars}★`;
+        t.innerHTML = unlocked ? dm.name : `${icon('lock')} ${dm.unlockStars} ${icon('star')}`;
         t.addEventListener('click', () => {
             if (unlocked) openLevels(di);
             else t.animate([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}], {duration:220});
@@ -4836,7 +5110,7 @@ function lvStart(i){
     players = [players[0]];
     players[0].x = PLAY_W()/2;
     lv = { lootId:newLootId('level'), idx:i, t:0, falls:0, prevMode:'idle', lastLandY: START_Y - 32, done:false, shownT:-1, shownF:-1,
-           finishY: platforms[platforms.length-1].y };
+           finishY: platforms[platforms.length-1].y, tutorial: !!DIMENSIONS[curDim].tutorial };
     lvNameEl.textContent = i + 1;
     beginRound();
 }
@@ -4845,6 +5119,7 @@ function updateLevel(dt){
     const lp = players[0];
     if (!lp || lv.done) return;
     lv.t += dt;
+    if (lv.tutorial && window.Tutorial) Tutorial.update(lp);
     if (lv.prevMode === 'air' && lp.mode === 'idle' && lp.plat){
         if (lp.y - lv.lastLandY > 150){
             lv.falls++;
@@ -4863,10 +5138,17 @@ function updateLevel(dt){
 }
 function lvFmt(t){ const m = Math.floor(t/60), s = t - m*60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); }
 
+// Which supply drop a level gives for 3 stars: rarity by the level's difficulty and its dimension.
+function lvDropTier(dim, i){
+    const n = DIMENSIONS[dim].levels.length, f = i / Math.max(1, n - 1);
+    return dim === 0 ? (f < 0.4 ? 'common' : f < 0.8 ? 'rare' : 'epic') : (f < 0.35 ? 'rare' : f < 0.7 ? 'epic' : 'legendary');
+}
 function lvComplete(p){
+    if (window.Missions) Missions.event('level');
     SFX.play('finish');
     if (lv.done) return;
     lv.done = true;
+    if (DIMENSIONS[curDim].tutorial){ state = 'over'; dragging = false; SFX.play('finish'); camShake = 8; for (const c of ['#35e0c8', '#ffcf3f', '#ffffff']) burst(p.x, p.y, c, 20, 300); Tutorial.finish(p); return; }
     state = 'over'; dragging = false;
     hitStop = 0.5; camShake = 8;
     const col = DIMENSIONS[curDim].levels[lv.idx].color;
@@ -4877,9 +5159,27 @@ function lvComplete(p){
     const prevBest = d.best[i];
     const isBest = !prevBest || t < prevBest;
     if (isBest) d.best[i] = +t.toFixed(2);
+    const prevStars = d.stars[i];
     const gainedStars = Math.max(0, stars - d.stars[i]);
     d.stars[i] = Math.max(d.stars[i], stars);
-    const loot = awardLootDrop(lv.lootId, {coins:gainedStars * 20, xp:25, passPoints:20 + stars * 10});
+    // Three stars earn a supply drop whose starting rarity follows the level's difficulty (and the dimension);
+    // anything less pays the base rewards straight away.
+    let loot;
+    const bc = n => window.Boost ? Boost.coins(n, lv.lootId) : n;      // coin booster
+    if (stars >= 3 && prevStars < 3){   // the drop is a one-time reward for the first 3-star clear
+        const n = DIMENSIONS[curDim].levels.length, f = i / Math.max(1, n - 1);
+        const tier = lvDropTier(curDim, i);
+        const coins = bc(curDim === 0 ? Math.round(40 + f * 60) : Math.round(90 + f * 120));
+        loot = awardLootDrop(lv.lootId, {coins, xp:25 + Math.round(f * 25), passPoints:50}, {tier});
+    } else {
+        const coins = bc(gainedStars * 20), xp = 25, pp = 20 + stars * 10, q = prog();
+        if (!q.lootGrants[lv.lootId] && !q.pendingDrops[lv.lootId]){
+            q.xp += xp; q.passPoints += pp; q.passPointsEarned += pp;
+            q.lootGrants[lv.lootId] = { id:lv.lootId, tier:'common', coins, xp, passPoints:pp, cosmetic:null, noDrop:true }; saveProg(q);
+            store('rr_coins', load('rr_coins', 0) + coins);
+        }
+        loot = { noDrop:true, coins, xp, passPoints:pp };
+    }
     lvSave(d);
     const L = DIMENSIONS[curDim].levels[i];
     setTimeout(() => {
@@ -4887,14 +5187,15 @@ function lvComplete(p){
         document.getElementById('lvd-kicker').textContent = 'LEVEL ' + (i+1) + ' · ' + L.name.toUpperCase();
         document.getElementById('lvd-time').textContent = lvFmt(t);
         const sEl = document.getElementById('lvd-stars');
-        sEl.innerHTML = [0,1,2].map(k => `<span class="star${k < stars ? ' on' : ''}" style="animation-delay:${0.15 + k*0.18}s">★</span>`).join('');
+        sEl.innerHTML = [0,1,2].map(k => `<span class="star${k < stars ? ' on' : ''}" style="animation-delay:${0.15 + k*0.18}s">${icon('star')}</span>`).join('');
         const b = document.getElementById('lvd-best');
         b.textContent = isBest ? 'NEW BEST' : 'BEST ' + lvFmt(prevBest);
         b.classList.toggle('muted', !isBest);
         document.getElementById('lvd-falls').textContent = lv.falls;
-        document.getElementById('lvd-targets').innerHTML = `★★★ ${lvFmt(L.par3)} &nbsp;·&nbsp; ★★ ${lvFmt(L.par2)}`;
+        document.getElementById('lvd-targets').innerHTML = `${icon('star')}${icon('star')}${icon('star')} ${lvFmt(L.par3)} &nbsp;·&nbsp; ${icon('star')}${icon('star')} ${lvFmt(L.par2)}`;
         document.getElementById('btn-lvd-next').style.display = i < DIMENSIONS[curDim].levels.length - 1 ? '' : 'none';
-        renderLootDrop('loot-level', loot);
+        if (loot.noDrop) document.getElementById('loot-level').innerHTML = `<div class="loot-items">${R('coin', loot.coins, {plus:true})}${R('xp', loot.xp, {plus:true})}${R('pass', loot.passPoints, {plus:true})}</div>`;
+        else renderLootDrop('loot-level', loot);
         showScreen('lvdone');
         refreshStartMeta();
     }, 1300);
@@ -4933,7 +5234,7 @@ const lvTimeEl = document.getElementById('lv-time');
 const lvFallsEl = document.getElementById('lv-falls');
 const lvFallsPill = document.getElementById('lv-falls-pill');
 document.getElementById('btn-tower').addEventListener('click', openParkour);
-document.getElementById('btn-lv-back').addEventListener('click', () => { refreshStartMeta(); showScreen('start'); });
+for (const bid of ['btn-lv-back', 'btn-lv-back2']) document.getElementById(bid).addEventListener('click', () => { refreshStartMeta(); showScreen('start'); });
 document.getElementById('btn-lvd-next').addEventListener('click', () => lvStart(Math.min(DIMENSIONS[curDim].levels.length-1, lv.idx + 1)));
 document.getElementById('btn-lvd-retry').addEventListener('click', () => lvStart(lv.idx));
 document.getElementById('btn-lvd-levels').addEventListener('click', () => {
@@ -4960,7 +5261,7 @@ function syncMuteBtn(){
         // one button for everything: muting stops the music, unmuting brings back the
         // right track for wherever you are.
         if (m) SFX.music.stop();
-        else if (SFX.music.on) SFX.music.set(state === 'menu' ? 'menu' : 'race');
+        else if (SFX.music.on) SFX.music.set(SFX.trackFor());
     });
 }
 /* ---- Android / browser back button: pause or step back, never close the app ---- */
@@ -4995,3 +5296,6 @@ function syncMuteBtn(){
 
 /* start loop */
 requestAnimationFrame(t=>{ last=t; requestAnimationFrame(loop); });
+
+// no pinch-zoom of the game page (iOS Safari ignores user-scalable)
+['gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive:false }));

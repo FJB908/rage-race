@@ -1,0 +1,42 @@
+.ad-test { position: fixed; inset: 0; z-index: 9999; background: #05070b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
+.ad-box { width: min(86vw, 340px); aspect-ratio: 9 / 12; border-radius: 16px; background: #141a26; border: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.ad-box small { font-size: 11px; letter-spacing:.05em; color: #8b95a7; } .ad-box b { font-size: 18px; }
+.ad-bar { width: 70%; height: 5px; border-radius: 9px; background: rgba(255,255,255,.1); overflow: hidden; } .ad-bar i { display: block; height: 100%; width: 0; background: #35e0c8; }
+.ad-x { min-width: 150px; padding: 13px 20px; border-radius: 14px; border: 0; background: #232a37; color: #8b95a7; font: inherit; font-weight: 800; font-size: 14px; }
+.ad-x.go { background: #35e0c8; color: #06201b; }
+.ad-cancel { border: 0; background: none; color: #8b95a7; font: inherit; font-size: 13px; text-decoration: underline; padding: 8px; }
+
+.m-stage { cursor: pointer; position: relative; }
+
+
+
+/* home: just a coin with a play badge and the amount, no box */
+.m-adpill { position: absolute; right: 8px; bottom: 4px; z-index: 3; display: inline-flex; align-items: center; gap: 6px; padding: 2px 4px; border: 0; background: none; color: #ffcf3f; font: inherit; filter: drop-shadow(0 2px 6px rgba(0,0,0,.6)); }
+.m-adpill[hidden] { display: none; }
+.ap-art { position: relative; width: 38px; height: 38px; display: block; }
+.ap-art .ico-coin { width: 38px; height: 38px; } .ap-art .ico-video { position: absolute; right: -7px; bottom: -5px; width: 20px; height: 20px; }
+.m-adpill b { font-size: 19px; font-weight: 900; line-height: 1; }
+.ap-tx { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; } .ap-tx small { font-size: 10px; font-weight: 900; letter-spacing: .12em; color: #fff; opacity: .9; }
+.m-adpill, .m-stage, .m-adpill * { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; outline: none; }
+.m-adpill:active { transform: scale(.94); }
+.m-adpill .nbadge { top: -8px; right: -10px; }
+.m-adpill.cool { filter: grayscale(1) drop-shadow(0 2px 6px rgba(0,0,0,.6)); opacity: .85; } .m-adpill.cool b { color: #fff; font-variant-numeric: tabular-nums; }
+/* shop: two icon buttons instead of cards */
+.ad-row { display: flex; justify-content: center; gap: 36px; margin: 2px 0 20px; }
+.ad-chip { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 6px; border: 0; background: none; color: inherit; font: inherit; }
+.ad-art { position: relative; width: 62px; height: 62px; display: block; }
+.ad-art > .ico { width: 62px; height: 62px; --ic: #35e0c8; filter: drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
+.ad-art .ad-play { position: absolute; right: -10px; bottom: -4px; width: 28px; height: 28px; }
+.ad-lbl { font-size: 17px; font-weight: 900; margin-top: 6px; color: #ffcf3f; } .ad-chip[data-kind=drop] .ad-lbl { color: #35e0c8; }
+.ad-chip small { font-size: 11px; color: #8b95a7; }
+.ad-chip.cool, .ad-chip:disabled { filter: grayscale(1); opacity: .6; } .ad-chip.cool .ad-lbl { color: #fff; font-variant-numeric: tabular-nums; }
+
+/* small but loud: video rewards are free */
+.ad-free { position:absolute; left:-8px; top:-6px; z-index:2; padding:2px 6px 2px; border-radius:7px; background:#7ee787; color:#052b0d; font:900 9px/1.1 "Bricolage Grotesque",system-ui,sans-serif; font-style:normal; letter-spacing:.08em; box-shadow:0 2px 0 rgba(0,0,0,.35), 0 0 12px rgba(126,231,135,.65); transform:rotate(-8deg); pointer-events:none; animation:adfree 1.8s ease-in-out infinite; }
+@keyframes adfree { 50% { transform:rotate(-8deg) scale(1.1); } }      /* transform only: animating box-shadow repaints every frame */
+.m-adpill.cool .ad-free { display:none; }
+
+/* shop: free-video notices */
+.m-pill[data-cat=resources] { position: relative; }
+.pill-free { position:absolute; right:-6px; top:-9px; padding:2px 6px; border-radius:7px; background:#7ee787; color:#052b0d; font:900 9px/1.1 "Bricolage Grotesque",system-ui,sans-serif; letter-spacing:.08em; box-shadow:0 2px 0 rgba(0,0,0,.35); transform:rotate(6deg); pointer-events:none; }
+.ad-head { text-align:center; font:900 11px/1 "Bricolage Grotesque",system-ui,sans-serif; letter-spacing:.14em; color:#7ee787; margin:4px 0 -2px; }
