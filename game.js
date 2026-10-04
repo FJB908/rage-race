@@ -2923,7 +2923,7 @@ function goGemShop(){
 function paintWallet(k){
     const isC = k === 'rr_coins', el = document.getElementById(isC ? 'wallet-num' : 'gem-num'); if (!el) return;
     const v = Math.max(0, +localStorage.getItem(k) || 0), prev = _walletPrev[k];
-    el.textContent = isC ? String(v) : v.toLocaleString('en-US');
+    el.textContent = v >= 100000 ? Math.round(v / 1000).toLocaleString('en-US') + 'K' : v.toLocaleString('en-US');      // thousands separators; 100K+ shortens so the top bar never squeezes the name
     _walletPrev[k] = v;
     if (prev === undefined || prev === v) return;
     const pill = el.closest('button'); if (!pill) return;
@@ -4341,7 +4341,7 @@ function renderShop(cat){
                     (cat === 'trail' ? `<canvas class="tr-pv" width="400" height="200"></canvas>` : '') +
                     `<span class="m-skin-f"><span class="buy-hint">Tap again</span><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.premium ? R('gem', it.gemPrice) : R('coin', it.price)}</span></span>` + (it.premium ? `<span class="prem-tag">${icon('gem')}</span>` : '');
                 const preview = cat === 'costume' ? { skin:current.skin, hat:'none', face:'none', trail:'none', costume:it.id } : { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail, costume:'none' };
-                renderLook(b.querySelector('canvas'), preview, { scale:cat === 'costume' ? 0.2 : 0.22, cy:cat === 'costume' ? 0.64 : 0.62 });
+                renderLook(b.querySelector('canvas'), preview, { scale:cat === 'costume' ? 0.21 : 0.27, cy:cat === 'costume' ? 0.64 : 0.66 });
                 { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it, undefined, 1.7); }
                 if ((it.premium || it.id === 'crown' || cat === 'costume') && cat !== 'trail') animated.push([b.querySelector('canvas'), preview]);
                 b.addEventListener('click', () => {

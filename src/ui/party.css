@@ -44,3 +44,4 @@
 .pt-plus { position: absolute; left: calc(50% + (var(--n, 1) * var(--pw, 150px) + (var(--n, 1) - 1) * var(--pw, 150px) * .18) / 2 + 12px); bottom: calc(var(--pw, 150px) * .5 + 8px); margin: 0; align-self: auto; width: 36px; height: 36px; border: 1.5px dashed rgba(255,255,255,.28); background: rgba(255,255,255,.04); color: rgba(255,255,255,.5); font-size: 24px; }
 .m-stage.party .pt-plus { width: 34px; height: 34px; font-size: 22px; }
 .pt-plus:active { background: rgba(53,224,200,.15); color: #35e0c8; border-color: rgba(53,224,200,.6); }
+.pt-plus { display:flex; align-items:center; justify-content:center; padding:0; line-height:0; } .pt-plus svg { display:block; width:18px; height:18px; }

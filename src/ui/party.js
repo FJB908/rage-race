@@ -56,7 +56,7 @@
                 slot.insertAdjacentHTML('beforeend', '<span class="pt-sh"></span>');
                 row.appendChild(slot);
             });
-            if (n < MAX) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-plus'; b.setAttribute('aria-label', 'Invite a friend'); b.innerHTML = '<span>+</span>'; row.appendChild(b); }
+            if (n < MAX) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-plus'; b.setAttribute('aria-label', 'Invite a friend'); b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>'; row.appendChild(b); }
             $('pt-bar').hidden = !s.party || n < 2;
             if (!$('pt-bar').hidden) $('pt-bar').innerHTML = '<b>PARTY ' + n + '/' + MAX + '</b>' + ['race', 'gauntlet'].map(k => '<button type="button" class="pt-mode' + (mode() === k ? ' on' : '') + '" data-a="mode" data-m="' + k + '">' + (k === 'race' ? 'RACE' : 'GAUNTLET') + '</button>').join('') + '<button type="button" data-a="leave">LEAVE</button>';
             renderInvites();

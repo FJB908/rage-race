@@ -669,3 +669,18 @@ body.build-race #finish-menu { display:none !important; }
 .gx-t { grid-column:1/-1; font:900 11px/1 "Bricolage Grotesque",system-ui,sans-serif; letter-spacing:.14em; color:#ffcf3f; text-align:center; }
 .gx-deal { display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 6px; border-radius:16px; border:1px solid rgba(255,207,63,.35); background:linear-gradient(160deg,rgba(255,207,63,.14),rgba(255,255,255,.03)); color:#fff; font:inherit; }
 .gx-deal:active { transform:scale(.96); } .gx-c { font:900 15px/1 system-ui; color:#ffcf3f; } .gx-p { display:flex; align-items:center; gap:4px; padding:6px 10px; border-radius:10px; background:#3a1650; color:#ff8ae6; } .gx-p .ico { width:16px; height:16px; } .gx-p b { font-size:15px; }
+
+/* polish: the top bar keeps room for the name, the level-reward badge sits on the avatar's corner, cards align */
+.m-top { gap: 8px; padding-left: 18px; padding-right: 14px; }
+.m-coins, .m-gems { gap: 5px; padding: 0 4px 0 9px; font-size: 13px; }
+.m-coins .m-plus, .m-gems .m-plus { width: 22px; height: 22px; }
+.m-gear { width: 36px; height: 36px; }
+.m-who { min-width: 64px; } .m-name { font-size: 16px; }
+.m-avatar #m-lvl .nbadge, .m-avatar .m-lvl .nbadge { top: -12px; left: -14px; right: auto; min-width: 17px; height: 17px; font-size: 10px; padding: 0 4px; }
+.m-card.stack { justify-content: flex-start; gap: 12px; }
+.m-card.stack .mc-copy { margin-top: 0; }
+#acct-sub, .set-line small, [id*="cloud"] small { white-space: normal; }
+#ma-sub { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.3; }
+/* settings never clips on short phones: it scrolls and keeps its Done button reachable */
+#s-settings { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: calc(env(safe-area-inset-top, 0px) + 18px) 16px calc(env(safe-area-inset-bottom, 0px) + 22px); box-sizing: border-box; }
+#s-settings .set-panel { margin: auto; gap: 12px; }
