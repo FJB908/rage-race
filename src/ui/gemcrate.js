@@ -3,10 +3,11 @@
 (function () {
     'use strict';
     const PRICE = 100, SECOND_CHANCE = 0.12;
-    const ODDS = [['legendary', 0.20], ['epic', 0.50], ['rare', 0.30]];
+    const ODDS = [['legendary', 0.12], ['mythic', 0.20], ['epic', 0.40], ['rare', 0.28]];
     const EXTRAS = {
         rare:      { coins: 2500, xp: 400, gems: 20, boosts: [{ kind: 'coin', mult: 2, n: 8 }, { kind: 'chest', mult: 2, n: 5 }], bonus: ['epic', 'rare'] },
         epic:      { coins: 1800, xp: 300, gems: 15, boosts: [{ kind: 'coin', mult: 2, n: 5 }, { kind: 'chest', mult: 2, n: 3 }], bonus: ['rare'] },
+        mythic:    { coins: 1500, xp: 270, gems: 12, boosts: [{ kind: 'coin', mult: 2, n: 4 }], bonus: ['rare'] },
         legendary: { coins: 1200, xp: 250, gems: 10, boosts: [{ kind: 'coin', mult: 2, n: 3 }], bonus: [] },
     };
     const pool = (rar, p) => [...SKINS, ...HATS, ...FACES, ...TRAILS, ...(window.Finishers ? Finishers.FINISHERS : [])].filter(i => i.id !== 'f-none').filter(i => i.rarity === rar && i.price > 0 && !i.premium && !i.exclusive && !i.priceLock && !p.owned.includes(i.id));
@@ -14,7 +15,7 @@
     function roll() {
         const p = prog(); let x = Math.random(), rar = 'rare';
         for (const [r, w] of ODDS) { x -= w; if (x <= 0) { rar = r; break; } }
-        const order = [rar, ...['legendary', 'epic', 'rare'].filter(r => r !== rar)];
+        const order = [rar, ...['legendary', 'mythic', 'epic', 'rare'].filter(r => r !== rar)];
         for (const r of order) { const list = pool(r, p); if (list.length) return { rar: r, item: list[Math.floor(Math.random() * list.length)] }; }
         return { rar, item: null };
     }
@@ -30,7 +31,7 @@
         const { rar, item } = roll(), ex = EXTRAS[rar], p = prog();
         let coins = ex.coins, second = null;
         const isFin = !!(item && item.id[0] === 'f' && item.id[1] === '-');
-        if (item) p.owned.push(item.id); else coins += { rare: 600, epic: 1500, legendary: 3500 }[rar];       // everything owned: coins instead
+        if (item) p.owned.push(item.id); else coins += { rare: 600, epic: 1500, mythic: 2500, legendary: 3500 }[rar];       // everything owned: coins instead
         if (item && Math.random() < SECOND_CHANCE) { const l = pool('rare', p).concat(pool('epic', p)).filter(i => i.id !== item.id && !(i.id[0] === 'f' && i.id[1] === '-')); if (l.length) { second = l[Math.floor(Math.random() * l.length)]; p.owned.push(second.id); } }
         p.xp += ex.xp; saveProg(p);
         addCoins(coins); addGems(ex.gems);

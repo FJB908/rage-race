@@ -3,28 +3,28 @@
 //   showRewardPops(list, { head })                    just the reveal (icon + amount pops), list = [{type:'coin'|'xp'|'pass', n} | {type:'item', item}]
 // drop = pending drop {id, pending:true, tier, base} (resolved with resolveDrop when it opens) or an already resolved drop.
 (function () {
-    const TIERS = ['common', 'rare', 'epic', 'legendary'];
-    const TIER_NAME = { common:'CHEST', rare:'RARE CHEST', epic:'EPIC CHEST', legendary:'LEGENDARY CHEST' };
-    const TIER_COLOR = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
+    const TIERS = ['common', 'rare', 'epic', 'mythic', 'legendary'];
+    const TIER_NAME = { common:'CHEST', rare:'RARE CHEST', epic:'EPIC CHEST', mythic:'MYTHIC CHEST', legendary:'LEGENDARY CHEST' };
+    const TIER_COLOR = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' };
     // Tap odds: the level-up chance shrinks with every tap, the open chance grows, so a drop always opens within a handful of taps.
-    const UP0 = 0.45, UP_DECAY = 0.58, UP_TIER = [1, 0.8, 0.16], OPEN0 = 0.16, OPEN_STEP = 0.12;
+    const UP0 = 0.45, UP_DECAY = 0.58, UP_TIER = [1, 0.8, 0.26, 0.1], OPEN0 = 0.16, OPEN_STEP = 0.12;
     // The supply crate: a heavy steel cube like the players themselves. Glowing tier-coloured bands, the climbing chevrons on the front,
     // a jewel lock, and a light that leaks through the seam. `uid` keeps gradient ids unique when several crates are on screen.
     // Rarer crates get more detail, not just another colour: common is plain steel with a stud, rare adds a jewel and rivets,
     // epic adds corner caps, runes and a cut gem, legendary adds a gold rim, a crown on the lid and light rays.
     const buildChest = (uid, tier) => {
-        const T = { common:0, rare:1, epic:2, legendary:3 }[tier] || 0, k = uid || '';
+        const T = { common:0, rare:1, epic:2, mythic:3, legendary:4 }[tier] || 0, k = uid || '';
         const dark = '#0b0e16';
         const rays = '';                              // no light rays behind any chest (legendary used to have them)
-        const crown = T === 3 ? '<path d="M46 42 L54 14 L76 34 L100 6 L124 34 L146 14 L154 42 Z" fill="var(--c)" stroke="' + dark + '" stroke-width="3" stroke-linejoin="round"/><g fill="#fff"><circle cx="54" cy="15" r="3.4"/><circle cx="100" cy="7" r="4"/><circle cx="146" cy="15" r="3.4"/></g>' : '';
+        const crown = T === 4 ? '<path d="M46 42 L54 14 L76 34 L100 6 L124 34 L146 14 L154 42 Z" fill="var(--c)" stroke="' + dark + '" stroke-width="3" stroke-linejoin="round"/><g fill="#fff"><circle cx="54" cy="15" r="3.4"/><circle cx="100" cy="7" r="4"/><circle cx="146" cy="15" r="3.4"/></g>' : '';
         const rivets = T >= 1 ? '<g fill="' + dark + '" opacity=".75"><circle cx="54" cy="98" r="2.6"/><circle cx="54" cy="152" r="2.6"/><circle cx="146" cy="98" r="2.6"/><circle cx="146" cy="152" r="2.6"/><circle cx="30" cy="62" r="3"/><circle cx="170" cy="62" r="3"/></g>' : '';
         const caps = T >= 2 ? '<path d="M24 108 V100 Q24 88 36 88 H44 M176 108 V100 Q176 88 164 88 H156 M24 146 V154 Q24 166 36 166 H44 M176 146 V154 Q176 166 164 166 H156" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>' +
             '<g stroke="#fff" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"><path d="M54 110 V122 M54 130 V138"/><path d="M146 110 V122 M146 130 V138"/></g>' : '';
-        const rim = T === 3 ? '<rect x="22" y="86" width="156" height="80" rx="18" fill="none" stroke="var(--c)" stroke-opacity=".85" stroke-width="2.2"/>' : '';
-        const lidRim = T === 3 ? '<rect x="16" y="38" width="168" height="52" rx="22" fill="none" stroke="var(--c)" stroke-opacity=".85" stroke-width="2.2"/>' : '';
+        const rim = T >= 3 ? '<rect x="22" y="86" width="156" height="80" rx="18" fill="none" stroke="var(--c)" stroke-opacity=".85" stroke-width="2.2"/>' : '';
+        const lidRim = T >= 3 ? '<rect x="16" y="38" width="168" height="52" rx="22" fill="none" stroke="var(--c)" stroke-opacity=".85" stroke-width="2.2"/>' : '';
         const lock = T === 0 ? '<rect x="80" y="54" width="40" height="30" rx="11" fill="' + dark + '" opacity=".6"/><circle cx="100" cy="69" r="7" fill="#5c6a8c" stroke="' + dark + '" stroke-width="2.5"/><circle cx="98" cy="67" r="2" fill="#fff" opacity=".6"/>'
             : T === 1 ? '<rect x="80" y="54" width="40" height="30" rx="11" fill="' + dark + '" opacity=".7"/><circle cx="100" cy="68" r="11" fill="url(#lbGem' + k + ')" stroke="' + dark + '" stroke-width="2.5"/><circle cx="96" cy="64" r="3" fill="#fff" opacity=".9"/>'
-            : '<rect x="76" y="50" width="48" height="36" rx="13" fill="' + dark + '" opacity=".75"/><path d="M100 53 L115 68 L100 83 L85 68 Z" fill="url(#lbGem' + k + ')" stroke="' + (T === 3 ? '#fff' : dark) + '" stroke-opacity="' + (T === 3 ? '.7' : '1') + '" stroke-width="2.6" stroke-linejoin="round"/><path d="M92 64 L100 58 L104 62" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="2.4" stroke-linecap="round"/>';
+            : '<rect x="76" y="50" width="48" height="36" rx="13" fill="' + dark + '" opacity=".75"/><path d="M100 53 L115 68 L100 83 L85 68 Z" fill="url(#lbGem' + k + ')" stroke="' + (T >= 3 ? '#fff' : dark) + '" stroke-opacity="' + (T === 3 ? '.7' : '1') + '" stroke-width="2.6" stroke-linejoin="round"/><path d="M92 64 L100 58 L104 62" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="2.4" stroke-linecap="round"/>';
         const sparks = '<g class="lb-sparks" fill="#fff"><path class="sp s1" d="M20 40 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z"/><path class="sp s2" d="M180 30 l1.6 5 5 1.6 -5 1.6 -1.6 5 -1.6 -5 -5 -1.6 5 -1.6z"/><path class="sp s3" d="M186 110 l1.4 4 4 1.4 -4 1.4 -1.4 4 -1.4 -4 -4 -1.4 4 -1.4z"/>' + (T >= 2 ? '<path class="sp s2" d="M12 120 l1.4 4 4 1.4 -4 1.4 -1.4 4 -1.4 -4 -4 -1.4 4 -1.4z"/>' : '') + (T === 3 ? '<path class="sp s1" d="M150 4 l1.6 5 5 1.6 -5 1.6 -1.6 5 -1.6 -5 -5 -1.6 5 -1.6z"/><path class="sp s3" d="M40 6 l1.4 4 4 1.4 -4 1.4 -1.4 4 -1.4 -4 -4 -1.4 4 -1.4z"/>' : '') + '</g>';
         return (
         '<svg viewBox="0 0 200 180" aria-hidden="true"><defs>' +
@@ -184,7 +184,7 @@
         const cos = final.cosmetic;
         if (cos) {
             await sleep(350);
-            const slot = slotOf(cos), rc = RARITY[cos.rarity].color, big = cos.rarity === 'legendary' || cos.rarity === 'epic';
+            const slot = slotOf(cos), rc = RARITY[cos.rarity].color, big = cos.rarity === 'legendary' || cos.rarity === 'mythic' || cos.rarity === 'epic';
             o.el.style.setProperty('--c', rc);
             const it = document.createElement('div'); it.className = 'lb-itempop'; it.style.setProperty('--ic', rc);
             it.innerHTML = '<i class="glow"></i><canvas width="440" height="440"></canvas><div class="rar">' + (cos.premium ? icon('gem') + ' PREMIUM' : RARITY[cos.rarity].label.toUpperCase()) + '</div><div class="nm">' + esc(cos.name) + '</div><span class="new">NEW</span>' +
@@ -203,7 +203,7 @@
     // a finisher found in a chest: a looping preview of the effect instead of a character
     async function revealFinisher(o, fin, sleep) {
         await sleep(350);
-        const f = (window.Finishers && Finishers.BY[fin.id]) || fin, rc = RARITY[f.rarity].color, big = f.rarity === 'legendary' || f.rarity === 'epic';
+        const f = (window.Finishers && Finishers.BY[fin.id]) || fin, rc = RARITY[f.rarity].color, big = f.rarity === 'legendary' || f.rarity === 'mythic' || f.rarity === 'epic';
         o.el.style.setProperty('--c', rc);
         const it = document.createElement('div'); it.className = 'lb-itempop lb-fin'; it.style.setProperty('--ic', rc);
         it.innerHTML = '<i class="glow"></i><canvas width="600" height="440"></canvas><div class="rar">FINISHER</div><div class="nm">' + esc(f.name) + '</div><span class="new">NEW</span>';

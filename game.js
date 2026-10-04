@@ -3406,6 +3406,7 @@ const RARITY = {
     common:    { label:'Common',    color:'#9aa3b5' },
     rare:      { label:'Rare',      color:'#5b8def' },
     epic:      { label:'Epic',      color:'#b3a9ff' },
+    mythic:    { label:'Mythic',    color:'#ff4d7d' },       // between epic and legendary
     legendary: { label:'Legendary', color:'#ffcf3f' },
 };
 const SKINS = [
@@ -3509,10 +3510,14 @@ if (typeof CUSTOM_COSMETICS !== 'undefined'){
     for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
         for (const it of (CUSTOM_COSMETICS[key] || [])) if (!arr.some(x => x.id === it.id)) arr.push(Object.assign({ custom:true }, it));
 }
+// MYTHIC sits between epic and legendary: the cheaper half of what used to be legendary moves up a step here (ids picked by hand).
+const MYTHIC_IDS = new Set(['circuit', 'eclipse', 'starforge', 'c-prism', 'halo', 'spacehelm', 'petalcrown', 'c-knight', 'visor', 'foxmark', 'aurora', 'shadowcode', 'nebula', 'c-void',
+    'p-liquidgold', 'p-holochrome', 'p-glitch', 'p-streaker', 'p-starhalo', 'p-storm', 'p-laser', 'p-nova', 'p-scanner', 'p-thunder', 'p-solar']);
+for (const arr of [SKINS, HATS, FACES, TRAILS]) for (const it of arr) if (MYTHIC_IDS.has(it.id) && it.rarity === 'legendary') it.rarity = 'mythic';
 // Prices follow rarity, not the order items were written in: items inside a rarity are ranked by their listed
 // price and spread across that rarity's range. Epic and legendary are deliberately a very long grind.
 // Set priceLock:true on an item (designer: "Lock exact price") to keep its own price.
-const PRICE_RANGES = { common:[250, 700], rare:[1800, 4200], epic:[7000, 14000], legendary:[35000, 70000] };
+const PRICE_RANGES = { common:[250, 700], rare:[1800, 4200], epic:[7000, 14000], mythic:[18000, 30000], legendary:[35000, 70000] };
 for (const arr of [SKINS, HATS, FACES, TRAILS]){
     for (const r of Object.keys(PRICE_RANGES)){
         const items = arr.filter(i => i.rarity === r && i.price > 0 && !i.priceLock).sort((a, b) => a.price - b.price || a.name.localeCompare(b.name));
@@ -3524,7 +3529,7 @@ for (const arr of [SKINS, HATS, FACES, TRAILS]){
 }
 if (typeof PREMIUM_COSMETICS !== 'undefined'){
     for (const [arr, key] of [[SKINS, 'skins'], [HATS, 'hats'], [FACES, 'faces'], [TRAILS, 'trails']])
-        for (const it of (PREMIUM_COSMETICS[key] || [])) if (!arr.some(x => x.id === it.id)) arr.push(Object.assign({ premium:true, rarity:'legendary' }, it, it.gemPrice ? { gemPrice:Math.round(it.gemPrice * 0.75 / 50) * 50 } : {}));
+        for (const it of (PREMIUM_COSMETICS[key] || [])) if (!arr.some(x => x.id === it.id)) arr.push(Object.assign({ premium:true, rarity:MYTHIC_IDS.has(it.id) ? 'mythic' : 'legendary' }, it, it.gemPrice ? { gemPrice:Math.round(it.gemPrice * 0.75 / 50) * 50 } : {}));
 }
 const TRAIL_BY_ID = Object.fromEntries(TRAILS.map(trail => [trail.id, trail]));
 const COS_BY = { skin: SKINS, hat: HATS, face: FACES, trail: TRAILS };
@@ -4004,7 +4009,7 @@ function newPlayerEase(){ let r = 0; try { r = prog().races || 0; } catch(e){} r
 function randomBotLook(){
     // Bots wear everything: plain skins, but also epic, legendary and gem cosmetics, trails and a finish effect.
     const real = arr => arr.filter(i => i.id !== 'none' && !i.exclusive);
-    const rare = arr => real(arr).filter(i => i.premium || i.rarity === 'epic' || i.rarity === 'legendary');
+    const rare = arr => real(arr).filter(i => i.premium || i.rarity === 'epic' || i.rarity === 'mythic' || i.rarity === 'legendary');
     const pick = arr => arr[Math.floor(Math.random() * arr.length)].id;
     const flashy = Math.random() < 0.4;
     const slot = (arr, chance) => {
@@ -4079,15 +4084,16 @@ function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Ma
 // ---------- Supply drops ----------
 // A drop is a pending ticket until it is opened. Opening (see src/ui/lootbox.js) lets the player tap it to
 // level its rarity up; the final tier then decides the rewards (resolveDrop).
-const DROP_TIERS = ['common', 'rare', 'epic', 'legendary'];
-const DROP_COIN_MULT = { common:1, rare:1.75, epic:3, legendary:9 };
-const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, legendary:3.2 };
-const DROP_COSMETIC_CHANCE = { common:0.022, rare:0.06, epic:0.14, legendary:0.6 };
+const DROP_TIERS = ['common', 'rare', 'epic', 'mythic', 'legendary'];
+const DROP_COIN_MULT = { common:1, rare:1.75, epic:3, mythic:5.5, legendary:9 };
+const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, mythic:2.4, legendary:3.2 };
+const DROP_COSMETIC_CHANCE = { common:0.022, rare:0.06, epic:0.14, mythic:0.34, legendary:0.6 };
 const DROP_RARITY_WEIGHTS = {
-    common:    { common:60, rare:28, epic:9,  legendary:3 },
-    rare:      { common:36, rare:40, epic:18, legendary:6 },
-    epic:      { common:14, rare:34, epic:38, legendary:14 },
-    legendary: { common:22, rare:32, epic:28, legendary:18 },
+    common:    { common:60, rare:28, epic:9,  mythic:2.4, legendary:0.6 },
+    rare:      { common:36, rare:40, epic:18, mythic:4.5, legendary:1.5 },
+    epic:      { common:14, rare:34, epic:36, mythic:11,  legendary:5 },
+    mythic:    { common:8,  rare:26, epic:36, mythic:20,  legendary:10 },
+    legendary: { common:12, rare:24, epic:28, mythic:22,  legendary:14 },
 };
 function pickCosmetic(available, tier){
     const W = DROP_RARITY_WEIGHTS[tier] || DROP_RARITY_WEIGHTS.common, by = {};
@@ -4127,7 +4133,7 @@ function resolveDrop(id, tier){
     };
     // Gems are very rare: only epic and legendary drops can hold them, and only a legendary one can hold a premium (gem) cosmetic.
     drop.gems = 0;
-    if (Math.random() < ({ epic:0.012, legendary:0.22 }[tier] || 0)) drop.gems = tier === 'legendary' ? 5 + Math.floor(Math.random() * 16) : 5;
+    if (Math.random() < ({ epic:0.012, mythic:0.08, legendary:0.22 }[tier] || 0)) drop.gems = tier === 'legendary' ? 5 + Math.floor(Math.random() * 16) : tier === 'mythic' ? 5 + Math.floor(Math.random() * 6) : 5;
     if (tier === 'legendary' && Math.random() < 0.004){
         const prem = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.premium && i.gemPrice && !i.exclusive && !p.owned.includes(i.id));
         if (prem.length){ drop.cosmetic = prem[Math.floor(Math.random() * prem.length)]; p.owned.push(drop.cosmetic.id); }
@@ -4143,7 +4149,7 @@ function resolveDrop(id, tier){
     } else if (!drop.cosmetic){
         drop.coins += 100;
     }
-    if (!drop.cosmetic && window.Finishers && Math.random() < ({ common:0.02, rare:0.05, epic:0.1, legendary:0.22 }[tier] || 0)){      // chests can hold finishers too
+    if (!drop.cosmetic && window.Finishers && Math.random() < ({ common:0.02, rare:0.05, epic:0.1, mythic:0.15, legendary:0.22 }[tier] || 0)){      // chests can hold finishers too
         const pool = Finishers.FINISHERS.filter(f => f.price > 0 && !f.premium && !p.owned.includes(f.id));
         if (pool.length){ const f = pickCosmetic(pool, tier); p.owned.push(f.id); drop.finisher = { id:f.id, name:f.name, rarity:f.rarity }; }
     }
@@ -4185,7 +4191,7 @@ function renderLootDrop(containerId, drop){
     const panel = document.getElementById(containerId);
     if (!panel || !drop) return;
     const tier = drop.tier || 'common';
-    const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
+    const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' };
     panel.classList.remove('opening'); panel.classList.add('big');
     // after a match the only thing to press is VIEW RESULTS: it opens the chest straight away, then the results and the other buttons appear
     document.body.classList.add('await-chest');
@@ -4295,7 +4301,7 @@ function renderShop(cat){
     if (cat === 'resources'){ renderResourceShop(); return; }
     if (cat === 'emote'){ if (window.Emotes) Emotes.renderShop(grid); return; }
     if (cat === 'finisher'){ if (window.Finishers) Finishers.renderShop(grid); return; }
-    const rarityOrder = {common:0, rare:1, epic:2, legendary:3};
+    const rarityOrder = {common:0, rare:1, epic:2, mythic:3, legendary:4};
     // order: gem items first (they stay on top, owned or not), then everything you own, then what is still for sale
     const grp = it => it.premium ? 0 : current.owned.includes(it.id) ? 1 : 2;
     const items = [...(COS_BY[cat] || SKINS)].filter(it => !it.exclusive || current.owned.includes(it.id)).sort((a,b) => grp(a) - grp(b) || (grp(a) === 1 ? ((a.price === 0 ? 0 : 1) - (b.price === 0 ? 0 : 1)) || current.owned.indexOf(b.id) - current.owned.indexOf(a.id) : 0) || rarityOrder[a.rarity]-rarityOrder[b.rarity] || (a.price || a.gemPrice || 0)-(b.price || b.gemPrice || 0) || a.name.localeCompare(b.name));
@@ -4310,7 +4316,7 @@ function renderShop(cat){
                 const eq = current[cat] === it.id;
                 const b = document.createElement('button');
                 b.type = 'button'; b.style.setProperty('--rc', RARITY[it.rarity].color); b.title = RARITY[it.rarity].label; b.dataset.tid = it.id;
-                b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' ? ' leg' : '') + (it.premium ? ' prem' : '');
+                b.className = 'm-skin' + (eq ? ' eq' : '') + (it.rarity === 'legendary' || it.rarity === 'mythic' ? ' leg' : '') + (it.premium ? ' prem' : '');
                 b.innerHTML = `<span class="m-skin-pv"><canvas width="160" height="160"></canvas></span>` +
                     `<b>${it.name}</b>` +
                     (cat === 'trail' ? `<canvas class="tr-pv" width="400" height="200"></canvas>` : '') +
@@ -5055,7 +5061,7 @@ function openLevels(gotoDim){
         b.className = 'lv-tile' + (open ? '' : ' locked') + (d.stars[i] ? ' done' : '');
         b.style.setProperty('--lv', L.color);
         const stars = [0,1,2].map(k => `<span class="s${k < d.stars[i] ? ' on' : ''}">${icon('star')}</span>`).join('');
-        const tc = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' }[lvDropTier(curDim, i)];
+        const tc = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' }[lvDropTier(curDim, i)];
         const chest = d.stars[i] >= 3 ? '' : `<span class="lv-drop" title="3 stars: chest" style="--ic:${tc}">${icon('drop-' + lvDropTier(curDim, i))}</span>`;   // shown until you have earned it, also on locked levels
         b.innerHTML = chest + `<span class="lv-num">${i+1}</span><span class="lv-name">${L.name}</span>` +
                       (open ? `<span class="lv-stars">${stars}</span>` : `<span class="lv-lock">${LOCK_SVG}</span>`);

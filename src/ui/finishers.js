@@ -284,7 +284,7 @@
               for (let i = 0; i < 26; i++) s.at(i * 40, () => s.add({ x: p.x + R_(-170, 170), y: p.y + R_(-170, 60), size: R_(1, 2.2), max: R_(.5, 1), col: '#ffffff', glow: 1, vx: 0, vy: -10 }));
           } },
 
-        { id: 'f-supernova', still: 0.22, pv: 380, name: 'Supernova', rarity: 'legendary', gemPrice: 450, premium: true,
+        { id: 'f-supernova', still: 0.22, pv: 380, name: 'Supernova', rarity: 'mythic', gemPrice: 450, premium: true,
           fx(s, p) {
               s.sfx('boost'); s.sfx('finish'); s.shake(18); s.flash('#ffffff', .85); s.flare(p.x, p.y, 300, '#ffcf3f', 1.1);
               [0, 90, 180, 270].forEach((t, i) => s.at(t, () => s.ring(p.x, p.y, i % 2 ? '#ffcf3f' : '#ffffff', 180 + i * 55, .9, false, 6 - i)));

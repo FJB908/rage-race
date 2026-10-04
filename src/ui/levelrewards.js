@@ -2,7 +2,7 @@
 // Loaded AFTER game.js.
 (function () {
     'use strict';
-    const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
+    const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' };
     const itemOf = r => COS_BY[r.cat].find(i => i.id === r.id);
     const lvOf = () => levelInfo(prog().xp);
 
@@ -76,7 +76,7 @@
         else if (r.t === 'drop') { const drop = awardLootDrop(newLootId('lvreward'), { coins:60, xp:40, passPoints:0 }, { tier:r.tier }); await new Promise(res => openLootbox(drop, { title:'LEVEL ' + l + ' REWARD', onDone:res })); }
         else {
             const it = itemOf(r), q = prog();
-            if (q.owned.includes(it.id)) { const back = { common:100, rare:400, epic:1200, legendary:3000 }[it.rarity] || 100; addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:it.rarity }); }
+            if (q.owned.includes(it.id)) { const back = { common:100, rare:400, epic:1200, mythic:2000, legendary:3000 }[it.rarity] || 100; addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:it.rarity }); }
             else { q.owned.push(it.id); saveProg(q); await showRewardPops([{ type:'item', item:it }], { tier:it.rarity }); }
         }
     }

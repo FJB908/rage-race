@@ -1,7 +1,7 @@
 // Daily login streak calendar. Loaded AFTER game.js.
 (function () {
     const N = STREAK_REWARDS.length;
-    const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
+    const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' };
     const pad = n => (n < 10 ? '0' : '') + n;
     const dstr = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
     const now = () => window.__todayOverride ? new Date(window.__todayOverride + 'T12:00:00') : new Date();
@@ -74,7 +74,7 @@
         else if (r.t === 'drop') { const drop = awardLootDrop(newLootId('streak'), { coins:80, xp:60, passPoints:0 }, { tier:r.tier }); await new Promise(res => openLootbox(drop, { title:'DAILY CHEST', onDone:res })); }
         else {
             const it = itemOf(r);
-            if (p.owned.includes(it.id)) { const back = { common:100, rare:400, epic:1200, legendary:3000 }[it.rarity] || 100; addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:it.rarity }); }
+            if (p.owned.includes(it.id)) { const back = { common:100, rare:400, epic:1200, mythic:2000, legendary:3000 }[it.rarity] || 100; addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:it.rarity }); }
             else { p.owned.push(it.id); saveProg(p); await showRewardPops([{ type:'item', item:it }], { tier:it.rarity }); }
         }
     }

@@ -70,7 +70,7 @@
     function normal(r) { let u = 0, v = 0; while (u === 0) u = r(); while (v === 0) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
 
     // Higher rated bots own rarer cosmetics. Deterministic per bot, so a person always looks the same.
-    const RAR = { common:0, rare:1, epic:2, legendary:3 };
+    const RAR = { common:0, rare:1, epic:2, mythic:3, legendary:4 };
     function weightedPick(arr, want, r) {
         let tot = 0; const w = arr.map(it => { const d = Math.abs((RAR[it.rarity] || 0) - want); const x = Math.exp(-d * 1.15) + (it.premium ? 0.05 * want : 0); tot += x; return x; });
         let x = r() * tot; for (let i = 0; i < arr.length; i++) { x -= w[i]; if (x <= 0) return arr[i]; }

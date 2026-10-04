@@ -146,12 +146,12 @@
     const dropSymbols = () => {
         const D = '#0b0e16', IC = 'style="fill:var(--ic,#35e0c8)"', ST = 'style="stroke:var(--ic,#35e0c8)"';
         const one = (id, T) => {
-            const crown = T === 3 ? '<path d="M14 14 L17 5 L24 11 L32 2 L40 11 L47 5 L50 14 Z" ' + IC + ' stroke="' + D + '" stroke-width="2" stroke-linejoin="round"/>' : '';
+            const crown = T === 4 ? '<path d="M14 14 L17 5 L24 11 L32 2 L40 11 L47 5 L50 14 Z" ' + IC + ' stroke="' + D + '" stroke-width="2" stroke-linejoin="round"/>' : '';
             const caps = T >= 2 ? '<path d="M8 38 V35 Q8 31 12 31 H15 M56 38 V35 Q56 31 52 31 H49 M8 48 V51 Q8 57 14 57 H17 M56 48 V51 Q56 57 50 57 H47" fill="none" ' + ST + ' stroke-width="2.6" stroke-linecap="round"/>' : '';
             const lock = T === 0 ? '<circle cx="32" cy="21" r="3.4" fill="#5c6a8c" stroke="' + D + '" stroke-width="2"/>'
                 : T === 1 ? '<circle cx="32" cy="21" r="4.4" ' + IC + ' stroke="' + D + '" stroke-width="2"/><circle cx="30.6" cy="19.6" r="1.3" fill="#fff"/>'
-                : '<path d="M32 15 L38.5 21.5 L32 28 L25.5 21.5 Z" ' + IC + ' stroke="' + (T === 3 ? '#fff' : D) + '" stroke-width="2" stroke-linejoin="round"/><path d="M29 20 L32 17.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>';
-            const rim = T === 3 ? '<rect x="8" y="28" width="48" height="29" rx="7" fill="none" ' + ST + ' stroke-width="1.2" opacity=".9"/>' : '';
+                : '<path d="M32 15 L38.5 21.5 L32 28 L25.5 21.5 Z" ' + IC + ' stroke="' + (T >= 3 ? '#fff' : D) + '" stroke-width="2" stroke-linejoin="round"/><path d="M29 20 L32 17.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>';
+            const rim = T >= 3 ? '<rect x="8" y="28" width="48" height="29" rx="7" fill="none" ' + ST + ' stroke-width="1.2" opacity=".9"/>' : '';
             return '<symbol id="' + id + '" viewBox="0 0 64 64">' + crown +
               '<ellipse cx="32" cy="60" rx="24" ry="3" fill="#000" opacity=".3"/>' +
               '<rect x="8" y="28" width="48" height="29" rx="7" fill="url(#gdb)" stroke="' + D + '" stroke-width="2.6"/>' + rim + caps +
@@ -165,7 +165,7 @@
         };
         return '<linearGradient id="gdb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#46526f"/><stop offset=".5" stop-color="#2a3350"/><stop offset="1" stop-color="#151a2b"/></linearGradient>' +
             '<linearGradient id="gdl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7ba3"/><stop offset="1" stop-color="#2f3a56"/></linearGradient>' +
-            one('ico-drop', 0) + one('ico-drop-common', 0) + one('ico-drop-rare', 1) + one('ico-drop-epic', 2) + one('ico-drop-legendary', 3);
+            one('ico-drop', 0) + one('ico-drop-common', 0) + one('ico-drop-rare', 1) + one('ico-drop-epic', 2) + one('ico-drop-mythic', 3) + one('ico-drop-legendary', 4);
     };
     const mount = () => { if (!document.getElementById('ico-sprite')) { const d = document.createElement('div'); d.id = 'ico-sprite'; d.innerHTML = SPRITE.replace('</defs></svg>', dropSymbols() + '</defs></svg>'); document.body.prepend(d); } };
     if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);

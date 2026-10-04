@@ -6,6 +6,7 @@
 .lb.in { opacity:1; }
 .lb.tier-rare { --c:#5b8def; --c2:#24428a; }
 .lb.tier-epic { --c:#b3a9ff; --c2:#5a49c9; }
+.lb.tier-mythic { --c:#ff4d7d; --c2:#9c1b4a; }
 .lb.tier-legendary { --c:#ffcf3f; --c2:#a86d00; }
 .lb-fx { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3; }
 .lb-rays { position:absolute; left:50%; top:42%; width:110vmax; height:110vmax; margin:-55vmax 0 0 -55vmax; opacity:0; will-change:opacity; pointer-events:none; z-index:0;
@@ -52,6 +53,7 @@
 /* Small panel tint so the drop tier is visible before opening */
 .loot-crate.tier-rare { border-color:#5b8def; color:#5b8def; background:#1a2338; }
 .loot-crate.tier-epic { border-color:#b3a9ff; color:#b3a9ff; background:#231f3d; }
+.loot-crate.tier-mythic { border-color:#ff4d7d; color:#ff4d7d; background:#2d1520; box-shadow:0 0 14px rgba(255,77,125,.3); }
 .loot-crate.tier-legendary { border-color:#ffcf3f; color:#ffcf3f; background:#2d2812; box-shadow:0 0 18px rgba(255,207,63,.35); }
 .loot-crate.tier-common { border-color:#35e0c8; color:#35e0c8; background:#13302d; }
 
@@ -117,14 +119,14 @@
 @keyframes lootLeak { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
 @keyframes lootTap { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 @keyframes lootGo { to { transform: scale(1.12); opacity: .0; } }
-.loot-big.tier-common { --tc: #35e0c8; --tc2: #127b6c; } .loot-big.tier-rare { --tc: #5b8def; --tc2: #1f3f8f; } .loot-big.tier-epic { --tc: #b3a9ff; --tc2: #4f3fc4; } .loot-big.tier-legendary { --tc: #ffcf3f; --tc2: #a86a00; }
+.loot-big.tier-common { --tc: #35e0c8; --tc2: #127b6c; } .loot-big.tier-rare { --tc: #5b8def; --tc2: #1f3f8f; } .loot-big.tier-epic { --tc: #b3a9ff; --tc2: #4f3fc4; } .loot-big.tier-mythic { --tc: #ff4d7d; --tc2: #9c1b4a; } .loot-big.tier-legendary { --tc: #ffcf3f; --tc2: #a86a00; }
 
 .lb-boosts { flex-wrap: wrap; justify-content: center; gap: 10px 18px; max-width: 92vw; }
 .lb-pop.pop-boost { flex-direction: row; gap: 8px; } .lb-pop.pop-boost b { font-size: 14px; font-weight: 800; text-align: left; line-height: 1.15; max-width: 120px; }
 .lb-pop.pop-boost .bo-art { width: 40px; height: 40px; } .lb-pop.pop-boost .bo-art b { position: absolute; max-width: none; font-size: 11px; }
 .lb.dense .lb-itempop canvas { width: 150px; height: 150px; } .lb.dense .lb-itempop .nm { font-size: 24px; }
 
-.lb.variant-gem, .lb.variant-gem.tier-common, .lb.variant-gem.tier-rare, .lb.variant-gem.tier-epic, .lb.variant-gem.tier-legendary { --c: #ff8ae6; --c2: #a0128a; }
+.lb.variant-gem, .lb.variant-gem.tier-common, .lb.variant-gem.tier-rare, .lb.variant-gem.tier-epic, .lb.variant-gem.tier-mythic, .lb.variant-gem.tier-legendary { --c: #ff8ae6; --c2: #a0128a; }
 .gem-orbit { transform-box: view-box; transform-origin: 100px 100px; animation: gemOrbit 7s linear infinite; }
 .gem-o { animation: gemTw 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes gemOrbit { to { transform: rotate(360deg); } } @keyframes gemTw { 50% { transform: scale(1.35); } }
@@ -145,7 +147,7 @@
 .loot-view:active { transform:translateY(3px); box-shadow:0 3px 0 color-mix(in srgb,var(--tc,#35e0c8) 55%,#000); animation:none; }
 body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-chest .rk-cta, body.await-chest #board, body.await-chest #result-sub { visibility:hidden; pointer-events:none; }
 
-.lb.tier-legendary .lb-rays { display:none; }
+.lb.tier-legendary .lb-rays, .lb.tier-mythic .lb-rays { display:none; }
 
 /* wallet strip while a chest opens: balances tick up as the rewards count */
 .lb-wallet { position:absolute; z-index:7; top:calc(66px + env(safe-area-inset-top,0px)); left:0; right:0; display:flex; justify-content:center; gap:8px; flex-wrap:wrap; padding:0 14px; opacity:0; transform:translateY(-10px); transition:all .3s ease; pointer-events:none; }

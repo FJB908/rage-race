@@ -54,7 +54,7 @@
         if (t.t === 'none') return '<div class="pz-art none"></div>';
         if (t.t === 'coins') return '<div class="pz-art coin">' + icon('coin') + '</div>';
         if (t.t === 'gem') return '<div class="pz-art gem">' + icon('gem') + '</div>';
-        if (t.t === 'drop') { const c = { rare:['#5eb4ff', '#1f5bd0'], epic:['#b3a9ff', '#5b46d6'], legendary:['#ffcf3f', '#b8651a'] }[t.tier] || ['#35e0c8', '#127b6c']; return '<div class="pz-art chest" style="--c:' + c[0] + ';--c2:' + c[1] + '">' + (window.LB_CHEST ? LB_CHEST('pz' + key, t.tier || 'common') : LB_CHEST_SVG) + '</div>'; }
+        if (t.t === 'drop') { const c = { rare:['#5eb4ff', '#1f5bd0'], epic:['#b3a9ff', '#5b46d6'], mythic:['#ff4d7d', '#9c1b4a'], legendary:['#ffcf3f', '#b8651a'] }[t.tier] || ['#35e0c8', '#127b6c']; return '<div class="pz-art chest" style="--c:' + c[0] + ';--c2:' + c[1] + '">' + (window.LB_CHEST ? LB_CHEST('pz' + key, t.tier || 'common') : LB_CHEST_SVG) + '</div>'; }
         if (t.t === 'boost') return '<div class="pz-art boost">' + Boost.art(t, true) + '</div>';
         if (t.t === 'emote') { const e = emoOf(t); return '<div class="pz-art emote"><span style="background-image:' + GRAD(e.col) + '">' + e.text + '</span></div>'; }
         if (t.t === 'finisher') return '<div class="pz-art fin"><canvas width="220" height="170" data-fin="' + t.id + '"></canvas></div>';
@@ -75,7 +75,7 @@
         if (isItem(t)) return t.t === 'prem' ? '#ff8ae6' : rar(itemOf(t).rarity).color;
         if (t.t === 'finisher') return rar(finOf(t).rarity).color;
         if (t.t === 'emote') return emoOf(t).col[1];
-        if (t.t === 'drop') return { rare:'#5eb4ff', epic:'#b3a9ff', legendary:'#ffcf3f' }[t.tier] || '#35e0c8';
+        if (t.t === 'drop') return { rare:'#5eb4ff', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' }[t.tier] || '#35e0c8';
         if (t.t === 'boost') return Boost.KINDS[t.kind].color;
         return t.t === 'gem' ? '#ff8ae6' : '#ffcf3f';
     }
@@ -196,7 +196,7 @@
             await showFinisherReward(f);
         } else {
             const cos = itemOf(t), q = prog(), dup = q.owned.includes(cos.id);
-            if (dup) { const back = t.t === 'prem' ? 0 : ({ common:100, rare:400, epic:1200, legendary:3000 }[cos.rarity] || 100); if (back) { addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:cos.rarity }); } else { addGems(100); await showRewardPops([{ type:'gem', n:100 }]); } }
+            if (dup) { const back = t.t === 'prem' ? 0 : ({ common:100, rare:400, epic:1200, mythic:2000, legendary:3000 }[cos.rarity] || 100); if (back) { addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:cos.rarity }); } else { addGems(100); await showRewardPops([{ type:'gem', n:100 }]); } }
             else { q.owned.push(cos.id); saveProg(q); await showRewardPops([{ type:'item', item:cos }], { tier:cos.rarity }); }
         }
     }
