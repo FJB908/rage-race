@@ -211,7 +211,9 @@
     async function nativeGoogleCredential() {
         const FA = window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseAuthentication;
         if (!FA) throw new Error('native-auth-missing');
-        const r = await FA.signInWithGoogle({ skipNativeAuth: true });
+        let r;
+        try { r = await FA.signInWithGoogle({ skipNativeAuth: true, useCredentialManager: false }); }       // the classic Google account picker: more forgiving than the newer Credential Manager
+        catch (e) { if (/cancel/i.test(String(e && (e.message || e.code || e)))) throw e; r = await FA.signInWithGoogle({ skipNativeAuth: true }); }
         const idToken = r && r.credential && r.credential.idToken;
         if (!idToken) throw new Error('no-token');
         return fb.auth.GoogleAuthProvider.credential(idToken);
