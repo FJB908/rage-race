@@ -79,6 +79,13 @@ let hintTimer = 4;
 
 /* input */
 let dragging = false, sx=0, sy=0, cx=0, cy=0;
+// Free camera: once you've finished (or been knocked out) you can drag the screen to look over the rest of the course.
+let freeCam = false, panDrag = null;
+function canFreeCam(){
+    const p = players[0];
+    return !!p && state === 'playing' && (gameMode === 'race' || gameMode === 'gauntlet') && (p.finished || p.gone);
+}
+function clampFreeCam(y){ return Math.max(FINISH_Y - VH*0.35, Math.min(START_Y + 140 - VH*0.7, y)); }
 
 /* ---------- DOM ---------- */
 const S = {
@@ -1101,10 +1108,12 @@ canvas.addEventListener('pointerdown', e => {
     if (state !== 'playing' && state !== 'countdown') return;
     if (e.clientX > CW - SIDEBAR) return;
     const p = players[0];
+    if (canFreeCam()){ panDrag = { y0: e.clientY, cam0: cameraY }; freeCam = true; return; }
     if (p.finished || p.mode !== 'idle') return;
     dragging = true; sx=cx=e.clientX; sy=cy=e.clientY;
 });
 canvas.addEventListener('pointermove', e => {
+    if (panDrag){ cameraY = clampFreeCam(panDrag.cam0 - (e.clientY - panDrag.y0) / VIEW_K); return; }
     if (!dragging) return;
     cx=e.clientX; cy=e.clientY;
 });
@@ -1122,8 +1131,8 @@ function endDrag(){
         hintEl.style.display='none';
     }
 }
-canvas.addEventListener('pointerup', endDrag);
-canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('pointerup', () => { panDrag = null; endDrag(); });
+canvas.addEventListener('pointercancel', () => { panDrag = null; endDrag(); });
 
 /* ---------- Bot AI (smart) ---------- */
 // Given a target dx (horizontal) and dy (vertical, negative = up), find a launch
@@ -1908,8 +1917,12 @@ function update(dt) {
         ? players.reduce((best, p) => !p.escape.dead && (!best || p.y < best.y) ? p : best, null)
         : null;
     const camP = (spectating && spectateTarget && !spectateTarget.finished) ? spectateTarget : (gameMode === 'gauntlet' ? gtCamTarget() : (escapeSpectate || players[0]));
-    const targetCam = camP.y - VH*0.62;
-    cameraY += (targetCam - cameraY) * Math.min(1, 12*dt);
+    if (freeCam && !canFreeCam()) freeCam = false;
+    if (!freeCam){
+        const targetCam = camP.y - VH*0.62;
+        cameraY += (targetCam - cameraY) * Math.min(1, 12*dt);
+    }
+    refreshWatchBar();
     if (camShake > 0.1) camShake *= Math.pow(0.001, dt); else camShake = 0;
     if (spectating) updateSpectate();
 
@@ -2150,6 +2163,7 @@ function draw() {
             ctx.fillStyle=PLAT.fragile; roundRect(-pl.w/2,-pl.h/2,pl.w,pl.h,4); ctx.fill();
             ctx.globalAlpha=1; ctx.restore(); continue;
         }
+        if (pl.piece === 'saw' && window.Build && Build.drawSaw(ctx, pl)){ ctx.restore(); continue; }
         if (pl.type === 'spike'){
             const n = Math.max(4, Math.round(pl.w/14)), tw = pl.w/n, h = pl.h;
             ctx.shadowBlur = 10; ctx.shadowColor = '#ff5470'; ctx.fillStyle = '#ff5470';
@@ -2187,6 +2201,7 @@ function draw() {
         ctx.fillStyle=col;
         roundRect(-pl.w/2,-pl.h/2,pl.w,pl.h,5); ctx.fill();
         ctx.shadowBlur=0;
+        if ((pl.foundation || pl.piece === 'blink') && window.Build) Build.drawOverlay(ctx, pl);      // Build Race: stone foundation, flickering blink blocks
         if (pl.owner !== undefined){ ctx.fillStyle = PCOL[pl.owner]; ctx.fillRect(-pl.w/2 + 5, pl.h/2 - 4, pl.w - 10, 3); }    // Build Race: who placed it
 
         if (pl.ceiling){
@@ -2693,26 +2708,40 @@ function stillRacing(){ return players.filter(p => !p.local && !p.finished); }
 function setSpectate(target){
     spectateTarget = target;
     const bar = document.getElementById('spectate-bar');
-    if (target){ document.getElementById('spectate-name').textContent = target.name; bar.style.display = 'flex'; }
+    if (target){ document.getElementById('spectate-name').textContent = target.name; const ey = document.getElementById('spectate-eye'); if (ey) ey.textContent = 'SPECTATING'; bar.style.display = 'flex'; }
     else bar.style.display = 'none';
 }
+// The bar is also shown to a finished/knocked-out player who is not spectating: it then offers 'follow' arrows next to the free camera.
+function refreshWatchBar(){
+    const bar = document.getElementById('spectate-bar'); if (!bar) return;
+    const want = spectating ? true : canFreeCam();
+    if (!spectating){
+        const eye = document.getElementById('spectate-eye'), nm = document.getElementById('spectate-name');
+        const txt = freeCam ? 'FREE VIEW' : 'WATCHING', sub = freeCam ? 'Tap arrow: follow' : 'Drag to look';
+        if (eye && eye.textContent !== txt) eye.textContent = txt;
+        if (nm && nm.textContent !== sub && (freeCam || !spectateTarget)) nm.textContent = sub;
+    }
+    if (bar.style.display !== (want ? 'flex' : 'none')) bar.style.display = want ? 'flex' : 'none';
+}
 function cycleSpectate(dir){
+    if (!spectating){ freeCam = false; panDrag = null; SFX.play('count'); return; }
     const list = stillRacing();
     if (!list.length){ return; }
+    freeCam = false;
     let i = list.indexOf(spectateTarget);
     i = (i + dir + list.length) % list.length;
     setSpectate(list[i]);
     SFX.play('count');
 }
 function startSpectate(){
-    spectating = true;
+    spectating = true; freeCam = false;
     resumeRace();                                   // unpause and let the race keep running
     showFinishMenu(true);
     const list = stillRacing();
     setSpectate(list[0] || null);
 }
 function stopSpectate(){
-    spectating = false; spectateTarget = null;
+    spectating = false; spectateTarget = null; freeCam = false; panDrag = null;
     const bar = document.getElementById('spectate-bar');
     if (bar) bar.style.display = 'none';
 }
