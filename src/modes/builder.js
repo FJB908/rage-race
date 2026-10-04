@@ -6,7 +6,7 @@
 // can run with real people later. Loaded AFTER game.js.
 (function () {
     'use strict';
-    const ROUNDS = 4, COURSE_H = 1500, RACE_LIMIT = 45, POINTS = [10, 7, 5, 3], TRAP_PTS = 2, BOMB_R = 105;
+    const ROUNDS = 4, COURSE_H = 1500, RACE_LIMIT = 55, POINTS = [10, 7, 5, 3], TRAP_PTS = 2, BOMB_R = 105;
     const TURN_MS = 15000, READY_MS = 12000;          // time to place a piece / time to press READY between rounds
     const $ = id => document.getElementById(id);
     const sfx = (n, a) => { try { SFX.play(n, a); } catch (e) {} };
@@ -32,7 +32,7 @@
     const rangeOf = k => PIECES[k].range || 0;
 
     const ORIG = { f: FINISH_Y, t: TRACK };
-    const B = { on: false, round: 0, scores: [0, 0, 0, 0], prevRank: [0, 1, 2, 3], roster: null, phase: 'idle', raceT: 0, startedRace: false, pieces: [], placed: [], cur: -1, fx: [], movers: [], turnEnd: 0, ready: [false, false, false, false], idc: 1, zapT: [0, 0, 0, 0], lootId: '', specStarted: false };
+    const B = { on: false, round: 0, scores: [0, 0, 0, 0], prevRank: [0, 1, 2, 3], roster: null, phase: 'idle', raceT: 0, startedRace: false, pieces: [], placed: [], cur: -1, fx: [], movers: [], parts: [], fuse: null, shake: 0, flash: 0, lastT: 0, turnEnd: 0, ready: [false, false, false, false], idc: 1, zapT: [0, 0, 0, 0], lootId: '', specStarted: false };
     window.buildMatch = false;
 
     /* -------------------------------------------------------------------------------------- course ---- */
@@ -42,19 +42,19 @@
         FINISH_Y = START_Y - COURSE_H; TRACK = COURSE_H;
         platforms = []; itemBoxes = []; finishPlatform = null; ufos = [];
         B.idc = 1; platforms.push({ x: pw / 2, y: START_Y, w: pw, h: 40, type: 'normal', active: true, ground: true, foundation: true, id: B.idc++ });
-        let y = START_Y - 160, lastX = pw / 2;
-        while (y > FINISH_Y + 250) {
+        let y = START_Y - 215, lastX = pw / 2;
+        while (y > FINISH_Y + 330) {                                    // few foundation blocks, far apart: the rest is up to the players
             const diff = 1 - (y - FINISH_Y) / TRACK;
-            const gap = 120 + r() * 28 + diff * 26;
-            const w = Math.max(92, 140 - diff * 30 + r() * 18);
+            const gap = 225 + r() * 55 + diff * 20;
+            const w = Math.max(80, 118 - diff * 26 + r() * 14);
             const roll = r(); let type = 'normal', speed = 0, range = 0;
-            if (roll > 0.86) type = 'ice'; else if (roll > 0.74) { type = 'moving'; speed = 70 + r() * 30; range = 45 + r() * 40; }
-            const half = w / 2; let x = lastX + (r() * 2 - 1) * (95 + diff * 25); x = Math.max(half + 6, Math.min(pw - half - 6, x));
+            if (roll > 0.8) type = 'ice'; else if (roll > 0.6) { type = 'moving'; speed = 80 + r() * 40; range = 50 + r() * 45; }
+            const half = w / 2; let x = lastX + (r() < 0.5 ? -1 : 1) * (90 + r() * 90); x = Math.max(half + 6, Math.min(pw - half - 6, x));
             let baseX = x; if (type === 'moving') { baseX = Math.max(half + 6 + range, Math.min(pw - half - 6 - range, x)); x = baseX; }
             platforms.push(flat(x, y, w, type, { speed, dir: r() < 0.5 ? 1 : -1, baseX, range, route: true, w }));
             lastX = x; y -= gap;
         }
-        platforms.push(flat(pw / 2, FINISH_Y + 170, pw * 0.7, 'normal', { route: false }));
+        platforms.push(flat(pw / 2, FINISH_Y + 190, pw * 0.5, 'normal', { route: false }));
         platforms.push({ x: pw / 2, y: FINISH_Y, w: pw, h: 40, type: 'finish', active: true });
         finishPlatform = platforms.find(p => p.type === 'finish');
         for (const pc of B.pieces) platforms.push(pc);
@@ -130,9 +130,27 @@
             else { platforms = platforms.filter(p => p !== h.pl); B.pieces = B.pieces.filter(p => p !== h.pl); B.fx.push({ x: h.pl.x, y: h.pl.y, t: performance.now(), kind: 'puff' }); }
         }
     }
+    // the bomb: a short lit fuse, then a real explosion: fireball, debris from every piece it takes, smoke, shockwave, screen shake and flash
+    async function detonate(sp, owner) {
+        const x = sp.x, y = sp.y; await camTo(y, 280); if (!B.on) return;
+        B.fuse = { x, y, t0: performance.now() };
+        for (let k = 0; k < 3; k++) { sfx('count'); await wait(260); if (!B.on) { B.fuse = null; return; } }
+        B.fuse = null;
+        const hits = bombHits(x, y);
+        const now = performance.now(), S = 1;
+        B.fx.push({ x, y, t: now, kind: 'fire' });
+        for (let k = 0; k < 46; k++) { const a = Math.random() * 7, v = rr(160, 620); B.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, life: rr(0.5, 1.1), max: 1.1, col: ['#ffcf3f', '#ffb238', '#ff7a2e', '#fff3b0'][k % 4], size: rr(2, 5), g: 600, spark: true }); }
+        for (let k = 0; k < 16; k++) { const a = Math.random() * 7; B.parts.push({ x: x + Math.cos(a) * 20, y: y + Math.sin(a) * 20, vx: Math.cos(a) * rr(20, 110), vy: Math.sin(a) * rr(20, 110) - 60, life: rr(0.9, 1.6), max: 1.6, col: '#8a93a6', size: rr(14, 30), g: -40, smoke: true }); }
+        for (const h of hits) {
+            const pl = h.pl, col = h.kind === 'ceil' ? '#6b7488' : (PIECES[pl.piece] ? PIECES[pl.piece].color : '#8b95a7'), cx0 = pl.x, cy0 = h.kind === 'ceil' ? pl.y + 12 : pl.y, w0 = h.kind === 'ceil' ? pl.w : pl.w;
+            for (let k = 0; k < 14; k++) { const ang = Math.atan2(cy0 - y, cx0 - x) + rr(-1.1, 1.1), v = rr(260, 700); B.parts.push({ x: cx0 + rr(-w0 / 2, w0 / 2), y: cy0 + rr(-8, 8), vx: Math.cos(ang) * v, vy: Math.sin(ang) * v - 260, life: rr(0.8, 1.5), max: 1.5, col, size: rr(5, 11), g: 1500, rot: Math.random() * 6, vr: rr(-12, 12), chunk: true }); }
+        }
+        B.shake = 16; B.flash = 1; sfx('shatter'); sfx('knock'); try { haptic([60, 30, 90]); } catch (e) {}
+        explode(x, y, hits);
+        await wait(900);
+    }
     function apply(sp, owner) {
-        B.placed.push({ owner, kind: sp.kind });
-        if (sp.kind === 'bomb') { explode(sp.x, sp.y, sp.hits || bombHits(sp.x, sp.y)); sfx('shatter'); return; }
+        if (sp.kind === 'bomb') { explode(sp.x, sp.y, sp.hits || bombHits(sp.x, sp.y)); return; }
         if (sp.kind === 'ceiling') { const t = (sp.targetId && platforms.find(p => p.id === sp.targetId)) || sp.target || ceilTarget(sp.x, sp.y); if (t) { t.hadCeiling = true; t.ceiling = true; t.ceilingBroken = false; t.ceilOwner = owner; B.fx.push({ x: t.x, y: t.y + 12, t: performance.now(), kind: 'puff' }); } return; }
         addPiece(sp.kind, sp.x, sp.y, owner);
     }
@@ -252,7 +270,9 @@
     function render() {
         raf = requestAnimationFrame(render); if (root.hidden) return;
         const S = view.S, now = performance.now();
+        const dtp = Math.min(0.05, (now - (B.lastT || now)) / 1000); B.lastT = now;
         cx.clearRect(0, 0, view.w, view.h); cx.fillStyle = '#0d1017'; cx.fillRect(0, 0, view.w, view.h);
+        cx.save(); if (B.shake > 0.3) { cx.translate((Math.random() - 0.5) * B.shake, (Math.random() - 0.5) * B.shake); B.shake *= Math.pow(0.002, dtp); } else B.shake = 0;
         cx.strokeStyle = 'rgba(255,255,255,.04)'; cx.lineWidth = 1;
         for (let gy = Math.floor(view.camTop / 120) * 120; gy < view.camTop + view.h / S; gy += 120) { cx.beginPath(); cx.moveTo(wx(0), wy(gy)); cx.lineTo(wx(PLAY_W()), wy(gy)); cx.stroke(); }
         cx.strokeStyle = 'rgba(255,255,255,.14)'; cx.strokeRect(wx(0), wy(FINISH_Y - 140), PLAY_W() * S, (START_Y + 60 - FINISH_Y + 140) * S);
@@ -286,6 +306,7 @@
         }
         B.fx = B.fx.filter(f => now - f.t < 900);
         for (const f of B.fx) {                                              // explosion / dust rings
+            if (f.kind === 'fire') continue;
             const a = (now - f.t) / 900; cx.save(); cx.globalAlpha = 1 - a; cx.strokeStyle = f.kind === 'boom' ? '#ffb238' : '#cfd6e4'; cx.lineWidth = f.kind === 'boom' ? 5 : 3;
             cx.beginPath(); cx.arc(wx(f.x), wy(f.y), (f.kind === 'boom' ? BOMB_R : 36) * S * (0.35 + a * 0.9), 0, 7); cx.stroke();
             if (f.kind === 'boom') { cx.fillStyle = 'rgba(255,178,56,' + (0.3 * (1 - a)) + ')'; cx.fill(); } cx.restore();
@@ -302,7 +323,32 @@
             }
             if (!ghost.ok && ghost.why) { cx.fillStyle = '#ff5470'; cx.font = '800 11px system-ui'; cx.textAlign = 'center'; cx.fillText(ghost.why, wx(ghost.x), wy(ghost.y) - 30); }
         }
+        if (B.fuse) {                                                        // lit bomb: flashes faster and faster, with a countdown
+            const f = B.fuse, age = (now - f.t0) / 780, x = wx(f.x), y = wy(f.y), flick = Math.floor(now / (130 - age * 70)) % 2;
+            cx.save(); cx.translate(x, y); const sc = 1 + age * 0.45 + Math.sin(now / 55) * 0.05; cx.scale(sc, sc);
+            cx.fillStyle = flick ? '#ff5470' : '#20242f'; cx.beginPath(); cx.arc(0, 2 * S, 14 * S, 0, 7); cx.fill();
+            cx.strokeStyle = '#c9a36a'; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(5 * S, -10 * S); cx.quadraticCurveTo(12 * S, -20 * S, 18 * S, -15 * S); cx.stroke();
+            cx.fillStyle = '#ffcf3f'; for (let k = 0; k < 4; k++) { cx.beginPath(); cx.arc(18 * S + rr(-4, 4), -15 * S + rr(-4, 4), rr(1.5, 3.5), 0, 7); cx.fill(); }
+            cx.restore(); cx.fillStyle = '#fff'; cx.font = '900 22px system-ui'; cx.textAlign = 'center'; cx.fillText(String(Math.max(1, 3 - Math.floor(age * 3.2))), x, y - 34 * S);
+        }
+        for (const q of B.parts) {                                          // sparks, debris chunks, smoke
+            q.vy += (q.g || 0) * dtp; q.x += q.vx * dtp; q.y += q.vy * dtp; q.life -= dtp; if (q.rot !== undefined) q.rot += q.vr * dtp;
+            const a = Math.max(0, q.life / q.max); cx.save(); cx.globalAlpha = q.smoke ? a * 0.45 : Math.min(1, a * 1.6); cx.translate(wx(q.x), wy(q.y));
+            if (q.smoke) { cx.fillStyle = q.col; cx.beginPath(); cx.arc(0, 0, q.size * S * (1.6 - a), 0, 7); cx.fill(); }
+            else if (q.chunk) { cx.rotate(q.rot); cx.fillStyle = q.col; cx.fillRect(-q.size / 2, -q.size / 3, q.size, q.size * 0.66); }
+            else { cx.fillStyle = q.col; cx.beginPath(); cx.arc(0, 0, q.size * a + 0.5, 0, 7); cx.fill(); }
+            cx.restore();
+        }
+        B.parts = B.parts.filter(q => q.life > 0);
+        for (const f of B.fx) if (f.kind === 'fire') {                       // fireball
+            const a = (now - f.t) / 520; if (a >= 1) continue;
+            const r0 = BOMB_R * S * (0.25 + a * 0.95), gr = cx.createRadialGradient(wx(f.x), wy(f.y), 0, wx(f.x), wy(f.y), r0);
+            gr.addColorStop(0, 'rgba(255,248,200,' + (0.95 * (1 - a)) + ')'); gr.addColorStop(0.45, 'rgba(255,150,40,' + (0.7 * (1 - a)) + ')'); gr.addColorStop(1, 'rgba(255,60,20,0)');
+            cx.fillStyle = gr; cx.beginPath(); cx.arc(wx(f.x), wy(f.y), r0, 0, 7); cx.fill();
+        }
         cx.fillStyle = '#35e0c8'; cx.font = '800 11px system-ui'; cx.textAlign = 'center'; cx.fillText('START', wx(PLAY_W() / 2), wy(START_Y) - 16);
+        cx.restore();
+        if (B.flash > 0.02) { cx.fillStyle = 'rgba(255,244,214,' + (B.flash * 0.6) + ')'; cx.fillRect(0, 0, view.w, view.h); B.flash *= Math.pow(0.0005, dtp); }
         const mx = view.w - 28, top = 150, bot = view.h - 190, k = (bot - top) / (START_Y - FINISH_Y + 200);
         cx.fillStyle = 'rgba(255,255,255,.06)'; cx.fillRect(mx - 8, top, 16, bot - top);
         for (const pl of platforms) { if (pl.ground || pl.type === 'finish') continue; const yy = top + (pl.y - (FINISH_Y - 100)) * k; cx.fillStyle = pl.piece ? PCOL[pl.owner] : 'rgba(255,255,255,.3)'; cx.fillRect(mx - 6, yy, 12, pl.piece ? 3 : 2); }
@@ -456,9 +502,10 @@
         if (r.ctrl !== 'remote') net.send({ t: 'place', idx: i, sp: wire(sp) });
         if (!sp) return;
         if (i !== 0) { centerOn(sp.y); }
-        apply(sp, i); sfx(sp.kind === 'bomb' ? 'shatter' : i === 0 ? 'equip' : 'pop');
         $('bd-msg').textContent = (i === 0 ? 'You' : r.name.slice(0, 9)) + (sp.kind === 'bomb' ? ' dropped a BOMB' : ' placed ' + PIECES[sp.kind].name.toUpperCase());
-        await wait(sp.kind === 'bomb' ? 900 : 650);
+        B.placed.push({ owner: i, kind: sp.kind });
+        if (sp.kind === 'bomb') { B.placed.pop(); await detonate(sp, i); B.placed.push({ owner: i, kind: sp.kind }); }
+        else { apply(sp, i); sfx(i === 0 ? 'equip' : 'pop'); await wait(650); }
     }
 
     /* --------------------------------------------------------------------------------- the flow ---- */
@@ -663,5 +710,5 @@
     }
     window.addEventListener('resize', () => { if (!root.hidden) fit(); });
     render();
-    const api = window.Build = { open, begin, update, checkEnd, leave, arcHitsSpike, drawSaw, drawOverlay, state: B, PIECES, spotInfo, apply, bombHits, net, remote: [] };     // api.remote: seats played by other people (set before begin)
+    const api = window.Build = { open, begin, update, checkEnd, leave, arcHitsSpike, drawSaw, drawOverlay, state: B, PIECES, spotInfo, apply, bombHits, detonate, net, remote: [] };     // api.remote: seats played by other people (set before begin)
 })();

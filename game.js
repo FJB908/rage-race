@@ -2595,7 +2595,7 @@ function openPrompt(title, sub, buttons) {
 }
 function resumeRace() {
     showScreen('');
-    matchStart += Date.now() - pauseStart;   // paused time doesn't count
+    if (state === 'paused' && pauseStart > 0){ matchStart += Date.now() - pauseStart; pauseStart = 0; }   // paused time doesn't count (and never from a pause that didn't happen: that made finish times hugely negative)
     state = 'playing';
 }
 function quitToMenu() {
