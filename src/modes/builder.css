@@ -16,7 +16,7 @@
 .bd-ic { display:block; width:64px; height:44px; } .bd-ic svg { width:100%; height:100%; }
 .bd-actions { display:grid; grid-template-columns:1fr 2fr; gap:10px; } .bd-actions .btn { margin:0; } .bd-placebtn:disabled { opacity:.4; }
 .bd-tip { margin:8px 0 0; text-align:center; font-size:11px; color:#8b95a7; font-weight:600; }
-#bd-hud { position:fixed; top:calc(52px + env(safe-area-inset-top,0px)); left:12px; z-index:12; display:flex; align-items:center; gap:5px; pointer-events:none; max-width:calc(100% - 60px); flex-wrap:wrap; }
+#bd-hud { position:fixed; top:calc(96px + env(safe-area-inset-top,0px)); left:12px; z-index:12; display:flex; align-items:center; gap:5px; pointer-events:none; max-width:calc(100% - 60px); flex-wrap:wrap; }
 #bd-hud > b { font-size:10px; font-weight:900; letter-spacing:.12em; color:#ff8ae6; padding:3px 8px; border-radius:99px; background:rgba(13,16,23,.8); }
 #bd-hud .bd-chip { flex:none; } #bd-hud .bd-t { padding:3px 8px; border-radius:99px; background:rgba(13,16,23,.8); font-size:11px; font-weight:900; color:#ffcf3f; }
 .bd-panel { position:fixed; inset:0; z-index:40; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:20px; background:rgba(8,10,16,.92); backdrop-filter:blur(6px); overflow-y:auto; }
@@ -28,3 +28,4 @@
 .bd-how { list-style:none; margin:0; padding:0; width:100%; max-width:380px; display:flex; flex-direction:column; gap:10px; } .bd-how li { display:flex; gap:12px; align-items:center; padding:12px 14px; border-radius:14px; background:#161b24; text-align:left; font-size:14px; line-height:1.35; } .bd-how li b { flex:none; display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#ff8ae6; color:#2a0c24; font-weight:900; } .bd-how em { font-style:normal; color:#ffcf3f; font-weight:800; }
 .bd-rw { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
 .bd-panel .loot-drop { margin:0 auto; }
+#bd-hud .bd-chip { padding:3px 7px; font-size:11px; } #bd-hud .bd-chip em { margin-left:4px; }

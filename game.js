@@ -2584,6 +2584,7 @@ function resumeRace() {
     state = 'playing';
 }
 function quitToMenu() {
+    if (window.buildMatch && window.Build){ Build.leave(true); return; }
     if (typeof stopSpectate === 'function') stopSpectate();
     state = 'menu'; dragging = false;
     hud.style.display = 'none';
@@ -3917,7 +3918,7 @@ function randomBotLook(){
     };
 }
 
-const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · Place & race' };
+const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
 const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
 let _freeIds = null;
 function freeItemIds(){
@@ -3956,7 +3957,7 @@ function prog(){
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
     if (!d.hat || !HATS.some(h => h.id === d.hat)) d.hat = 'none';
     if (!d.face || !FACES.some(f => f.id === d.face)) d.face = 'none';
-    if (!['race', 'escape', 'parkour', 'gauntlet', 'ranked'].includes(d.lastMode)) d.lastMode = 'race';
+    if (!['race', 'escape', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';
     return d;
 }
 function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} if (window.Cloud) Cloud.touch(); }
