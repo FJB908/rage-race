@@ -444,14 +444,11 @@ html, body, * { -webkit-tap-highlight-color: transparent; }
         background: rgba(13,16,23,.80); border: 2px solid rgba(255,255,255,.10);
         pointer-events: auto; display: grid; place-items: center; transition: border-color .2s, opacity .2s;
         touch-action: none; -webkit-tap-highlight-color: transparent; }
-    .item-slot.empty { opacity: .5; }
-    .item-slot.empty .item-icon::after { content: '?'; font-family: 'Bricolage Grotesque'; font-weight: 800;
-        font-size: 30px; color: rgba(255,255,255,.22); }
+    .item-slot.empty { opacity: .45; border-style: dashed; }
     .item-slot.rolling { border-color: rgba(255,255,255,.35); }
-    .item-slot.ready { border-color: var(--accent); animation: slotPulse 1.1s ease-in-out infinite; }
+    .item-slot.ready { border-color: #4ade80; border-width: 4px; background: linear-gradient(160deg, rgba(74,222,128,.34), rgba(13,16,23,.88) 75%); box-shadow: 0 0 18px rgba(74,222,128,.55); animation: slotPulse 1.2s ease-in-out infinite; }
     .item-slot.active { border-color: rgba(255,255,255,.18); }
-    .item-slot.chained { border-color: rgba(255,84,112,.6); }
-    @keyframes slotPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(53,224,200,.55); } 50% { box-shadow: 0 0 0 9px rgba(53,224,200,0); } }
+    @keyframes slotPulse { 50% { transform: scale(1.07); } }
     .item-icon { width: 46px; height: 46px; display: grid; place-items: center; }
     .item-icon svg { width: 100%; height: 100%; display: block; }
     .item-badge { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%;
@@ -684,3 +681,9 @@ body.build-race #finish-menu { display:none !important; }
 /* settings never clips on short phones: it scrolls and keeps its Done button reachable */
 #s-settings { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: calc(env(safe-area-inset-top, 0px) + 18px) 16px calc(env(safe-area-inset-bottom, 0px) + 22px); box-sizing: border-box; }
 #s-settings .set-panel { margin: auto; gap: 12px; }
+
+.item-slot { width: 80px; height: 80px; }
+.item-slot .item-icon { width: 52px; height: 52px; }
+.nbadge.free { background: linear-gradient(180deg,#7ee787,#34b85a); color:#052b0d; font-size:10px; letter-spacing:.06em; padding:0 6px; }
+.m-nav .nbadge.free { right:calc(50% - 34px); }
+.m-nav .nbadge.free { top:-5px; right:calc(50% - 40px); }

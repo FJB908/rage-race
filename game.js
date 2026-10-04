@@ -1085,9 +1085,7 @@ function updateItemHUD(){
     } else if (p.itemState === 'ready'){ mode = 'ready'; icon = p.item; }
     else if (p.giantT > 0){ mode = 'active'; icon = 'giant'; prog = p.giantT/GIANT_TIME; col = ITEMS.giant.color; }
     else if (p.bounceT > 0){ mode = 'active'; icon = 'bounce'; badge = Math.ceil(p.bounceT)+'s'; prog = p.bounceT/BOUNCE_TIME; col = ITEMS.bounce.color; }
-    else if (p.chainT > 0){ mode = 'active chained'; icon = 'chain'; prog = p.chainT/CHAIN_TIME; col = '#ff5470'; }
     else if (p.shieldT > 0){ mode = 'active'; icon = 'shield'; prog = p.shieldT/SHIELD_TIME; col = ITEMS.shield.color; }
-    else if (p.windT > 0){ mode = 'active'; icon = 'wind'; prog = p.windT/WIND_TIME; col = ITEMS.wind.color; }
     const key = mode + '|' + icon + '|' + badge;
     if (key !== itemHUD.key){
         const prevMode = itemHUD.key.split('|')[0];
@@ -4433,7 +4431,8 @@ function setBadge(el, n){
     let b = el.querySelector(':scope > .nbadge');
     if (!n){ if (b) b.remove(); return; }
     if (!b){ b = document.createElement('b'); b.className = 'nbadge'; el.appendChild(b); }
-    b.textContent = n > 99 ? '99+' : n;
+    b.textContent = typeof n === 'string' ? n : (n > 99 ? '99+' : n);
+    b.classList.toggle('free', typeof n === 'string');
 }
 // Shop items you have not seen yet (new releases). Everything that exists on the first launch counts as seen.
 function shopItems(){ return [...SKINS, ...HATS, ...FACES, ...TRAILS, ...(COS_BY.costume || [])].filter(i => i.price > 0 || i.premium); }
@@ -4441,7 +4440,7 @@ function refreshShopBadge(){
     const p = prog(), ids = shopItems().map(i => i.id);
     if (!Array.isArray(p.shopSeen)){ p.shopSeen = ids; saveProg(p); }
     const fresh = ids.filter(id => !p.shopSeen.includes(id) && !p.owned.includes(id)).length;
-    setBadge(document.querySelector('.m-nav [data-go="shop"]'), (window.Gentle && Gentle.simple() ? 0 : fresh) + (window.Ads ? Ads.ready() : 0));      // no "new items" noise for brand-new players
+    setBadge(document.querySelector('.m-nav [data-go="shop"]'), (window.Ads && Ads.ready() > 0) ? 'FREE' : (window.Gentle && Gentle.simple() ? 0 : fresh));      // a free video waiting says FREE; otherwise the number of new items      // no "new items" noise for brand-new players
 }
 function markShopSeen(){ const p = prog(); p.shopSeen = shopItems().map(i => i.id); saveProg(p); refreshShopBadge(); }
 function menuTab(tab){

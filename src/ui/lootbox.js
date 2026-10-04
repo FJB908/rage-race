@@ -147,9 +147,15 @@
     }
 
     // Reward pops: an icon with an amount next to it (no windows) -------------------------------
+    let curCount = null;                   // the counter that is running right now: a tap on the screen finishes it at once
     function countUp(node, value, skipped, onStep, from) {
-        const steps = skipped() ? 1 : 22; let i = 0;
-        return new Promise(res => { const iv = setInterval(() => { i++; const v = Math.round((from || 0) + (value - (from || 0)) * (1 - Math.pow(1 - i / steps, 3))); node.textContent = '+' + v.toLocaleString(); if (onStep) onStep(v); if (i % 4 === 0) sfx('coin'); if (i >= steps) { clearInterval(iv); res(); } }, 36); });
+        const steps = skipped() ? 1 : 11, f0 = from || 0; let i = 0;
+        return new Promise(res => {
+            let iv = 0;
+            const end = () => { clearInterval(iv); if (curCount && curCount.end === end) curCount = null; node.textContent = '+' + Math.round(value).toLocaleString(); if (onStep) onStep(Math.round(value)); res(); };
+            curCount = { end };
+            iv = setInterval(() => { i++; const v = Math.round(f0 + (value - f0) * (1 - Math.pow(1 - i / steps, 3))); node.textContent = '+' + v.toLocaleString(); if (onStep) onStep(v); if (i % 4 === 0) sfx('coin'); if (i >= steps) end(); }, 28);
+        });
     }
     // the wallet strip on top of the opening screen: the balances before the reward, ticking up while the reward counts (cosmetics have no balance)
     function walletStrip(o, final) {
@@ -164,7 +170,9 @@
         return { set(k, v) { const b = strip.querySelector('.lbw-' + k + ' b'); if (!b) return; const val = Math.max(0, now[k] - add[k]) + v; b.textContent = val.toLocaleString(); const c = b.parentNode; c.classList.remove('tick'); void c.offsetWidth; c.classList.add('tick'); } };
     }
     async function revealRewards(o, final, skipped) {
-        const pops = o.$('.lb-pops'), sleep = ms => skipped() ? Promise.resolve() : wait(ms);
+        const pops = o.$('.lb-pops'), sleep = ms => skipped() ? Promise.resolve() : wait(Math.round(ms * 0.45));
+        const tapSkip = e => { if (e.target.closest && e.target.closest('button')) return; if (curCount) curCount.end(); };      // tap = finish this counter, the next one starts straight away
+        o.el.addEventListener('pointerdown', tapSkip);
         const row = document.createElement('div'); row.className = 'lb-row'; pops.appendChild(row);
         const ws = walletStrip(o, final);
         for (const [kind, n] of [['coin', final.coins], ['xp', final.xp], ['pass', final.passPoints], ['gem', final.gems]]) {
