@@ -459,6 +459,7 @@ const SFX = (() => {
         setSfxVol(v) { sfxVol = Math.max(0, Math.min(1, v)); try { localStorage.setItem('rr_sfxvol', sfxVol); } catch (e) {} if (sfxBus) { try { sfxBus.gain.setTargetAtTime(sfxVol, ac.currentTime, 0.02); } catch (e) { sfxBus.gain.value = sfxVol; } } },
         setMusVol(v) { musVol = Math.max(0, Math.min(1, v)); try { localStorage.setItem('rr_musvol', musVol); } catch (e) {} MUSIC.setVol(musVol); },
         unlock() { try { ctx(); } catch (e) {} },
+        suspend() { try { if (ac && ac.state === 'running' && ac.suspend) { const r = ac.suspend(); if (r && r.catch) r.catch(() => {}); } } catch (e) {} },      // app in the background / screen off: no sound
         trackFor,
         music: MUSIC,
         names: Object.keys(P),
@@ -479,7 +480,8 @@ if (typeof window !== 'undefined' && window.addEventListener) {
     window.addEventListener('keydown', unlockOnce);
     window.addEventListener('touchend', unlockOnce, { passive: true });
     window.addEventListener('click', unlockOnce);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) SFX.unlock(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) SFX.suspend(); else SFX.unlock(); });
+    window.addEventListener('pagehide', () => SFX.suspend());
     // a soft tick on every button that does not make a sound of its own
     document.addEventListener('click', e => {
         const b = e.target && e.target.closest && e.target.closest('button, [role="button"]');
