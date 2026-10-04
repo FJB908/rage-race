@@ -221,13 +221,14 @@
     async function signInGoogle() {
         if (!fb || !user) throw new Error('not-ready');
         const provider = new fb.auth.GoogleAuthProvider();
+        let nativeCred = null;
         try {
             if (!user.isAnonymous) return;
-            if (nativeApp()) await fb.auth.linkWithCredential(user, await nativeGoogleCredential());
+            if (nativeApp()) { nativeCred = await nativeGoogleCredential(); await fb.auth.linkWithCredential(user, nativeCred); }
             else await fb.auth.linkWithPopup(user, provider);                      // keeps this account and its data
         } catch (e) {
             if (e && e.code === 'auth/credential-already-in-use') {                // this Google account already has a save: switch to it and merge
-                const cred = (e.credential) || fb.auth.GoogleAuthProvider.credentialFromError(e);
+                const cred = nativeCred || e.credential || fb.auth.GoogleAuthProvider.credentialFromError(e);
                 if (!cred) throw e;
                 ready = false; await fb.auth.signInWithCredential(fb.au, cred); return;
             }
