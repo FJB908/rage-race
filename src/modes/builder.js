@@ -7,6 +7,7 @@
 (function () {
     'use strict';
     const ROUNDS = 4, COURSE_H = 1500, RACE_LIMIT = 45, POINTS = [10, 7, 5, 3], TRAP_PTS = 2, BOMB_R = 105;
+    const TURN_MS = 15000, READY_MS = 12000;          // time to place a piece / time to press READY between rounds
     const $ = id => document.getElementById(id);
     const sfx = (n, a) => { try { SFX.play(n, a); } catch (e) {} };
     const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -31,16 +32,16 @@
     const rangeOf = k => PIECES[k].range || 0;
 
     const ORIG = { f: FINISH_Y, t: TRACK };
-    const B = { on: false, round: 0, scores: [0, 0, 0, 0], prevRank: [0, 1, 2, 3], roster: null, phase: 'idle', raceT: 0, startedRace: false, pieces: [], placed: [], cur: -1, fx: [], zapT: [0, 0, 0, 0], lootId: '', specStarted: false };
+    const B = { on: false, round: 0, scores: [0, 0, 0, 0], prevRank: [0, 1, 2, 3], roster: null, phase: 'idle', raceT: 0, startedRace: false, pieces: [], placed: [], cur: -1, fx: [], movers: [], turnEnd: 0, ready: [false, false, false, false], idc: 1, zapT: [0, 0, 0, 0], lootId: '', specStarted: false };
     window.buildMatch = false;
 
     /* -------------------------------------------------------------------------------------- course ---- */
-    const flat = (x, y, w, type, extra) => Object.assign({ x, y, w, h: 18, type: type || 'normal', speed: 0, dir: 1, active: true, breaking: false, breakT: 0, respawn: 0, baseX: x, range: 0, boostReady: true, foundation: true }, extra || {});
+    const flat = (x, y, w, type, extra) => Object.assign({ x, y, w, h: 18, type: type || 'normal', speed: 0, dir: 1, active: true, breaking: false, breakT: 0, respawn: 0, baseX: x, range: 0, boostReady: true, foundation: true, id: B.idc++ }, extra || {});
     function makeCourse(seed) {
         const r = pkRng(seed), pw = PLAY_W();
         FINISH_Y = START_Y - COURSE_H; TRACK = COURSE_H;
         platforms = []; itemBoxes = []; finishPlatform = null; ufos = [];
-        platforms.push({ x: pw / 2, y: START_Y, w: pw, h: 40, type: 'normal', active: true, ground: true, foundation: true });
+        B.idc = 1; platforms.push({ x: pw / 2, y: START_Y, w: pw, h: 40, type: 'normal', active: true, ground: true, foundation: true, id: B.idc++ });
         let y = START_Y - 160, lastX = pw / 2;
         while (y > FINISH_Y + 250) {
             const diff = 1 - (y - FINISH_Y) / TRACK;
@@ -118,7 +119,7 @@
     function addPiece(kind, x, y, owner) {
         const d = PIECES[kind], rg = rangeOf(kind);
         const pc = { x, y, w: d.w, h: d.h, type: d.type, speed: d.type === 'moving' ? 80 : 0, dir: Math.random() < 0.5 ? 1 : -1, active: true, breaking: false, breakT: 0, respawn: 0,
-                     baseX: x, range: kind === 'saw' ? rg : (d.type === 'moving' ? rg : 0), boostReady: true, owner, piece: kind, born: performance.now(), phase: Math.random() * 6 };
+                     baseX: x, range: kind === 'saw' ? rg : (d.type === 'moving' ? rg : 0), boostReady: true, owner, piece: kind, born: performance.now(), phase: Math.random() * 6, id: B.idc++ };
         if (kind === 'blink') pc.blinkT = 1.4 + owner * 0.35;
         platforms.push(pc); B.pieces.push(pc); return pc;
     }
@@ -132,7 +133,7 @@
     function apply(sp, owner) {
         B.placed.push({ owner, kind: sp.kind });
         if (sp.kind === 'bomb') { explode(sp.x, sp.y, sp.hits || bombHits(sp.x, sp.y)); sfx('shatter'); return; }
-        if (sp.kind === 'ceiling') { const t = sp.target || ceilTarget(sp.x, sp.y); if (t) { t.hadCeiling = true; t.ceiling = true; t.ceilingBroken = false; t.ceilOwner = owner; B.fx.push({ x: t.x, y: t.y + 12, t: performance.now(), kind: 'puff' }); } return; }
+        if (sp.kind === 'ceiling') { const t = (sp.targetId && platforms.find(p => p.id === sp.targetId)) || sp.target || ceilTarget(sp.x, sp.y); if (t) { t.hadCeiling = true; t.ceiling = true; t.ceilingBroken = false; t.ceilOwner = owner; B.fx.push({ x: t.x, y: t.y + 12, t: performance.now(), kind: 'puff' }); } return; }
         addPiece(sp.kind, sp.x, sp.y, owner);
     }
     function drawCards() {                                          // four different pieces: always something friendly, a bomb only when it has a target
@@ -177,8 +178,8 @@
         }
         return null;
     }
-    function botPlace(idx) {
-        const pers = B.roster[idx].pers, cards = drawCards();
+    function botPlace(idx, given) {
+        const pers = B.roster[idx].pers, cards = (given || drawCards()).slice();
         const order = pers === 'chaos' ? KEYS.slice().sort(() => Math.random() - 0.5) : RANK[pers] || KEYS;
         cards.sort((a, b) => order.indexOf(a) - order.indexOf(b));
         for (const k of cards) { const sp = botTry(idx, k, pers); if (sp) return sp; }
@@ -188,7 +189,7 @@
     /* -------------------------------------------------------------------------------- overlay: DOM ---- */
     const root = document.createElement('div'); root.id = 'bd-root'; root.hidden = true;
     root.innerHTML = '<canvas id="bd-cv"></canvas>' +
-        '<div class="bd-top"><button class="bd-x" id="bd-x" type="button" aria-label="Leave">' + icon('chev-l') + '</button><div class="bd-title"><small id="bd-round"></small><b id="bd-msg"></b></div></div>' +
+        '<div class="bd-top"><button class="bd-x" id="bd-x" type="button" aria-label="Leave">' + icon('chev-l') + '</button><div class="bd-title"><small id="bd-round"></small><b id="bd-msg"></b></div><div class="bd-turn" id="bd-turn" hidden></div></div>' +
         '<div class="bd-tiles" id="bd-tiles"></div>' +
         '<div class="bd-bottom" id="bd-bottom"></div>';
     document.body.appendChild(root);
@@ -246,7 +247,7 @@
         if (ring) { const rw = kind === 'saw' ? w + 8 : (d.special ? 0 : w + 8); if (rw) { cx.strokeStyle = ring; cx.lineWidth = 2.5; rrect(-rw / 2, -h / 2 - 8 * S, rw, h + 12 * S, 7); cx.stroke(); } }
         cx.restore();
     }
-    const ghost = { kind: null, x: 0, y: 0, ok: false, why: '', target: null, hits: [] };
+    const ghost = { kind: null, x: 0, y: 0, ok: false, why: '', target: null, hits: [], touched: true };
     let raf = 0;
     function render() {
         raf = requestAnimationFrame(render); if (root.hidden) return;
@@ -276,6 +277,13 @@
             drawPiece(pc.piece, pc.piece === 'saw' ? pc.baseX : pc.x, pc.y, 1, PCOL[pc.owner] || '#fff');
             if (age < 1.2) { cx.save(); cx.globalAlpha = 1 - age / 1.2; cx.strokeStyle = PCOL[pc.owner]; cx.lineWidth = 3; cx.beginPath(); cx.arc(wx(pc.x), wy(pc.y), 18 + age * 50, 0, 7); cx.stroke(); cx.restore(); }
         }
+        for (const m of B.movers) {                                          // a rival is dragging a piece: show the piece, their name and their finger
+            drawPiece(m.kind, m.x, m.y, 0.95, m.kind === 'ceiling' || m.kind === 'bomb' ? null : (m.fin ? '#7ee787' : PCOL[m.owner]));
+            const sx = wx(m.x), sy = wy(m.y), pulse = 1 + Math.sin(now / 120) * 0.12;
+            cx.save(); cx.fillStyle = 'rgba(255,255,255,.28)'; cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx, sy + 74, 17 * pulse, 0, 7); cx.fill(); cx.stroke();
+            cx.strokeStyle = 'rgba(255,255,255,.25)'; cx.setLineDash([3, 4]); cx.beginPath(); cx.moveTo(sx, sy + 16); cx.lineTo(sx, sy + 56); cx.stroke(); cx.setLineDash([]);
+            cx.font = '800 11px system-ui'; cx.textAlign = 'center'; const tw = cx.measureText(m.name).width + 14; cx.fillStyle = PCOL[m.owner]; rrect(sx - tw / 2, sy - 44, tw, 18, 9); cx.fill(); cx.fillStyle = '#10131b'; cx.fillText(m.name, sx, sy - 31); cx.restore();
+        }
         B.fx = B.fx.filter(f => now - f.t < 900);
         for (const f of B.fx) {                                              // explosion / dust rings
             const a = (now - f.t) / 900; cx.save(); cx.globalAlpha = 1 - a; cx.strokeStyle = f.kind === 'boom' ? '#ffb238' : '#cfd6e4'; cx.lineWidth = f.kind === 'boom' ? 5 : 3;
@@ -287,6 +295,11 @@
             if (pk === 'bomb') for (const h of ghost.hits) { cx.strokeStyle = '#ff5470'; cx.lineWidth = 3; const hx = wx(h.pl.x), hy = wy(h.kind === 'ceil' ? h.pl.y + 12 : h.pl.y); cx.beginPath(); cx.arc(hx, hy, 24 * S, 0, 7); cx.stroke(); }
             if (pk === 'ceiling' && ghost.target) { const t = ghost.target, y = wy(t.y + t.h / 2), x = wx(baseOf(t)), w = t.w * S; cx.fillStyle = 'rgba(126,231,135,.55)'; cx.fillRect(x - w / 2, y, w, 10 * S); cx.strokeStyle = '#7ee787'; cx.lineWidth = 2; cx.strokeRect(x - w / 2, y, w, 10 * S); }
             else if (pk !== 'ceiling') drawPiece(pk, ghost.x, ghost.y, 0.9, pk === 'bomb' ? null : (ghost.ok ? '#7ee787' : '#ff5470'));
+            if (!ghost.touched && ghost.kind) {                                  // first time: show where to grab
+                const sx = wx(ghost.x), sy = wy(ghost.y), pulse = 1 + Math.sin(now / 160) * 0.18;
+                cx.save(); cx.fillStyle = 'rgba(255,255,255,.3)'; cx.strokeStyle = '#fff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx, sy + 74, 18 * pulse, 0, 7); cx.fill(); cx.stroke();
+                cx.fillStyle = '#fff'; cx.font = '900 12px system-ui'; cx.textAlign = 'center'; cx.fillText('DRAG ANYWHERE', sx, sy + 112); cx.restore();
+            }
             if (!ghost.ok && ghost.why) { cx.fillStyle = '#ff5470'; cx.font = '800 11px system-ui'; cx.textAlign = 'center'; cx.fillText(ghost.why, wx(ghost.x), wy(ghost.y) - 30); }
         }
         cx.fillStyle = '#35e0c8'; cx.font = '800 11px system-ui'; cx.textAlign = 'center'; cx.fillText('START', wx(PLAY_W() / 2), wy(START_Y) - 16);
@@ -300,7 +313,7 @@
     let drag = null, auto = 0;
     function setGhost(info) { ghost.x = info.x; ghost.y = info.y; ghost.ok = info.ok; ghost.why = info.why || ''; ghost.target = info.target || null; ghost.hits = info.hits || []; refreshPlaceBtn(); }
     function updateGhost(px, py) {
-        const w = toWorld(px, py - 74); setGhost(spotInfo(ghost.kind, Math.round(w.x / 4) * 4, Math.round(w.y / 4) * 4));
+        ghost.touched = true; const w = toWorld(px, py - 74); setGhost(spotInfo(ghost.kind, Math.round(w.x / 4) * 4, Math.round(w.y / 4) * 4));
     }
     cv.addEventListener('pointerdown', e => {
         if (root.hidden) return; cv.setPointerCapture && cv.setPointerCapture(e.pointerId);
@@ -348,17 +361,49 @@
             default: return plat(d.color);
         }
     }
-    function refreshPlaceBtn() { const b = $('bd-place'); if (b) { b.disabled = !ghost.ok; b.classList.toggle('ready', ghost.ok); } }
-    function humanPlace(cards) {
+    function refreshPlaceBtn() { const b = $('bd-place'); if (b) { b.disabled = !ghost.ok; b.classList.toggle('ready', ghost.ok); b.textContent = ghost.ok ? (ghost.kind === 'bomb' ? 'DROP IT' : 'PLACE IT HERE') : (ghost.why || 'NOT HERE'); } }
+    const hintRow = (a, b2) => '<div class="bd-hintrow">' + a + (b2 || '') + '</div>';
+    const step = (n, t) => '<span class="bd-hint"><b>' + n + '</b>' + t + '</span>';
+
+    /* ----------------------------------------------------------------- network seam ----
+       Everything a player does in a turn is one small message, so the same flow can run with real people:
+         {t:'turn',  idx, cards, deadline}      host -> everyone: whose turn, which 4 pieces, until when
+         {t:'place', idx, sp:{kind,x,y,targetId}} that player -> everyone: where the piece goes
+         {t:'ready', idx}                       that player -> everyone: ready for the next round
+       Build.net.out = fn(msg) sends; Build.net.receive(msg) feeds messages in. Players with ctrl 'remote' are waited for (with a timeout),
+       players with ctrl 'bot' are played here, 'local' is the person holding this phone. */
+    const net = { out: null, waiters: {},
+        send(m) { try { if (net.out) net.out(m); } catch (e) {} },
+        receive(m) {
+            if (!m || !B.on) return;
+            if (m.t === 'ready') { B.ready[m.idx] = true; renderReady(); return; }
+            const k = m.t + ':' + m.idx, w = net.waiters[k]; if (w) { delete net.waiters[k]; w(m); }
+        },
+        wait(t, idx, ms) { return new Promise(res => { const k = t + ':' + idx; net.waiters[k] = res; setTimeout(() => { if (net.waiters[k] === res) { delete net.waiters[k]; res(null); } }, ms); }); },
+    };
+    const wire = sp => sp && { kind: sp.kind, x: sp.x, y: sp.y, targetId: sp.target ? sp.target.id : sp.targetId };
+
+    function autoPlace(cards) {                                      // when somebody runs out of time
+        for (const k of cards.slice().sort(() => Math.random() - 0.5)) { const sp = botTry(0, k, 'helper'); if (sp) return sp; }
+        return botTry(0, 'ledge', 'helper');
+    }
+    function humanPlace(cards, deadline) {
         return new Promise(res => {
-            ghost.kind = null; const bot = $('bd-bottom');
+            ghost.kind = null; const bot = $('bd-bottom'); let done = false;
+            const finish = sp => { if (done) return; done = true; clearTimeout(to); B.cancelTurn = null; ghost.kind = null; bot.innerHTML = ''; res(sp); };
+            const to = setTimeout(() => {                                   // time's up: your piece goes where the ghost is, or somewhere sensible
+                sfx('error'); const sp = (ghost.kind && ghost.ok) ? { kind: ghost.kind, x: ghost.x, y: ghost.y, target: ghost.target } : autoPlace(cards);
+                setTop("Time's up! Placed for you"); finish(sp);
+            }, Math.max(0, deadline - Date.now()));
+            B.cancelTurn = () => finish(null);
+            const timeBar = '<div class="bd-timebar"><u id="bd-tb"></u></div>';
             const showCards = () => {
-                ghost.kind = null; setTop('Choose a piece');
-                bot.innerHTML = '<div class="bd-cards">' + cards.map(k => { const d = PIECES[k], tg = TAGS[d.tag]; return '<button class="bd-card" type="button" data-k="' + k + '" style="--tc:' + tg[1] + '"><span class="bd-ic">' + iconFor(k) + '</span><span class="bd-ct"><b>' + d.name + '</b><em>' + tg[0] + '</em><small>' + d.tip + '</small></span></button>'; }).join('') + '</div>';
+                ghost.kind = null; setTop('Your turn: pick a piece');
+                bot.innerHTML = timeBar + hintRow('<span class="bd-hint big"><b>&#9660;</b>TAP A PIECE TO PICK IT</span>') + '<div class="bd-cards">' + cards.map(k => { const d = PIECES[k], tg = TAGS[d.tag]; return '<button class="bd-card" type="button" data-k="' + k + '" style="--tc:' + tg[1] + '"><span class="bd-ic">' + iconFor(k) + '</span><span class="bd-ct"><b>' + d.name + '</b><em>' + tg[0] + '</em><small>' + d.tip + '</small></span></button>'; }).join('') + '</div>';
                 bot.querySelectorAll('.bd-card').forEach(b => b.onclick = () => pick(b.dataset.k));
             };
             const pick = kind => {
-                sfx('select'); ghost.kind = kind; centerOn((START_Y + FINISH_Y) / 2 + 60);
+                sfx('select'); ghost.kind = kind; ghost.touched = false; centerOn((START_Y + FINISH_Y) / 2 + 60);
                 const mid = toWorld(view.w / 2 - 17, view.h * 0.45); let gx = Math.round(mid.x / 4) * 4, gy = Math.round(mid.y / 4) * 4, found = null;
                 if (kind === 'bomb') { const t = B.pieces[B.pieces.length - 1] || platforms.find(p => p.hadCeiling); if (t) { gx = t.x; gy = t.y; } }
                 search: for (let r = 0; r <= 640; r += 12) for (let a = 0; a < (r ? 12 : 1); a++) {       // nearest free spot, spiralling out
@@ -366,40 +411,76 @@
                     if (info.ok) { found = info; break search; }
                 }
                 setGhost(found || spotInfo(kind, gx, gy));
-                setTop(kind === 'bomb' ? 'Drag the bomb over pieces' : kind === 'ceiling' ? 'Drag under a platform' : 'Drag it where you want it');
-                bot.innerHTML = '<div class="bd-actions"><button class="btn ghost bd-back" id="bd-back" type="button">BACK</button><button class="btn bd-placebtn" id="bd-place" type="button">' + (kind === 'bomb' ? 'DROP' : 'PLACE') + '</button></div><p class="bd-tip">' + PIECES[kind].tip + '</p>';
+                setTop(kind === 'bomb' ? 'Drop it on pieces' : kind === 'ceiling' ? 'Put it under a platform' : 'Drag it into place');
+                bot.innerHTML = timeBar + hintRow(step(1, kind === 'bomb' ? 'DRAG THE BOMB' : 'DRAG THE PIECE'), step(2, 'TAP THE BUTTON')) + '<div class="bd-actions"><button class="btn ghost bd-back" id="bd-back" type="button">BACK</button><button class="btn bd-placebtn" id="bd-place" type="button">PLACE IT HERE</button></div><p class="bd-tip">' + PIECES[kind].tip + '</p>';
                 $('bd-back').onclick = () => { sfx('back'); showCards(); };
-                $('bd-place').onclick = () => { if (!ghost.ok) { sfx('error'); return; } const sp = { kind: ghost.kind, x: ghost.x, y: ghost.y, target: ghost.target, hits: ghost.hits }; ghost.kind = null; bot.innerHTML = ''; res(sp); };
+                $('bd-place').onclick = () => { if (!ghost.ok) { sfx('error'); return; } finish({ kind: ghost.kind, x: ghost.x, y: ghost.y, target: ghost.target }); };
                 refreshPlaceBtn();
             };
             centerOn((START_Y + FINISH_Y) / 2 + 60); showCards();
         });
     }
 
+    /* tiny animation helpers: bots really pick up their piece, hover over the wrong spot, then drop it */
+    const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    function tween(ms, fn) {
+        return new Promise(res => { const t0 = performance.now(); const tick = () => { if (!B.on) return res(); const t = Math.min(1, (performance.now() - t0) / ms); fn(ease(t)); t < 1 ? requestAnimationFrame(tick) : res(); }; tick(); });
+    }
+    async function camTo(y, ms) { const a = view.camTop, tgt = Math.max(FINISH_Y - 160, Math.min(START_Y + 60 - view.h / view.S, y - view.h / view.S * 0.45)); await tween(ms, t => { view.camTop = a + (tgt - a) * t; }); }
+    async function botTurn(i, cards) {
+        const name = B.roster[i].name, sn = name.slice(0, 9); setTop(sn + ' is thinking...'); $('bd-bottom').innerHTML = hintRow('<span class="bd-hint"><b>&hellip;</b>' + name + ' IS CHOOSING</span>');
+        await wait(rr(600, 1200)); if (!B.on) return null;
+        const sp = botPlace(i, cards); if (!sp) return null;
+        setTop(sn + ' picks ' + PIECES[sp.kind].name.toUpperCase());
+        await camTo(sp.y, 500); if (!B.on) return null;
+        const pw = PLAY_W(), cl = x => Math.max(50, Math.min(pw - 50, x)), side = Math.random() < 0.5 ? -1 : 1;
+        const p0 = { x: cl(sp.x + side * rr(120, 200)), y: sp.y - rr(220, 320) }, p1 = { x: cl(sp.x + rr(-130, 130)), y: sp.y + rr(-120, -50) };
+        const m = { kind: sp.kind, x: p0.x, y: p0.y, owner: i, name: name.slice(0, 12), fin: false }; B.movers = [m]; sfx('select');
+        await tween(650, t => { m.x = p0.x + (p1.x - p0.x) * t; m.y = p0.y + (p1.y - p0.y) * t; });
+        await wait(rr(150, 380));
+        await tween(520, t => { m.x = p1.x + (sp.x - p1.x) * t; m.y = p1.y + (sp.y - p1.y) * t; });
+        m.fin = true; await wait(300); B.movers = [];
+        return sp;
+    }
+
+    async function takeTurn(i, order, k) {
+        const r = B.roster[i], cards = drawCards(), deadline = Date.now() + TURN_MS; B.turnEnd = deadline; B.cur = i;
+        buildTiles(order, k); net.send({ t: 'turn', idx: i, cards, deadline });
+        let sp = null;
+        if (r.ctrl === 'local') sp = await humanPlace(cards, deadline);
+        else if (r.ctrl === 'remote') {
+            setTop(r.name.slice(0, 9) + ' is placing...'); $('bd-bottom').innerHTML = hintRow('<span class="bd-hint"><b>&hellip;</b>WAITING FOR ' + r.name.toUpperCase() + '</span>');
+            const m = await net.wait('place', i, TURN_MS + 1500); sp = m ? m.sp : autoPlace(cards);
+        } else sp = await botTurn(i, cards);
+        if (!B.on) return;
+        if (r.ctrl !== 'remote') net.send({ t: 'place', idx: i, sp: wire(sp) });
+        if (!sp) return;
+        if (i !== 0) { centerOn(sp.y); }
+        apply(sp, i); sfx(sp.kind === 'bomb' ? 'shatter' : i === 0 ? 'equip' : 'pop');
+        $('bd-msg').textContent = (i === 0 ? 'You' : r.name.slice(0, 9)) + (sp.kind === 'bomb' ? ' dropped a BOMB' : ' placed ' + PIECES[sp.kind].name.toUpperCase());
+        await wait(sp.kind === 'bomb' ? 900 : 650);
+    }
+
     /* --------------------------------------------------------------------------------- the flow ---- */
     async function buildPhase() {
-        B.phase = 'build'; root.hidden = false; hudChip.hidden = true; document.body.classList.add('bd-building'); B.placed = [];
+        B.phase = 'build'; root.hidden = false; hudChip.hidden = true; document.body.classList.add('bd-building'); B.placed = []; B.movers = [];
         state = 'build'; if (SFX.music) SFX.music.set('levels');
         fit(); resetDynamic();
         const order = [0, 1, 2, 3].sort((a, b) => B.scores[b] - B.scores[a] || Math.random() - 0.5);       // the leader places first, the last player places last
-        for (let k = 0; k < order.length; k++) {
-            const i = order[k]; B.cur = i; buildTiles(order, k);
-            if (i === 0) {
-                const sp = await humanPlace(drawCards());
-                if (!B.on) return; apply(sp, 0); sfx(sp.kind === 'bomb' ? 'shatter' : 'equip');
-                if (sp.kind === 'bomb') { setTop('BOOM'); await wait(700); }
-            } else {
-                setTop(B.roster[i].name + ' is placing...'); $('bd-bottom').innerHTML = '';
-                await wait(900); if (!B.on) return;
-                const sp = botPlace(i);
-                if (sp) { centerOn(sp.y); apply(sp, i); sfx(sp.kind === 'bomb' ? 'shatter' : 'pop'); $('bd-msg').textContent = B.roster[i].name + (sp.kind === 'bomb' ? ' dropped a BOMB' : ' placed ' + PIECES[sp.kind].name.toUpperCase()); }
-                await wait(1100); if (!B.on) return;
-            }
-        }
-        buildTiles(order, 4); setTop('Get ready...'); await wait(900); if (!B.on) return;
+        for (let k = 0; k < order.length; k++) { await takeTurn(order[k], order, k); if (!B.on) return; }
+        buildTiles(order, 4); setTop('Get ready...'); $('bd-bottom').innerHTML = ''; B.turnEnd = 0; await wait(900); if (!B.on) return;
         root.hidden = true; document.body.classList.remove('bd-building');
         startRace();
     }
+    // header clock + time bar for whoever's turn it is
+    setInterval(() => {
+        const t = $('bd-turn'); if (!t) return;
+        if (B.on && B.phase === 'build' && !root.hidden && B.turnEnd) {
+            const left = Math.max(0, B.turnEnd - Date.now()), s = Math.ceil(left / 1000);
+            t.hidden = false; t.textContent = s + 's'; t.classList.toggle('low', s <= 5);
+            const tb = $('bd-tb'); if (tb) { tb.style.width = (left / TURN_MS * 100) + '%'; tb.classList.toggle('low', s <= 5); }
+        } else t.hidden = true;
+    }, 200);
     function startRace() {
         B.phase = 'race'; B.raceT = 0; B.startedRace = false; B.specStarted = false; B.hitFor = [new Set(), new Set(), new Set(), new Set()]; B.zapT = [0, 0, 0, 0]; B.trapPts = [0, 0, 0, 0];
         const keep = B.roster; initPlayers();
@@ -475,9 +556,32 @@
             rows.map(r => '<div class="bd-rr' + (r.i === 0 ? ' me' : '') + '" style="--pc:' + PCOL[r.i] + '"><span class="bd-pl' + (r.place === 1 ? ' g' : '') + '">' + (r.place || '-') + '</span>' +
                 '<div class="bd-who"><b>' + (r.i === 0 ? 'YOU' : B.roster[r.i].name) + '</b><small>' + (r.place ? r.time.toFixed(1) + 's' : 'did not finish') + (r.tp ? ' &middot; <em>caught ' + (r.tp / TRAP_PTS) + '</em>' : '') + '</small></div>' +
                 '<div class="bd-gain' + (r.fp + r.tp ? '' : ' z') + '">+' + (r.fp + r.tp) + '</div><div class="bd-tot"><strong>' + B.scores[r.i] + '</strong><i class="' + (r.moved > 0 ? 'up' : r.moved < 0 ? 'dn' : '') + '">' + (r.moved > 0 ? '&#9650;' + r.moved : r.moved < 0 ? '&#9660;' + (-r.moved) : '') + '</i></div></div>').join('') + '</div>' +
-            '<p class="bd-lead">' + (last ? '' : 'Leader places first next round: ' + (after[0] === 0 ? 'you' : B.roster[after[0]].name)) + '</p>' +
-            '<button class="btn bd-next" id="bd-next" type="button">' + (last ? 'FINAL RESULT' : 'NEXT ROUND') + '</button>';
-        $('bd-next').onclick = () => { sfx('select'); panel.hidden = true; ending = false; if (last) finalResult(); else { B.round++; buildPhase(); } };
+            '<p class="bd-lead">' + (last ? 'That was the last round' : 'Leader places first next round: ' + (after[0] === 0 ? 'you' : B.roster[after[0]].name)) + '</p>' +
+            '<div class="bd-ready" id="bd-ready"></div>' +
+            '<button class="btn bd-next ready-btn" id="bd-next" type="button">READY</button>';
+        const go = await readyPhase(last);
+        if (!go) return;
+        panel.hidden = true; ending = false; if (last) finalResult(); else { B.round++; buildPhase(); }
+    }
+    // between rounds: everybody presses READY (bots after a moment, remote players by message), or the timer runs out and the next round starts anyway
+    function renderReady() {
+        const el = $('bd-ready'); if (!el) return;
+        el.innerHTML = B.roster.map((r, i) => '<span class="bd-rd' + (B.ready[i] ? ' on' : '') + '" style="--pc:' + PCOL[i] + '"><i></i>' + (i === 0 ? 'YOU' : r.name.slice(0, 8)) + '<em>' + (B.ready[i] ? 'READY' : '...') + '</em></span>').join('');
+    }
+    function readyPhase(last) {
+        B.ready = [false, false, false, false];
+        B.roster.forEach((r, i) => { if (r.ctrl === 'bot') setTimeout(() => { if (B.on && B.phase === 'result') { B.ready[i] = true; renderReady(); sfx('pop'); } }, rr(1200, READY_MS - 3500)); });
+        const end = Date.now() + READY_MS; renderReady();
+        return new Promise(res => {
+            const btn = $('bd-next');
+            btn.onclick = () => { if (B.ready[0]) return; B.ready[0] = true; net.send({ t: 'ready', idx: 0 }); sfx('select'); renderReady(); };
+            const iv = setInterval(() => {
+                if (!B.on || B.phase !== 'result') { clearInterval(iv); res(false); return; }
+                const left = Math.max(0, Math.ceil((end - Date.now()) / 1000)), all = B.ready.every(Boolean);
+                const b2 = $('bd-next'); if (b2) { b2.textContent = B.ready[0] ? 'WAITING FOR OTHERS ' + left + 's' : 'READY  ' + left + 's'; b2.classList.toggle('waiting', B.ready[0]); }
+                if (all || left <= 0) { clearInterval(iv); if (all) sfx('count'); setTimeout(() => res(true), all ? 500 : 0); }
+            }, 200);
+        });
     }
     function finalResult() {
         const order = rankOf(); const place = order.indexOf(0) + 1;
@@ -504,12 +608,12 @@
         B.round = 1; B.scores = [0, 0, 0, 0]; B.pieces = []; B.fx = []; B.lootId = newLootId('race');
         makeCourse(matchSeed);
         initPlayers();
-        B.roster = players.map((p, i) => ({ name: p.name, look: p.look, finisher: p.look && p.look.finisher, skill: p.skill, pers: i === 0 ? 'you' : ['trapper', 'helper', 'chaos', 'trapper'][Math.floor(Math.random() * 4)] }));
+        B.roster = players.map((p, i) => ({ name: p.name, look: p.look, finisher: p.look && p.look.finisher, skill: p.skill, pers: i === 0 ? 'you' : ['trapper', 'helper', 'chaos', 'trapper'][Math.floor(Math.random() * 4)], ctrl: i === 0 ? 'local' : (api.remote.includes(i) ? 'remote' : 'bot') }));
         buildPhase();
     }
     function start() { window.buildQueued = true; startMatchmaking(); }
     function leave(toMenu) {
-        B.on = false; window.buildMatch = false; B.phase = 'idle'; root.hidden = true; panel.hidden = true; hudChip.hidden = true; ghost.kind = null; ending = false;
+        B.on = false; window.buildMatch = false; B.phase = 'idle'; B.movers = []; net.waiters = {}; if (B.cancelTurn) B.cancelTurn(); root.hidden = true; panel.hidden = true; hudChip.hidden = true; ghost.kind = null; ending = false;
         document.body.classList.remove('bd-building', 'build-race');
         FINISH_Y = ORIG.f; TRACK = ORIG.t;
         if (toMenu) { state = 'menu'; gameMode = 'race'; hud.style.display = 'none'; refreshStartMeta(); showScreen('start'); }
@@ -559,5 +663,5 @@
     }
     window.addEventListener('resize', () => { if (!root.hidden) fit(); });
     render();
-    window.Build = { open, begin, update, checkEnd, leave, arcHitsSpike, drawSaw, drawOverlay, state: B, PIECES, spotInfo, apply, bombHits };
+    const api = window.Build = { open, begin, update, checkEnd, leave, arcHitsSpike, drawSaw, drawOverlay, state: B, PIECES, spotInfo, apply, bombHits, net, remote: [] };     // api.remote: seats played by other people (set before begin)
 })();
