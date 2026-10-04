@@ -4277,6 +4277,7 @@ function toast(msg){
     t.textContent = msg; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
 }
+const GEM_COIN_DEALS = [[10, 1500], [50, 9000], [200, 40000]];     // [gems, coins]: the bigger the deal, the better the rate
 function renderResourceShop(){
     const box = document.getElementById('m-resource-shop'); box.innerHTML = '';
     const head = document.createElement('div'); head.className = 'gem-head'; head.innerHTML = `<span>${R('gem', gemCount())}</span>`; box.appendChild(head);
@@ -4290,6 +4291,18 @@ function renderResourceShop(){
         });
         grid.appendChild(card);
     }
+    const ex = document.createElement('div'); ex.className = 'gem-ex';
+    ex.innerHTML = '<div class="gx-t">GEMS TO COINS</div>';
+    for (const [gems, coins] of GEM_COIN_DEALS){
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'gx-deal';
+        b.innerHTML = `<span class="gx-c">${R('coin', coins.toLocaleString('en-US'))}</span><span class="gx-p">${icon('gem')}<b>${gems}</b></span>`;
+        b.addEventListener('click', () => {
+            if (gemCount() < gems){ toast('Not enough gems'); SFX.play('fall'); return; }
+            store('rr_gems', gemCount() - gems); addCoins(coins); SFX.play('coin'); refreshMenu(); toast('+' + coins.toLocaleString('en-US') + ' coins'); renderResourceShop();
+        });
+        ex.appendChild(b);
+    }
+    box.appendChild(ex);
     if (window.GemCrate) GemCrate.render(box);
     if (window.Ads) Ads.renderShop(box);
 }

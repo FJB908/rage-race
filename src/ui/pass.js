@@ -155,7 +155,8 @@
         track.scrollLeft = keepX;
         // ENDLESS: after tier 30 every PASS_END_PTS pass points pays an epic chest, for as long as you keep playing
         let end = document.getElementById('pz-end');
-        if (!end) { end = document.createElement('div'); end.id = 'pz-end'; end.className = 'pz-end'; track.parentNode.insertBefore(end, track); }
+        if (!end) { end = document.createElement('div'); end.id = 'pz-end'; end.className = 'pz-end'; }
+        track.appendChild(end);                      // always the last thing on the track, right after tier 30
         end.className = 'pz-end' + (st.endReady ? ' ready' : '') + (st.done < N ? ' locked' : '');
         end.innerHTML = '<span class="pze-art">' + icon('drop-epic') + '</span><span class="pze-tx"><b>ENDLESS EPIC CHEST</b><small>' + (st.done < N ? 'Finish tier ' + N + ', then every ' + PASS_END_PTS + ' pass points gives an epic chest' : 'Every ' + PASS_END_PTS + ' pass points &middot; ' + (PASS_END_PTS - st.endInto) + ' to the next') + '</small><i class="pze-bar"><u style="width:' + (st.done < N ? 0 : Math.round(st.endInto / PASS_END_PTS * 100)) + '%"></u></i></span>' + (st.endReady ? '<button type="button" class="pze-claim">CLAIM <b>' + st.endReady + '</b></button>' : '');
         const eb = end.querySelector('.pze-claim'); if (eb) eb.onclick = () => claimEnd();

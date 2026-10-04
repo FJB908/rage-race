@@ -40,10 +40,11 @@
                     if (kind === 'rewarded') {
                         await AdMob.prepareRewardVideoAd({ adId: NATIVE_CFG.admob.rewarded, isTesting: !NATIVE_CFG.live });
                         let rewarded = false;
-                        const got = once('onRewardedVideoAdReward', () => { rewarded = true; });
+                        once('onRewardedVideoAdReward', () => { rewarded = true; });
                         const closed = once('onRewardedVideoAdDismissed');
                         await AdMob.showRewardVideoAd();
                         await closed;
+                        for (let i = 0; i < 12 && !rewarded; i++) await new Promise(r => setTimeout(r, 150));      // the reward event can land just after the ad closes
                         return rewarded;
                     }
                     await AdMob.prepareInterstitial({ adId: NATIVE_CFG.admob.interstitial, isTesting: !NATIVE_CFG.live });

@@ -664,3 +664,8 @@ body.build-race #finish-menu { display:none !important; }
 .pf-av { overflow: visible; position: relative; isolation: isolate; }
 .pf-av canvas { position: absolute; left: -34px; top: -34px; width: 160px; height: 160px; z-index: -1; pointer-events: none; }
 .pf-hero .pf-id { position: relative; z-index: 1; }
+
+.gem-ex { margin:16px 0 4px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.gx-t { grid-column:1/-1; font:900 11px/1 "Bricolage Grotesque",system-ui,sans-serif; letter-spacing:.14em; color:#ffcf3f; text-align:center; }
+.gx-deal { display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 6px; border-radius:16px; border:1px solid rgba(255,207,63,.35); background:linear-gradient(160deg,rgba(255,207,63,.14),rgba(255,255,255,.03)); color:#fff; font:inherit; }
+.gx-deal:active { transform:scale(.96); } .gx-c { font:900 15px/1 system-ui; color:#ffcf3f; } .gx-p { display:flex; align-items:center; gap:4px; padding:6px 10px; border-radius:10px; background:#3a1650; color:#ff8ae6; } .gx-p .ico { width:16px; height:16px; } .gx-p b { font-size:15px; }
