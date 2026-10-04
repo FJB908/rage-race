@@ -651,3 +651,15 @@ body.online-race #btn-pause { display: none; }
 .m-card.wide { min-height:84px; }
 .new-tag { font-style:normal; font-size:10px !important; font-weight:900; letter-spacing:.1em; padding:3px 8px; border-radius:99px; background:#ff8ae6; color:#2a0c24; }
 body.build-race #finish-menu { display:none !important; }
+
+/* cosmetics that stick out (crowns, wings, flames) are not cropped: the canvases are bigger than their frames and sit BEHIND the other UI */
+.m-top > .m-who, .m-top > .m-coins, .m-top > .m-gems, .m-top > .m-gear { position: relative; z-index: 1; }
+.m-avatar { overflow: visible; isolation: isolate; z-index: 0; }
+.m-avatar canvas { position: absolute; left: -16px; top: -16px; width: 80px; height: 80px; border-radius: 0; z-index: -1; pointer-events: none; }
+.m-avatar .m-lvl { z-index: 2; }
+.m-split, .m-row, .m-play { position: relative; z-index: 2; }
+.m-stage { z-index: 0; }
+.m-hero-c { width: 283px; height: 283px; margin: -56px; pointer-events: none; z-index: 0; }
+.pf-av { overflow: visible; position: relative; isolation: isolate; }
+.pf-av canvas { position: absolute; left: -34px; top: -34px; width: 160px; height: 160px; z-index: -1; pointer-events: none; }
+.pf-hero .pf-id { position: relative; z-index: 1; }

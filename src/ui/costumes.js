@@ -342,4 +342,5 @@
         front: (c, s, k, id, t) => has(id) && run('front', c, s, k, id, t),
     };
     if (typeof COS_BY !== 'undefined') COS_BY.costume = COSTUMES;
+    try { if (typeof refreshMenu === 'function') refreshMenu(); } catch (e) {}      // the menu was drawn before this file loaded: draw the equipped costume now
 })();

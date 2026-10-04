@@ -4425,9 +4425,9 @@ function refreshMenu(){
     if (window.Streak) Streak.refreshHome();
     if (window.Gauntlet) Gauntlet.refreshHome();
     refreshShopBadge();
-    renderLook(document.getElementById('m-hero'), myLook(), { scale:0.22, cy:0.62 });
-    renderLook(document.getElementById('m-hero2'), myLook(), { scale:0.22, cy:0.62 });
-    renderLook(document.getElementById('m-av'), myLook(), { scale:0.25, cy:0.68 });
+    // these canvases are bigger than their frames (padding all round), so crowns, wings and flames are never cropped
+    const bigLook = (id, scale, cy, baseW) => { const cv = document.getElementById(id); if (!cv) return; const W = cv.width; renderLook(cv, myLook(), { scale:scale * baseW / W, cy:((W - baseW) / 2 + cy * baseW) / W }); };
+    bigLook('m-hero', 0.22, 0.62, 360); bigLook('m-hero2', 0.22, 0.62, 200); bigLook('m-av', 0.25, 0.68, 96);
     let d1 = 0, d2 = 0;
     try { d1 = dimLoad(DIMENSIONS[0]).stars.reduce((a,b) => a+b, 0); d2 = dimLoad(DIMENSIONS[1]).stars.reduce((a,b) => a+b, 0); } catch(e){}
     document.getElementById('m-d1').innerHTML = `${icon('star')} ${d1}/30`;
