@@ -60,7 +60,7 @@
         if (t.t === 'boost') return '<div class="pz-art boost">' + Boost.art(t, true) + '</div>';
         if (t.t === 'emote') { const e = emoOf(t); return '<div class="pz-art emote"><span style="background-image:' + GRAD(e.col) + '">' + e.text + '</span></div>'; }
         if (t.t === 'finisher') return '<div class="pz-art fin"><canvas width="220" height="170" data-fin="' + t.id + '"></canvas></div>';
-        return '<div class="pz-art item"><canvas width="140" height="140" data-key="' + key + '"></canvas></div>';
+        return '<div class="pz-art item"><canvas width="200" height="200" data-key="' + key + '"></canvas></div>';
     }
     function nameOf(t) {
         if (t.t === 'none') return '<span class="pz-lbl dim">NO REWARD</span>';
@@ -89,7 +89,7 @@
     }
     function paintItem(cv, t) {
         const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [t.cat]:t.id });
-        try { renderLook(cv, look, { scale:.3, cy:.58 }); } catch (e) {}
+        try { renderLook(cv, look, { scale:.235, cy:.64 }); } catch (e) {}
     }
 
     // ---------- Rage pass banner ----------
@@ -153,6 +153,7 @@
             col.append(top, node, bot); track.appendChild(col);
         });
         track.scrollLeft = keepX;
+        track.querySelectorAll('.pz-name').forEach(n => n.classList.toggle('long', n.textContent.trim().length > 10));
         // ENDLESS: after tier 30 every PASS_END_PTS pass points pays an epic chest, for as long as you keep playing
         let end = document.getElementById('pz-end');
         if (!end) { end = document.createElement('div'); end.id = 'pz-end'; end.className = 'pz-end'; }

@@ -164,3 +164,14 @@
 /* endless card sits at the end of the track */
 .pz-track > .pz-end { flex:none; flex-direction:column; text-align:center; width:210px; margin:0 0 0 16px; padding:16px 14px; gap:10px; }
 .pz-track > .pz-end .pze-art { width:64px; height:64px; } .pz-track > .pz-end .pze-tx { width:100%; text-align:center; align-items:stretch; } .pz-track > .pz-end .pze-claim { width:100%; }
+
+/* nothing in a pass card is cropped: the preview canvas always fits the art area, long names shrink, badges clear the text */
+.pz-art canvas { width:auto; height:100%; max-width:100%; aspect-ratio:1; }
+.pz-art.fin canvas { width:100%; height:auto; aspect-ratio:auto; max-height:100%; }
+.pz-name { font-size:12.5px; letter-spacing:-.01em; overflow-wrap:anywhere; }
+.pz-art.boost { margin-bottom:8px; } .pz-art.chest { padding-bottom:4px; }
+
+.pz-art.item { overflow:visible; } .pz-art.item canvas { width:100px; height:100px; margin:-16px 0 -12px; max-width:none; aspect-ratio:auto; }
+.pz-name { overflow-wrap:normal; }
+.pz-name.long { font-size:10.5px; letter-spacing:-.02em; }
+.pz-art.item canvas { width:92px; height:92px; margin:-14px 0 -8px; } .pz-name { position:relative; z-index:2; } .pz-card:not(.rage) .pz-art.item canvas { width:84px; height:84px; margin:-14px 0 -10px; }

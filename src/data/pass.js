@@ -32,10 +32,10 @@ const RAGE_TIERS = [
     { t:'drop', tier:'legendary' },          { t:'finisher', id:'f-lightning' },        { t:'prem', cat:'hat', id:'p-storm' },     { t:'emote', id:'king' },                 { t:'boost', kind:'chest', mult:3, n:4 },
     { t:'gem', n:60 },                       { t:'coins', n:2500 },                     { t:'drop', tier:'legendary' },          { t:'finisher', id:'f-supernova' },        { t:'prem', cat:'skin', id:'p-holochrome' },
     // tiers 31-50
-    { t:'emote', id:'haha' }, { t:'drop', tier:'legendary' }, { t:'gem', n:1 }, { t:'coins', n:3000 }, { t:'finisher', id:'f-rocket' },
-    { t:'prem', cat:'skin', id:'p-glitch' }, { t:'emote', id:'lol' }, { t:'boost', kind:'coin', mult:5, n:6 }, { t:'gem', n:1 }, { t:'drop', tier:'legendary' },
-    { t:'prem', cat:'hat', id:'p-phoenix' }, { t:'coins', n:3500 }, { t:'emote', id:'lmao' }, { t:'finisher', id:'f-galaxy' }, { t:'gem', n:1 },
-    { t:'prem', cat:'trail', id:'p-solar' }, { t:'emote', id:'ez' }, { t:'prem', cat:'face', id:'p-laser' }, { t:'finisher', id:'f-royal' }, { t:'gem', n:1 }
+    { t:'emote', id:'haha' }, { t:'drop', tier:'epic' }, { t:'gem', n:1 }, { t:'coins', n:3000 }, { t:'drop', tier:'epic' },
+    { t:'coins', n:3200 }, { t:'emote', id:'lol' }, { t:'boost', kind:'coin', mult:5, n:6 }, { t:'gem', n:1 }, { t:'drop', tier:'epic' },
+    { t:'coins', n:3400 }, { t:'coins', n:3500 }, { t:'emote', id:'lmao' }, { t:'boost', kind:'chest', mult:5, n:4 }, { t:'gem', n:1 },
+    { t:'coins', n:3800 }, { t:'emote', id:'ez' }, { t:'drop', tier:'epic' }, { t:'finisher', id:'f-royal' }, { t:'gem', n:1 }
 ];
 
 // More multipliers: boosters sit in many tiers of both lanes, getting bigger the further you go (x2, x3, then x5).
@@ -48,4 +48,4 @@ PASS_TIERS.forEach((t, i) => { if (t.t === 'coins') t.n = Math.round(t.n * Math.
 RAGE_TIERS.forEach((t, i) => { if (t.t === 'coins') t.n = Math.round(t.n * Math.min(4, 1 + i * i / 300) / 50) * 50; });
 // The Rage pass pays back almost all of its price: the gem rewards add up to exactly RAGE_GEMS_BACK (920 of the 1,000 gems).
 const RAGE_GEMS_BACK = 920;
-{ const amounts = [40, 60, 80, 100, 120, 140, 170, 210], gemTiers = RAGE_TIERS.filter(t => t.t === 'gem'); gemTiers.forEach((t, k) => { t.n = amounts[k]; }); }
+{ const amounts = [60, 80, 90, 100, 110, 120, 150, 210], gemTiers = RAGE_TIERS.filter(t => t.t === 'gem'); gemTiers.forEach((t, k) => { t.n = amounts[k]; }); }
