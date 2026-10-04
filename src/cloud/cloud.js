@@ -85,7 +85,7 @@
         MAX_FIELDS.forEach(k => { o[k] = Math.max(num(a[k]), num(b[k])); });
         o.passClaimed = union(a.passClaimed, b.passClaimed); o.lvClaimed = union(a.lvClaimed, b.lvClaimed); o.rageClaimed = union(a.rageClaimed, b.rageClaimed); o.setsClaimed = union(a.setsClaimed, b.setsClaimed); o.missions = mergeMiss(a.missions, b.missions); o.weekly = mergeWeekly(a.weekly, b.weekly); o.rage = !!(a.rage || b.rage); o.emotes = union(a.emotes, b.emotes); o.owned = union(a.owned, b.owned);
         o.lootGrants = Object.assign({}, od.lootGrants, nw.lootGrants);          // ids that were already granted: never grant twice
-        o.pendingDrops = Object.assign({}, nw.pendingDrops);                     // unopened drops follow the newest state (avoids resurrecting opened ones)
+        { const done = Object.assign({}, a.lootGrants, b.lootGrants); o.pendingDrops = Object.assign({}, od.pendingDrops, nw.pendingDrops); for (const id in o.pendingDrops) if (done[id]) delete o.pendingDrops[id]; }   // chests not opened yet are kept from both sides
         const ga = a.gt || {}, gb = b.gt || {}; o.gt = Object.assign({}, od.gt, nw.gt);
         ['runs', 'wins', 'best', 'keys'].forEach(k => { o.gt[k] = Math.max(num(ga[k]), num(gb[k])); });
         o.gt.crowned = !!(ga.crowned || gb.crowned);

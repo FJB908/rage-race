@@ -74,3 +74,4 @@
 .sk-tile.gemchest small { position:absolute; top:6px; left:10px; color:#ffb8f0; } .sk-tile.gemchest b { font-size:20px; letter-spacing:.1em; }
 #m-skins .fn-card .m-skin-pv { height:84px; margin-bottom:4px; overflow:hidden; }
 #m-skins .fn-card .m-skin-pv canvas.fn-pv { width:100%; height:100%; }
+#m-skins .fn-card .m-skin-pv { background:radial-gradient(75% 85% at 50% 70%, color-mix(in srgb, var(--rc, #4a5366) 30%, #1d2330), #1d2330); }

@@ -400,10 +400,12 @@ const SFX = (() => {
         }
         function play(name) {
             const A = ctx(); if (!A || !cache[name]) return;
-            stopNode(1.2);
+            stopNode(0.2);
             const g = A.createGain(), s = A.createBufferSource(); s.buffer = cache[name]; s.loop = true;
-            g.gain.setValueAtTime(0.0001, A.currentTime); g.gain.linearRampToValueAtTime(1, A.currentTime + 1.4);
-            s.connect(g); g.connect(musBus); s.start(); node = { s, g }; cur = name; level(musVol * MUS_GAIN);
+            g.gain.setValueAtTime(0.0001, A.currentTime); g.gain.linearRampToValueAtTime(1, A.currentTime + 0.5);
+            try { musBus.gain.cancelScheduledValues(A.currentTime); } catch (e) {}
+            musBus.gain.setValueAtTime(Math.max(0.0001, musVol * MUS_GAIN), A.currentTime);        // the bus itself is never faded: only the track is
+            s.connect(g); g.connect(musBus); s.start(); node = { s, g }; cur = name;
         }
         function ensure(name) { return cache[name] ? Promise.resolve() : (pending[name] || (pending[name] = build(name).catch(() => null).then(() => { delete pending[name]; }))); }
         async function prefetch() {                       // the other tracks are prepared quietly in the background
@@ -417,10 +419,12 @@ const SFX = (() => {
                 if (!musicOn || muted || !name || !TRACKS[name]) { this.stop(); return; }
                 wanted = name; if (!ctx()) return;
                 if (cur === name && node) return;
-                ensure(name).then(() => { if (wanted === name && musicOn && !muted) { play(name); prefetch(); } });
+                if (node) { stopNode(0.2); cur = null; }                                           // the old track leaves first: never two at once
+                const go = () => { if (wanted === name && musicOn && !muted) { play(name); prefetch(); } };
+                if (cache[name]) setTimeout(go, 160); else ensure(name).then(go);
             },
-            stop() { wanted = null; stopNode(0.6); cur = null; if (musBus) level(0); },
-            setVol(v) { if (node && musBus) level(v * MUS_GAIN); },
+            stop() { wanted = null; stopNode(0.4); cur = null; },
+            setVol(v) { if (musBus && ac) { try { musBus.gain.cancelScheduledValues(ac.currentTime); } catch (e) {} musBus.gain.setValueAtTime(Math.max(0.0001, v * MUS_GAIN), ac.currentTime); } },
             toggle() { musicOn = !musicOn; try { localStorage.setItem('rr_music', musicOn ? '1' : '0'); } catch (e) {}
                 if (!musicOn) this.stop(); return musicOn; },
             __build: name => ensure(name).then(() => cache[name]),       // tests: the finished loop

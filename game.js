@@ -1419,7 +1419,7 @@ function handleFinish(p) {
     finishedCount++;
     if (p.local && window.partyMatch && window.Social){ Social.onPartyFinish(p.finishTime, finishedCount); if (window.Missions) Missions.race(finishedCount, true); }
     burst(p.x, p.y, p.color, 30, 260);
-    if (p.local && window.Finishers) Finishers.play(p);                // the finisher you equipped
+    if (window.Finishers) Finishers.play(p);                           // your equipped finisher (and the bots' own)
     if (p.local){ SFX.play('finish'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
     if (window.rankedMatch){ if (p.local) Ranked.onLocalFinish(finishedCount); return; }   // Ranked ends the moment YOU cross the line: nobody after you can pass you
     checkEnd();
@@ -2580,7 +2580,13 @@ function quitToMenu() {
     refreshStartMeta();
     showScreen('start');
 }
+function grantFinishedRaceReward(){            // a finished race always pays out (its chest waits in the queue until the home screen)
+    if (gameMode !== 'race' || window.rankedMatch || !players[0] || !players[0].finished) return;
+    const order = [...players].sort((a,b) => a.finished && b.finished ? a.finishTime-b.finishTime : a.finished ? -1 : b.finished ? 1 : a.y-b.y);
+    try { rewardRace(order.indexOf(players[0]) + 1, true, matchLootId); } catch(e){}
+}
 function restartRace() {
+    grantFinishedRaceReward();
     if (typeof stopSpectate === 'function') stopSpectate();
     state = 'menu'; dragging = false;
     hud.style.display = 'none';
@@ -2650,7 +2656,7 @@ document.getElementById('btn-pause').addEventListener('click', () => {
     const btns = [
         ['Resume', resumeRace],
         ['Settings', () => openSettings('pause'), true],
-        ['Restart', restartRace, true],
+        ['Play again', restartRace, true],
         ['Main menu', quitToMenu, true],
     ];
     if (gameMode === 'level' && lv && dimLoad(DIMENSIONS[curDim]).stars[lv.idx] === 0) {       // stuck on a level: skip it (no stars) for gems
@@ -3877,14 +3883,20 @@ function renderLook(cv, look, opts){
 // Bots start a bit weaker and reach full strength after about 15 races, so beginners can actually win.
 function newPlayerEase(){ let r = 0; try { r = prog().races || 0; } catch(e){} return 0.86 + 0.14 * Math.min(1, r / 15); }
 function randomBotLook(){
-    // Bots draw from the full catalogue (built-ins and designer items), common to legendary.
-    const pickAny = arr => arr[Math.floor(Math.random() * arr.length)].id;
-    const pickReal = arr => arr[1 + Math.floor(Math.random() * (arr.length - 1))].id;
+    // Bots wear everything: plain skins, but also epic, legendary and gem cosmetics, trails and a finish effect.
+    const real = arr => arr.filter(i => i.id !== 'none' && !i.exclusive);
+    const rare = arr => real(arr).filter(i => i.premium || i.rarity === 'epic' || i.rarity === 'legendary');
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)].id;
+    const flashy = Math.random() < 0.4;
+    const slot = (arr, chance) => {
+        if (Math.random() >= (flashy ? Math.min(1, chance * 2.4) : chance)) return 'none';
+        const r = rare(arr); return pick(Math.random() < (flashy ? 0.7 : 0.22) && r.length ? r : real(arr));
+    };
+    const fins = window.Finishers ? Finishers.FINISHERS.filter(f => f.id !== 'f-none') : [];
     return {
-        skin: Math.random() < 0.5 ? pickAny(SKINS) : null,
-        hat: Math.random() < 0.2 ? pickReal(HATS) : 'none',
-        face: Math.random() < 0.14 ? pickReal(FACES) : 'none',
-        trail: Math.random() < 0.07 ? pickReal(TRAILS) : 'none',
+        skin: Math.random() < (flashy ? 0.95 : 0.5) ? pick(Math.random() < (flashy ? 0.7 : 0.2) && rare(SKINS).length ? rare(SKINS) : SKINS) : null,
+        hat: slot(HATS, 0.3), face: slot(FACES, 0.22), trail: slot(TRAILS, 0.18),
+        finisher: fins.length && Math.random() < (flashy ? 0.85 : 0.3) ? pick(fins) : 'f-none',
     };
 }
 
@@ -4032,10 +4044,23 @@ function resolveDrop(id, tier){
     return drop;
 }
 // Anything left unopened is paid out at its starting tier whenever the player is back on the home screen.
-function settlePendingDrops(){
-    const p = prog();
-    for (const id of Object.keys(p.pendingDrops)) resolveDrop(id, p.pendingDrops[id].tier);
+// Chests you won but did not open (left early, closed the game, synced from the cloud) open one after another as soon as you are on the home screen.
+let _openingPending = false;
+async function openPendingChests(){
+    if (_openingPending || document.getElementById('lootbox') || typeof state === 'undefined' || state !== 'menu') return;
+    if (!prog().pendingDrops || !Object.keys(prog().pendingDrops).length) return;
+    if (S.start && getComputedStyle(S.start).display === 'none') return;
+    _openingPending = true;
+    try {
+        for (const id of Object.keys(prog().pendingDrops)){
+            const d = prog().pendingDrops[id]; if (!d) continue;
+            if (state !== 'menu') break;
+            await new Promise(res => openLootbox(d, { onDone: res }));
+            refreshMenu();
+        }
+    } finally { _openingPending = false; }
 }
+function settlePendingDrops(){ clearTimeout(settlePendingDrops._t); settlePendingDrops._t = setTimeout(openPendingChests, 500); }
 function renderLootDrop(containerId, drop){
     const panel = document.getElementById(containerId);
     if (!panel || !drop) return;

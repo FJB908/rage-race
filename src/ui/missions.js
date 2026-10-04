@@ -43,11 +43,11 @@
         if (!p.missions || p.missions.day !== day) {
             const rnd = seeded('d' + day), pool = DAILY.filter(m => !m.ok || m.ok()), fams = new Set(), list = [];
             for (let guard = 0; list.length < 3 && guard < 60; guard++) { const m = pool[Math.floor(rnd() * pool.length)]; if (fams.has(m.fam)) continue; fams.add(m.fam); list.push({ id: m.id, n: 0, claimed: false }); }
-            p.missions = { day, list, bonus: false }; changed = true;
+            p.missions = { day, list, bonus: false, seen: false }; changed = true;
         }
         if (!p.weekly || p.weekly.wk !== wk) {
             const rnd = seeded('w' + wk), m = WEEKLY[Math.floor(rnd() * WEEKLY.length)];
-            p.weekly = { wk, id: m.id, n: 0, claimed: false }; changed = true;
+            p.weekly = { wk, id: m.id, n: 0, claimed: false }; if (p.missions) p.missions.seen = false; changed = true;
         }
         return changed;
     }
@@ -91,7 +91,8 @@
         btn.title = done + ' / 3 missions done';
         [...btn.querySelectorAll('.mm-dots u')].forEach((u, i) => { const m = p.missions.list[i], d = m && BY[m.id]; u.className = m && m.claimed ? 'on' : (m && d && m.n >= d.target ? 'rdy' : ''); });
         btn.classList.toggle('ready', ready > 0);
-        setBadge(btn, ready);
+        setBadge(btn, ready > 0 ? ready : (p.missions.seen ? 0 : '!'));
+        btn.classList.toggle('fresh', !ready && !p.missions.seen);
     }
 
     /* -------------------------------------------------------------------------- screen ---- */
@@ -167,7 +168,7 @@
     }
     claimBtn.addEventListener('click', () => { if (!claimBtn.disabled) claim(claimables(prog())); });
     el.querySelector('#ms-back').addEventListener('click', () => showScreen('start'));
-    function open() { flush(); render(); showScreen('missions'); }
+    function open() { flush(); { const p = prog(); ensure(p); if (!p.missions.seen) { p.missions.seen = true; saveProg(p); } } render(); showScreen('missions'); refreshHome(); }
 
     { const mb = document.getElementById('btn-missions'); if (mb) mb.addEventListener('click', () => { SFX.play('count'); open(); }); }
     window.Missions = { event, race, open, refreshHome, state: () => { const p = prog(); ensure(p); return { missions: p.missions, weekly: p.weekly }; }, DAILY, WEEKLY };

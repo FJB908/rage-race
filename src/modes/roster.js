@@ -64,7 +64,7 @@
     }
 
     /* --------------------------------------------------------------- the roster ---- */
-    const SEED = 20261001, COUNT = 240, KEY = 'rr_rk_roster_v2';
+    const SEED = 20261001, COUNT = 240, KEY = 'rr_rk_roster_v3';
     let bots = null, seasonKey = -1;
     const rng = seed => pkRng(seed >>> 0);
     function normal(r) { let u = 0, v = 0; while (u === 0) u = r(); while (v === 0) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
@@ -80,7 +80,7 @@
     function lookFor(mmr, r) {
         const t = Math.max(0, Math.min(1, (mmr - 850) / 900));
         const real = a => a.filter(i => i.id !== 'none' && !i.exclusive);
-        const flashy = r() < 0.07 + t * 0.07, want = flashy ? 1.5 + t * 1.6 : t * 0.9;            // 7-14% wear rare things
+        const flashy = r() < 0.16 + t * 0.16, want = flashy ? 1.5 + t * 1.6 : t * 0.9;            // 7-14% wear rare things
         const some = (chance, arr) => r() < chance ? weightedPick(real(arr), want, r).id : 'none';
         const skins = real(SKINS);
         return {
@@ -137,13 +137,20 @@
         return out;
     }
 
+    // Every bot has a favourite finish effect (stable per bot; better players own the rarer ones)
+    function finisherFor(b) {
+        if (!window.Finishers) return 'f-none';
+        const rr = rng(SEED + b.id * 31 + 5), t = Math.max(0, Math.min(1, (b.mmr - 850) / 900));
+        if (rr() > 0.3 + t * 0.4) return 'f-none';
+        const list = Finishers.FINISHERS.filter(f => f.id !== 'f-none'); return weightedPick(list, t * 2.4, rr).id;
+    }
     // Put roster bots into player objects (the race's `players[1..]`).
     function applyTo(list, chosen, opts) {
         opts = opts || {};
         list.forEach((p, i) => {
             const b = chosen[i]; if (!b) return;
             const pr = paramsFor(levelOf(b.mmr), b.persona);
-            p.name = b.name; p.look = Object.assign({}, b.look);
+            p.name = b.name; p.look = Object.assign({}, b.look); p.finisherId = finisherFor(b);
             if (opts.color) p.color = skinById(b.look.skin).color;
             p.skill = pr.skill; p.baseSkill = pr.skill; p.thinkScale = pr.thinkScale; p.waitScale = pr.waitScale; p.mistake = pr.mistake;
             p.botType = pr.botType; p.afk = false; p.botId = b.id; p.botMmr = b.mmr; p.rkTier = rankOf(mmrToRp(b.mmr)).tier;

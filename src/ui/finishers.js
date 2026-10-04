@@ -184,7 +184,7 @@
     const FINISHERS = [
         { id: 'f-none', name: 'None', rarity: 'common', price: 0 },
 
-        { id: 'f-confetti', pv: 300, name: 'Confetti', rarity: 'common', price: 300,
+        { id: 'f-confetti', still: 0.4, pv: 300, name: 'Confetti', rarity: 'common', price: 300,
           fx(s, p) {
               s.sfx('shatter'); s.shake(4);
               [0, 170, 340].forEach(t => s.at(t, () => {
@@ -199,10 +199,10 @@
               }));
           } },
 
-        { id: 'f-fireworks', pv: 380, name: 'Fireworks', rarity: 'rare', price: 800,
+        { id: 'f-fireworks', still: 0.95, pv: 380, name: 'Fireworks', rarity: 'rare', price: 800,
           fx(s, p) { ['peony', 'ring', 'willow', 'peony', 'ring'].forEach((kd, i) => s.at(i * 270, () => launch(s, p.x + R_(-30, 30), p.y, p.x + R_(-130, 130), p.y - R_(150, 300), pick(PAL), kd))); } },
 
-        { id: 'f-shockwave', pv: 330, name: 'Shockwave', rarity: 'rare', price: 900,
+        { id: 'f-shockwave', still: 0.28, pv: 330, name: 'Shockwave', rarity: 'rare', price: 900,
           fx(s, p) {
               const gy = p.y + (p.r || 14); s.sfx('boost'); s.shake(12); s.flash('#ffffff', .35);
               [0, 110, 230, 360].forEach((t, i) => s.at(t, () => s.ring(p.x, gy, i % 2 ? '#35e0c8' : '#ffffff', 240 + i * 70, .8, true, 7 - i)));
@@ -211,7 +211,7 @@
               for (let i = 0; i < 22; i++) s.add({ x: p.x + R_(-30, 30), y: gy, vx: R_(-170, 170), vy: R_(-140, -30), g: -20, drag: 1.4, max: R_(.7, 1.2), size: R_(8, 15), col: '#b8c2d6', add: false, alpha: .35, shrink: -.6 });
           } },
 
-        { id: 'f-frost', pv: 340, name: 'Frost burst', rarity: 'rare', price: 1100,
+        { id: 'f-frost', still: 0.4, pv: 340, name: 'Frost burst', rarity: 'rare', price: 1100,
           fx(s, p) {
               s.sfx('shatter'); s.flash('#bfe9ff', .28); s.ring(p.x, p.y, '#bfe9ff', 170, .7); s.ring(p.x, p.y, '#ffffff', 100, .45, false, 3);
               for (let i = 0; i < 9; i++) s.add({ x: p.x + R_(-40, 40), y: p.y + R_(-30, 20), size: R_(26, 44), max: R_(.9, 1.4), col: '#cfeaff', add: false, alpha: .16, shrink: -.9, vy: -R_(10, 40) });
@@ -219,7 +219,7 @@
               for (let i = 0; i < 40; i++) s.at(i * 45, () => s.add({ x: p.x + R_(-180, 180), y: p.y - R_(200, 310), vx: R_(-20, 20), vy: R_(40, 110), max: R_(2, 3), size: R_(1.8, 3.4), col: '#ffffff', glow: 1, sway: { a: 34, f: 3, p: R_(0, 6) } }));
           } },
 
-        { id: 'f-neon', pv: 420, name: 'Laser show', rarity: 'rare', price: 1300,
+        { id: 'f-neon', still: 0.9, pv: 420, name: 'Laser show', rarity: 'rare', price: 1300,
           fx(s, p) {
               s.sfx('boost'); const cols = ['#ff2bd6', '#35e0ff', '#7cff4d', '#ffe14a', '#b36bff', '#ff5470'];
               for (let i = 0; i < 6; i++) s.beams.push({ x: p.x, y: p.y - 4, a: -Math.PI / 2 + (i - 2.5) * .34, sweep: .5, spd: (i % 2 ? 1 : -1) * R_(5, 8), len: 560, life: 0, dur: 1.7, col: cols[i] });
@@ -227,7 +227,7 @@
               for (let i = 0; i < 40; i++) s.at(i * 35, () => s.add({ x: p.x + R_(-40, 40), y: p.y - R_(0, 60), vx: R_(-140, 140), vy: -R_(140, 340), g: 200, max: R_(.8, 1.4), size: R_(1.8, 3), col: pick(cols), glow: 1 }));
           } },
 
-        { id: 'f-sakura', pv: 360, name: 'Petal storm', rarity: 'epic', price: 1800,
+        { id: 'f-sakura', still: 1.1, pv: 360, name: 'Petal storm', rarity: 'epic', price: 1800,
           fx(s, p) {
               s.sfx('item');
               for (let i = 0; i < 28; i++) { const a = R_(-Math.PI, 0), sp = R_(120, 380); s.add({ x: p.x, y: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 60, drag: 1.5, max: R_(1.8, 2.8), size: R_(3.5, 6), col: pick(['#ffb8d6', '#ff8ab8', '#ffe0ee']), shape: 'petal', rot: R_(0, TAU), spin: R_(-4, 4), tws: R_(3, 7), add: false, sway: { a: 55, f: 3.2, p: R_(0, 6) } }); }
@@ -235,7 +235,7 @@
               s.ring(p.x, p.y, '#ffb8d6', 120, .6);
           } },
 
-        { id: 'f-goldrain', pv: 360, name: 'Gold rain', rarity: 'epic', price: 2000,
+        { id: 'f-goldrain', still: 1.0, pv: 360, name: 'Gold rain', rarity: 'epic', price: 2000,
           fx(s, p) {
               const gy = p.y + (p.r || 14); s.sfx('coin'); s.ring(p.x, p.y, '#ffcf3f', 130, .6); s.pillar(p.x, gy, 90, 420, 'rgba(255,207,63,.8)', 1.3);
               for (let i = 0; i < 38; i++) s.at(i * 48, () => {
@@ -245,7 +245,7 @@
               });
           } },
 
-        { id: 'f-lightning', pv: 480, name: 'Lightning', rarity: 'epic', price: 2200,
+        { id: 'f-lightning', still: 0.1, pv: 480, name: 'Lightning', rarity: 'epic', price: 2200,
           fx(s, p) {
               const gy = p.y + (p.r || 14); s.sfx('boost'); s.shake(13); s.flash('#cfe6ff', .75);
               strike(s, p.x, p, gy, p.y - 560);
@@ -253,7 +253,7 @@
               s.at(330, () => { s.shake(9); strike(s, p.x + R_(-40, 40), p, gy, p.y - 560); });
           } },
 
-        { id: 'f-inferno', pv: 330, name: 'Inferno', rarity: 'epic', price: 2300,
+        { id: 'f-inferno', still: 0.9, pv: 330, name: 'Inferno', rarity: 'epic', price: 2300,
           fx(s, p) {
               const gy = p.y + (p.r || 14); s.sfx('rocket'); s.shake(6); s.ring(p.x, gy, '#ff7a3d', 200, .8, true, 7); s.pillar(p.x, gy, 80, 300, 'rgba(255,120,40,.9)', 1.5);
               for (let i = 0; i < 52; i++) s.at(i * 30, () => {
@@ -262,7 +262,7 @@
               });
           } },
 
-        { id: 'f-rocket', pv: 480, name: 'Rocket', rarity: 'legendary', price: 4000,
+        { id: 'f-rocket', still: 1.1, pv: 480, name: 'Rocket', rarity: 'legendary', price: 4000,
           fx(s, p) {
               const gy = p.y + (p.r || 14); s.sfx('rocket'); s.shake(5);
               for (let i = 0; i < 14; i++) s.add({ x: p.x + R_(-20, 20), y: gy, vx: R_(-110, 110), vy: -R_(10, 90), max: R_(.7, 1.3), size: R_(8, 15), col: '#b8c2d6', add: false, alpha: .4, shrink: -.8 });
@@ -275,7 +275,7 @@
               });
           } },
 
-        { id: 'f-galaxy', pv: 330, name: 'Galaxy', rarity: 'legendary', price: 4500,
+        { id: 'f-galaxy', still: 0.9, pv: 330, name: 'Galaxy', rarity: 'legendary', price: 4500,
           fx(s, p) {
               s.sfx('boost'); s.flash('#b3a9ff', .3); s.flare(p.x, p.y, 120, '#b3a9ff', 1.4); s.ring(p.x, p.y, '#b3a9ff', 190, 1, true, 5);
               const cols = ['#ffffff', '#b3a9ff', '#7c6bff', '#ff8ae6', '#5eb4ff'];
@@ -284,7 +284,7 @@
               for (let i = 0; i < 26; i++) s.at(i * 40, () => s.add({ x: p.x + R_(-170, 170), y: p.y + R_(-170, 60), size: R_(1, 2.2), max: R_(.5, 1), col: '#ffffff', glow: 1, vx: 0, vy: -10 }));
           } },
 
-        { id: 'f-supernova', pv: 380, name: 'Supernova', rarity: 'legendary', gemPrice: 450, premium: true,
+        { id: 'f-supernova', still: 0.22, pv: 380, name: 'Supernova', rarity: 'legendary', gemPrice: 450, premium: true,
           fx(s, p) {
               s.sfx('boost'); s.sfx('finish'); s.shake(18); s.flash('#ffffff', .85); s.flare(p.x, p.y, 300, '#ffcf3f', 1.1);
               [0, 90, 180, 270].forEach((t, i) => s.at(t, () => s.ring(p.x, p.y, i % 2 ? '#ffcf3f' : '#ffffff', 180 + i * 55, .9, false, 6 - i)));
@@ -293,7 +293,7 @@
               for (let i = 0; i < 18; i++) s.add({ x: p.x, y: p.y, vx: R_(-300, 300), vy: R_(-300, 300), g: 160, drag: 1, max: R_(1, 1.6), size: R_(3, 5), col: '#fff4c2', shape: 'star', spin: R_(-6, 6) });
           } },
 
-        { id: 'f-royal', pv: 330, name: 'Royal', rarity: 'legendary', gemPrice: 600, premium: true,
+        { id: 'f-royal', still: 0.9, pv: 330, name: 'Royal', rarity: 'legendary', gemPrice: 600, premium: true,
           fx(s, p) {
               s.sfx('finish'); s.shake(6); s.flash('#fff4c2', .35); s.ring(p.x, p.y, '#ffcf3f', 150, .8);
               s.crowns.push({ x: p.x, y: p.y - 86, life: 0, dur: 2.6 });
@@ -311,7 +311,9 @@
         flashEl.style.transition = 'opacity .5s ease-out'; flashEl.style.opacity = 0;
     }
     function play(p) {
-        const f = BY[prog().finisher]; if (!f || !f.fx) return;
+        const id = p.local ? prog().finisher : (p.finisherId || (p.look && p.look.finisher));
+        const f = BY[id]; if (!f || !f.fx) return;
+        if (!p.local && typeof cameraY !== 'undefined' && (p.y < cameraY - 120 || p.y > cameraY + VH + 120)) return;       // bots only show it when you can see it
         if (!live) live = makeSim({ sfx: n => SFX.play(n), shake: n => { camShake = Math.max(camShake, n); }, flash: flashOverlay });
         lastT = 0; f.fx(live, { x: p.x, y: p.y, r: p.r || 14 });
     }
