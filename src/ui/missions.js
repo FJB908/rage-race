@@ -71,6 +71,9 @@
     const flush = () => { if (jumps) event('flush', 0); };
     addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
 
+    // one call for every finished match, whoever it was against (bots now, other players when online): quick race, Ranked, party
+    function race(place, finished) { event('race'); if (finished && place === 1) event('win'); if (finished && place <= 2) event('podium'); }
+
     function claimables(p) {
         const out = [];
         p.missions.list.forEach((m, i) => { const d = BY[m.id]; if (d && !m.claimed && m.n >= d.target) out.push({ t: 'm', i }); });
@@ -80,23 +83,15 @@
         return out;
     }
 
-    /* ----------------------------------------------------------------------- home row ---- */
-    let row = null;
-    function mountRow() {
-        if (row) return;
-        const anchor = document.querySelector('.m-stage'); if (!anchor) return;
-        row = document.createElement('button'); row.type = 'button'; row.className = 'm-miss'; row.id = 'btn-missions';
-        row.innerHTML = '<span class="mm-ico">' + icon('check') + '</span><span class="mm-copy"><b>Missions</b><small id="mm-sub"></small></span><i class="mm-dots"><u></u><u></u><u></u></i>';
-        anchor.parentNode.insertBefore(row, anchor);
-        row.addEventListener('click', () => { SFX.play('count'); open(); });
-    }
+    /* ----------------------------------------------------------------------- home icon ---- */
     function refreshHome() {
-        mountRow(); if (!row) return;
+        const btn = document.getElementById('btn-missions'); if (!btn) return;
         const p = prog(); if (ensure(p)) saveProg(p);
         const done = p.missions.list.filter(m => m.claimed).length, ready = claimables(p).length;
-        row.querySelector('#mm-sub').textContent = done === 3 ? 'All done today' : done + ' / 3 done today';
-        [...row.querySelectorAll('.mm-dots u')].forEach((u, i) => { const m = p.missions.list[i], d = m && BY[m.id]; u.className = m && m.claimed ? 'on' : (m && d && m.n >= d.target ? 'rdy' : ''); });
-        setBadge(row, ready);
+        btn.title = done + ' / 3 missions done';
+        [...btn.querySelectorAll('.mm-dots u')].forEach((u, i) => { const m = p.missions.list[i], d = m && BY[m.id]; u.className = m && m.claimed ? 'on' : (m && d && m.n >= d.target ? 'rdy' : ''); });
+        btn.classList.toggle('ready', ready > 0);
+        setBadge(btn, ready);
     }
 
     /* -------------------------------------------------------------------------- screen ---- */
@@ -109,25 +104,31 @@
     const hoursLeft = () => { const d = now(); const end = new Date(d); end.setHours(24, 0, 0, 0); return Math.max(1, Math.ceil((end - d) / 3600000)); };
     const daysLeft = () => { const d = now(); const dow = (d.getDay() + 6) % 7; return 7 - dow; };
 
+    const EV_ICON = { race: 'mode-race', win: 'crown', podium: 'crown', jump: 'arrow-up', item: 'xp', chest: 'drop-common', level: 'mode-levels', escape: 'mode-escape', ranked: 'mode-race', gtrun: 'crown' };
+    const chestArt = (tier, id) => (window.LB_CHEST ? LB_CHEST(id, tier) : icon('drop-' + tier));
     function render() {
         const p = prog(); if (ensure(p)) saveProg(p);
         el.querySelector('#ms-reset').textContent = 'New missions in ' + hoursLeft() + ' h';
-        let h = '<h2 class="scr-h2">Today</h2><div class="ms-list">';
+        const done = p.missions.list.filter(m => m.claimed).length, all = done === 3;
+        // hero: the chest for finishing all three
+        let h = '<div class="ms-hero' + (p.missions.bonus ? ' done' : all ? ' ready' : '') + '"><div class="ms-hero-chest" style="--c:#5b8def;--c2:#1f3f8f">' + chestArt('rare', 'mh') + '</div>' +
+            '<div class="ms-hero-tx"><small>DAILY CHEST</small><b>' + (p.missions.bonus ? 'Opened today' : all ? 'Ready to open' : 'Finish all 3') + '</b><div class="ms-pips"><i class="' + (done > 0 ? 'on' : '') + '"></i><i class="' + (done > 1 ? 'on' : '') + '"></i><i class="' + (done > 2 ? 'on' : '') + '"></i></div></div>' +
+            (p.missions.bonus ? '<span class="ms-ok">' + icon('check') + '</span>' : all ? '<button class="ms-go big" data-t="b" type="button">OPEN</button>' : '') + '</div>';
+        h += '<h2 class="scr-h2">Today</h2><div class="ms-list">';
         p.missions.list.forEach((m, i) => {
             const d = BY[m.id], pct = Math.round(100 * m.n / d.target), ready = !m.claimed && m.n >= d.target;
-            h += '<div class="ms-row' + (m.claimed ? ' done' : ready ? ' ready' : '') + '"><div class="ms-main"><b>' + d.text + '</b>' +
+            h += '<div class="ms-row' + (m.claimed ? ' done' : ready ? ' ready' : '') + '"><span class="ms-ic">' + icon(EV_ICON[d.ev] || 'star') + '</span><div class="ms-main"><b>' + d.text + '</b>' +
                 '<div class="ms-bar"><i style="width:' + pct + '%"></i></div><small>' + Math.min(m.n, d.target).toLocaleString('en-US') + ' / ' + d.target.toLocaleString('en-US') + '</small></div>' +
-                '<div class="ms-rw">' + R('coin', d.coins) + R('pass', d.pass) + '</div>' +
-                (m.claimed ? '<span class="ms-ok">' + icon('check') + '</span>' : ready ? '<button class="ms-go" data-t="m" data-i="' + i + '" type="button">CLAIM</button>' : '<span class="ms-wait"></span>') + '</div>';
+                '<div class="ms-side"><div class="ms-rw">' + R('coin', d.coins) + R('pass', d.pass) + '</div>' +
+                (m.claimed ? '<span class="ms-ok">' + icon('check') + '</span>' : ready ? '<button class="ms-go" data-t="m" data-i="' + i + '" type="button">CLAIM</button>' : '') + '</div></div>';
         });
-        const all = p.missions.list.every(m => m.claimed);
-        h += '<div class="ms-row bonus' + (p.missions.bonus ? ' done' : all ? ' ready' : '') + '"><div class="ms-main"><b>All 3 done</b><small>Bonus chest</small></div><div class="ms-rw"><span class="ms-chest">' + icon('drop-rare') + '</span></div>' +
-            (p.missions.bonus ? '<span class="ms-ok">' + icon('check') + '</span>' : all ? '<button class="ms-go" data-t="b" type="button">OPEN</button>' : '<span class="ms-wait"></span>') + '</div></div>';
+        h += '</div>';
         const w = BY[p.weekly.id], wp = Math.round(100 * p.weekly.n / w.target), wr = !p.weekly.claimed && p.weekly.n >= w.target;
         h += '<h2 class="scr-h2">This week <em>' + daysLeft() + (daysLeft() === 1 ? ' day' : ' days') + ' left</em></h2>' +
-            '<div class="ms-row weekly' + (p.weekly.claimed ? ' done' : wr ? ' ready' : '') + '"><div class="ms-main"><b>' + w.text + '</b><div class="ms-bar"><i style="width:' + wp + '%"></i></div><small>' + Math.min(p.weekly.n, w.target).toLocaleString('en-US') + ' / ' + w.target.toLocaleString('en-US') + '</small></div>' +
-            '<div class="ms-rw">' + R('gem', WEEK_REWARD.gems) + '<span class="ms-chest">' + icon('drop-epic') + '</span></div>' +
-            (p.weekly.claimed ? '<span class="ms-ok">' + icon('check') + '</span>' : wr ? '<button class="ms-go" data-t="w" type="button">CLAIM</button>' : '<span class="ms-wait"></span>') + '</div>';
+            '<div class="ms-week' + (p.weekly.claimed ? ' done' : wr ? ' ready' : '') + '"><div class="ms-week-chest" style="--c:#b3a9ff;--c2:#4f3fc4">' + chestArt('epic', 'mw') + '</div>' +
+            '<div class="ms-main"><b>' + w.text + '</b><div class="ms-bar"><i style="width:' + wp + '%"></i></div><small>' + Math.min(p.weekly.n, w.target).toLocaleString('en-US') + ' / ' + w.target.toLocaleString('en-US') + '</small>' +
+            '<div class="ms-rw row">' + R('gem', WEEK_REWARD.gems) + R('coin', WEEK_REWARD.coins) + '</div></div>' +
+            (p.weekly.claimed ? '<span class="ms-ok">' + icon('check') + '</span>' : wr ? '<button class="ms-go" data-t="w" type="button">CLAIM</button>' : '') + '</div>';
         body.innerHTML = h;
         body.querySelectorAll('.ms-go').forEach(b => b.onclick = () => claim([{ t: b.dataset.t, i: +b.dataset.i }]));
         const n = claimables(p).length;
@@ -168,7 +169,7 @@
     el.querySelector('#ms-back').addEventListener('click', () => showScreen('start'));
     function open() { flush(); render(); showScreen('missions'); }
 
-    window.Missions = { event, open, refreshHome, state: () => { const p = prog(); ensure(p); return { missions: p.missions, weekly: p.weekly }; }, DAILY, WEEKLY };
+    window.Missions = { event, race, open, refreshHome, state: () => { const p = prog(); ensure(p); return { missions: p.missions, weekly: p.weekly }; }, DAILY, WEEKLY };
     window.addEventListener('load', () => refreshHome());
     setTimeout(refreshHome, 0);
 })();

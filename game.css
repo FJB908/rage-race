@@ -631,3 +631,19 @@ body.online-race #btn-pause { display: none; }
 .m-mini3[hidden] { display:none; }
 
 #result-sub .near { display:block; margin-top:8px; font-size:15px; font-weight:800; color:#ffcf3f; letter-spacing:.02em; }
+
+/* top row on Home: the pass card, then two small icon buttons (daily rewards, missions) */
+.m-split { grid-template-columns:minmax(0,1fr) 64px 64px; }
+.m-ico-btn { position:relative; display:grid; place-items:center; width:64px; min-height:74px; padding:0; border-radius:16px; border:1px solid rgba(255,255,255,.1); background:#161b24; color:inherit; }
+.m-ico-btn .ico { width:38px; height:38px; }
+.m-streak.m-ico-btn { border-color:rgba(255,179,71,.4); background:linear-gradient(160deg,rgba(255,179,71,.14),#161b24 70%); }
+.m-streak .ms-fire { position:absolute; right:6px; bottom:7px; width:16px; height:16px; display:none; filter:drop-shadow(0 0 5px rgba(255,120,30,.8)); animation:fireFlick 1.3s ease-in-out infinite; }
+.m-streak.has-fire .ms-fire { display:block; }
+@keyframes fireFlick { 0%,100% { transform:scale(1) rotate(-3deg); } 50% { transform:scale(1.14) rotate(3deg); } }
+.m-streak.ready { border-color:#ffcf3f; box-shadow:0 0 14px -4px #ffcf3f; }
+.m-missbtn { border-color:rgba(53,224,200,.4); background:linear-gradient(160deg,rgba(53,224,200,.14),#161b24 70%); }
+.m-missbtn.ready { border-color:#ffcf3f; box-shadow:0 0 14px -4px #ffcf3f; }
+.m-missbtn .mm-dots { position:absolute; left:0; right:0; bottom:7px; justify-content:center; gap:4px; }
+.m-missbtn .mm-dots u { width:7px; height:7px; }
+.m-missbtn .ico { margin-top:-8px; }
+.m-split .m-pass-entry.m-half { min-width:0; }

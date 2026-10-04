@@ -120,6 +120,13 @@
         '</symbol>' +
         '<symbol id="ico-star" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>' +
         '<symbol id="ico-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>' +
+        '<symbol id="ico-missions" viewBox="0 0 64 64">' +
+          '<rect x="12" y="10" width="40" height="48" rx="8" fill="#1d3a46" stroke="#0d1d24" stroke-width="3"/>' +
+          '<rect x="22" y="5" width="20" height="12" rx="5" fill="#35e0c8" stroke="#0d1d24" stroke-width="3"/>' +
+          '<path d="M19 28l4 4 7-8" fill="none" stroke="#35e0c8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<path d="M19 43l4 4 7-8" fill="none" stroke="#ffcf3f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<rect x="34" y="27" width="12" height="4" rx="2" fill="#7fa0ad"/><rect x="34" y="42" width="12" height="4" rx="2" fill="#7fa0ad"/>' +
+        '</symbol>' +
         '<symbol id="ico-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>' +
         '<symbol id="ico-chev-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>' +
         '<symbol id="ico-chev-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>' +

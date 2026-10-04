@@ -49,3 +49,28 @@
 /* Levels: same header pattern as every other screen (back on the top left), the old bottom BACK goes away */
 #s-levels .lv-head { width:100%; max-width:420px; margin:0 0 4px; } #s-levels #btn-lv-back { display:none; } #s-levels .over-kicker { margin-top:0; }
 #s-levels { justify-content:flex-start; padding-top:calc(14px + env(safe-area-inset-top,0px)); }
+
+/* ===== Missions, the version people want to finish ===== */
+.ms-hero { position:relative; display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:20px; border:1px solid rgba(91,141,239,.5); background:radial-gradient(90% 140% at 0% 50%, rgba(91,141,239,.3), transparent 65%), linear-gradient(120deg,#16213a,#121723 75%); overflow:hidden; }
+.ms-hero.ready { border-color:#ffcf3f; box-shadow:0 0 28px -6px #ffcf3f; animation:msPulse 1.6s ease-in-out infinite; } .ms-hero.done { opacity:.6; }
+.ms-hero-chest { flex:none; width:92px; filter:drop-shadow(0 0 16px rgba(91,141,239,.7)); animation:lootBob 2.4s ease-in-out infinite; } .ms-hero-chest svg { display:block; width:100%; height:auto; overflow:visible; }
+.ms-hero-tx { flex:1; display:flex; flex-direction:column; gap:6px; text-align:left; } .ms-hero-tx small { font-size:10px; font-weight:900; letter-spacing:.16em; color:#8fb2ff; } .ms-hero-tx b { font:900 21px/1.1 "Bricolage Grotesque",system-ui,sans-serif; }
+.ms-pips { display:flex; gap:7px; } .ms-pips i { width:26px; height:8px; border-radius:99px; background:rgba(255,255,255,.14); } .ms-pips i.on { background:linear-gradient(90deg,#35e0c8,#7c6bff); box-shadow:0 0 10px rgba(53,224,200,.6); }
+@keyframes msPulse { 50% { box-shadow:0 0 36px -2px #ffcf3f; } }
+.ms-row { grid-template-columns:44px 1fr auto; gap:12px; padding:12px; }
+.ms-ic { display:grid; place-items:center; width:44px; height:44px; border-radius:13px; background:#1d2636; border:1px solid rgba(255,255,255,.1); } .ms-ic .ico { width:28px; height:28px; filter:none; }
+.ms-side { display:flex; flex-direction:column; align-items:flex-end; justify-content:center; gap:8px; min-width:74px; }
+.ms-rw { gap:2px; font-size:13px; font-weight:800; } .ms-rw.row { flex-direction:row; gap:12px; align-items:center; margin-top:2px; }
+.ms-go { min-width:74px; height:40px; padding:0 14px; font-size:13px; animation:msPulse 1.4s ease-in-out infinite; } .ms-go.big { height:46px; padding:0 22px; font-size:15px; }
+.ms-row.ready { background:linear-gradient(110deg,rgba(255,207,63,.12),#141923 70%); }
+.ms-week { display:flex; align-items:center; gap:14px; padding:14px; border-radius:20px; border:1px solid rgba(179,169,255,.5); background:radial-gradient(90% 140% at 0% 50%, rgba(179,169,255,.26), transparent 65%), linear-gradient(120deg,#1c1a38,#121723 75%); }
+.ms-week.ready { border-color:#ffcf3f; box-shadow:0 0 28px -6px #ffcf3f; } .ms-week.done { opacity:.6; }
+.ms-week-chest { flex:none; width:78px; filter:drop-shadow(0 0 14px rgba(179,169,255,.7)); } .ms-week-chest svg { display:block; width:100%; height:auto; overflow:visible; }
+.ms-week .ms-main { flex:1; }
+.scr .ms-hero-tx, .scr .ms-hero-tx * { text-align:left; }
+/* daily gem chest tile (day 30): big, glowing, unmissable */
+.sk-tile.gemchest { grid-column:1 / -1; flex-direction:row; justify-content:center; gap:16px; padding:12px; min-height:118px; background:radial-gradient(80% 120% at 30% 50%, rgba(255,138,230,.35), transparent 70%), linear-gradient(170deg,#2a1636,#121723 80%); border-color:#ff8ae6; box-shadow:0 4px 0 #0a0d14,0 0 26px rgba(255,138,230,.5); animation:skGlow 1.6s ease-in-out infinite; }
+.sk-tile.gemchest .sk-art { flex:none; width:96px; } .sk-tile.gemchest .sk-chest svg { width:96px; height:auto; display:block; overflow:visible; filter:drop-shadow(0 0 12px rgba(255,138,230,.8)); }
+.sk-tile.gemchest small { position:absolute; top:6px; left:10px; color:#ffb8f0; } .sk-tile.gemchest b { font-size:20px; letter-spacing:.1em; }
+#m-skins .fn-card .m-skin-pv { height:84px; margin-bottom:4px; overflow:hidden; }
+#m-skins .fn-card .m-skin-pv canvas.fn-pv { width:100%; height:100%; }

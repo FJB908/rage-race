@@ -1701,7 +1701,7 @@ function handleFinish(p) {
     p.finished = true;
     p.finishTime = (Date.now()-matchStart)/1000;
     finishedCount++;
-    if (p.local && window.partyMatch && window.Social) Social.onPartyFinish(p.finishTime, finishedCount);
+    if (p.local && window.partyMatch && window.Social){ Social.onPartyFinish(p.finishTime, finishedCount); if (window.Missions) Missions.race(finishedCount, true); }
     burst(p.x, p.y, p.color, 30, 260);
     if (p.local && window.Finishers) Finishers.play(p);                // the finisher you equipped
     if (p.local){ SFX.play('finish'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
@@ -4623,7 +4623,7 @@ function rewardRace(place, finished, lootId){
     rewardRace.keyEarned = false;
     if (!alreadyGranted){
         const p = prog(); p.races++; if (finished && place === 1) p.wins++;
-        if (window.Missions && gameMode === 'race' && !window.rankedMatch){ Missions.event('race'); if (finished && place === 1) Missions.event('win'); if (finished && place <= 2) Missions.event('podium'); }
+        if (window.Missions && gameMode === 'race' && !window.rankedMatch) Missions.race(place, finished);
         else p.gt.streak = 0;
         saveProg(p);
     }

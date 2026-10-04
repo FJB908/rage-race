@@ -334,7 +334,7 @@
     function step(m, dt) {
         const cv = m.cv, w = cv.width, h = cv.height, c = m.ctx, k = h / (m.span || 430), S = 14;
         if (!m.sim) {
-            if ((m.idle -= dt) > 0) { /* hold */ } else if (m.f.fx) { m.sim = makeSim({}); m.f.fx(m.sim, { x: 0, y: 0, r: S }); m.age = 0; }
+            if ((m.idle -= dt) > 0) { if (!m.still) { prime(m); m.still = true; } return; } else if (m.f.fx) { m.sim = makeSim({}); m.f.fx(m.sim, { x: 0, y: 0, r: S }); m.age = 0; m.still = false; }
         }
         if (m.sim) { m.sim.update(dt); m.age += dt; if (m.age > .3 && m.sim.empty()) { m.sim = null; m.idle = m.hold || .9; } }
         c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, w, h);
@@ -352,8 +352,24 @@
         }
         if (mounts.size) raf = requestAnimationFrame(tick); else prevT = 0;
     }
+    // a first still frame straight away, so a card is never empty (and something shows even if the animation cannot run)
+    function prime(m) {
+        const cv = m.cv, w = cv.width, h = cv.height, c = m.ctx, k = h / (m.span || 430);
+        try {
+            c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, w, h); c.translate(w / 2, h * (m.oy || .8)); c.scale(k, k);
+            cube(c, 14);
+            if (m.f.fx) {
+                const s = makeSim({}); m.f.fx(s, { x: 0, y: 0, r: 14 });
+                let t = 0, until = m.f.still || .5; while (t < until) { s.update(1 / 30); t += 1 / 30; }
+                s.draw(c);
+            } else { c.strokeStyle = '#566074'; c.lineWidth = 4; c.beginPath(); c.arc(0, -40, 26, 0, TAU); c.moveTo(-18, -22); c.lineTo(18, -58); c.stroke(); }
+        } catch (e) {
+            try { c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, w, h); c.fillStyle = RARITY[m.f.rarity].color; c.globalAlpha = .9; c.beginPath(); c.arc(w / 2, h / 2, h * .22, 0, TAU); c.fill(); c.globalAlpha = 1; c.fillStyle = '#0d1017'; c.font = '900 ' + Math.round(h * .26) + 'px system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(m.f.name[0], w / 2, h / 2 + 2); } catch (e2) {}
+        }
+    }
     function mount(cv, f, opts) {
         const m = Object.assign({ cv, f, ctx: cv.getContext('2d'), sim: null, idle: Math.random() * .15, age: 0, hold: .35 }, opts || {});
+        prime(m);
         mounts.add(m); if (!raf) raf = requestAnimationFrame(tick); return m;
     }
 
@@ -371,7 +387,7 @@
             const own = isOwn(f), eq = (p.finisher || 'f-none') === f.id;
             const b = document.createElement('button'); b.type = 'button'; b.className = 'm-skin fn-card' + (eq ? ' eq' : '') + (f.premium ? ' prem' : '') + (f.rarity === 'legendary' ? ' leg' : '');
             b.style.setProperty('--rc', RARITY[f.rarity].color);
-            b.innerHTML = '<span class="m-skin-pv"><canvas width="400" height="304" class="fn-pv"></canvas></span><b>' + f.name + '</b>' +
+            b.innerHTML = '<span class="m-skin-pv"><canvas width="460" height="336" class="fn-pv"></canvas></span><b>' + f.name + '</b>' +
                 '<span class="m-skin-f"><span class="buy-hint">Tap again</span><span class="' + (own ? (eq ? 'eqd' : 'own') : 'price') + '">' + (own ? (eq ? 'EQUIPPED' : 'OWNED') : f.premium ? icon('gem') + ' ' + f.gemPrice : icon('coin') + ' ' + f.price.toLocaleString('en-US')) + '</span></span>';
             mount(b.querySelector('canvas'), f, { span: f.pv || 340, oy: .84 });
             b.onclick = () => {

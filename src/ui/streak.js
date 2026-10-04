@@ -50,7 +50,7 @@
         STREAK_REWARDS.forEach((r, i) => {
             const day = i + 1, claimed = day <= st.shown, isToday = st.canClaim && day === st.nextDay, milestone = r.t === 'prem' || r.t === 'gemchest' || r.t === 'item' || (r.t === 'drop' && r.tier === 'legendary');
             const tile = document.createElement('div');
-            tile.className = 'sk-tile' + (claimed ? ' claimed' : '') + (isToday ? ' today' : '') + (milestone ? ' mile' : '') + (r.t === 'prem' || r.t === 'gemchest' ? ' prem' : '');
+            tile.className = 'sk-tile' + (claimed ? ' claimed' : '') + (isToday ? ' today' : '') + (milestone ? ' mile' : '') + (r.t === 'prem' ? ' prem' : '') + (r.t === 'gemchest' ? ' gemchest' : '');
             tile.innerHTML = '<small>' + day + '</small><div class="sk-art">' + art(r, i) + '</div>' + amount(r) + (claimed ? '<span class="sk-check">' + icon('check') + '</span>' : '');
             grid.appendChild(tile);
             const cv = tile.querySelector('canvas');
@@ -104,7 +104,7 @@
         open() { render(); showScreen('streak'); setTimeout(scrollToToday, 80); },
         refreshHome() {
             const st = state(), b = document.getElementById('btn-streak-open'); if (!b) return;
-            b.querySelector('.ms-day').innerHTML = (st.streak > 0 ? icon('flame', 'ms-fire') + ' ' : '') + (st.canClaim ? 'Day ' + st.nextDay : st.streak + ' day streak');
+            b.classList.toggle('has-fire', st.streak > 0); b.title = st.streak > 0 ? st.streak + ' day streak' : 'Daily rewards';
             b.querySelector('.ms-dot').hidden = true;
             setBadge(b, st.canClaim ? 1 : 0);
             b.classList.toggle('ready', st.canClaim);

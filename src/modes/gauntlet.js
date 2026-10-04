@@ -774,7 +774,7 @@
         const p = prog(), id = gt.lootId;
         let drop = null;
         if (!p.lootGrants[id] && !p.pendingDrops[id]) {
-            if (window.Missions) Missions.event('gtrun');
+            if (window.Missions) { Missions.event('gtrun'); if (win) Missions.event('win'); }
             const g = p.gt; g.runs++; if (win) g.wins++; g.best = Math.max(g.best, reached);
             g.crowned = win;                                              // the crown is yours until someone takes it
             saveProg(p);
