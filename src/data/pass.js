@@ -27,6 +27,11 @@ const RAGE_TIERS = [
     { t:'gem', n:60 },                       { t:'coins', n:2500 },                     { t:'drop', tier:'legendary' },          { t:'finisher', id:'f-supernova' },        { t:'prem', cat:'skin', id:'p-holochrome' }
 ];
 
+// More multipliers: boosters sit in many tiers of both lanes, getting bigger the further you go (x2, x3, then x5).
+const _B = (kind, mult, n) => ({ t:'boost', kind, mult, n });
+Object.entries({ 1:_B('coin', 2, 2), 4:_B('chest', 2, 2), 7:_B('coin', 2, 4), 10:_B('chest', 2, 3), 13:_B('coin', 3, 3), 16:_B('chest', 3, 2), 22:_B('coin', 5, 2) }).forEach(([i, r]) => { PASS_TIERS[+i] = r; });
+Object.entries({ 6:_B('coin', 2, 8), 13:_B('chest', 3, 5), 19:_B('coin', 5, 3), 26:_B('chest', 5, 3) }).forEach(([i, r]) => { RAGE_TIERS[+i] = r; });
+
 // Rewards grow with the tier: coins and gems scale up the further you get.
 PASS_TIERS.forEach((t, i) => { if (t.t === 'coins') t.n = Math.round(t.n * (1 + i * i / 300) / 10) * 10; });
 RAGE_TIERS.forEach((t, i) => { if (t.t === 'coins') t.n = Math.round(t.n * (1 + i * i / 300) / 50) * 50; if (t.t === 'gem') t.n = Math.round(t.n * (1 + i / 12) / 5) * 5; });

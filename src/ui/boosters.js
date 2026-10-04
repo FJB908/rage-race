@@ -34,9 +34,10 @@
         refreshHome() {
             const el = document.getElementById('m-boosts'); if (!el) return;
             const parts = [];
-            for (const kind of ['coin', 'chest']) {
+            for (const kind of ['coin', 'chest']) {                                 // one clear card per active multiplier: what it is, how big, how many left
                 const a = B.active(kind); if (!a) continue;
-                parts.push('<span class="bo-pill" style="--bc:' + KINDS[kind].color + '">' + icon(kind === 'coin' ? 'coin' : 'drop') + '<b>x' + a.mult + '</b><small>' + a.total + (kind === 'coin' ? '' : '') + '</small></span>');
+                const k = KINDS[kind], unit = a.total === 1 ? k.unit : k.plural;
+                parts.push('<div class="bo-card" style="--bc:' + k.color + '">' + B.art({ kind, mult:a.mult }) + '<span class="bo-txt"><b>' + (kind === 'coin' ? 'COIN BOOST' : 'CHEST BOOST') + '</b><small>x' + a.mult + ' &middot; ' + a.total + ' ' + unit + ' left</small></span></div>');
             }
             el.innerHTML = parts.join(''); el.hidden = !parts.length;
         },
