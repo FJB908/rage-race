@@ -24,7 +24,7 @@
         }
         btn.disabled = true;
         try { await Cloud.signInGoogle(); toast('Signed in'); }
-        catch (e) { const code = String(e && e.code || e); if (!/popup-closed|cancelled/.test(code)) toast('Sign-in failed: ' + code.replace('auth/', '')); }
+        catch (e) { const code = String(e && (e.code || e.message) || e); if (!/popup-closed|cancel/i.test(code)) toast('Sign-in failed: ' + String(e && e.message || code).replace('auth/', '').slice(0, 120)); }
         btn.disabled = false; render();
     });
     Cloud.on(render); render();
@@ -48,7 +48,7 @@
         gbtn.onclick = async () => {
             gbtn.disabled = true;
             try { try { localStorage.setItem(CHOICE, 'google'); } catch (e) {} await Cloud.signInGoogle(); el.remove(); }
-            catch (e) { try { localStorage.removeItem(CHOICE); } catch (er) {} const code = String(e && e.code || e); if (!/popup-closed|cancelled/.test(code)) toast('Sign-in failed: ' + code.replace('auth/', '')); gbtn.disabled = false; }
+            catch (e) { try { localStorage.removeItem(CHOICE); } catch (er) {} const code = String(e && (e.code || e.message) || e); if (!/popup-closed|cancel/i.test(code)) { toast('Sign-in failed: ' + code.replace('auth/', '')); note.textContent = 'Sign-in failed: ' + String(e && e.message || code).slice(0, 160); note.style.color = '#ff7a90'; } gbtn.disabled = false; }      // the message also goes on the card: a toast can hide behind it
         };
     }
     setInterval(() => { if (document.querySelector('.m-tab[data-tab="profile"]:not([hidden])')) render(); }, 30000);
