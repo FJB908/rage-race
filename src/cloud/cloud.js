@@ -65,13 +65,25 @@
         out.matches = Math.max(num(a.matches), num(b.matches)); out.wins = Math.max(num(a.wins), num(b.wins));
         return out;
     }
+    function mergeMiss(a, b) {                   // same day: best progress, claims stick; otherwise the later day wins
+        if (!a || !b) return a || b;
+        if (a.day !== b.day) return String(a.day) > String(b.day) ? a : b;
+        const out = JSON.parse(JSON.stringify(a)); out.bonus = !!(a.bonus || b.bonus);
+        (b.list || []).forEach(m => { const x = out.list.find(y => y.id === m.id); if (x) { x.n = Math.max(num(x.n), num(m.n)); x.claimed = !!(x.claimed || m.claimed); } });
+        return out;
+    }
+    function mergeWeekly(a, b) {
+        if (!a || !b) return a || b;
+        if (a.wk !== b.wk) return String(a.wk) > String(b.wk) ? a : b;
+        return a.id === b.id ? Object.assign({}, a, { n: Math.max(num(a.n), num(b.n)), claimed: !!(a.claimed || b.claimed) }) : a;
+    }
     function mergeProfile(a, b, aNewer) {
         if (!a || !b) return a || b;
         const nw = aNewer ? a : b, od = aNewer ? b : a, o = Object.assign({}, od, nw);   // newer wins: name, equipped, unknown fields
         const dflt = n => !n || n === 'Player';                                            // never let the default name replace a chosen one
         if (dflt(o.name) && !dflt(od.name)) o.name = od.name;
         MAX_FIELDS.forEach(k => { o[k] = Math.max(num(a[k]), num(b[k])); });
-        o.passClaimed = union(a.passClaimed, b.passClaimed); o.lvClaimed = union(a.lvClaimed, b.lvClaimed); o.rageClaimed = union(a.rageClaimed, b.rageClaimed); o.rage = !!(a.rage || b.rage); o.emotes = union(a.emotes, b.emotes); o.owned = union(a.owned, b.owned);
+        o.passClaimed = union(a.passClaimed, b.passClaimed); o.lvClaimed = union(a.lvClaimed, b.lvClaimed); o.rageClaimed = union(a.rageClaimed, b.rageClaimed); o.setsClaimed = union(a.setsClaimed, b.setsClaimed); o.missions = mergeMiss(a.missions, b.missions); o.weekly = mergeWeekly(a.weekly, b.weekly); o.rage = !!(a.rage || b.rage); o.emotes = union(a.emotes, b.emotes); o.owned = union(a.owned, b.owned);
         o.lootGrants = Object.assign({}, od.lootGrants, nw.lootGrants);          // ids that were already granted: never grant twice
         o.pendingDrops = Object.assign({}, nw.pendingDrops);                     // unopened drops follow the newest state (avoids resurrecting opened ones)
         const ga = a.gt || {}, gb = b.gt || {}; o.gt = Object.assign({}, od.gt, nw.gt);

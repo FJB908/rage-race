@@ -136,6 +136,7 @@
         let dm = Math.round(B.eloDelta(ratings, place, k));
         if (forfeit) dm = Math.min(dm, -12);
         let rpd = 0, promo = null, demo = null;
+        if (window.Missions) Missions.event('ranked');
         const out = withRk((rk, p) => {
             rk.mmr = clamp(rk.mmr + dm, 400, 2900);
             rk.matches++; rk.sm++; rk.lastPlayed = seasonNow(); if (place === 1) { rk.wins++; rk.streak++; } else if (place >= 3) rk.streak = 0;

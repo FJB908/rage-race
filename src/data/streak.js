@@ -11,5 +11,5 @@ const STREAK_REWARDS = [
     { t:'boost', kind:'chest', mult:2, n:3 },  { t:'pass', n:120 },  { t:'drop', tier:'epic' },  { t:'gem', n:40 },  { t:'boost', kind:'coin', mult:3, n:3 },  { t:'drop', tier:'epic' },
     { t:'item', cat:'face', id:'hologlass' },
     { t:'gem', n:50 },
-    { t:'prem', cat:'skin', id:'p-streaker' },
+    { t:'gemchest' },
 ];

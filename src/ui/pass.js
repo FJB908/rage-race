@@ -36,7 +36,7 @@
             const pick = st.claimable.length ? { t: PASS_TIERS[st.claimable[0]], claim: true } : (p.rage && st.rageClaimable.length) ? { t: RAGE_TIERS[st.rageClaimable[0]], claim: true } : null;
             let txt = '', cl = false;
             if (pick) { txt = 'Claim: ' + plain(pick.t); cl = true; }
-            else { for (let i = st.done; i < N; i++) if (PASS_TIERS[i].t !== 'none') { txt = 'Next (tier ' + (i + 1) + '): ' + plain(PASS_TIERS[i]); break; } if (!txt && st.done >= N) txt = 'Season complete'; }
+            else { for (let i = st.done; i < N; i++) if (PASS_TIERS[i].t !== 'none') { txt = 'Next: ' + plain(PASS_TIERS[i]); break; } if (!txt && st.done >= N) txt = 'Season complete'; }
             nx.textContent = txt; nx.classList.toggle('claim', cl);
         }
         const art = document.querySelector('.m-pass-art');
@@ -99,7 +99,7 @@
             '<span class="pzr-buy">' + icon('gem') + '<b>' + RAGE_PASS_GEMS.toLocaleString('en-US') + '</b></span>';
         let armed = false, tm = 0; const sub = el.querySelector('small');
         el.onclick = () => {
-            if (!armed) { armed = true; el.classList.add('arm'); sub.textContent = 'Tap again to unlock'; tm = setTimeout(() => { armed = false; el.classList.remove('arm'); sub.textContent = N + ' premium rewards: exclusive cosmetics, emotes, finishers, gems and legendary drops'; }, 2600); return; }
+            if (!armed) { armed = true; el.classList.add('arm'); sub.textContent = 'Tap again to unlock'; tm = setTimeout(() => { armed = false; el.classList.remove('arm'); sub.textContent = N + ' premium rewards'; }, 2600); return; }
             clearTimeout(tm); buyRage();
         };
     }

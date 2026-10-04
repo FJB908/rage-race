@@ -361,7 +361,7 @@
     function renderShop(grid) {
         const p = prog(); grid.innerHTML = '';
         const head = document.createElement('div'); head.className = 'em-head';
-        head.innerHTML = '<b>Finishers</b><small>Plays when you cross the finish line</small>'; grid.appendChild(head);
+        head.innerHTML = '<b>Finishers</b>'; grid.appendChild(head);
         const RANK = { common: 0, rare: 1, epic: 2, legendary: 3 };
         const isOwn = f => f.price === 0 || p.owned.includes(f.id);
         const grp = f => f.premium ? 0 : isOwn(f) ? 1 : 2;      // gem finishers first, then what you own, then what is for sale

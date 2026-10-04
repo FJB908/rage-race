@@ -22,6 +22,11 @@
     function open() {
         if (gemCount() < PRICE) { toast('You need ' + PRICE + ' gems'); SFX.play('fall'); return; }
         store('rr_gems', gemCount() - PRICE);
+        give();
+    }
+    // the chest itself (also used as the day-30 streak reward): rolls, pays out and opens; the promise resolves when the player is done
+    function give() {
+        return new Promise(done => {
         const { rar, item } = roll(), ex = EXTRAS[rar], p = prog();
         let coins = ex.coins, second = null;
         const isFin = !!(item && item.id[0] === 'f' && item.id[1] === '-');
@@ -36,13 +41,14 @@
             refreshMenu();
             if (second) await showRewardPops([{ type: 'item', item: second }], { tier: second.rarity });
             for (const t of ex.bonus) await new Promise(res => openLootbox(awardLootDrop(newLootId('gemcrate'), { coins: 200, xp: 80, passPoints: 0 }, { tier: t }), { onDone: res }));
-            refreshMenu();
+            refreshMenu(); done();
         } });
+        });
     }
 
     function render(box) {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'gc-hero';
-        const sub = 'A cosmetic you do not own, plus a pile of coins, boosts and bonus chests';
+        const sub = 'A new cosmetic plus loads of loot';
         b.innerHTML = '<span class="gc-chest">' + LB_GEMCHEST('s') + '</span><span class="gc-tx"><b>Gem chest</b><small>' + sub + '</small></span><span class="gc-price">' + icon('gem') + '<b>' + PRICE + '</b></span>';
         let armed = false, t = 0;
         b.onclick = () => {
@@ -52,5 +58,5 @@
         };
         const grid = box.querySelector('.gem-grid'); box.insertBefore(b, grid || null);
     }
-    window.GemCrate = { open, render, roll, EXTRAS };
+    window.GemCrate = { open, give, render, roll, EXTRAS };
 })();

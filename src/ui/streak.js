@@ -24,10 +24,12 @@
         if (r.t === 'xp') return icon('xp');
         if (r.t === 'pass') return icon('pass');
         if (r.t === 'boost') return Boost.art(r);
+        if (r.t === 'gemchest') return '<span class="sk-chest" style="--ic:#ff8ae6">' + (window.LB_GEMCHEST ? LB_GEMCHEST('sk') : icon('gem')) + '</span>';
         if (r.t === 'drop') return '<span class="sk-chest" style="--ic:' + TC[r.tier] + '">' + icon('drop-' + r.tier) + '</span>';
         return '<canvas width="120" height="120" data-i="' + i + '"></canvas>';
     }
     function amount(r) {
+        if (r.t === 'gemchest') return '<b class="a-item" style="color:#ff8ae6">GEM CHEST</b>';
         if (r.t === 'coin' || r.t === 'gem' || r.t === 'xp' || r.t === 'pass') return '<b class="a-' + r.t + '">' + r.n.toLocaleString('en-US') + '</b>';
         if (r.t === 'boost') return '<b class="a-boost" style="color:' + Boost.KINDS[r.kind].color + '">' + r.n + (r.kind === 'coin' ? (r.n === 1 ? ' match' : ' matches') : (r.n === 1 ? ' chest' : ' chests')) + '</b>';
         if (r.t === 'drop') return '<b class="a-drop" style="color:' + TC[r.tier] + '">' + r.tier.toUpperCase() + '</b>';
@@ -46,9 +48,9 @@
         const st = state(); el.querySelector('#sk-days').textContent = st.streak; el.querySelector('#sk-flame').hidden = st.streak < 1;
         grid.innerHTML = '';
         STREAK_REWARDS.forEach((r, i) => {
-            const day = i + 1, claimed = day <= st.shown, isToday = st.canClaim && day === st.nextDay, milestone = r.t === 'prem' || r.t === 'item' || (r.t === 'drop' && r.tier === 'legendary');
+            const day = i + 1, claimed = day <= st.shown, isToday = st.canClaim && day === st.nextDay, milestone = r.t === 'prem' || r.t === 'gemchest' || r.t === 'item' || (r.t === 'drop' && r.tier === 'legendary');
             const tile = document.createElement('div');
-            tile.className = 'sk-tile' + (claimed ? ' claimed' : '') + (isToday ? ' today' : '') + (milestone ? ' mile' : '') + (r.t === 'prem' ? ' prem' : '');
+            tile.className = 'sk-tile' + (claimed ? ' claimed' : '') + (isToday ? ' today' : '') + (milestone ? ' mile' : '') + (r.t === 'prem' || r.t === 'gemchest' ? ' prem' : '');
             tile.innerHTML = '<small>' + day + '</small><div class="sk-art">' + art(r, i) + '</div>' + amount(r) + (claimed ? '<span class="sk-check">' + icon('check') + '</span>' : '');
             grid.appendChild(tile);
             const cv = tile.querySelector('canvas');
@@ -68,6 +70,7 @@
         else if (r.t === 'xp') { p.xp += r.n; saveProg(p); await showRewardPops([{ type:'xp', n:r.n }]); }
         else if (r.t === 'pass') { p.passPoints += r.n; p.passPointsEarned += r.n; saveProg(p); await showRewardPops([{ type:'pass', n:r.n }]); }
         else if (r.t === 'boost') { await showRewardPops([Boost.pop(r)]); }
+        else if (r.t === 'gemchest') { await GemCrate.give(); }
         else if (r.t === 'drop') { const drop = awardLootDrop(newLootId('streak'), { coins:80, xp:60, passPoints:0 }, { tier:r.tier }); await new Promise(res => openLootbox(drop, { title:'DAILY CHEST', onDone:res })); }
         else {
             const it = itemOf(r);

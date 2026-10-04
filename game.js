@@ -106,7 +106,7 @@ function showScreen(name) {
     if (typeof SFX !== 'undefined' && SFX.music){
         if (name === 'start') SFX.music.set('menu');
     }
-    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings','streak','lvr'].forEach(k => {
+    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings','streak','lvr','missions','collection'].forEach(k => {
         const el = S[k]; if (!el) return;
         if (k === name) {
             el.style.display = 'flex';
@@ -651,6 +651,7 @@ function capUpwardVelocity(p){
     if (p.vy < -MAX_UP_VEL) p.vy = -MAX_UP_VEL;
 }
 function launchPlayer(p, dx, dy) {
+    if (p.local && window.Missions) Missions.event('jump');
     const mult = playerPowMul(p, false);
     // Launch purely from the drag: don't inherit the moving platform's velocity,
     // otherwise the aim flips the instant the platform reverses at its limit.
@@ -988,6 +989,7 @@ function botWantsItem(p){
 function activateItem(p){
     if (p.itemState !== 'ready' || p.finished || p.ufoHold || state !== 'playing') return false;
     const it = p.item;
+    if (p.local && window.Missions) Missions.event('item');
         const chainTarget = it === 'chain' ? pickChainTarget(p) : null;
     if (it === 'chain' && !chainTarget) return false;
     p.item = null; p.itemState = null; p.itemCool = 4;
@@ -2266,6 +2268,13 @@ function showResults() {
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
     sub.innerHTML = (msgs[you-1] || "") + (rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
+    { const me = sorted.find(p => p.local);                      // how close it was
+      if (me && me.finished){
+        let line = '';
+        if (you > 1 && sorted[0].finished) line = (me.finishTime - sorted[0].finishTime).toFixed(2) + ' s behind 1st';
+        else if (you === 1 && sorted[1] && sorted[1].finished) line = 'Won by ' + (sorted[1].finishTime - me.finishTime).toFixed(2) + ' s';
+        if (line) sub.innerHTML += '<span class="near">' + line + '</span>';
+      } }
     sub.style.color = you===1 ? 'var(--gold)' : 'var(--muted)';
 
     const board = document.getElementById('board');
@@ -4300,6 +4309,7 @@ function resolveDrop(id, tier){
     store('rr_coins', load('rr_coins', 0) + drop.coins);
     delete p.pendingDrops[id];
     p.lootGrants[id] = drop;
+    if (window.Missions && !/^(mission|weekly|pass|streak)/.test(id)) setTimeout(() => Missions.event('chest'), 0);
     const grantIds = Object.keys(p.lootGrants);
     for (const oldId of grantIds.slice(0, Math.max(0, grantIds.length - 40))) delete p.lootGrants[oldId];
     saveProg(p);
@@ -4354,6 +4364,7 @@ function escGameOver(p){
         SFX.play('fail');
         const prevBest = load('rr_esc_best_score', 0);
         if (run.score > prevBest) store('rr_esc_best_score', run.score);
+        if (window.Missions) Missions.event('escape', run.score);
     }
     burst(p.x, p.y, p.color, 40, 320);
     burst(p.x, p.y, '#ff5470', 30, 260);
@@ -4612,6 +4623,7 @@ function rewardRace(place, finished, lootId){
     rewardRace.keyEarned = false;
     if (!alreadyGranted){
         const p = prog(); p.races++; if (finished && place === 1) p.wins++;
+        if (window.Missions && gameMode === 'race' && !window.rankedMatch){ Missions.event('race'); if (finished && place === 1) Missions.event('win'); if (finished && place <= 2) Missions.event('podium'); }
         else p.gt.streak = 0;
         saveProg(p);
     }
@@ -5263,6 +5275,7 @@ function lvDropTier(dim, i){
     return dim === 0 ? (f < 0.4 ? 'common' : f < 0.8 ? 'rare' : 'epic') : (f < 0.35 ? 'rare' : f < 0.7 ? 'epic' : 'legendary');
 }
 function lvComplete(p){
+    if (window.Missions) Missions.event('level');
     SFX.play('finish');
     if (lv.done) return;
     lv.done = true;
@@ -5352,7 +5365,7 @@ const lvTimeEl = document.getElementById('lv-time');
 const lvFallsEl = document.getElementById('lv-falls');
 const lvFallsPill = document.getElementById('lv-falls-pill');
 document.getElementById('btn-tower').addEventListener('click', openParkour);
-document.getElementById('btn-lv-back').addEventListener('click', () => { refreshStartMeta(); showScreen('start'); });
+for (const bid of ['btn-lv-back', 'btn-lv-back2']) document.getElementById(bid).addEventListener('click', () => { refreshStartMeta(); showScreen('start'); });
 document.getElementById('btn-lvd-next').addEventListener('click', () => lvStart(Math.min(DIMENSIONS[curDim].levels.length-1, lv.idx + 1)));
 document.getElementById('btn-lvd-retry').addEventListener('click', () => lvStart(lv.idx));
 document.getElementById('btn-lvd-levels').addEventListener('click', () => {

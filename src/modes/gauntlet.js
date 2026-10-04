@@ -774,6 +774,7 @@
         const p = prog(), id = gt.lootId;
         let drop = null;
         if (!p.lootGrants[id] && !p.pendingDrops[id]) {
+            if (window.Missions) Missions.event('gtrun');
             const g = p.gt; g.runs++; if (win) g.wins++; g.best = Math.max(g.best, reached);
             g.crowned = win;                                              // the crown is yours until someone takes it
             saveProg(p);
@@ -866,7 +867,7 @@
         const lock = !unlocked(), card = $('btn-gauntlet'); if (card) card.classList.toggle('locked', lock);
         if (el) el.textContent = lock ? 'Unlocks at level ' + UNLOCK_LEVEL : g.crowned ? 'You hold the crown' : '32 players · 3 stages';
         if (tag) { tag.innerHTML = g.crowned ? icon('crown') : icon('users'); }
-        if (pcard) pcard.textContent = lock ? 'Reach level ' + UNLOCK_LEVEL + ' to play' : '32 players · 3 stages';
+        if (pcard) pcard.textContent = lock ? 'Reach level ' + UNLOCK_LEVEL + ' to play' : '3 stages, 1 crown';
     };
     GT.refreshHome();
 

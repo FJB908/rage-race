@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="src/ui/emotes.css">
 <link rel="stylesheet" href="src/ui/lootbox.css">
 <link rel="stylesheet" href="src/ui/pass.css">
+<link rel="stylesheet" href="src/ui/missions.css">
 <link rel="stylesheet" href="src/tutorial/tutorial.css">
 <link rel="stylesheet" href="src/ui/streak.css">
 <link rel="stylesheet" href="src/modes/gauntlet.css">
@@ -67,19 +68,16 @@
         <!-- PLAY -->
         <section class="m-tab" data-tab="play">
             <h1 class="m-h1">Play</h1>
-            <button class="m-card ranked" type="button" id="btn-ranked" data-mode="ranked"><span class="mc-ico" aria-hidden="true"></span><span class="mc-copy"><b>Ranked</b><span>Ranked, 4 players</span><small id="p-rk-sub"></small></span><em></em></button>
-            <button class="m-card teal" type="button" id="btn-find" data-mode="race"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-race"/></svg></span><span class="mc-copy"><b>Race</b><span>Quick match, 4 players</span></span><em></em></button>
-            <button class="m-card gold" type="button" id="btn-gauntlet" data-mode="gauntlet"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-crown"/></svg></span><span class="mc-copy"><b>Gauntlet</b><span>32 players, 1 crown</span><small id="p-gt-sub"></small></span><em></em></button>
-            <button class="m-card red" type="button" id="btn-escape" data-mode="escape"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-escape"/></svg></span><span class="mc-copy"><b>Escape</b><span>Climb before the floor catches you</span></span><em id="start-best"></em></button>
-            <button class="m-card violet stack" type="button" id="btn-parkour" data-mode="parkour">
-                <span class="m-card-top"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-levels"/></svg></span><span class="mc-copy"><b>Levels</b><span>Dimensions and Tower</span></span><em id="start-pk"></em></span>
-                <span class="m-mini3">
-                    <span><small>Dimension I</small><strong id="m-d1"><svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg> 0/30</strong></span>
-                    <span id="m-d2box"><small>Dimension II</small><strong id="m-d2">28 <svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg></strong></span>
-                    <span><small>The Tower</small><strong id="m-tower">--</strong></span>
-                </span>
-            </button>
-            <button class="m-card violet" type="button" data-go="friends"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-users"/></svg></span><span class="mc-copy"><b>Party</b><span>Play with friends</span></span><em>Soon</em></button>
+            <button class="m-card teal big" type="button" id="btn-find" data-mode="race"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-race"/></svg></span><span class="mc-copy"><b>Quick race</b><span>4 players</span></span><em></em></button>
+            <div class="m-pair">
+                <button class="m-card ranked sm" type="button" id="btn-ranked" data-mode="ranked"><span class="mc-ico" aria-hidden="true"></span><span class="mc-copy"><b>Ranked</b><span>Climb the ranks</span><small id="p-rk-sub"></small></span><em></em></button>
+                <button class="m-card gold sm" type="button" id="btn-gauntlet" data-mode="gauntlet"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-crown"/></svg></span><span class="mc-copy"><b>Gauntlet</b><span>32 players</span><small id="p-gt-sub"></small></span><em></em></button>
+            </div>
+            <div class="m-pair">
+                <button class="m-card violet sm" type="button" id="btn-parkour" data-mode="parkour"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-levels"/></svg></span><span class="mc-copy"><b>Levels</b><span>Dimensions</span><small id="start-pk"></small></span><em></em></button>
+                <button class="m-card red sm" type="button" id="btn-escape" data-mode="escape"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-escape"/></svg></span><span class="mc-copy"><b>Escape</b><span>Climb or fall</span><small id="start-best"></small></span><em></em></button>
+            </div>
+            <div class="m-mini3" hidden><strong id="m-d1"></strong><span id="m-d2box"><strong id="m-d2"></strong></span><strong id="m-tower"></strong></div>
         </section>
 
         <!-- SHOP -->
@@ -212,6 +210,7 @@
 
 <!-- LEVELS: select -->
 <div id="s-levels" class="screen" style="display:none;opacity:0">
+    <header class="scr-head lv-head"><button class="pass-back" type="button" id="btn-lv-back2" aria-label="Back"><svg class="ico ico-chev-l" aria-hidden="true"><use href="#ico-chev-l"/></svg></button><div class="scr-title"><h1>Levels</h1></div></header>
     <div class="over-kicker" id="lv-hub-title" style="color:var(--violet)">DIMENSION I</div>
     <div class="lv-total"><span class="star on"><svg class="ico ico-star" aria-hidden="true"><use href="#ico-star"/></svg></span><span id="lv-total">0</span><small id="lv-total-max">/30</small></div>
     <div class="dim-tabs" id="dim-tabs"></div>
@@ -370,5 +369,7 @@
 <script src="src/ui/gemcrate.js"></script>
 <script src="src/ui/emotes.js"></script>
 <script src="src/ui/finishers.js"></script>
+<script src="src/ui/missions.js"></script>
+<script src="src/ui/collection.js"></script>
 </body>
 </html>

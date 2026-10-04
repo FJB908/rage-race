@@ -619,3 +619,15 @@ body.online-race #btn-pause { display: none; }
 .m-pills .m-pill .ico { width:15px; height:15px; }
 
 .m-pass-next { display:block; margin-top:2px; font-style:normal; font-size:11px; font-weight:700; color:#c5bcff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .m-pass-next.claim { color:#ffcf3f; }
+
+/* Play tab: one big card, then two pairs */
+.m-card.big { min-height:92px; padding:18px; } .m-card.big b { font-size:26px; } .m-card.big .mc-ico { width:60px; height:60px; border-radius:18px; } .m-card.big .mc-ico .ico { width:40px; height:40px; }
+.m-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.m-card.sm { flex-direction:column; align-items:flex-start !important; justify-content:flex-start !important; gap:8px; min-height:132px; padding:14px; }
+.m-card.sm .mc-copy { width:100%; } .m-card.sm b { font-size:19px; } .m-card.sm .mc-copy > span { font-size:12px; } .m-card.sm .mc-copy > small { font-size:11px; color:var(--muted); min-height:14px; }
+.m-card.sm em { position:absolute; top:12px; right:12px; margin:0 !important; }
+.m-card.sm.sel::after { top:auto; bottom:10px; right:12px; }
+.m-card.ranked { --mc:#b3a9ff; }
+.m-mini3[hidden] { display:none; }
+
+#result-sub .near { display:block; margin-top:8px; font-size:15px; font-weight:800; color:#ffcf3f; letter-spacing:.02em; }
