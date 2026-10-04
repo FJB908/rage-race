@@ -13,3 +13,11 @@
 .tut-gesture.go .tut-finger { animation:tutDrag 1.6s ease-in-out infinite; }
 @keyframes tutDrag { 0% { opacity:0; transform:translate(0,0) scale(1); } 12% { opacity:1; transform:translate(0,0) scale(.88); } 58% { opacity:1; transform:translate(var(--dx),var(--dy)) scale(.88); } 72% { opacity:1; transform:translate(var(--dx),var(--dy)) scale(1.25); } 100% { opacity:0; transform:translate(var(--dx),var(--dy)) scale(1.6); } }
 body.mode-tutorial #hint { display:none !important; }
+
+#tut-done { position:fixed; inset:0; z-index:1050; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(5,7,11,.82); opacity:0; transition:opacity .25s; }
+#tut-done.in { opacity:1; }
+.td-card { width:min(100%,340px); text-align:center; padding:22px 20px 20px; border-radius:26px; background:radial-gradient(120% 70% at 50% -10%, rgba(91,141,239,.32), transparent 60%), #151a25; border:1.5px solid rgba(91,141,239,.6); transform:scale(.85); transition:transform .45s cubic-bezier(.2,1.5,.3,1); }
+#tut-done.in .td-card { transform:none; }
+.td-ico { width:150px; margin:0 auto 4px; } .td-ico svg { width:100%; height:auto; filter:drop-shadow(0 0 16px rgba(91,141,239,.55)); animation:tgBob 1.6s ease-in-out infinite; }
+.td-card small { font-size:11px; font-weight:900; letter-spacing:.24em; color:#5b8def; } .td-card h2 { margin:6px 0 6px; font:900 30px/1 "Bricolage Grotesque",system-ui,sans-serif; } .td-card p { margin:0 0 16px; font-size:14px; line-height:1.4; color:#aab3c4; }
+.td-card button { width:100%; padding:16px; border:0; border-radius:16px; background:linear-gradient(#7aa8ff,#4a78e0); color:#06122b; font:900 17px/1 system-ui; letter-spacing:.06em; box-shadow:0 5px 0 #284a9a; }

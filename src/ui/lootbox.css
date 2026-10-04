@@ -16,10 +16,10 @@
 @keyframes lbSpin { to { transform:rotate(360deg); } }
 @keyframes lbFade { to { opacity:.85; } }
 .lb-flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:5; }
-.lb-flash.go { animation:lbFlash .55s ease-out; }
-@keyframes lbFlash { 0% { opacity:.95; } 100% { opacity:0; } }
-.lb.shake { animation:lbShake .4s linear; }
-@keyframes lbShake { 0%,100% { transform:translate(0); } 20% { transform:translate(-7px,4px); } 40% { transform:translate(6px,-5px); } 60% { transform:translate(-4px,-3px); } 80% { transform:translate(3px,4px); } }
+.lb-flash.go { animation:lbFlash .7s ease-out; }
+@keyframes lbFlash { 0% { opacity:.16; } 100% { opacity:0; } }      /* a soft glow instead of a white flash */
+.lb.shake { animation:lbShake .3s ease-out; }
+@keyframes lbShake { 0%,100% { transform:translate(0); } 25% { transform:translate(-2px,1px); } 50% { transform:translate(2px,-1px); } 75% { transform:translate(-1px,1px); } }
 
 .lb-stage { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:14px; transition:transform .6s cubic-bezier(.5,0,.2,1), opacity .5s ease; }
 .lb-stage.away { transform:translateY(-14vh) scale(.55); opacity:0; pointer-events:none; }
@@ -161,3 +161,8 @@ body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-ches
 
 .lb-itempop canvas.trw { width:min(86vw,340px); height:auto; aspect-ratio:2/1; }
 .lb.dense .lb-itempop canvas.trw { width:min(80vw,280px); }
+
+/* calmer chests: slower, softer pulses; no strobing sparkle or glow */
+.lb.ready .lb-hint { animation-duration:2.4s; } .lb-itempop .glow { animation-duration:3.4s; }
+.lb-shine { animation-duration:6s; } .lb-sparks .sp { animation-duration:5s !important; }
+.loot-big .lb-leak { animation-duration:4s; }

@@ -19,8 +19,12 @@ const SIDEBAR = 34;                           // right-hand progress rail (scree
 let WORLD_W = 356;
 let VIEW_K = 1, VIEW_OX = 0, VH = 0;                 // scale, x-offset, visible world height
 
+let _rsz = '';
 function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, dprCap);
+    const nd = Math.min(window.devicePixelRatio || 1, dprCap), key = nd + '|' + window.innerWidth + '|' + window.innerHeight + '|' + WORLD_W;
+    if (key === _rsz) return;                    // same size as before: do not reallocate the canvas (that made the screen flicker / tremble on phones)
+    _rsz = key;
+    DPR = nd;
     CW = window.innerWidth; CH = window.innerHeight;
     const avail = CW - SIDEBAR;
     VIEW_K = Math.max(0.6, Math.min(1.3, avail / WORLD_W));
@@ -522,6 +526,7 @@ function rankFrac(p){
 // Mario Kart style: the further behind you are, the better your odds of a rocket
 // (or, in last place, an earthquake). f: 0 = leading, 1 = last place.
 function rollItem(p){
+    if (window.TUT_ITEM && p.local) return window.TUT_ITEM;          // the tutorial always hands out the harmless, fun one
     const f = rankFrac(p);
     const others = players.some(o => o !== p && !o.finished);
     const isLeader = !players.some(o => o !== p && !o.finished && o.y < p.y);
@@ -2550,6 +2555,7 @@ function applyInterp(a){
 
 let qSlow = 0, qFast = 0;
 function adaptQuality(rawDt){
+    if (state !== 'playing' || Date.now() - matchStart < 2500) return;      // never retune quality during the countdown or the first seconds (that flicker looked like the screen trembling)
     if (rawDt > 0.1) return;                          // tab switch / hitch, ignore
     if (rawDt > 0.024) { qSlow++; qFast = 0; } else { qFast++; qSlow = Math.max(0, qSlow - 1); }
     if (qSlow >= 45 && qLevel < QUALITY_STEPS.length - 1) {   // ~45 slow frames: step down
