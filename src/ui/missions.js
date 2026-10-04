@@ -169,6 +169,7 @@
     el.querySelector('#ms-back').addEventListener('click', () => showScreen('start'));
     function open() { flush(); render(); showScreen('missions'); }
 
+    { const mb = document.getElementById('btn-missions'); if (mb) mb.addEventListener('click', () => { SFX.play('count'); open(); }); }
     window.Missions = { event, race, open, refreshHome, state: () => { const p = prog(); ensure(p); return { missions: p.missions, weekly: p.weekly }; }, DAILY, WEEKLY };
     window.addEventListener('load', () => refreshHome());
     setTimeout(refreshHome, 0);

@@ -262,7 +262,7 @@
             opened = true; busy = true;
             const final = pending ? (resolveDrop(drop.id, tier) || drop) : drop;
             const ft = final.tier || tier; if (ft !== tier) { tier = ft; paint(); }
-            el.classList.remove('ready', 'tapped'); o.flash(); o.shake(); buzz([40, 30, 80]); sfx('shatter'); sfx('boost'); sfx('finish');
+            el.classList.remove('ready', 'tapped'); o.flash(); o.shake(); buzz([40, 30, 80]); sfx('open');
             el.classList.add('burst'); el.style.setProperty('--charge', 1);
             const p = chestPos(); o.emit(120, { x:p.x, y:p.y, dir:-Math.PI / 2, spread:2.4, speed:760, size:11, colors:[TIER_COLOR[tier], '#fff', '#ffcf3f', '#35e0c8'], g:1100 });
             await wait(skipped ? 100 : 850);
@@ -297,12 +297,12 @@
             el.style.setProperty('--amp', Math.min(1.8, .7 + n * .25).toFixed(2));
             chest.classList.remove('tap'); void chest.offsetWidth; chest.classList.add('tap');
             el.style.setProperty('--charge', Math.min(.9, .12 + n * .12).toFixed(2));
-            sfx('count'); buzz(18 + n * 6);
+            sfx('knock', n); buzz(18 + n * 6);
             const p = chestPos(); o.emit(5 + Math.min(k, 6) * 2, { x:p.x, y:p.y, speed:240, size:6, colors:[TIER_COLOR[tier], '#fff'], g:300 });
             await wait(openNow || k > 1 ? 160 : 300); chest.classList.remove('tap');
             if (up) {
                 paint();
-                o.flash(); o.shake(); buzz([30, 30, 50]); sfx('boost'); sfx('finish');
+                o.flash(); o.shake(); buzz([30, 30, 50]); sfx('tierup');
                 const ring = o.$('.lb-ring'); ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go');
                 const q = chestPos(); o.emit(60, { x:q.x, y:q.y, speed:520, size:9, colors:[TIER_COLOR[tier], '#fff'], g:300 });
                 title.classList.remove('pop'); void title.offsetWidth; title.classList.add('pop');
