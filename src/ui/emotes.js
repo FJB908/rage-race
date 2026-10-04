@@ -144,7 +144,7 @@
                 '<span class="m-skin-f"><span class="buy-hint">Tap again</span><span class="' + (own ? (eq ? 'eqd' : 'own') : 'price') + '">' + (own ? (eq ? 'EQUIPPED' : 'OWNED') : icon('gem') + ' ' + e.gems) + '</span></span>';
             b.onclick = () => {
                 if (own) { equip(e.id); SFX.play('item'); renderShop(grid); return; }
-                if (gemCount() < e.gems) { b.classList.add('m-shake'); setTimeout(() => b.classList.remove('m-shake'), 400); SFX.play('fall'); return; }
+                if (gemCount() < e.gems) { b.classList.add('m-shake'); setTimeout(() => b.classList.remove('m-shake'), 400); SFX.play('fall'); setTimeout(goGemShop, 450); toast('You need ' + e.gems + ' gems'); return; }
                 if (armed !== b) { grid.querySelectorAll('.arm').forEach(x => x.classList.remove('arm')); b.classList.add('arm'); armed = b; SFX.play('count'); clearTimeout(armT); armT = setTimeout(() => { b.classList.remove('arm'); armed = null; }, 2600); return; }
                 buy(e.id); SFX.play('pickup'); refreshMenu(); renderShop(grid);
             };

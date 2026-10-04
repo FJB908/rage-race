@@ -15,12 +15,30 @@
         return { pts, done, claimable, rageClaimable, into: done >= N ? PASS_TIER_PTS : pts % PASS_TIER_PTS };
     }
 
+    const plain = t => {
+        if (t.t === 'coins') return t.n.toLocaleString('en-US') + ' coins';
+        if (t.t === 'gem') return t.n + ' gems';
+        if (t.t === 'drop') return (t.tier ? t.tier[0].toUpperCase() + t.tier.slice(1) + ' ' : '') + 'chest';
+        if (t.t === 'boost') return 'x' + t.mult + ' ' + (t.kind === 'coin' ? 'coins' : 'chests');
+        if (t.t === 'emote') return 'emote ' + Emotes.BY[t.id].text;
+        if (t.t === 'finisher') return Finishers.BY[t.id].name;
+        if (t.t === 'item' || t.t === 'prem') return itemOf(t).name;
+        return '';
+    };
     // ---------- home card ----------
     window.renderPassHome = function (p) {
         const st = state(p), el = document.getElementById('m-pass-progress');
         if (!el) return;
         el.textContent = st.done >= N ? 'Complete' : 'Tier ' + st.done + ' / ' + N;
         document.getElementById('m-pass-meter-fill').style.width = (st.done >= N ? 100 : st.into) + '%';
+        const nx = document.getElementById('m-pass-next');
+        if (nx) {
+            const pick = st.claimable.length ? { t: PASS_TIERS[st.claimable[0]], claim: true } : (p.rage && st.rageClaimable.length) ? { t: RAGE_TIERS[st.rageClaimable[0]], claim: true } : null;
+            let txt = '', cl = false;
+            if (pick) { txt = 'Claim: ' + plain(pick.t); cl = true; }
+            else { for (let i = st.done; i < N; i++) if (PASS_TIERS[i].t !== 'none') { txt = 'Next (tier ' + (i + 1) + '): ' + plain(PASS_TIERS[i]); break; } if (!txt && st.done >= N) txt = 'Season complete'; }
+            nx.textContent = txt; nx.classList.toggle('claim', cl);
+        }
         const art = document.querySelector('.m-pass-art');
         const nClaim = st.claimable.length + (p.rage ? st.rageClaimable.length : 0);
         setBadge(document.getElementById('btn-pass-open'), nClaim);
@@ -86,7 +104,7 @@
         };
     }
     function buyRage() {
-        if (gemCount() < RAGE_PASS_GEMS) { toast('You need ' + RAGE_PASS_GEMS + ' gems'); sfx('fall'); renderPassScreen(); return; }
+        if (gemCount() < RAGE_PASS_GEMS) { toast('You need ' + RAGE_PASS_GEMS + ' gems'); sfx('fall'); goGemShop(); return; }
         store('rr_gems', gemCount() - RAGE_PASS_GEMS);
         const p = prog(); p.rage = true; saveProg(p);
         sfx('finish'); toast('Rage pass unlocked'); try { buzz([40, 30, 80]); } catch (e) {}

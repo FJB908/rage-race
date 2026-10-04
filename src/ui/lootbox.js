@@ -7,7 +7,7 @@
     const TIER_NAME = { common:'CHEST', rare:'RARE CHEST', epic:'EPIC CHEST', legendary:'LEGENDARY CHEST' };
     const TIER_COLOR = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
     // Tap odds: the level-up chance shrinks with every tap, the open chance grows, so a drop always opens within a handful of taps.
-    const UP0 = 0.45, UP_DECAY = 0.58, UP_TIER = [1, 0.8, 0.5], OPEN0 = 0.16, OPEN_STEP = 0.12;
+    const UP0 = 0.45, UP_DECAY = 0.58, UP_TIER = [1, 0.8, 0.16], OPEN0 = 0.16, OPEN_STEP = 0.12;
     // The supply crate: a heavy steel cube like the players themselves. Glowing tier-coloured bands, the climbing chevrons on the front,
     // a jewel lock, and a light that leaks through the seam. `uid` keeps gradient ids unique when several crates are on screen.
     // Rarer crates get more detail, not just another colour: common is plain steel with a stud, rare adds a jewel and rivets,

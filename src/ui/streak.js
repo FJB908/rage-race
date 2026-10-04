@@ -89,7 +89,7 @@
     saveBtn.addEventListener('click', () => {
         const st = state(); if (!st.canSave) return;
         if (!saveBtn.dataset.armed) { saveBtn.dataset.armed = '1'; saveBtn.classList.add('arm'); setTimeout(() => { saveBtn.dataset.armed = ''; saveBtn.classList.remove('arm'); }, 2600); return; }
-        if (gemCount() < SAVE_GEMS) { toast('You need ' + SAVE_GEMS + ' gems'); return; }
+        if (gemCount() < SAVE_GEMS) { toast('You need ' + SAVE_GEMS + ' gems'); goGemShop(); return; }
         store('rr_gems', gemCount() - SAVE_GEMS);
         const p = prog(); p.streak = { n:p.streak.n, last:yesterday() }; saveProg(p);       // the missed day counts as played
         SFX.play('finish'); toast('Streak saved'); refreshMenu(); render(); Streak.refreshHome();

@@ -3109,6 +3109,10 @@ function store(k, v){
 }
 let _walletPrev = {};
 setInterval(() => { for (const k of ['rr_coins', 'rr_gems']) { const v = Math.max(0, +localStorage.getItem(k) || 0); if (_walletPrev[k] !== undefined && _walletPrev[k] !== v) paintWallet(k); } }, 250);       // safety net: the top bar always follows the real value
+// not enough gems: take the player to the gem shop
+function goGemShop(){
+    showScreen('start'); try { menuTab('shop'); renderShop('resources'); } catch(e){}
+}
 function paintWallet(k){
     const isC = k === 'rr_coins', el = document.getElementById(isC ? 'wallet-num' : 'gem-num'); if (!el) return;
     const v = Math.max(0, +localStorage.getItem(k) || 0), prev = _walletPrev[k];
@@ -4219,9 +4223,9 @@ function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Ma
 // A drop is a pending ticket until it is opened. Opening (see src/ui/lootbox.js) lets the player tap it to
 // level its rarity up; the final tier then decides the rewards (resolveDrop).
 const DROP_TIERS = ['common', 'rare', 'epic', 'legendary'];
-const DROP_COIN_MULT = { common:1, rare:1.75, epic:3, legendary:5 };
-const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, legendary:2.2 };
-const DROP_COSMETIC_CHANCE = { common:0.035, rare:0.09, epic:0.2, legendary:0.85 };
+const DROP_COIN_MULT = { common:1, rare:1.75, epic:3, legendary:9 };
+const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, legendary:3.2 };
+const DROP_COSMETIC_CHANCE = { common:0.022, rare:0.06, epic:0.14, legendary:0.6 };
 const DROP_RARITY_WEIGHTS = {
     common:    { common:60, rare:28, epic:9,  legendary:3 },
     rare:      { common:36, rare:40, epic:18, legendary:6 },
@@ -4242,7 +4246,7 @@ function awardLootDrop(id, base, opts){
     if (p.pendingDrops[id]) return p.pendingDrops[id];
     const r = Math.random();
     const drop = {
-        id, pending:true, tier: (opts && opts.tier) || (r < 0.02 ? 'epic' : r < 0.14 ? 'rare' : 'common'),
+        id, pending:true, tier: (opts && opts.tier) || (r < 0.01 ? 'epic' : r < 0.13 ? 'rare' : 'common'),
         base:{ coins:Math.max(0, Math.round(base.coins || 0)), xp:Math.max(0, Math.round(base.xp || 0)), passPoints:Math.max(0, Math.round(base.passPoints || 0)) },
     };
     p.pendingDrops[id] = drop;
@@ -4266,14 +4270,14 @@ function resolveDrop(id, tier){
     };
     // Gems are very rare: only epic and legendary drops can hold them, and only a legendary one can hold a premium (gem) cosmetic.
     drop.gems = 0;
-    if (Math.random() < ({ epic:0.012, legendary:0.05 }[tier] || 0)) drop.gems = tier === 'legendary' ? 5 + Math.floor(Math.random() * 16) : 5;
+    if (Math.random() < ({ epic:0.012, legendary:0.22 }[tier] || 0)) drop.gems = tier === 'legendary' ? 5 + Math.floor(Math.random() * 16) : 5;
     if (tier === 'legendary' && Math.random() < 0.004){
         const prem = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.premium && i.gemPrice && !i.exclusive && !p.owned.includes(i.id));
         if (prem.length){ drop.cosmetic = prem[Math.floor(Math.random() * prem.length)]; p.owned.push(drop.cosmetic.id); }
     }
     if (drop.gems) addGems(drop.gems);
     const available = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(item => item.price > 0 && !p.owned.includes(item.id));
-    if (!drop.cosmetic && available.length && (p.cosmeticPity >= 24 || Math.random() < DROP_COSMETIC_CHANCE[tier])){
+    if (!drop.cosmetic && available.length && (p.cosmeticPity >= 32 || Math.random() < DROP_COSMETIC_CHANCE[tier])){
         drop.cosmetic = pickCosmetic(available, tier);
         p.owned.push(drop.cosmetic.id);
         p.cosmeticPity = 0;
@@ -4285,6 +4289,9 @@ function resolveDrop(id, tier){
     if (!drop.cosmetic && window.Finishers && Math.random() < ({ common:0.02, rare:0.05, epic:0.1, legendary:0.22 }[tier] || 0)){      // chests can hold finishers too
         const pool = Finishers.FINISHERS.filter(f => f.price > 0 && !f.premium && !p.owned.includes(f.id));
         if (pool.length){ const f = pickCosmetic(pool, tier); p.owned.push(f.id); drop.finisher = { id:f.id, name:f.name, rarity:f.rarity }; }
+    }
+    if (tier === 'legendary'){                                      // legendary chests are rare, so they pay well: a coin booster on top
+        drop.boosts = [{ type:'boost', kind:'coin', mult:2, n:3 }]; if (window.Boost) Boost.grant('coin', 2, 3);
     }
     if (cm > 1){ drop.coins = Math.round(drop.coins * cm); drop.xp = Math.round(drop.xp * cm); drop.passPoints = Math.round(drop.passPoints * cm); drop.boost = cm; }
     p.xp += drop.xp;
@@ -4646,7 +4653,7 @@ document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.addEvent
         const p = prog();
         if (v !== p.name) {
             const cost = (p.nameChanges || 0) >= 1 ? RENAME_GEMS : 0;
-            if (cost && gemCount() < cost) { toast('You need ' + cost + ' gems'); inp.value = p.name; lock(); return; }
+            if (cost && gemCount() < cost) { toast('You need ' + cost + ' gems'); inp.value = p.name; lock(); goGemShop(); return; }
             if (cost) store('rr_gems', gemCount() - cost);
             const q = prog(); q.name = v; q.nameChanges = (q.nameChanges || 0) + 1; saveProg(q); toast('Name changed');
         }

@@ -144,3 +144,5 @@
 .loot-view .lb-view { display:block; font:900 20px/64px "Bricolage Grotesque",system-ui,sans-serif; letter-spacing:.1em; }
 .loot-view:active { transform:translateY(3px); box-shadow:0 3px 0 color-mix(in srgb,var(--tc,#35e0c8) 55%,#000); animation:none; }
 body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-chest .rk-cta, body.await-chest #board, body.await-chest #result-sub { visibility:hidden; pointer-events:none; }
+
+.lb.tier-legendary .lb-rays { display:none; }

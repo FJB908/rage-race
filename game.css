@@ -611,3 +611,11 @@ body.online-race #btn-pause { display: none; }
 #m-skins.trails .m-skin-pv { display:none; }
 #m-skins.trails .tr-pv { width:100%; height:auto; aspect-ratio:2/1; margin:0 0 2px; border-radius:9px; }
 #m-skins.trails .m-skin b { font-size:13px; }
+
+/* shop tabs: two tidy rows instead of a sideways scroll */
+.m-pills { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; overflow:visible; margin:0; padding:0; }
+.m-pills .m-pill { padding:0 4px; height:38px; font-size:13px; display:flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap; }
+.m-pills .m-pill:last-child { grid-column:span 2; }
+.m-pills .m-pill .ico { width:15px; height:15px; }
+
+.m-pass-next { display:block; margin-top:2px; font-style:normal; font-size:11px; font-weight:700; color:#c5bcff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .m-pass-next.claim { color:#ffcf3f; }

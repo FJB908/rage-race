@@ -377,7 +377,7 @@
             b.onclick = () => {
                 if (own) { const q = prog(); q.finisher = eq ? 'f-none' : f.id; saveProg(q); SFX.play('item'); renderShop(grid); return; }
                 const afford = f.premium ? gemCount() >= f.gemPrice : load('rr_coins', 0) >= f.price;
-                if (!afford) { b.classList.add('m-shake'); setTimeout(() => b.classList.remove('m-shake'), 400); SFX.play('fall'); return; }
+                if (!afford) { b.classList.add('m-shake'); setTimeout(() => b.classList.remove('m-shake'), 400); SFX.play('fall'); if (f.premium) { toast('You need ' + f.gemPrice + ' gems'); setTimeout(goGemShop, 450); } return; }
                 if (armed !== b) { grid.querySelectorAll('.arm').forEach(x => x.classList.remove('arm')); b.classList.add('arm'); armed = b; SFX.play('count'); clearTimeout(armT); armT = setTimeout(() => { b.classList.remove('arm'); armed = null; }, 2600); return; }
                 if (f.premium) store('rr_gems', gemCount() - f.gemPrice); else store('rr_coins', load('rr_coins', 0) - f.price);
                 const q = prog(); q.owned.push(f.id); q.finisher = f.id; saveProg(q); SFX.play('pickup'); refreshMenu(); renderShop(grid);
