@@ -13,7 +13,7 @@
     const GT_W = 470;                         // the Gauntlet arena is wider than a normal race (356)
     const FIELD = 32;
     const FULL_DRAW = 4;                      // bots re-drawn layer by layer every frame (nearest to you); the rest use cached pictures
-    window.GT_SPRITE = { w:72, h:72, half:14.4, cy:44.64 };   // cached look pictures: body half-size and where its centre sits (px)
+    window.GT_SPRITE = { w:128, h:128, half:25.6, cy:79.36 };   // cached look pictures: body half-size and where its centre sits (px)
     window.GT_BAND = 0.5;                     // how strongly bots rubber-band to YOU (a normal race: 1); set per stage
 
     const STAGES = [   // bg = the stage's floor tint

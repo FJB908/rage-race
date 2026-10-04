@@ -26,6 +26,10 @@
         if (!isHost()) { toast('Only the party leader picks the mode'); return; }
         const q = prog(); q.lastMode = m; saveProg(q); refreshMenu(); render(); syncMode();
     }
+    const LABEL = { race:'Race · Quick match', gauntlet:'Gauntlet · 32 players' };
+    const modeLabel = () => LABEL[mode()] || 'Pick a mode';
+    // same idea as the Mode row on the home screen: the leader goes to the Play tab to pick, everyone else just sees it
+    function pickMode() { if (!isHost()) { toast('Only the party leader picks the mode'); return; } if (typeof menuTab === 'function') menuTab('play'); }
     function syncMode() { const s = S(); if (s.party && s.party.host === s.uid && s.party.mode !== myMode() && myMode() !== 'other' && window.Social) { s.party.mode = myMode(); Social.setMode(myMode()); } }
     const isHost = () => { const s = S(); return !s.party || s.party.host === s.uid; };
 
@@ -122,7 +126,7 @@
         if (mode === 'race' || !mode) { Social.startParty(); return true; }
         toast('Parties play Quick race and Gauntlet'); return true;
     }
-    window.Party = { members, mode, setMode, intercept, render, active:inParty, standIns:() => (inParty() ? members().slice(1) : []) };
+    window.Party = { members, mode, setMode, modeLabel, pickMode, intercept, render, active:inParty, standIns:() => (inParty() ? members().slice(1) : []) };
     render(); syncMode();
     setInterval(() => { if (!document.hidden) { render(); syncMode(); } }, 4000);          // your own look can change from the shop
 })();

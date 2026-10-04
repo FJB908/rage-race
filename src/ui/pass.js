@@ -129,7 +129,7 @@
         document.getElementById('pz-pts').innerHTML = R('pass', st.pts);
         document.getElementById('pz-lvl').textContent = st.done;
         document.getElementById('pz-next-txt').textContent = st.done >= N ? 'NEXT EPIC CHEST IN' : 'TIER ' + (st.done + 1) + ' IN';
-        document.getElementById('pz-prog-num').innerHTML = st.done >= N ? R('pass', (PASS_END_PTS - st.endInto) + ' to go') : R('pass', (st.cost - st.into) + ' to go');
+        document.getElementById('pz-prog-num').innerHTML = st.done >= N ? R('pass', st.endInto + '/' + PASS_END_PTS) : R('pass', st.into + '/' + st.cost);
         document.getElementById('pz-bar-fill').style.width = (st.done >= N ? Math.round(st.endInto / PASS_END_PTS * 100) : Math.round(st.into / st.cost * 100)) + '%';
         renderRage(p);
         const all = document.getElementById('pz-claimall'), n = st.claimable.length + (p.rage ? st.rageClaimable.length : 0) + st.endReady;
@@ -159,7 +159,7 @@
         if (!end) { end = document.createElement('div'); end.id = 'pz-end'; end.className = 'pz-end'; }
         track.appendChild(end);                      // always the last thing on the track, right after tier 30
         end.className = 'pz-end' + (st.endReady ? ' ready' : '') + (st.done < N ? ' locked' : '');
-        end.innerHTML = '<span class="pze-art">' + icon('drop-epic') + '</span><span class="pze-tx"><b>ENDLESS EPIC CHEST</b><small>' + (st.done < N ? 'Finish tier ' + N + ', then every ' + PASS_END_PTS + ' pass points gives an epic chest' : 'Every ' + PASS_END_PTS + ' pass points &middot; ' + (PASS_END_PTS - st.endInto) + ' to the next') + '</small><i class="pze-bar"><u style="width:' + (st.done < N ? 0 : Math.round(st.endInto / PASS_END_PTS * 100)) + '%"></u></i></span>' + (st.endReady ? '<button type="button" class="pze-claim">CLAIM <b>' + st.endReady + '</b></button>' : '');
+        end.innerHTML = '<span class="pze-art">' + icon('drop-epic') + '</span><span class="pze-tx"><b>ENDLESS EPIC CHEST</b><small>' + (st.done < N ? 'Finish tier ' + N + ', then every ' + PASS_END_PTS + ' pass points gives an epic chest' : 'Every ' + PASS_END_PTS + ' pass points &middot; ' + st.endInto + '/' + PASS_END_PTS + ' to the next') + '</small><i class="pze-bar"><u style="width:' + (st.done < N ? 0 : Math.round(st.endInto / PASS_END_PTS * 100)) + '%"></u></i></span>' + (st.endReady ? '<button type="button" class="pze-claim">CLAIM <b>' + st.endReady + '</b></button>' : '');
         const eb = end.querySelector('.pze-claim'); if (eb) eb.onclick = () => claimEnd();
         requestAnimationFrame(layoutLine);
     };

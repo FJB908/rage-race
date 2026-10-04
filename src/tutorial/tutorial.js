@@ -74,6 +74,7 @@
         get done() { return isDone(); },
         start() {
             curDim = DIMENSIONS.findIndex(d => d.tutorial); active = true; shownStep = -2;
+            if (qLevel > 0) { qLevel = 0; dprCap = QUALITY_STEPS[0].dpr; glowK = QUALITY_STEPS[0].glow; resize(); }      // always the crisp look in the tutorial
             lvStart(0);
             document.body.classList.add('mode-tutorial');
         },

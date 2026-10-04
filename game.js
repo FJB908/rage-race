@@ -2112,7 +2112,7 @@ function draw() {
         if (d>14){
             if (d>MAX_DRAG){ dx=dx/d*MAX_DRAG; dy=dy/d*MAX_DRAG; }
             const col = lp.charged ? 'rgba(53,224,200,0.85)' : lp.chainT>0 ? 'rgba(255,140,160,0.7)' : 'rgba(255,255,255,0.7)';
-            if (gameMode === 'parkour' || gameMode === 'level') {
+            if ((gameMode === 'parkour' || gameMode === 'level') && !(DIMENSIONS[curDim] && DIMENSIONS[curDim].tutorial)) {      // the tutorial teaches with the normal dotted line
                 // Parkour rules: only direction and power, never a hint of where you'll land.
                 // A plain arrow whose length tracks how far you've dragged, up to MAX_DRAG —
                 // past that it simply stops growing.

@@ -309,7 +309,7 @@
     }
 
     /* ------------------------------------------------------------------ rendering ---- */
-    function avatar(look) { return '<canvas class="so-av" width="80" height="80" data-look="' + esc(JSON.stringify(look || {})) + '"></canvas>'; }
+    function avatar(look, lvl) { return '<span class="so-avw"><canvas class="so-av" width="80" height="80" data-look="' + esc(JSON.stringify(look || {})) + '"></canvas>' + (lvl ? '<i class="so-lv">' + lvl + '</i>' : '') + '</span>'; }
     function paintAvatars(scope) {
         scope.querySelectorAll('canvas.so-av').forEach(cv => { try { renderLook(cv, JSON.parse(cv.dataset.look || '{}'), { scale:0.27, cy:0.68 }); } catch (e) {} });
     }
@@ -323,7 +323,7 @@
         inv.innerHTML = !PARTY_ENABLED ? '' : S.invites.map(i => '<div class="so-banner"><span><b>' + esc(i.fromName) + '</b> invited you to a party</span><button type="button" data-a="join-inv" data-id="' + esc(i.id) + '" data-code="' + esc(i.code) + '">JOIN</button><button type="button" class="ghost" data-a="del-inv" data-id="' + esc(i.id) + '">X</button></div>').join('');
 
         const req = [...S.friends].filter(([, v]) => v.status === 'pending' && v.requester !== S.uid);
-        $('soc-req').innerHTML = req.length ? '<h2 class="m-h2">REQUESTS</h2>' + req.map(([u, v]) => { const d = (S.profiles.get(u) || {}).d || {}; return '<div class="so-row">' + avatar(d.look) + '<span class="so-n"><b>' + esc(d.name || 'Player') + '</b><small>Lv ' + (d.lvl || 1) + '</small></span><button type="button" data-a="ok" data-id="' + v.fid + '">ACCEPT</button><button type="button" class="ghost" data-a="no" data-id="' + v.fid + '">X</button></div>'; }).join('') : '';
+        $('soc-req').innerHTML = req.length ? '<h2 class="m-h2">REQUESTS</h2>' + req.map(([u, v]) => { const d = (S.profiles.get(u) || {}).d || {}; return '<div class="so-row">' + avatar(d.look, d.lvl || 1) + '<span class="so-n"><b>' + esc(d.name || 'Player') + '</b></span><button type="button" data-a="ok" data-id="' + v.fid + '">ACCEPT</button><button type="button" class="ghost" data-a="no" data-id="' + v.fid + '">X</button></div>'; }).join('') : '';
 
         const P = S.party, host = P && P.host === S.uid;
         let pc;
@@ -333,10 +333,10 @@
             const slots = [];
             for (let i = 0; i < PARTY_MAX; i++) {
                 const m = S.members[i];
-                slots.push(m ? '<div class="so-slot">' + avatar(m.look) + '<strong>' + esc(m.name) + '</strong><small>' + (m.lvl ? 'Lv ' + m.lvl + ' · ' : '') + (m.uid === P.host ? 'HOST' : (host ? '<a data-a="kick" data-id="' + m.uid + '">REMOVE</a>' : '')) + '</small></div>' : '<div class="so-slot empty">Invite</div>');
+                slots.push(m ? '<div class="so-slot">' + avatar(m.look, m.lvl) + '<strong>' + esc(m.name) + '</strong><small>' + (m.uid === P.host ? 'HOST' : (host ? '<a data-a="kick" data-id="' + m.uid + '">REMOVE</a>' : '')) + '</small></div>' : '<div class="so-slot empty">Invite</div>');
             }
             pc = '<div class="so-party-h"><b>Your party</b><span>' + S.members.length + ' / ' + PARTY_MAX + '</span></div><div class="so-slots">' + slots.join('') + '</div>' +
-                '<div class="so-modes">' + ['race', 'gauntlet'].map(k => '<button type="button" data-a="mode" data-m="' + k + '"' + ((window.Party ? Party.mode() : 'race') === k ? ' class="on"' : '') + (host ? '' : ' disabled') + '>' + (k === 'race' ? 'QUICK RACE' : 'GAUNTLET') + '</button>').join('') + '</div>' +
+                '<button type="button" class="m-row so-mode" data-a="mode-pick"><span class="m-row-l"><span class="m-row-ico">' + (typeof MODE_ICON !== 'undefined' ? icon(MODE_ICON[prog().lastMode] || MODE_ICON.race) : '') + '</span><span><span class="m-kick">MODE</span><span class="m-row-t">' + esc(window.Party ? Party.modeLabel() : 'Race') + '</span></span></span>' + (host ? '<span class="m-row-chg">Change<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>' : '') + '</button>' +
                 '<div class="so-pcode"><span>Party code</span><strong>' + esc(P.code) + '</strong></div>' +
                 (host ? '<button type="button" class="so-big" data-a="start">PLAY</button>' : '<div class="so-wait">Waiting for the host to start</div>') +
                 '<button type="button" class="so-link" data-a="leave">' + (host ? 'Close party' : 'Leave party') + '</button>';
@@ -348,7 +348,7 @@
         acc.sort((a, b) => (online((S.profiles.get(b[0]) || {}).d) ? 1 : 0) - (online((S.profiles.get(a[0]) || {}).d) ? 1 : 0));
         $('soc-list').innerHTML = '<h2 class="m-h2">FRIENDS ' + acc.length + '</h2>' + (acc.length ? acc.map(([u, v]) => {
             const d = (S.profiles.get(u) || {}).d || {}, on = online(d), inParty = S.members.some(m => m.uid === u);
-            return '<div class="so-row">' + avatar(d.look) + '<span class="so-n"><b><i class="dot' + (on ? ' on' : '') + '"></i>' + esc(d.name || 'Player') + '</b><small>Lv ' + (d.lvl || 1) + (d.rk ? ' · ' + esc(d.rk) : '') + '</small></span>' +
+            return '<div class="so-row">' + avatar(d.look, d.lvl || 1) + '<span class="so-n"><b><i class="dot' + (on ? ' on' : '') + '"></i>' + esc(d.name || 'Player') + '</b>' + (d.rk ? '<small>' + esc(d.rk) + '</small>' : '') + '</span>' +
                 (PARTY_ENABLED && P && !inParty ? '<button type="button" data-a="invite" data-id="' + u + '">INVITE</button>' : '') + '<button type="button" class="ghost" data-a="rm" data-id="' + v.fid + '" title="Remove">...</button></div>';
         }).join('') : '<p class="so-p">No friends yet. Share your code or enter a friend\'s code above.</p>') +
             (pend.length ? '<p class="so-p">' + pend.length + ' request' + (pend.length > 1 ? 's' : '') + ' waiting for an answer</p>' : '');
@@ -365,7 +365,7 @@
         else if (a === 'create') createParty();
         else if (a === 'leave') leaveParty();
         else if (a === 'start') { if (window.Party) Party.intercept(Party.mode() === 'gauntlet' ? 'gauntlet' : 'race') || (Party.mode() === 'gauntlet' && Gauntlet.open()); }
-        else if (a === 'mode') { if (window.Party) Party.setMode(t.dataset.m); }
+        else if (a === 'mode-pick') { if (window.Party && Party.pickMode) Party.pickMode(); }
         else if (a === 'invite') invite(id);
         else if (a === 'kick') kick(id);
         else if (a === 'join-inv') { await fs().deleteDoc(dref('invites', id)).catch(() => {}); joinParty(t.dataset.code); }
@@ -396,5 +396,5 @@
         return [...S.friends].filter(([, v]) => v.status === 'accepted').map(([u]) => { const d = (S.profiles.get(u) || {}).d || {}; return { uid:u, name:d.name || 'Player', look:d.look || {}, lvl:d.lvl || 1, online:online(d), inParty:S.members.some(m => m.uid === u) }; })
             .sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
     }
-    window.Social = { setMode, friendList, createParty, joinParty, leaveParty, invite, kick, startParty, pretty, ready:() => !!S.api, answerInvite:(i, ok) => ok ? (fs().deleteDoc(dref('invites', i.id)).catch(() => {}), joinParty(i.code)) : fs().deleteDoc(dref('invites', i.id)).catch(() => {}), stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
+    window.Social = { render, setMode, friendList, createParty, joinParty, leaveParty, invite, kick, startParty, pretty, ready:() => !!S.api, answerInvite:(i, ok) => ok ? (fs().deleteDoc(dref('invites', i.id)).catch(() => {}), joinParty(i.code)) : fs().deleteDoc(dref('invites', i.id)).catch(() => {}), stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
 })();

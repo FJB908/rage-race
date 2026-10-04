@@ -39,7 +39,7 @@ const SFX = (() => {
         if (!ac) {
             const AC = (typeof window !== 'undefined') && (window.AudioContext || window.webkitAudioContext);
             if (!extCtx && !AC) return null;
-            if (extCtx) ac = extCtx; else { try { ac = new AC({ latencyHint: 'balanced' }); } catch (e) { ac = new AC(); } }   // a bit more buffer than 'interactive': fewer underruns when the game is busy drawing
+            if (extCtx) ac = extCtx; else { try { ac = new AC({ latencyHint: 'playback' }); } catch (e) { ac = new AC(); } }   // a bit more buffer than 'interactive': fewer underruns when the game is busy drawing
             comp = ac.createGain(); comp.gain.value = 1.25;
             try {                                       // soft saturation instead of a (laggy) compressor
                 const shaper = ac.createWaveShaper(), cv = new Float32Array(4096);
@@ -446,7 +446,7 @@ const SFX = (() => {
         play(name, arg) { try {
             const now = performance.now(), cd = COOLDOWN[name] !== undefined ? COOLDOWN[name] : (CRITICAL.has(name) ? 0 : 45);
             if (cd && now - (lastPlay[name] || -1e9) < cd) return;
-            if (active > 28 && !CRITICAL.has(name)) return;
+            if (active > 20 && !CRITICAL.has(name)) return;
             lastPlay[name] = now; lastAny = now;
             if (P[name]) P[name](arg);
         } catch (e) {} },
