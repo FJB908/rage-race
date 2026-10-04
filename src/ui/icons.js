@@ -104,6 +104,12 @@
           '<path d="M16 9 H55 L49 22 L55 35 H16 Z" fill="none" stroke="#0d1017" stroke-width="3" stroke-linejoin="round"/>' +
           '<circle cx="13.5" cy="6" r="4" fill="#35e0c8" stroke="#0d1017" stroke-width="2.4"/>' +
         '</symbol>' +
+        '<symbol id="ico-mode-build" viewBox="0 0 64 64">' +
+          '<rect x="6" y="44" width="30" height="9" rx="4" fill="#4ade80" stroke="#0d3a1c" stroke-width="2.5"/>' +
+          '<rect x="30" y="26" width="28" height="9" rx="4" fill="#7c6bff" stroke="#1d1650" stroke-width="2.5"/>' +
+          '<path d="M10 14 l7 -7 l7 7 l-3 3 l-4 -4 l-4 4z" fill="#ff5470" stroke="#5a0f24" stroke-width="2" stroke-linejoin="round"/>' +
+          '<path d="M44 8 l10 10 M44 18 l10 -10" stroke="#ffcf3f" stroke-width="4" stroke-linecap="round"/>' +
+        '</symbol>' +
         '<symbol id="ico-mode-escape" viewBox="0 0 64 64">' +
           '<path d="M3 47 Q11 41 19 47 T35 47 T51 47 T61 47 V62 H3 Z" fill="#14060c" opacity=".5" transform="translate(0 2)"/>' +
           '<path d="M3 47 Q11 41 19 47 T35 47 T51 47 T61 47 V62 H3 Z" fill="url(#gfl)" stroke="#7a1408" stroke-width="3" stroke-linejoin="round"/>' +

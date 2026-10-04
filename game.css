@@ -647,3 +647,8 @@ body.online-race #btn-pause { display: none; }
 .m-missbtn .mm-dots u { width:7px; height:7px; }
 .m-missbtn .ico { margin-top:-8px; }
 .m-split .m-pass-entry.m-half { min-width:0; }
+
+.m-card.pink { --mc:#ff8ae6; border-color:rgba(255,138,230,.5); } .m-card.pink b { color:#ff8ae6; }
+.m-card.wide { min-height:84px; }
+.new-tag { font-style:normal; font-size:10px !important; font-weight:900; letter-spacing:.1em; padding:3px 8px; border-radius:99px; background:#ff8ae6; color:#2a0c24; }
+body.build-race #finish-menu { display:none !important; }

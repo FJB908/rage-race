@@ -2,9 +2,9 @@
 const GRAVITY = 2400;
 const MAX_DRAG = 150;
 const POWER = 9.5;              // max launch speed ~1425
-const FINISH_Y = 400;
+let FINISH_Y = 400;
 const START_Y = 13000;
-const TRACK = START_Y - FINISH_Y;
+let TRACK = START_Y - FINISH_Y;
 const BOOST_MULT = 1.45;
 const MAX_UP_VEL = 2400;   // just above a fully-charged Boost jump (~2066) alone, so a normal
 const ROLL_TIME = 1.1;

@@ -1265,7 +1265,7 @@ function updateBot(p, dt) {
     // Consider platforms in a reachable window above
     let best = null, secondBest = null, nearest = null, nearestD = Infinity;
     for (const pl of platforms) {
-        if (!pl.active) continue;
+        if (!pl.active || pl.type === 'spike') continue;
         if (pl === p.plat) continue;
         if (pl.y >= p.y - 20) continue;               // must be above
         if (pl.y < p.y - BOT_BASE.reach) continue;    // beyond this bot's ambition
@@ -1281,7 +1281,7 @@ function updateBot(p, dt) {
     // Fallback: if nothing above is reachable, hop to the best nearby platform
     if (!best) {
         for (const pl of platforms) {
-            if (!pl.active || pl === p.plat) continue;
+            if (!pl.active || pl === p.plat || pl.type === 'spike') continue;
             if (Math.abs(pl.y - p.y) > 300) continue;
             const e = evalTarget(p, pl, ceilings);
             if (!e) continue;
@@ -1314,6 +1314,9 @@ function updateBot(p, dt) {
     if (mistakeP && nearest && nearest !== best && Math.random() < mistakeP) best = nearest;
 
     let { vx, vy } = best.sol;
+    if (window.buildMatch && window.Build && window.Build.arcHitsSpike(p, vx, vy)) {            // Build Race: look before you jump
+        if (secondBest && !window.Build.arcHitsSpike(p, secondBest.sol.vx, secondBest.sol.vy)) { best = secondBest; vx = best.sol.vx; vy = best.sol.vy; }
+    }
 
     // Rubber-banding: keep the race close to the human so you actually meet the bots.
     // HUMAN bots are deliberately exempt — the whole point is that they read as a real
@@ -1539,7 +1542,7 @@ function stepPlayer(p, dt) {
             const pBottomNow  = p.y + p.r;
             for (const pl of platforms) {
                 if (!pl.active) continue;
-                if (pl.type==='finish') continue;    // finishing is handled unconditionally above
+                if (pl.type==='finish' || pl.type==='spike') continue;    // finishing is handled unconditionally above; spikes are a hazard, never a floor
                 if (pl === p.dropPlat && p.dropT > 0) continue;   // stomped through this one
                 const top = pl.y - pl.h/2;
                 if (pBottomPrev <= top + 2 && pBottomNow >= top) {
@@ -1898,6 +1901,7 @@ function update(dt) {
     else if (gameMode === 'parkour') updateParkour(dt);
     else if (gameMode === 'level') updateLevel(dt);
     else if (gameMode === 'gauntlet') updateGauntlet(dt);
+    else if (window.buildMatch && window.Build) Build.update(dt);
 
     // camera — follows you normally, or the player you're spectating after you've finished
     const escapeSpectate = gameMode === 'escape' && players[0].escape.dead
@@ -1964,6 +1968,7 @@ function updatePosition() {
 
 /* ---------- End game ---------- */
 function checkEnd() {
+    if (window.buildMatch && window.Build) return Build.checkEnd();
     if (finishedCount >= 4) {
         state = 'finished';
         setTimeout(showResults, 1100);
@@ -2145,6 +2150,14 @@ function draw() {
             ctx.fillStyle=PLAT.fragile; roundRect(-pl.w/2,-pl.h/2,pl.w,pl.h,4); ctx.fill();
             ctx.globalAlpha=1; ctx.restore(); continue;
         }
+        if (pl.type === 'spike'){
+            const n = Math.max(4, Math.round(pl.w/14)), tw = pl.w/n, h = pl.h;
+            ctx.shadowBlur = 10; ctx.shadowColor = '#ff5470'; ctx.fillStyle = '#ff5470';
+            for (let i = 0; i < n; i++){ ctx.beginPath(); ctx.moveTo(-pl.w/2 + i*tw, h/2); ctx.lineTo(-pl.w/2 + (i+0.5)*tw, -h*0.95); ctx.lineTo(-pl.w/2 + (i+1)*tw, h/2); ctx.closePath(); ctx.fill(); }
+            ctx.shadowBlur = 0; ctx.fillStyle = '#7a1230'; ctx.fillRect(-pl.w/2, h/2 - 4, pl.w, 5);
+            if (pl.owner !== undefined){ ctx.fillStyle = PCOL[pl.owner]; ctx.fillRect(-pl.w/2, h/2 + 3, pl.w, 3); }
+            ctx.restore(); continue;
+        }
         // Draw the slide-range track for moving platforms (in world space, before local translate)
         if (pl.type==='moving' && pl.range>0){
             ctx.save();
@@ -2174,6 +2187,7 @@ function draw() {
         ctx.fillStyle=col;
         roundRect(-pl.w/2,-pl.h/2,pl.w,pl.h,5); ctx.fill();
         ctx.shadowBlur=0;
+        if (pl.owner !== undefined){ ctx.fillStyle = PCOL[pl.owner]; ctx.fillRect(-pl.w/2 + 5, pl.h/2 - 4, pl.w - 10, 3); }    // Build Race: who placed it
 
         if (pl.ceiling){
             const uh = 18, w = pl.w;
@@ -2586,6 +2600,7 @@ function grantFinishedRaceReward(){            // a finished race always pays ou
     try { rewardRace(order.indexOf(players[0]) + 1, true, matchLootId); } catch(e){}
 }
 function restartRace() {
+    if (window.buildMatch && window.Build){ Build.leave(false); window.buildQueued = true; startMatchmaking(); return; }
     grantFinishedRaceReward();
     if (typeof stopSpectate === 'function') stopSpectate();
     state = 'menu'; dragging = false;
@@ -2728,7 +2743,7 @@ function leaveRaceToMenu(){
 }
 finishMenuBtn.addEventListener('click', e => { e.stopPropagation(); SFX.play('count'); leaveRaceToMenu(); });
 function maybePromptBotsDone() {
-    if (botsDonePrompted || !players[0].finished) return;   // only makes sense once YOU'RE already done
+    if (window.buildMatch || botsDonePrompted || !players[0].finished) return;   // only makes sense once YOU'RE already done
     if (players.slice(1).every(b => b.finished)) return;    // everyone's in — the race is just ending normally
     botsDonePrompted = true;
     const place = [...players].sort((a,b)=>{
@@ -2756,6 +2771,7 @@ let matchHumanSlot = 0;    // 0 = no human-profile bot this race; 1-3 = which sl
 
 function startMatchmaking() {
     window.rankedMatch = false; window.RACE_BAND = undefined; window.matchBots = null; window.partyMatch = null;   // a normal quick match
+    window.buildMatch = !!window.buildQueued; window.buildQueued = false; if (!window.buildMatch && window.Build) Build.leave(false);
     matchLootId = newLootId('race');
     // Decide ONCE, before the lobby even builds, whether this match has a "human" bot and
     // who it is — so the name shown in the lobby always matches who behaves that way in
@@ -2779,6 +2795,7 @@ function startMatchmaking() {
 function startGame() {
     gameMode = 'race'; esc = null; pk = null; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level'); lv = null;
     showScreen(''); // hide all overlays
+    if (window.buildMatch && window.Build) return Build.begin();                 // Build Race makes its own course
     generateLevel(matchSeed); initPlayers(); botsDonePrompted = false;
     if (window.matchBots && window.BotRoster) BotRoster.applyTo(players.slice(1), window.matchBots);   // Ranked: roster opponents with their own skill
     // Quick match: now and then one bot is genuinely good (a roster bot rated like a top player), so wins are earned. Not for beginners.
@@ -3900,8 +3917,8 @@ function randomBotLook(){
     };
 }
 
-const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race' };
-const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked' };
+const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · Place & race' };
+const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
 let _freeIds = null;
 function freeItemIds(){
     if (!_freeIds) _freeIds = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.price === 0 && !i.premium && !i.exclusive && !i.priceLock).map(i => i.id);
@@ -4387,6 +4404,7 @@ function playSelected(){
     else if (m === 'parkour') openLevels();
     else if (m === 'gauntlet') Gauntlet.open();
     else if (m === 'ranked') Ranked.open();
+    else if (m === 'build') Build.open();
     else startMatchmaking();
 }
 document.getElementById('btn-home-play').addEventListener('click', playSelected);
