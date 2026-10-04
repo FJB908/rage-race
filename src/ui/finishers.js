@@ -326,7 +326,9 @@
     const mounts = new Set(); let raf = 0, prevT = 0;
     function cube(c, S) {
         const g = c.createLinearGradient(0, -S, 0, S); g.addColorStop(0, '#6ff0dc'); g.addColorStop(1, '#1fb8a3');
-        c.fillStyle = g; c.strokeStyle = '#0b4a42'; c.lineWidth = 2; c.beginPath(); c.roundRect(-S, -S, S * 2, S * 2, S * .3); c.fill(); c.stroke();
+        c.fillStyle = g; c.strokeStyle = '#0b4a42'; c.lineWidth = 2; c.beginPath();
+        const r = S * .3, x0 = -S, y0 = -S, w = S * 2;                       // rounded square by hand (older phones have no roundRect)
+        c.moveTo(x0 + r, y0); c.arcTo(x0 + w, y0, x0 + w, y0 + w, r); c.arcTo(x0 + w, y0 + w, x0, y0 + w, r); c.arcTo(x0, y0 + w, x0, y0, r); c.arcTo(x0, y0, x0 + w, y0, r); c.closePath(); c.fill(); c.stroke();
         c.fillStyle = '#0d1017'; for (const x of [-S * .42, S * .42]) { c.beginPath(); c.arc(x, -S * .1, S * .17, 0, TAU); c.fill(); }
     }
     function step(m, dt) {
@@ -346,12 +348,12 @@
         for (const m of mounts) {
             if (!m.cv.isConnected) { mounts.delete(m); continue; }
             const r = m.cv.getBoundingClientRect(); if (!r.width || r.bottom < 0 || r.top > innerHeight) continue;
-            step(m, dt);
+            try { step(m, dt); } catch (e) { m.sim = null; m.idle = 1; }
         }
         if (mounts.size) raf = requestAnimationFrame(tick); else prevT = 0;
     }
     function mount(cv, f, opts) {
-        const m = Object.assign({ cv, f, ctx: cv.getContext('2d'), sim: null, idle: Math.random() * .5, age: 0 }, opts || {});
+        const m = Object.assign({ cv, f, ctx: cv.getContext('2d'), sim: null, idle: Math.random() * .15, age: 0, hold: .35 }, opts || {});
         mounts.add(m); if (!raf) raf = requestAnimationFrame(tick); return m;
     }
 

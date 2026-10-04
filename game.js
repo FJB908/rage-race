@@ -796,13 +796,13 @@ function rollItem(p){
     // Quake needs SOME gap to the leader before it can appear (never in 1st), then ramps up:
     // a real but modest chance in 2nd, growing into a strong comeback tool in 3rd/4th.
     let quakeW = others ? Math.max(0, f - 0.18) * 1.1 : 0;
-    if (gameMode === 'gauntlet') quakeW *= 0.25;                  // 32 players would shake the course constantly
+    if (gameMode === 'gauntlet') quakeW = 0;                      // no earthquakes in the Gauntlet
     // Shield is defensive: more useful (and more common) the further ahead you are —
     // you're the one everyone else's attacks are aimed at.
     const shieldW = 0.16 + 0.16*(1-f);
     // Wind is a mild offensive tool for whoever's behind: it doesn't touch the caster,
     // and a modest chance even near the front keeps it from feeling exclusively "loser-only".
-    const windW = others ? 0.10 + 0.20*f : 0;
+    const windW = (others && gameMode !== 'gauntlet') ? 0.10 + 0.20*f : 0;     // and no wind there either
     // UFO is a comeback lifeline: last place (or near it), and the further you've fallen
     // behind the next player up, the likelier it gets.
     let ufoW = 0;
@@ -1063,7 +1063,7 @@ function startQuake(p){
     const margin = 260;
     const candidates = platforms.filter(pl =>
         pl.active && pl.type !== 'safety' && pl.type !== 'finish' && pl.type !== 'moving' &&
-        pl !== p.plat && pl.y < avgY - margin && pl.y > avgY - margin - 900);
+        pl !== p.plat && !players.some(o => o.plat === pl && o.mode === 'idle') && pl.y < avgY - margin && pl.y > avgY - margin - 900);
     candidates.sort((a,b) => b.y - a.y);              // closest-above first
     const hitList = candidates.slice(0, 6);
     for (const pl of hitList){ pl.quakeWarn = QUAKE_WARN; pl.quakeDown = 0; }
@@ -1072,19 +1072,7 @@ function startQuake(p){
     // actually FALLS a bounded distance — no teleport, you can see it happen. A short
     // warning shake plays first, then gravity does the rest at a boosted fall speed so
     // it reads as "the ground gave way", not a random jump in position.
-    let shaken = 0;
-    for (const o of alive){
-        if (o === p || o.mode !== 'idle') continue;      // only someone standing on a platform loses the ground; nobody is hit mid-air
-        const lead = p.y - o.y;                        // how far ahead o is of the caster
-        if (lead < margin) continue;
-        if (shieldBlocks(o)){ if (p.local) floatText(o.x, o.y - o.r - 18, 'BLOCKED!', ITEMS.shield.color); continue; }
-        const drop = Math.min(QUAKE_DROP, lead * 0.55);
-        o.quakePending = QUAKE_WARN;                    // warning shake first, THEN the fall triggers
-        o.quakeDrop = drop;
-        o.quakeShakeT = QUAKE_WARN;                      // visual shake while pending
-        shaken++;
-    }
-
+    const shaken = 0;                                  // nobody is knocked off their platform any more: the quake only shakes empty platforms
     ring(p.x, p.y, ITEMS.quake.color, 70);
     burst(p.x, p.y, ITEMS.quake.color, 20, 220);
     if (p.local) camShake = Math.max(camShake, 6);
@@ -1106,9 +1094,10 @@ function updateQuakes(dt){
         if (pl.quakeWarn > 0){
             pl.quakeWarn -= dt;
             if (pl.quakeWarn <= 0){
-                pl.quakeWarn = 0; pl.quakeDown = QUAKE_DOWN; pl.active = false; pl.respawn = 0;
+                pl.quakeWarn = 0;
+                if (players.some(o => o.plat === pl && o.mode === 'idle')) continue;          // somebody stands on it: it stays
+                pl.quakeDown = QUAKE_DOWN; pl.active = false; pl.respawn = 0;
                 burst(pl.x, pl.y, ITEMS.quake.color, 18, 200);
-                for (const p of players) if (p.mode === 'idle' && p.plat === pl){ p.mode='air'; p.plat=null; }
             }
         } else if (pl.quakeDown > 0){
             pl.quakeDown -= dt;
@@ -3119,6 +3108,7 @@ function store(k, v){
     if (window.Cloud) Cloud.touch();
 }
 let _walletPrev = {};
+setInterval(() => { for (const k of ['rr_coins', 'rr_gems']) { const v = Math.max(0, +localStorage.getItem(k) || 0); if (_walletPrev[k] !== undefined && _walletPrev[k] !== v) paintWallet(k); } }, 250);       // safety net: the top bar always follows the real value
 function paintWallet(k){
     const isC = k === 'rr_coins', el = document.getElementById(isC ? 'wallet-num' : 'gem-num'); if (!el) return;
     const v = Math.max(0, +localStorage.getItem(k) || 0), prev = _walletPrev[k];
@@ -4319,12 +4309,17 @@ function renderLootDrop(containerId, drop){
     const tier = drop.tier || 'common';
     const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', legendary:'#ffcf3f' };
     panel.classList.remove('opening'); panel.classList.add('big');
-    panel.innerHTML = `<button class="loot-big tier-${tier}" type="button" aria-label="Open the chest"><span class="lb-crate">${LB_CHEST('p' + Math.random().toString(36).slice(2, 6), tier)}</span><span class="lb-tap">TAP TO OPEN</span></button>`;
-    panel.querySelector('.loot-big').addEventListener('click', event => {
+    // after a match the only thing to press is VIEW RESULTS: it opens the chest straight away, then the results and the other buttons appear
+    document.body.classList.add('await-chest');
+    clearInterval(renderLootDrop._wd);
+    renderLootDrop._wd = setInterval(() => { if (!panel.isConnected || !panel.querySelector('.loot-view')) { document.body.classList.remove('await-chest'); clearInterval(renderLootDrop._wd); } }, 800);
+    panel.innerHTML = `<button class="loot-big loot-view tier-${tier}" type="button" aria-label="View results"><span class="lb-view">VIEW RESULTS</span></button>`;
+    panel.querySelector('.loot-view').addEventListener('click', event => {
         const button = event.currentTarget;
         if (button.disabled) return;
         button.disabled = true; button.classList.add('go');
         openLootbox(drop, { onDone: final => {
+            document.body.classList.remove('await-chest'); clearInterval(renderLootDrop._wd);
             final = final || drop;
             const chips = [R('coin', final.coins || 0, {plus:true}), R('xp', final.xp || 0, {plus:true})];
             if (final.passPoints) chips.push(R('pass', final.passPoints, {plus:true}));
@@ -4482,7 +4477,7 @@ function renderShop(cat){
         const byCanvas = new Map(); grid.querySelectorAll('.m-skin').forEach((card, i) => { const cv = card.querySelector('canvas.tr-pv'); if (cv) byCanvas.set(cv, card.dataset.tid); });
         const loop = now => {
             if (grid.hidden || !grid.isConnected || !grid.classList.contains('trails')) return;
-            for (const cv of tps){ const r = cv.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight || !r.width) continue; const tr = TRAIL_BY_ID[byCanvas.get(cv)]; if (tr) { try { drawTrailPreview(cv, tr, 0.4 + (now / 1000) % 3.4, 1.7); } catch (e) {} } }
+            for (const cv of tps){ const r = cv.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight || !r.width) continue; const tr = TRAIL_BY_ID[byCanvas.get(cv)]; if (tr) { try { drawTrailPreview(cv, tr, now / 1000, 1.7, true); } catch (e) {} } }
             renderShop._trRaf = requestAnimationFrame(loop);
         };
         renderShop._trRaf = requestAnimationFrame(loop);

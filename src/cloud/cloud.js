@@ -68,6 +68,8 @@
     function mergeProfile(a, b, aNewer) {
         if (!a || !b) return a || b;
         const nw = aNewer ? a : b, od = aNewer ? b : a, o = Object.assign({}, od, nw);   // newer wins: name, equipped, unknown fields
+        const dflt = n => !n || n === 'Player';                                            // never let the default name replace a chosen one
+        if (dflt(o.name) && !dflt(od.name)) o.name = od.name;
         MAX_FIELDS.forEach(k => { o[k] = Math.max(num(a[k]), num(b[k])); });
         o.passClaimed = union(a.passClaimed, b.passClaimed); o.lvClaimed = union(a.lvClaimed, b.lvClaimed); o.rageClaimed = union(a.rageClaimed, b.rageClaimed); o.rage = !!(a.rage || b.rage); o.emotes = union(a.emotes, b.emotes); o.owned = union(a.owned, b.owned);
         o.lootGrants = Object.assign({}, od.lootGrants, nw.lootGrants);          // ids that were already granted: never grant twice
@@ -143,6 +145,7 @@
             return false;
         }
         const merged = pristine(local) ? remote : merge(local, remote);
+        if (pristine(local) && merged.d.profile && local.d.profile && local.d.profile.name && local.d.profile.name !== 'Player' && (!merged.d.profile.name || merged.d.profile.name === 'Player')) merged.d.profile.name = local.d.profile.name;
         const changed = JSON.stringify(merged.d) !== JSON.stringify(local.d);
         if (changed) applySnapshot(merged);
         const needPush = JSON.stringify(merged.d) !== JSON.stringify(remote.d);

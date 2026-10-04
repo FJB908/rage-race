@@ -71,14 +71,17 @@
         c.globalAlpha = 1;
     };
     // Animated/static preview on a small canvas. t = seconds into the loop.
-    window.drawTrailPreview = function (cv, trail, t, zoom) {
+    window.drawTrailPreview = function (cv, trail, t, zoom, loop) {
         const c = cv.getContext('2d'), W = cv.width, H = cv.height; t = t === undefined ? 1.15 : t;
         c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
         const life = trailLife(trail), rate = trailRate(trail), u = H / 120 * (zoom || 1);
         c.setTransform(u, 0, 0, u, 0, 0);
-        const ww = W / u, hh = H / u, pathX = e => ww * .5 + Math.sin(e * 1.1 - 1.1) * ww * .34, pathY = e => hh * .5 + Math.sin(e * 2.6) * hh * .2;
+        // loop = true: the path repeats exactly every P seconds (a whole number of trail samples), so the animation restarts without a visible jump
+        const N = loop ? Math.max(8, Math.round(3.2 / rate)) : 0, P = N * rate, w1 = loop ? TAU / P : 1.1, w2 = loop ? 2 * w1 : 2.6;
+        if (loop) t = life + ((t % P) + P) % P;
+        const ww = W / u, hh = H / u, pathX = e => ww * .5 + Math.sin(e * w1 - (loop ? 0 : 1.1)) * ww * .34, pathY = e => hh * .5 + Math.sin(e * w2) * hh * .2;
         const samples = [], first = Math.max(0, t - life), k0 = Math.floor(first / rate);
-        for (let k = k0; k * rate <= t; k++) { const e = k * rate; samples.push({ x:pathX(e), y:pathY(e), age:t - e, s:fract(Math.sin(k * 12.9898) * 43758.5453) }); }
+        for (let k = k0; k * rate <= t; k++) { const e = k * rate; samples.push({ x:pathX(e), y:pathY(e), age:t - e, s:fract(Math.sin((loop ? ((k % N) + N) % N : k) * 12.9898) * 43758.5453) }); }
         if (trail.fx) drawTrailFx(c, trail, samples, 1);
         else { c.fillStyle = trail.color || '#fff'; for (const s of samples) { c.globalAlpha = Math.max(0, 1 - s.age / .52) * .8; c.beginPath(); c.arc(s.x, s.y, 2 + (1 - s.age / .52) * 3.5, 0, TAU); c.fill(); } c.globalAlpha = 1; }
         const hx = pathX(t), hy = pathY(t); c.fillStyle = '#35e0c8'; c.strokeStyle = '#0d1017'; c.lineWidth = 2; c.beginPath(); c.roundRect ? c.roundRect(hx - 12, hy - 12, 24, 24, 4) : c.rect(hx - 12, hy - 12, 24, 24); c.fill(); c.stroke();

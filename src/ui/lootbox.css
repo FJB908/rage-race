@@ -138,3 +138,9 @@
 .loot-drop:has(.loot-crate.opened) { flex-direction: column; gap: 10px; }
 .loot-drop .loot-info { align-items: center; flex: none; }
 .loot-drop .loot-items { justify-content: center; }
+
+/* after a match: VIEW RESULTS is the only thing you can press, the chest opens by itself */
+.loot-view { width:min(78vw,320px); min-height:64px; border-radius:18px; background:var(--tc,#35e0c8); color:#0d1017; box-shadow:0 6px 0 color-mix(in srgb,var(--tc,#35e0c8) 55%,#000), 0 0 26px -4px var(--tc,#35e0c8); animation:lootBob 2.2s ease-in-out infinite; }
+.loot-view .lb-view { display:block; font:900 20px/64px "Bricolage Grotesque",system-ui,sans-serif; letter-spacing:.1em; }
+.loot-view:active { transform:translateY(3px); box-shadow:0 3px 0 color-mix(in srgb,var(--tc,#35e0c8) 55%,#000); animation:none; }
+body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-chest .rk-cta, body.await-chest #board, body.await-chest #result-sub { visibility:hidden; pointer-events:none; }

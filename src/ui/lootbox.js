@@ -271,29 +271,47 @@
             skipBtn.classList.remove('show'); btn.classList.add('show'); if (final.cosmetic) addEquip(o, final.cosmetic); else if (final.finisher) addEquipFin(o, Finishers.BY[final.finisher.id] || final.finisher);
             btn.onclick = () => { sfx('count'); o.close(() => { if (opts.onDone) opts.onDone(final); }); };
         }
-        async function tap() { try { await tapInner(); } catch (e) { if (!opened) busy = false; } }      // an error mid-animation must never leave the crate stuck
-        async function tapInner() {
+        // Taps count the moment they land: four fingers at once are four taps (they are batched into one animation)
+        let queued = 0, draining = false;
+        async function tap(k) { try { await tapInner(k || 1); } catch (e) { if (!opened) busy = false; } }      // an error mid-animation must never leave the crate stuck
+        async function drain() {
+            if (draining) return; draining = true;
+            try {
+                await wait(18);                                       // fingers that land together are batched
+                while (queued > 0 && !opened) {
+                    if (busy) { await wait(30); continue; }
+                    const k = Math.min(queued, 12); queued -= k; await tap(k);
+                }
+            } finally { draining = false; queued = opened ? 0 : queued; }
+        }
+        async function tapInner(k) {
             if (busy || opened) return; busy = true;
-            const n = taps; taps++;
+            let up = false, openNow = false;
+            const n0 = taps;
+            for (let i = 0; i < k && !openNow; i++) {
+                const n = taps++;
+                if (tier !== 'legendary' && !opts.fixed && Math.random() < upChance(n)) { tier = TIERS[TIERS.indexOf(tier) + 1]; up = true; continue; }
+                if (Math.random() < Math.min(1, OPEN0 + OPEN_STEP * n)) openNow = true;
+            }
+            const n = Math.max(0, taps - 1);
             el.style.setProperty('--amp', Math.min(1.8, .7 + n * .25).toFixed(2));
             chest.classList.remove('tap'); void chest.offsetWidth; chest.classList.add('tap');
             el.style.setProperty('--charge', Math.min(.9, .12 + n * .12).toFixed(2));
             sfx('count'); buzz(18 + n * 6);
-            const p = chestPos(); o.emit(6, { x:p.x, y:p.y, speed:240, size:6, colors:[TIER_COLOR[tier], '#fff'], g:300 });
-            await wait(300); chest.classList.remove('tap');
-            const up = tier !== 'legendary' && !opts.fixed && Math.random() < upChance(n);
+            const p = chestPos(); o.emit(5 + Math.min(k, 6) * 2, { x:p.x, y:p.y, speed:240, size:6, colors:[TIER_COLOR[tier], '#fff'], g:300 });
+            await wait(openNow || k > 1 ? 160 : 300); chest.classList.remove('tap');
             if (up) {
-                tier = TIERS[TIERS.indexOf(tier) + 1]; paint();
+                paint();
                 o.flash(); o.shake(); buzz([30, 30, 50]); sfx('boost'); sfx('finish');
                 const ring = o.$('.lb-ring'); ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go');
                 const q = chestPos(); o.emit(60, { x:q.x, y:q.y, speed:520, size:9, colors:[TIER_COLOR[tier], '#fff'], g:300 });
                 title.classList.remove('pop'); void title.offsetWidth; title.classList.add('pop');
-                await wait(420); busy = false; return;
+                if (!openNow) { await wait(420); busy = false; return; }
             }
-            if (Math.random() < Math.min(1, OPEN0 + OPEN_STEP * n)) { await open(); return; }
+            if (openNow) { await open(); return; }
             busy = false;
         }
-        chest.addEventListener('pointerdown', tap);
+        chest.addEventListener('pointerdown', () => { if (opened) return; queued++; drain(); });
         skipBtn.onclick = () => { skipped = true; skipBtn.classList.remove('show'); };
         setTimeout(() => { const p = chestPos(); o.shake(); buzz(35); sfx('land'); o.emit(26, { x:p.x, y:p.y + chest.offsetHeight * .38, dir:-Math.PI / 2, spread:2.8, speed:300, size:7, colors:['#8b95a7', TIER_COLOR[tier]], g:700 }); el.classList.add('ready'); busy = false; }, 900);
     };
