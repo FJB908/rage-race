@@ -179,6 +179,7 @@
         // the 31 rivals are roster bots around your level (a wide pool: some weak, some very good)
         const centre = Math.max(1200, prog().rk.mmr + 120);
         const crew = BotRoster.pick(FIELD - 1, { mmr:centre, spread:240 });
+        (window.gauntletParty || []).forEach((m, k) => { if (crew[k]) crew[k] = Object.assign({}, crew[k], { name:m.name, look:Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, m.look || {}) }); });   // party members stand in until Gauntlet runs online
         const top = crew.reduce((best, b) => (!best || b.mmr > best.mmr) ? b : best, null);
         crew.forEach((rb, k) => {
             const i = k + 1, b = makePlayer({ id:i, name:rb.name, local:false, color:skinById(rb.look.skin).color,

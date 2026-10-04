@@ -2002,7 +2002,7 @@ function showResults() {
     const msgs = ["Unbeatable.","Silver, so close.","Bronze, solid.","Fourth. Rage!"];
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
-    sub.innerHTML = (msgs[you-1] || "") + (rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
+    sub.innerHTML = (msgs[you-1] || "") + (rw.noRewards ? '  ·  Friendly match, no rewards' : rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
     { const me = sorted.find(p => p.local);                      // how close it was
       if (me && me.finished){
         let line = '';
@@ -4489,6 +4489,7 @@ function refreshMenu(){
 
 // Rewards after a race (place-based), shown on the results screen
 function rewardRace(place, finished, lootId){
+    if (window.partyMatch && partyMatch.noRewards) return { noDrop:true, noRewards:true, coins:0, xp:0, passPoints:0 };     // a match with only lobby members pays nothing (no farming with friends)
     const id = lootId || newLootId('race');
     const coins0 = finished ? [60, 40, 25, 15][place-1] || 10 : 10;
     const coins = window.Boost ? Boost.coins(coins0, id) : coins0;       // coin booster
@@ -4525,6 +4526,8 @@ function selectMode(mode){
 }
 function playSelected(){
     const m = prog().lastMode;
+    window.gauntletParty = null;
+    if (window.Party && Party.intercept(m)) return;                    // in a party the leader starts for everyone
     if (m === 'escape') startEscape();
     else if (m === 'parkour') openLevels();
     else if (m === 'gauntlet') Gauntlet.open();

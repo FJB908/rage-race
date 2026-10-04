@@ -7,7 +7,7 @@
     const ALPHA = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
     const ONLINE_MS = 6 * 60 * 1000, INVITE_MS = 30 * 60 * 1000, PARTY_MAX = 4;
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
-    const PARTY_ENABLED = false;                    // parties are parked until the server version: everything below stays, only the entry points are closed
+    const PARTY_ENABLED = true;                     // parties run on Firestore + the Realtime Database; set false to park them again
     const root = $('soc-root');
     if (!root) return;
 
@@ -274,7 +274,7 @@
         if (!PARTY_ENABLED) return;
         if (typeof state !== 'undefined' && state !== 'menu') return;
         S.boardDone = false;
-        window.partyMatch = { code:S.party.code, token:d.token, seed:d.seed, n:S.members.length, live:!!(d.live && RT) };
+        window.partyMatch = { code:S.party.code, token:d.token, seed:d.seed, n:S.members.length, live:!!(d.live && RT), noRewards:S.members.length >= PARTY_MAX };      // 4 lobby members and no other players: no rewards
         window.rankedMatch = false; window.RACE_BAND = 0;
         window.matchBots = window.partyMatch.live ? null : (window.BotRoster ? BotRoster.pick(3, { mmr:Math.max(1000, prog().rk.mmr), spread:160 }) : null);
         matchSeed = d.seed; matchLootId = newLootId('party'); matchBotNames = window.matchBots ? window.matchBots.map(b => b.name) : matchBotNames; matchHumanSlot = 0;
@@ -351,6 +351,7 @@
         }).join('') : '<p class="so-p">No friends yet. Share your code or enter a friend\'s code above.</p>') +
             (pend.length ? '<p class="so-p">' + pend.length + ' request' + (pend.length > 1 ? 's' : '') + ' waiting for an answer</p>' : '');
         paintAvatars(root);
+        try { window.dispatchEvent(new Event('party-change')); } catch (e) {}
     }
 
     root.addEventListener('click', async e => {
@@ -387,5 +388,10 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden && S.api) publish(true); });
     ensure();
 
-    window.Social = { stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
+    // what the home screen needs: members (you first), friends to invite, incoming invites
+    function friendList() {
+        return [...S.friends].filter(([, v]) => v.status === 'accepted').map(([u]) => { const d = (S.profiles.get(u) || {}).d || {}; return { uid:u, name:d.name || 'Player', look:d.look || {}, lvl:d.lvl || 1, online:online(d), inParty:S.members.some(m => m.uid === u) }; })
+            .sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
+    }
+    window.Social = { friendList, createParty, joinParty, leaveParty, invite, kick, startParty, pretty, ready:() => !!S.api, answerInvite:(i, ok) => ok ? (fs().deleteDoc(dref('invites', i.id)).catch(() => {}), joinParty(i.code)) : fs().deleteDoc(dref('invites', i.id)).catch(() => {}), stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
 })();
