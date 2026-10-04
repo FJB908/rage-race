@@ -35,3 +35,5 @@
 .pt-join { display: flex; gap: 8px; } .pt-join input { flex: 1; min-width: 0; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.12); background: #0f141d; color: #fff; font: 700 14px/1 system-ui; text-transform: uppercase; }
 .pt-mem { display: flex; flex-direction: column; align-items: center; gap: 4px; } .pt-mem canvas { width: 96px; height: 96px; }
 .pt-btn { border: 0; border-radius: 14px; padding: 14px; font: 900 14px/1 system-ui; letter-spacing: .06em; } .pt-btn.bad { background: #3a1a24; color: #ff8aa0; }
+.pt-lv { position:absolute; left:50%; bottom:-48px; transform:translateX(-50%); font:800 10px/1 system-ui; letter-spacing:.1em; color:#8b95a7; white-space:nowrap; }
+.pt-row { padding-bottom: 20px; }

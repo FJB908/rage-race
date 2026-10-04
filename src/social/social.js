@@ -109,7 +109,7 @@
             S.results = []; snap.forEach(d => S.results.push(Object.assign({ uid:d.id }, d.data()))); renderBoard();
         }, () => {}));
     }
-    const memberDoc = () => Object.assign({ name:publicProfile().name, look:myLook(), joined:Date.now() });
+    const memberDoc = () => Object.assign({ name:publicProfile().name, look:myLook(), lvl:levelInfo(prog().xp).lvl, joined:Date.now() });
     async function createParty() {
         if (S.party) return;
         const f = fs(); let code = '';
@@ -332,7 +332,7 @@
             const slots = [];
             for (let i = 0; i < PARTY_MAX; i++) {
                 const m = S.members[i];
-                slots.push(m ? '<div class="so-slot">' + avatar(m.look) + '<strong>' + esc(m.name) + '</strong><small>' + (m.uid === P.host ? 'HOST' : (host ? '<a data-a="kick" data-id="' + m.uid + '">REMOVE</a>' : '')) + '</small></div>' : '<div class="so-slot empty">Invite</div>');
+                slots.push(m ? '<div class="so-slot">' + avatar(m.look) + '<strong>' + esc(m.name) + '</strong><small>' + (m.lvl ? 'Lv ' + m.lvl + ' · ' : '') + (m.uid === P.host ? 'HOST' : (host ? '<a data-a="kick" data-id="' + m.uid + '">REMOVE</a>' : '')) + '</small></div>' : '<div class="so-slot empty">Invite</div>');
             }
             pc = '<div class="so-party-h"><b>Your party</b><span>' + S.members.length + ' / ' + PARTY_MAX + '</span></div><div class="so-slots">' + slots.join('') + '</div>' +
                 '<div class="so-pcode"><span>Party code</span><strong>' + esc(P.code) + '</strong></div>' +

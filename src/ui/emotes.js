@@ -16,6 +16,15 @@
         { id: 'cool',  text: 'COOL',        col: BLUE,   gems: 30, fx: 'shine', frost: true },
         { id: 'boom',  text: 'BOOM',        col: ORANGE, gems: 40, fx: 'boom', big: 1.3 },
         { id: 'king',  text: 'KING',        col: PURPLE, gems: 45, fx: 'shine', sparkle: true, big: 1.2 },
+        { id: 'haha',  text: 'HAHA',        col: GOLD,   gems: 35, fx: 'laugh', big: 1.25 },
+        { id: 'lol',   text: 'LOL',         col: TEAL,   gems: 35, fx: 'laugh', big: 1.35 },
+        { id: 'lmao',  text: 'LMAO',        col: PINK,   gems: 50, fx: 'laugh', amp: 1.6, big: 1.35, sparkle: true },
+        { id: 'ez',    text: 'EZ',          col: BLUE,   gems: 40, fx: 'shine', big: 1.5 },
+        { id: 'noob',  text: 'NOOB',        col: ORANGE, gems: 35, fx: 'jelly', big: 1.25 },
+        { id: 'skill', text: 'SKILL ISSUE', col: RED,    gems: 45, fx: 'shake', amp: 1.6, big: 1.1 },
+        { id: 'omg',   text: 'OMG!!',       col: PURPLE, gems: 40, fx: 'boom', big: 1.3 },
+        { id: 'rip',   text: 'RIP',         col: SILVER, gems: 30, fx: 'wobble', big: 1.3 },
+        { id: 'sheesh',text: 'SHEESH',      col: PINK,   gems: 45, fx: 'shine', sparkle: true, big: 1.2 },
     ];
     const BY = Object.fromEntries(EMOTES.map(e => [e.id, e]));
     const FAMILY = '"Bricolage Grotesque","Arial Rounded MT Bold","Segoe UI",system-ui,sans-serif';
@@ -37,15 +46,16 @@
             if (t > LIFE || !players.includes(a.p)) { active.splice(i, 1); continue; }
             const p = a.p, e = a.e, fade = t > LIFE - .4 ? (LIFE - t) / .4 : 1;
             const hatLift = p.look && p.look.hat && p.look.hat !== 'none' ? 14 : 0, rise = Math.min(t, .5) * 26 + t * 5;
-            let sx = 1, sy = 1, dx = 0, dy = 0;
+            let sx = 1, sy = 1, dx = 0, dy = 0, rot = 0;
             const pop = t < .22 ? 1 + 0.5 * Math.pow(1 - t / .22, 2) : 1; sx = sy = pop;
             if (e.fx === 'pulse') { const k = 1 + .07 * Math.sin(t * 14); sx *= k; sy *= k; }
             else if (e.fx === 'shake') { dx = Math.sin(t * 70) * (e.amp || 2) * Math.min(1, t * 6) * Math.max(0, 1 - t / 1.6); dy = Math.cos(t * 83) * (e.amp || 2) * .4 * Math.max(0, 1 - t / 1.6); }
             else if (e.fx === 'jelly') { const k = .16 * Math.sin(t * 18) * Math.exp(-t * 1.4); sx *= 1 + k; sy *= 1 - k; }
+            else if (e.fx === 'laugh') { const d = Math.exp(-t * .8), a = e.amp || 1; dy = -Math.abs(Math.sin(t * 17)) * 7 * a * d; rot = Math.sin(t * 24) * .13 * a * d; sx *= 1 + Math.abs(Math.sin(t * 17)) * .08 * d; }
             else if (e.fx === 'wobble') { dy = Math.sin(t * 16) * 2.2 * Math.exp(-t * 1.6); }
             else if (e.fx === 'boom') { const k = t < .3 ? 1 + 1.3 * Math.pow(1 - t / .3, 2) : 1; sx = sy = k; dx = Math.sin(t * 90) * 2 * Math.max(0, 1 - t / .5); }
             const size = 17 * (e.big || 1), x = p.x + dx, y = p.y - p.r - 46 - hatLift - rise + dy;
-            ctx.save(); ctx.translate(x, y); ctx.scale(sx, sy); ctx.globalAlpha = Math.max(0, Math.min(1, fade)); ctx.transform(1, 0, -0.14, 1, 0, 0);
+            ctx.save(); ctx.translate(x, y); ctx.scale(sx, sy); ctx.globalAlpha = Math.max(0, Math.min(1, fade)); ctx.rotate(rot); ctx.transform(1, 0, -0.14, 1, 0, 0);
             ctx.font = 'italic 800 ' + size + 'px ' + FAMILY; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             const tw = ctx.measureText(e.text).width;
             const g = ctx.createLinearGradient(0, -size / 2, 0, size / 2); g.addColorStop(0, e.col[0]); g.addColorStop(.48, e.col[1]); g.addColorStop(1, e.col[2]);

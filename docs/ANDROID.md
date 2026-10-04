@@ -28,7 +28,7 @@ Houd je **keystore** (de sleutel waarmee je tekent) veilig en maak een back-up: 
 4. Vul in AdMob ook het toestemmingsscherm (GDPR/UMP) in; de app vraagt het al.
 
 ## Gems kopen (Google Play Billing)
-1. Play Console > je app > *Monetize > In-app products*: maak **consumable** producten met precies deze ids: `g80`, `g500`, `g1100`, `g2400`, `g6500`, `g14000` (zie `src/data/gems.js`) en de prijzen die je wilt.
+1. Play Console > je app > *Monetize > In-app products*: maak **consumable** producten met precies deze ids: `g80`, `g500`, `g1000`, `g2400`, `g6500`, `g14000` (zie `src/data/gems.js`) en de prijzen die je wilt.
 2. Je kunt pas testen als de app (ook als intern testspoor) in de Play Console staat en je jezelf als tester toevoegt (*Settings > License testing*).
 3. Let op: de aankopen worden nu op de telefoon verwerkt. Voor serieus geld hoort een **server-controle** erbij (anders kan iemand valsspelen). In `native.js` staat een TODO.
 

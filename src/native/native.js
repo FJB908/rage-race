@@ -16,7 +16,7 @@
             interstitial: 'ca-app-pub-3940256099942544/1033173712',
         },
         // Play Console in-app products (type: consumable). The product id must equal the pack id from src/data/gems.js
-        products: ['g80', 'g500', 'g1100', 'g2400', 'g6500', 'g14000'],
+        products: ['g80', 'g500', 'g1000', 'g2400', 'g6500', 'g14000'],
     };
     const P = cap.Plugins || {};
 

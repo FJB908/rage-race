@@ -15,7 +15,7 @@
 
     function members() {                                        // you first, then the others in join order
         const s = S(), list = s.party ? s.members.filter(m => m.uid !== s.uid) : [];
-        const me = { uid:s.uid || 'me', name:(prog().name || 'You'), look:window.myLook ? myLook() : {}, me:true, host:!s.party || s.party.host === s.uid };
+        const me = { uid:s.uid || 'me', name:(prog().name || 'You'), lvl:levelInfo(prog().xp).lvl, look:window.myLook ? myLook() : {}, me:true, host:!s.party || s.party.host === s.uid };
         return [me].concat(list.map(m => Object.assign({ host:s.party && s.party.host === m.uid }, m))).slice(0, MAX);
     }
     const inParty = () => members().length > 1;
@@ -30,7 +30,7 @@
     function render() {
         const list = members(), n = list.length, w = SIZE[n] || 72, s = S();
         const hero = $('m-hero');
-        const key = JSON.stringify([n, list.map(m => [m.uid, m.name, m.host]), !!s.party, s.invites.map(i => i.id)]);
+        const key = JSON.stringify([n, list.map(m => [m.uid, m.name, m.host, m.lvl]), !!s.party, s.invites.map(i => i.id)]);
         stage.style.setProperty('--pw', w + 'px'); stage.classList.toggle('party', n > 1);
         if (key !== sig) {
             sig = key;
@@ -40,7 +40,7 @@
                 let cv;
                 if (m.me) cv = keep; else { cv = document.createElement('canvas'); cv.width = 280; cv.height = 280; cv.className = 'pt-c'; }
                 slot.appendChild(cv);
-                if (n > 1) slot.insertAdjacentHTML('beforeend', '<span class="pt-name">' + (m.host ? '<i class="pt-crown">&#9818;</i>' : '') + esc(m.me ? 'YOU' : m.name) + '</span>');
+                if (n > 1) slot.insertAdjacentHTML('beforeend', '<span class="pt-name">' + (m.host ? '<i class="pt-crown">&#9818;</i>' : '') + esc(m.me ? 'YOU' : m.name) + '</span><span class="pt-lv">' + (m.lvl ? 'LV ' + m.lvl : '') + '</span>');
                 slot.insertAdjacentHTML('beforeend', '<span class="pt-sh"></span>');
                 row.appendChild(slot);
             });
@@ -78,7 +78,7 @@
     }
     function memberSheet(m) {
         const lead = isHost();
-        openSheet('mem', '<div class="pt-mem"><canvas width="80" height="80" data-look="' + esc(JSON.stringify(m.look || {})) + '"></canvas><h2>' + esc(m.name) + '</h2><p class="pt-p">' + (m.host ? 'Party leader' : 'Party member') + '</p></div>' +
+        openSheet('mem', '<div class="pt-mem"><canvas width="80" height="80" data-look="' + esc(JSON.stringify(m.look || {})) + '"></canvas><h2>' + esc(m.name) + '</h2><p class="pt-p">' + (m.lvl ? 'Level ' + m.lvl + ' · ' : '') + (m.host ? 'Party leader' : 'Party member') + '</p></div>' +
             (lead && !m.me && !m.host ? '<button type="button" class="pt-btn bad" data-a="kick" data-id="' + esc(m.uid) + '">REMOVE FROM PARTY</button>' : '') +
             (m.me ? '<button type="button" class="pt-btn bad" data-a="leave">' + (lead ? 'CLOSE PARTY' : 'LEAVE PARTY') + '</button>' : ''));
     }

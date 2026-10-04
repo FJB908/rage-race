@@ -4438,7 +4438,7 @@ function renderProfile(p, L, stars){
     const rkEl = document.getElementById('pf-rank');
     if (rkEl && window.Ranked){ const s = Ranked.state(); rkEl.innerHTML = s.placed ? Ranked.emblem(s.tier, 22) + '<b>' + s.rank.label + '</b><small>' + s.rk.rp + ' RP</small>' : '<small>Unranked</small>'; }
     // records
-    const bestT = load('rr_pk_best_time', 0), bestM = load('rr_pk_best', 0), esc = load('rr_esc_best_score', 0), passTier = Math.min(30, passTiersDone(p.passPointsEarned || 0));
+    const bestT = load('rr_pk_best_time', 0), bestM = load('rr_pk_best', 0), esc = load('rr_esc_best_score', 0), passTier = Math.min(PASS_TIERS.length, passTiersDone(p.passPointsEarned || 0));
     const rows = [
         ['crown', 'Crowns', p.gt.wins],
         ['mode-escape', 'Escape best', esc ? esc.toLocaleString('en-US') : '--'],
