@@ -1,6 +1,6 @@
 // PARTY on the home screen: your friends stand next to you (up to 4), a plus invites more, the leader starts the match.
 // The data and the network live in src/social/social.js (Firestore + Realtime Database); this file is only the home UI and the PLAY rules.
-// Quick race: the leader starts a synced race for everyone. Gauntlet: the leader plays and the members join as stand-ins until Gauntlet runs on a game server.
+// Quick play: the leader starts a synced race for everyone. Gauntlet: the leader plays and the members join as stand-ins until Gauntlet runs on a game server.
 // A race with ONLY lobby members (4 of 4) pays no rewards. See docs/PARTY.md.
 (function () {
     'use strict';
@@ -19,14 +19,14 @@
         return [me].concat(list.map(m => Object.assign({ host:s.party && s.party.host === m.uid }, m))).slice(0, MAX);
     }
     const inParty = () => members().length > 1;
-    // the mode the party plays: the leader's choice (Quick race or Gauntlet), stored on the party so everyone sees it
-    const myMode = () => { const m = prog().lastMode; return m === 'gauntlet' ? 'gauntlet' : (!m || m === 'race') ? 'race' : 'other'; };
+    // the mode the party plays: the leader's choice (Quick play or Gauntlet), stored on the party so everyone sees it
+    const myMode = () => { const m = prog().lastMode; return m === 'gauntlet' ? 'gauntlet' : m === 'arcade' ? 'arcade' : (!m || m === 'race') ? 'race' : 'other'; };
     const mode = () => { const s = S(); return (s.party && s.party.host !== s.uid && s.party.mode) ? s.party.mode : myMode(); };
     function setMode(m) {
         if (!isHost()) { toast('Only the party leader picks the mode'); return; }
         const q = prog(); q.lastMode = m; saveProg(q); refreshMenu(); render(); syncMode();
     }
-    const LABEL = { race:'Race · Quick match', gauntlet:'Gauntlet · 32 players' };
+    const LABEL = { race:'Quick play · 4 players', arcade:'Arcade · Random minigames', gauntlet:'Gauntlet · 32 players' };
     const modeLabel = () => LABEL[mode()] || 'Pick a mode';
     // same idea as the Mode row on the home screen: the leader goes to the Play tab to pick, everyone else just sees it
     function pickMode() { if (!isHost()) { toast('Only the party leader picks the mode'); return; } if (typeof menuTab === 'function') menuTab('play'); }
@@ -58,7 +58,7 @@
             });
             if (n < MAX) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-plus'; b.setAttribute('aria-label', 'Invite a friend'); b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>'; row.appendChild(b); }
             $('pt-bar').hidden = !s.party || n < 2;
-            if (!$('pt-bar').hidden) $('pt-bar').innerHTML = '<b>PARTY ' + n + '/' + MAX + '</b>' + ['race', 'gauntlet'].map(k => '<button type="button" class="pt-mode' + (mode() === k ? ' on' : '') + '" data-a="mode" data-m="' + k + '">' + (k === 'race' ? 'RACE' : 'GAUNTLET') + '</button>').join('') + '<button type="button" data-a="leave">LEAVE</button>';
+            if (!$('pt-bar').hidden) $('pt-bar').innerHTML = '<b>PARTY ' + n + '/' + MAX + '</b>' + ['race', 'arcade', 'gauntlet'].map(k => '<button type="button" class="pt-mode' + (mode() === k ? ' on' : '') + '" data-a="mode" data-m="' + k + '">' + (k === 'race' ? 'QUICK PLAY' : k === 'arcade' ? 'ARCADE' : 'GAUNTLET') + '</button>').join('') + '<button type="button" data-a="leave">LEAVE</button>';
             renderInvites();
         }
         row.querySelectorAll('.pt-slot').forEach(slot => { const m = list[+slot.dataset.i]; if (m && !m.me) paint(slot.querySelector('canvas'), m.look || {}); });
@@ -123,8 +123,9 @@
         if (!inParty()) return false;
         if (!isHost()) { toast('Waiting for the party leader to start'); return true; }
         if (mode === 'gauntlet') { window.gauntletParty = members().slice(1); return false; }
+        if (mode === 'arcade') return false;                  // the minigames take your party as their players (Party.standIns)
         if (mode === 'race' || !mode) { Social.startParty(); return true; }
-        toast('Parties play Quick race and Gauntlet'); return true;
+        toast('Parties play Quick play, Arcade and Gauntlet'); return true;
     }
     window.Party = { members, mode, setMode, modeLabel, pickMode, intercept, render, active:inParty, standIns:() => (inParty() ? members().slice(1) : []) };
     render(); syncMode();

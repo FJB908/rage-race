@@ -111,6 +111,29 @@
           '<path d="M10 14 l7 -7 l7 7 l-3 3 l-4 -4 l-4 4z" fill="#ff5470" stroke="#5a0f24" stroke-width="2" stroke-linejoin="round"/>' +
           '<path d="M44 8 l10 10 M44 18 l10 -10" stroke="#ffcf3f" stroke-width="4" stroke-linecap="round"/>' +
         '</symbol>' +
+        '<symbol id="ico-mode-arcade" viewBox="0 0 64 64">' +
+          '<ellipse cx="32" cy="58" rx="22" ry="3.5" fill="#000" opacity=".28"/>' +
+          '<rect x="8" y="34" width="48" height="22" rx="8" fill="#6b4fd8" stroke="#1c1450" stroke-width="3"/>' +
+          '<rect x="12" y="38" width="40" height="6" rx="3" fill="#fff" opacity=".18"/>' +
+          '<rect x="29" y="14" width="6" height="22" rx="3" fill="#9aa4c0" stroke="#1c1450" stroke-width="2.4"/>' +
+          '<circle cx="32" cy="12" r="9" fill="#ff5470" stroke="#5a0f24" stroke-width="3"/><circle cx="29" cy="9" r="2.6" fill="#fff" opacity=".55"/>' +
+          '<circle cx="17" cy="46" r="4" fill="#ffcf3f" stroke="#6b3d00" stroke-width="2"/><circle cx="47" cy="46" r="4" fill="#35e0c8" stroke="#0d3a33" stroke-width="2"/>' +
+        '</symbol>' +
+        '<symbol id="ico-ar-giant" viewBox="0 0 64 64">' +
+          '<ellipse cx="32" cy="59" rx="24" ry="3.5" fill="#000" opacity=".28"/>' +
+          '<rect x="8" y="10" width="48" height="46" rx="11" fill="#ff6f91" stroke="#5a1230" stroke-width="3.2"/>' +
+          '<path d="M13 16 Q22 11 35 12" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="3.4" stroke-linecap="round"/>' +
+          '<circle cx="23" cy="31" r="6" fill="#fff"/><circle cx="41" cy="31" r="6" fill="#fff"/><circle cx="24.5" cy="32.5" r="3" fill="#0d1017"/><circle cx="39.5" cy="32.5" r="3" fill="#0d1017"/>' +
+          '<path d="M14 21 L28 27 M50 21 L36 27" stroke="#2a0a18" stroke-width="3.6" stroke-linecap="round"/>' +
+          '<rect x="22" y="43" width="20" height="6" rx="3" fill="#2a0a18"/><path d="M26 43 v5 M32 43 v5 M38 43 v5" stroke="#fff" stroke-width="1.6"/>' +
+        '</symbol>' +
+        '<symbol id="ico-ar-sink" viewBox="0 0 64 64">' +
+          '<path d="M6 40 H29 L26 47 H6 Z" fill="#4ade80" stroke="#0d3a1c" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M36 36 H58 V43 H33 Z" fill="#4ade80" stroke="#0d3a1c" stroke-width="3" stroke-linejoin="round" transform="rotate(8 46 40)"/>' +
+          '<path d="M24 52 l7 4 l-3 6 l-7 -3 Z" fill="#7bd88f" stroke="#0d3a1c" stroke-width="2.4" stroke-linejoin="round"/>' +
+          '<rect x="22" y="14" width="18" height="18" rx="5" fill="#35e0c8" stroke="#0d3a33" stroke-width="3"/><circle cx="28" cy="22" r="2.4" fill="#0d1017"/><circle cx="35" cy="22" r="2.4" fill="#0d1017"/>' +
+          '<path d="M5 56 Q14 50 22 56 T40 56 T58 56 V62 H5 Z" fill="#3b82f6" opacity=".85"/>' +
+        '</symbol>' +
         '<symbol id="ico-mode-tag" viewBox="0 0 64 64">' +
           '<ellipse cx="30" cy="57" rx="19" ry="3.5" fill="#000" opacity=".28"/>' +
           '<circle cx="30" cy="36" r="21" fill="url(#gbm)" stroke="#06080d" stroke-width="3"/>' +

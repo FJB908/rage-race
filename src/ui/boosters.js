@@ -20,7 +20,7 @@
         // Chest contents multiplier (>= 1) for one chest id.
         // Only chests earned by playing count (race, escape, gauntlet, levels, ranked, tower). Chests from the pass, daily calendar,
         // level rewards or videos are left alone and do not use a charge.
-        appliesToChest(id) { return /^(race|escape|tag|gauntlet|level|party|rk|tower):/.test(String(id)); },
+        appliesToChest(id) { return /^(race|escape|tag|arc|gauntlet|level|party|rk|tower):/.test(String(id)); },
         chest(id) { return B.appliesToChest(id) ? (use('chest', 1, id) || 1) : 1; },
         announce,
         art(r, big) {

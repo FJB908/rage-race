@@ -79,7 +79,7 @@
     }
     function start() {
         ensureRoot();
-        hideResult(); $('tg-root').classList.remove('over'); $('tg-banner').className = 'tg-banner';
+        hideResult(); $('tg-root').classList.remove('over'); { const u = $('tg-hud').querySelector('.tg-bomb use'); if (u) u.setAttribute('href', '#ico-mode-tag'); const cp = $('tg-cap'); if (cp) cp.style.display = 'none'; } $('tg-banner').className = 'tg-banner';
         gameMode = 'tag'; esc = null; pk = null; lv = null; ufos = []; window.rankedMatch = false; window.partyMatch = null;
         document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level', 'mode-gauntlet'); document.body.classList.add('mode-tag');
         showScreen('');
@@ -108,7 +108,7 @@
         gameMode = 'race'; state = 'menu'; dragging = false; hud.style.display = 'none';
         for (const p of players) { p.noAI = false; p.out = false; p.bomb = false; p.finished = false; p._off = false; p.gone = false; p.stunT = 0; }
         try { stopSpectate(); } catch (e) {}
-        if (toMenu) { refreshStartMeta(); showScreen('start'); }
+        if (toMenu) { if (window.Arcade) Arcade.endSession(); refreshStartMeta(); showScreen('start'); }
     }
     function restart() { leave(false); setTimeout(start, 30); }
 
@@ -243,6 +243,7 @@
         const skill = clamp(p.skill || 1, 0.7, 1.25), car = tg.carrier;
         const err = 0.022 + (1.2 - skill) * 0.08;
         if (p.bomb) {                                          // HUNT
+            if (p.charge) return;
             p.thinkT = rnd(0.3, 0.6) / skill;
             if (p.canPass > 0.2) { p.thinkT = 0.2; return; }
             let tgt = null, bs = 1e9;
@@ -250,7 +251,11 @@
             if (!tgt) { p.thinkT = 0.3; return; }
             const maxV = playerMaxV(p, false) * 0.97;
             const sol = solveHit(p, tgt.x + tgt.vx * 0.05, tgt.y, maxV);
-            if (sol && Math.random() < 0.9) { fire(p, sol.vx * (1 + rnd(-err, err)), sol.vy * (1 + rnd(-err, err))); return; }
+            if (sol && Math.random() < 0.9) {                   // wind-up first: a crouch and a dotted line everyone can see (and dodge)
+                p.charge = { tgt, t:rnd(0.5, 0.62), err };
+                if (!tgt.local && tgt.mode === 'idle') tgt.thinkT = Math.min(tgt.thinkT, rnd(0.12, 0.3) / clamp(tgt.skill || 1, 0.7, 1.25));
+                return;
+            }
             // too far: hop to the platform that brings us closest
             const here = Math.hypot(tgt.x - p.x, tgt.y - p.y); let best = null, bc = here - 30;
             for (const r of reachList(p)) { const d = Math.hypot(tgt.x - r.lx, tgt.y - r.ly) + r.sol.t * 20; if (d < bc) { bc = d; best = r; } }
@@ -292,6 +297,14 @@
         tg.t += dt;
         if (tg.hit > 0) tg.hit -= dt;
         for (let i = tg.pops.length - 1; i >= 0; i--) { tg.pops[i].t += dt; if (tg.pops[i].t > tg.pops[i].life) tg.pops.splice(i, 1); }
+        for (const p of players) {                              // a bot that is winding up a shot
+            const ch = p.charge; if (!ch) continue;
+            if (p.out || !p.bomb || p.mode !== 'idle' || p.stunT > 0 || ch.tgt.out || ch.tgt.tagImmune > 0 || ch.tgt.shieldT > 0 || tg.phase !== 'live') { p.charge = null; continue; }
+            ch.t -= dt; p.squash = Math.min(p.squash, 0.8 + 0.06 * Math.sin(tg.t * 42));
+            ch.sol = solveHit(p, ch.tgt.x, ch.tgt.y, playerMaxV(p, false) * 0.97);
+            if (!ch.sol) { p.charge = null; continue; }
+            if (ch.t <= 0) { p.charge = null; fire(p, ch.sol.vx * (1 + rnd(-ch.err, ch.err)), ch.sol.vy * (1 + rnd(-ch.err, ch.err))); }
+        }
         for (const p of players) { if (p.tagImmune > 0) p.tagImmune -= dt; if (p.canPass > 0) p.canPass -= dt; if (p.stunT > 0) p.stunT -= dt; }
         if (tg.phase === 'ready') { startRound(); return; }
         if (tg.phase === 'boom') { tg.pt -= dt; if (tg.pt <= 0) afterBoom(); updatePicks(dt, false); return; }
@@ -365,6 +378,13 @@
         if (!tg) return;
         const t = performance.now() / 1000;
         for (const k of tg.picks) drawPick(ctx, k, t);
+        for (const p of players) {                              // the wind-up line of a bot that is about to launch
+            if (!p.charge || !p.charge.sol) continue;
+            const s = p.charge.sol, g = playerG(p); let x = p.x, y = p.y, vx = s.vx, vy = s.vy;
+            ctx.save(); ctx.fillStyle = 'rgba(255,110,60,.85)';
+            for (let i = 0; i < 20; i++) { for (let k = 0; k < 2; k++) { vy += g * SIM_DT; x += vx * SIM_DT; y += vy * SIM_DT; } ctx.globalAlpha = 0.9 - i * 0.03; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill(); }
+            ctx.restore();
+        }
         for (const p of players) {
             if (p.out) continue;
             if (p.bomb && tg.phase === 'live') {
@@ -391,6 +411,7 @@
                 ctx.beginPath(); ctx.arc(0, 0, p.r + 9, 0, 7); ctx.stroke(); ctx.restore();
             }
         }
+        if (tg.local && !tg.local.out) drawYouArrow(ctx, tg.local, tg.local.bomb && tg.phase === 'live' ? 34 : 0);
         for (const o of tg.pops) {
             const k = o.t / o.life, rise = 26 * (1 - Math.pow(1 - Math.min(1, o.t * 3), 2)) + o.t * 14, sc = o.t < 0.14 ? 1 + 0.6 * (1 - o.t / 0.14) : 1, size = o.big ? 22 : 15;
             ctx.save(); ctx.translate(o.x, o.y - rise); ctx.scale(sc, sc); ctx.globalAlpha = k > 0.7 ? 1 - (k - 0.7) / 0.3 : 1; ctx.transform(1, 0, -0.14, 1, 0, 0);
@@ -415,7 +436,7 @@
         let root = $('tg-root'); if (root) return root;
         root = document.createElement('div'); root.id = 'tg-root';
         root.innerHTML =
-            '<div class="tg-hud" id="tg-hud"><div class="tg-fuse"><svg viewBox="0 0 64 64" class="tg-bomb" aria-hidden="true"><use href="#ico-mode-tag"/></svg><div class="tg-bar"><i id="tg-fill"></i></div><b id="tg-sec">0</b></div><div class="tg-chips" id="tg-chips"></div></div>' +
+            '<div class="tg-hud" id="tg-hud"><div class="tg-fuse"><svg viewBox="0 0 64 64" class="tg-bomb" aria-hidden="true"><use href="#ico-mode-tag"/></svg><div class="tg-bar"><i id="tg-fill"></i></div><b id="tg-sec">0</b></div><div class="tg-cap" id="tg-cap" style="display:none"></div><div class="tg-chips" id="tg-chips"></div></div>' +
             '<div class="tg-banner" id="tg-banner"></div>' +
             '<button class="tg-skip" id="tg-skip" type="button">SKIP TO RESULT</button>' +
             '<div class="tg-tip" id="tg-tip"><div class="tg-tip-card"><button class="tg-tip-x" id="tg-tip-x" type="button" aria-label="Close">&times;</button>' +
@@ -462,9 +483,10 @@
             '<div class="tg-rew">' + chips + (R_.bonus ? '<span class="tg-bonus">' + R('coin', R_.bonus, { plus:true }) + '<small>streak bonus</small></span>' : '') + '</div>' +
             '<div class="tg-streak' + (R_.streak > 1 ? ' hot' : '') + '"><b>' + R_.streak + '</b><span>' + (R_.streak ? 'win streak' : 'win streak: start one') + '</span><em>best ' + best + '</em></div>' +
             (pl === 1 ? '<p class="tg-note">A chest is waiting on the home screen</p>' : '') +
-            '<button class="tg-go" id="tg-again" type="button">PLAY AGAIN</button><button class="tg-ghost" id="tg-menu" type="button">MAIN MENU</button></div>';
+            (window.Arcade && Arcade.session() ? '<button class="tg-go" id="tg-next" type="button">NEXT MINIGAME</button><button class="tg-ghost" id="tg-again" type="button">PLAY AGAIN</button>' : '<button class="tg-go" id="tg-again" type="button">PLAY AGAIN</button>') + '<button class="tg-ghost" id="tg-menu" type="button">MAIN MENU</button></div>';
         $('tg-result').classList.add('vis');
         $('tg-again').onclick = () => restart();
+        if ($('tg-next')) $('tg-next').onclick = () => { leave(false); Arcade.next(); };
         $('tg-menu').onclick = () => leave(true);
     }
     // the player is out: let the others finish at once
@@ -478,6 +500,6 @@
         openPrompt('PAUSED', 'Boom Tag', [['Resume', resumeRace], ['Settings', () => openSettings('pause'), true], ['Leave match', () => { state = 'playing'; showScreen(''); leave(true); }, true]]);
     }
 
-    window.Tag = { open, start, restart, leave, update, drawFront, drawOverlay, pauseMenu, skip, state:() => tg,
+    window.Tag = { ui:{ ensureRoot, banner, hideResult }, open, start, restart, leave, update, drawFront, drawOverlay, pauseMenu, skip, state:() => tg,
         debug:{ get tg() { return tg; }, auto(on) { if (tg) tg.autoLocal = on !== false; }, players:() => players, fire, think } };
 })();

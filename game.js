@@ -375,7 +375,7 @@ function capUpwardVelocity(p){
     if (p.vy < -MAX_UP_VEL) p.vy = -MAX_UP_VEL;
 }
 function launchPlayer(p, dx, dy) {
-    if (gameMode === 'tag' && p.stunT > 0) return;           // Boom Tag: a zapped player cannot jump
+    if (isArena() && p.stunT > 0) return;           // Boom Tag: a zapped player cannot jump
     if (p.local && window.Missions) Missions.event('jump');
     const mult = playerPowMul(p, false);
     // Launch purely from the drag: don't inherit the moving platform's velocity,
@@ -408,7 +408,8 @@ function playerG(p){ return GRAVITY * (p.chainT > 0 ? CHAIN_GRAV : 1); }
 function playerPowMul(p, air){
     let m = 1;
     if (p.charged && !air) m *= BOOST_MULT;
-    if (gameMode === 'tag' && p.bomb) m *= 1.16;            // Boom Tag: whoever holds the bomb jumps a little harder, so catching is possible
+    if (isArena() && p.bomb) m *= 1.16;
+    if (isArena() && p.bigBoss) m *= 1.3;                   // the Giant's jumps are huge            // Boom Tag: whoever holds the bomb jumps a little harder, so catching is possible
     if (p.chainT > 0) m *= CHAIN_POW;
         return m;
 }
@@ -1515,7 +1516,7 @@ function stepPlayer(p, dt) {
         }
 
         // ground catch — while Super Bounce is active, the floor launches you back up
-        if (!p.finished && p.y > START_Y - p.r && p.vy > 0){
+        if (!p.finished && p.y > START_Y - p.r && p.vy > 0 && !window.ARC_NOFLOOR){      // (Sinking Ship has no floor: you fall out of the world)
             if (p.bounceT > 0 && p.vy > 60){
                 p.y = START_Y - p.r; p.vy = bounceVy(p.vy); springFx(p, 'floor');
             } else {
@@ -1913,7 +1914,7 @@ function update(dt) {
     else if (gameMode === 'parkour') updateParkour(dt);
     else if (gameMode === 'level') updateLevel(dt);
     else if (gameMode === 'gauntlet') updateGauntlet(dt);
-    else if (gameMode === 'tag' && window.Tag) Tag.update(dt);
+    else if (isArena()) arenaMod().update(dt);
     else if (window.buildMatch && window.Build) Build.update(dt);
 
     // camera — follows you normally, or the player you're spectating after you've finished
@@ -1922,7 +1923,7 @@ function update(dt) {
         : null;
     const camP = (spectating && spectateTarget && !spectateTarget.finished) ? spectateTarget : (gameMode === 'gauntlet' ? gtCamTarget() : (escapeSpectate || players[0]));
     if (freeCam && !canFreeCam()) freeCam = false;
-    if (!freeCam && gameMode !== 'tag'){      // Boom Tag: one fixed screen
+    if (!freeCam && !isArena()){      // Boom Tag: one fixed screen
         const targetCam = camP.y - VH*0.62;
         cameraY += (targetCam - cameraY) * Math.min(1, 12*dt);
     }
@@ -2073,7 +2074,7 @@ function drawCosmeticTrails(viewTop, viewBottom){
 var _menuPainted = false;                  // in the menu the world canvas is just a flat colour behind the UI: paint it once, not 60 times a second
 function draw() {
     if (state==='menu' && _menuPainted) return;
-    ctx.fillStyle = (gameMode === 'gauntlet' && window.GT_BG) || (gameMode === 'tag' && window.TG_BG) || '#0d1017';   // Gauntlet stages tint the floor colour (a cheap sky)
+    ctx.fillStyle = (gameMode === 'gauntlet' && window.GT_BG) || (isArena() && window.TG_BG) || '#0d1017';   // Gauntlet stages tint the floor colour (a cheap sky)
     ctx.fillRect(0,0,CW,CH);
     _menuPainted = state==='menu';
     if (state==='menu') return;
@@ -2197,10 +2198,10 @@ function draw() {
         }
 
         let col = PLAT[pl.type] || '#4ade80';
-        if (pl.type==='fragile' && pl.breaking){
-            const s=(1-pl.breakT)*5;
+        if ((pl.type==='fragile' || pl.sink) && pl.breaking){
+            const s=(1-pl.breakT/(pl.sink ? 1.2 : 0.9))*5;
             ctx.translate((Math.random()-0.5)*s,(Math.random()-0.5)*s);
-            col = (Math.floor(Date.now()/70)%2) ? '#fff' : PLAT.fragile;
+            col = (Math.floor(Date.now()/70)%2) ? '#fff' : (pl.sink ? '#ff5470' : PLAT.fragile);
         }
         if (pl.quakeWarn > 0 && Math.floor(pl.quakeWarn*10)%2===0){ col = ITEMS.quake.color; }
         if (pl.type==='ice'||pl.type==='boost'){ ctx.shadowBlur=12; ctx.shadowColor=col; }
@@ -2423,7 +2424,7 @@ function draw() {
     drawUfoCraft();
     if (gameMode === 'escape') drawEscapeWorldFront();
     else if (gameMode === 'gauntlet') gtDrawWorldFront(viewTop, viewBottom);
-    else if (gameMode === 'tag' && window.Tag) Tag.drawFront(ctx);
+    else if (isArena()) arenaMod().drawFront(ctx);
     if (window.Emotes) Emotes.draw(ctx);                          // emote bubbles above players
     if (window.Finishers) Finishers.draw(ctx);                    // your finish effect (world space)
     ctx.restore();
@@ -2440,11 +2441,25 @@ function draw() {
     else if (gameMode === 'parkour') drawParkourGauge();
     else if (gameMode === 'level') drawLevelGauge();
     else if (gameMode === 'gauntlet'){ gtDrawOverlay(); gtDrawGauge(); }
-    else if (gameMode === 'tag'){ if (window.Tag) Tag.drawOverlay(ctx, CW, CH); }
+    else if (isArena()){ arenaMod().drawOverlay(ctx, CW, CH); }
     else drawMinimap();
 }
 
 
+// The arrow over YOUR player in the one-screen modes and the Gauntlet: always above hats, crowns and bombs, never covering them
+const TALL_HAT = { tophat:20, wizard:24, chef:16, crown:16, party:20, propeller:14, antenna:20, 'c-unicorn':18, 'c-mohawk':16, 'p-storm':22, 'p-phoenix':22, 'p-planet':20, 'p-starhalo':20, 'p-magma':18, 'c-cake':20, 'c-pizza':14, 'c-icecream':18, bunny:16, 'c-cone':16, 'c-jester':14, 'c-bulb':16, 'c-tiara':12, 'c-dino':14 };
+function drawYouArrow(c, p, extra){
+    if (!p || p.finished || p.out || p.gone) return;
+    const t = performance.now() / 1000, hat = p.look && p.look.hat && p.look.hat !== 'none' ? (TALL_HAT[p.look.hat] || 12) : 0;
+    const y = p.y - p.r - 20 - hat - (extra || 0) + Math.sin(t * 5.5) * 2.6;
+    c.save(); c.translate(p.x, y);
+    c.shadowColor = '#35e0c8'; c.shadowBlur = 10;
+    c.fillStyle = '#35e0c8'; c.strokeStyle = '#06201b'; c.lineWidth = 2.4; c.lineJoin = 'round';
+    c.beginPath(); c.moveTo(0, 7); c.lineTo(-8.5, -3); c.lineTo(-3, -3); c.lineTo(-3, -9); c.lineTo(3, -9); c.lineTo(3, -3); c.lineTo(8.5, -3); c.closePath(); c.stroke(); c.shadowBlur = 0; c.fill();
+    c.font = '900 9px "Bricolage Grotesque",system-ui,sans-serif'; c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.lineWidth = 3; c.strokeStyle = '#06201b'; c.strokeText('YOU', 0, -13); c.fillStyle = '#eafffb'; c.fillText('YOU', 0, -13);
+    c.restore();
+}
+window.drawYouArrow = drawYouArrow;
 function roundRect(x,y,w,h,r){
     // Gebruik de supersnelle native methode als de browser dit ondersteunt
     if (ctx.roundRect) {
@@ -2615,7 +2630,7 @@ function resumeRace() {
     state = 'playing';
 }
 function quitToMenu() {
-    if (gameMode === 'tag' && window.Tag){ Tag.leave(true); return; }
+    if (isArena()){ arenaMod().leave(true); return; }
     if (window.buildMatch && window.Build){ Build.leave(true); return; }
     if (typeof stopSpectate === 'function') stopSpectate();
     state = 'menu'; dragging = false;
@@ -2642,7 +2657,7 @@ function restartRace() {
     else if (gameMode === 'parkour') { pkClearSave(); pkStart(null); }   // "Restart" = a fresh climb from the ground
     else if (gameMode === 'level') lvStart(lv.idx);
     else if (gameMode === 'gauntlet') gtForfeit();
-    else if (gameMode === 'tag' && window.Tag) Tag.restart();
+    else if (isArena()) arenaMod().restart();
     else startMatchmaking();
 }
 function giveUpToResults() {
@@ -2720,7 +2735,7 @@ document.getElementById('set-reset').addEventListener('click', () => {
 });
 document.getElementById('btn-pause').addEventListener('click', () => {
     if (gameMode === 'gauntlet'){ gtPauseMenu(); return; }
-    if (gameMode === 'tag' && window.Tag){ Tag.pauseMenu(); return; }
+    if (isArena()){ arenaMod().pauseMenu(); return; }
     if (window.rankedMatch){ Ranked.pauseMenu(); return; }
     const btns = [
         ['Resume', resumeRace],
@@ -2911,7 +2926,9 @@ function beginRound() {
 /* =====================================================================
    ESCAPE — solo endless climb with a rising void
    ===================================================================== */
-let gameMode = 'race';          // 'race' | 'escape'
+let gameMode = 'race';          // 'race' | 'escape' | 'tag' | 'arcade' ...
+function isArena(){ return gameMode === 'tag' || gameMode === 'arcade'; }          // the one-screen minigames (Boom Tag lives in tag.js, the rest in arcade.js)
+function arenaMod(){ return gameMode === 'arcade' ? window.Arcade : window.Tag; }
 let esc = null;                 // escape-mode state (null outside escape)
 const ESC_PICKUPS = { rocket:0.40, shield:0.32, giant:0.28 };   // no Super Bounce in solo
 const ESC_WIDTH_MUL = 1.3;      // wider platforms than the race
@@ -4038,8 +4055,8 @@ function randomBotLook(){
     };
 }
 
-const MODE_LABEL = { race:'Race · Quick match', tag:'Boom Tag · Pass the bomb', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
-const MODE_ICON = { race:'mode-race', tag:'mode-tag', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
+const MODE_LABEL = { race:'Quick play · 4 players', tag:'Boom Tag · Pass the bomb', arcade:'Arcade · Random minigames', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
+const MODE_ICON = { race:'mode-race', tag:'mode-tag', arcade:'mode-arcade', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
 let _freeIds = null;
 function freeItemIds(){
     if (!_freeIds) _freeIds = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.price === 0 && !i.premium && !i.exclusive && !i.priceLock).map(i => i.id);
@@ -4078,7 +4095,8 @@ function prog(){
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
     if (!d.hat || !HATS.some(h => h.id === d.hat)) d.hat = 'none';
     if (!d.face || !FACES.some(f => f.id === d.face)) d.face = 'none';
-    if (!['race', 'tag', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';
+    if (d.lastMode === 'tag') d.lastMode = 'arcade';
+    if (!['race', 'arcade', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';
     return d;
 }
 function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} if (window.Cloud) Cloud.touch(); }
@@ -4540,7 +4558,7 @@ function playSelected(){
     const m = prog().lastMode;
     window.gauntletParty = null;
     if (window.Party && Party.intercept(m)) return;                    // in a party the leader starts for everyone
-    if (m === 'tag' && window.Tag) Tag.open();
+    if (m === 'arcade' && window.Arcade) Arcade.open();
     else if (m === 'parkour') openLevels();
     else if (m === 'gauntlet') Gauntlet.open();
     else if (m === 'ranked') Ranked.open();

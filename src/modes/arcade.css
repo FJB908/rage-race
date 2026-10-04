@@ -1,0 +1,31 @@
+/* ARCADE: the hub (spin or pick) plus the extra HUD bits the minigames share with Boom Tag. */
+.tg-cap { font:800 10px/1 var(--tgf); letter-spacing:.16em; color:#ffd25a; padding:0 6px; text-shadow:0 1px 0 rgba(0,0,0,.6); }
+.tg-val { font:900 12px/1 var(--tgf); color:#ffd25a; margin-left:2px; font-variant-numeric:tabular-nums; }
+.tg-pips { display:inline-flex; gap:3px; margin-left:3px; text-decoration:none; } .tg-pips s { width:7px; height:9px; border-radius:2px; background:rgba(255,255,255,.2); } .tg-pips s.on { background:#ff5470; box-shadow:0 0 6px rgba(255,84,112,.7); }
+.m-card.pink { border-color:rgba(255,111,216,.55); } .m-card.pink b { color:#ff8ae6; }
+
+#ar-hub { position:fixed; inset:0; z-index:40; display:none; flex-direction:column; padding-top:env(safe-area-inset-top,0px); background:radial-gradient(120% 60% at 50% -8%, rgba(255,111,216,.26), transparent 62%), radial-gradient(90% 50% at 50% 108%, rgba(124,107,255,.2), transparent 60%), #0d1017; color:#eef2f8; font-family:"Space Grotesk","Segoe UI",system-ui,sans-serif; opacity:0; transition:opacity .25s; }
+#ar-hub.vis { display:flex; opacity:1; }
+.ar-top { display:flex; align-items:center; gap:12px; padding:14px 16px 6px; width:100%; max-width:460px; margin:0 auto; box-sizing:border-box; }
+.ar-back { width:42px; height:42px; border-radius:13px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:#eef2f8; font-size:26px; line-height:1; }
+.ar-title { flex:1; } .ar-title small { font-size:10px; font-weight:800; letter-spacing:.2em; color:#ff8ae6; } .ar-title h1 { margin:2px 0 0; font:900 30px/1 var(--tgf); }
+.ar-wins { display:flex; flex-direction:column; align-items:flex-end; } .ar-wins b { font:900 22px/1 var(--tgf); color:#ffcf3f; } .ar-wins small { font-size:10px; letter-spacing:.12em; color:#8b95a7; }
+.ar-scroll { flex:1; overflow-y:auto; width:100%; max-width:460px; margin:0 auto; padding:10px 16px 24px; box-sizing:border-box; display:flex; flex-direction:column; gap:14px; }
+.ar-spin { display:flex; align-items:center; gap:14px; width:100%; padding:16px; border:0; border-radius:22px; text-align:left; color:#2a0a22; background:linear-gradient(115deg,#ff8ae6,#ffb347); box-shadow:0 7px 0 #a02a86, 0 14px 30px -10px rgba(255,111,216,.6); }
+.ar-spin:active { transform:translateY(4px); box-shadow:0 3px 0 #a02a86; }
+.ar-spin-ico { width:62px; height:62px; flex:none; } .ar-spin-ico svg { width:100%; height:100%; animation:arWob 1.6s ease-in-out infinite; }
+@keyframes arWob { 50% { transform:rotate(-8deg) scale(1.06); } }
+.ar-spin-t { display:flex; flex-direction:column; gap:3px; } .ar-spin-t b { font:900 28px/1 var(--tgf); letter-spacing:.06em; } .ar-spin-t small { font-size:12px; font-weight:700; opacity:.8; }
+.ar-h { margin:4px 0 -4px; font:900 11px/1 var(--tgf); letter-spacing:.16em; color:#8b95a7; }
+.ar-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ar-card { display:flex; flex-direction:column; align-items:flex-start; gap:6px; padding:12px; border-radius:18px; border:1.5px solid color-mix(in srgb, var(--c) 55%, transparent); background:radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--c) 22%, transparent), transparent 60%), #151a25; color:#eef2f8; text-align:left; font:inherit; }
+.ar-card:active { transform:scale(.97); } .ar-card:last-child:nth-child(odd) { grid-column:1 / -1; }
+.ar-ci { width:44px; height:44px; border-radius:13px; display:grid; place-items:center; background:rgba(13,16,23,.6); border:1px solid color-mix(in srgb, var(--c) 50%, transparent); } .ar-ci svg { width:32px; height:32px; }
+.ar-card b { font:900 17px/1.1 var(--tgf); color:var(--c); } .ar-card small { font-size:11px; line-height:1.35; color:#9aa4b6; }
+
+.ar-reel { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(8,10,15,.92); }
+.ar-reel.vis { display:flex; }
+.ar-reel-in { text-align:center; padding:0 24px; } .ar-reel-in small { font-size:12px; font-weight:800; letter-spacing:.24em; color:#ff8ae6; }
+.ar-reel-ico { --c:#fff; width:120px; height:120px; margin:14px auto 8px; display:grid; place-items:center; border-radius:32px; background:rgba(255,255,255,.05); border:2px solid var(--c); box-shadow:0 0 40px -6px var(--c); } .ar-reel-ico svg { width:84px; height:84px; }
+.ar-reel-in b { display:block; font:italic 900 34px/1.05 var(--tgf); } .ar-reel-in p { margin:10px auto 0; max-width:300px; font-size:14px; line-height:1.4; color:#aab3c4; }
+.ar-reel.lock .ar-reel-ico { animation:arPop .5s cubic-bezier(.2,1.5,.3,1); } @keyframes arPop { from { transform:scale(.6) rotate(-8deg); } }

@@ -21,6 +21,8 @@
         { id: 'lv2',     fam: 'level', ev: 'level',   kind: 'add', target: 2,   text: 'Complete 2 levels',         coins: 250, pass: 35 },
         { id: 'esc300',  fam: 'esc',   ev: 'escape',  kind: 'max', target: 300, text: 'Score 300 in Escape',       coins: 200, pass: 30, ok: () => false },
         { id: 'esc700',  fam: 'esc',   ev: 'escape',  kind: 'max', target: 700, text: 'Score 700 in Escape',       coins: 300, pass: 40, ok: () => false },
+        { id: 'arc2',    fam: 'arc',   ev: 'arplay',  kind: 'add', target: 2,   text: 'Play 2 Arcade minigames',   coins: 230, pass: 35 },
+        { id: 'arcwin',  fam: 'arc',   ev: 'arwin',   kind: 'add', target: 1,   text: 'Win an Arcade minigame',    coins: 300, pass: 40 },
         { id: 'tag1',    fam: 'tag',   ev: 'tagplay', kind: 'add', target: 1,   text: 'Play Boom Tag',             coins: 200, pass: 30 },
         { id: 'tagwin',  fam: 'tag',   ev: 'tagwin',  kind: 'add', target: 1,   text: 'Win a Boom Tag match',      coins: 320, pass: 45 },
         { id: 'tagpass', fam: 'tag',   ev: 'tagpass', kind: 'add', target: 8,   text: 'Pass the bomb 8 times',     coins: 240, pass: 35 },
@@ -108,7 +110,7 @@
     const hoursLeft = () => { const d = now(); const end = new Date(d); end.setHours(24, 0, 0, 0); return Math.max(1, Math.ceil((end - d) / 3600000)); };
     const daysLeft = () => { const d = now(); const dow = (d.getDay() + 6) % 7; return 7 - dow; };
 
-    const EV_ICON = { race: 'mode-race', win: 'crown', podium: 'crown', jump: 'arrow-up', item: 'xp', chest: 'drop-common', level: 'mode-levels', escape: 'mode-escape', tagplay: 'mode-tag', tagwin: 'mode-tag', tagpass: 'mode-tag', ranked: 'mode-race', gtrun: 'crown' };
+    const EV_ICON = { race: 'mode-race', win: 'crown', podium: 'crown', jump: 'arrow-up', item: 'xp', chest: 'drop-common', level: 'mode-levels', escape: 'mode-escape', arplay: 'mode-arcade', arwin: 'mode-arcade', tagplay: 'mode-tag', tagwin: 'mode-tag', tagpass: 'mode-tag', ranked: 'mode-race', gtrun: 'crown' };
     const chestArt = (tier, id) => (window.LB_CHEST ? LB_CHEST(id, tier) : icon('drop-' + tier));
     function render() {
         const p = prog(); if (ensure(p)) saveProg(p);

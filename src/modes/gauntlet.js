@@ -526,6 +526,7 @@
         ctx.lineWidth = Math.max(1, s * 0.12); ctx.strokeStyle = '#6b3d00'; ctx.lineJoin = 'round'; ctx.stroke();
         ctx.fillStyle = '#ff5470'; ctx.beginPath(); ctx.arc(x, y + s * 0.18, s * 0.14, 0, 7); ctx.fill();
     }
+    window.drawCrown = drawCrown;
 
     window.gtDrawWorldBack = function (vt, vb) {
         if (!gt || !gt.st) return;
@@ -569,6 +570,7 @@
             const lift = (p.look && p.look.hat && p.look.hat !== 'none') ? 24 : 12;
             drawCrown(p.x, p.y - p.r - lift - 4, 6.5);
         }
+        { const me = players.find(q => q.local); if (me && !me.gone) drawYouArrow(ctx, me, (me.crowned || me.champ) ? 22 : 0); }
         if (!gt.wall) return;
         const top = gt.wall.y;
         if (top > cameraY + VH + 220) return;

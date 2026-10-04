@@ -364,7 +364,7 @@
         else if (a === 'ok') answer(id, true); else if (a === 'no') answer(id, false);
         else if (a === 'create') createParty();
         else if (a === 'leave') leaveParty();
-        else if (a === 'start') { if (window.Party) Party.intercept(Party.mode() === 'gauntlet' ? 'gauntlet' : 'race') || (Party.mode() === 'gauntlet' && Gauntlet.open()); }
+        else if (a === 'start') { if (window.Party) { const m = Party.mode(); if (!Party.intercept(m === 'gauntlet' ? 'gauntlet' : m === 'arcade' ? 'arcade' : 'race')) { if (m === 'gauntlet') Gauntlet.open(); else if (m === 'arcade') Arcade.open(); } } }
         else if (a === 'mode-pick') { if (window.Party && Party.pickMode) Party.pickMode(); }
         else if (a === 'invite') invite(id);
         else if (a === 'kick') kick(id);
