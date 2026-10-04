@@ -6,3 +6,5 @@
 .gc-price { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 10px 18px; border-radius: 14px; background: #ff8ae6; color: #2a0c24; font-weight: 900; font-size: 18px; } .gc-price .ico { width: 20px; height: 20px; }
 .gc-hero.arm { border-color: #ff8ae6; box-shadow: 0 0 22px -4px #ff8ae6; } .gc-hero.arm .gc-tx small { color: #ffd6f7; }
 @keyframes gcBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+.gc-odds { display:block; margin:-4px auto 10px; padding:4px 12px; border:0; background:none; color:#8b95a7; font:700 12px system-ui; text-decoration:underline; }

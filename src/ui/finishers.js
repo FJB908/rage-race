@@ -345,14 +345,24 @@
         cube(c, S);
         if (m.sim) m.sim.draw(c);
     }
+    // The previews run at 30 fps and only while their card is on screen. Visibility is checked a few times per second, not every frame:
+    // measuring every canvas on every frame forced a layout each time and made claiming rewards (many animated cards) stutter.
+    let lastRun = 0, visAt = 0;
     function tick(t) {
-        raf = 0; const dt = Math.min(.05, prevT ? (t - prevT) / 1000 : .016); prevT = t;
+        raf = 0;
+        if (t - lastRun < 30) { raf = requestAnimationFrame(tick); return; }
+        const dt = Math.min(.05, lastRun ? (t - lastRun) / 1000 : .016); lastRun = t;
+        const check = t - visAt > 250; if (check) visAt = t;
+        let any = false;
         for (const m of mounts) {
             if (!m.cv.isConnected) { mounts.delete(m); continue; }
-            const r = m.cv.getBoundingClientRect(); if (!r.width || r.bottom < 0 || r.top > innerHeight) continue;
+            if (check || m.vis === undefined) { const r = m.cv.getBoundingClientRect(); m.vis = !!(r.width && r.bottom > 0 && r.top < innerHeight); }
+            if (!m.vis) continue;
+            any = true;
             try { step(m, dt); } catch (e) { m.sim = null; m.idle = 1; }
         }
-        if (mounts.size) raf = requestAnimationFrame(tick); else prevT = 0;
+        if (!mounts.size) { prevT = 0; lastRun = 0; return; }
+        if (any) raf = requestAnimationFrame(tick); else setTimeout(() => { if (!raf && mounts.size) raf = requestAnimationFrame(tick); }, 300);       // nothing visible: just look again in a moment
     }
     // a first still frame straight away, so a card is never empty (and something shows even if the animation cannot run)
     function prime(m) {
@@ -372,7 +382,7 @@
     function mount(cv, f, opts) {
         const m = Object.assign({ cv, f, ctx: cv.getContext('2d'), sim: null, idle: Math.random() * .15, age: 0, hold: .35 }, opts || {});
         prime(m);
-        mounts.add(m); if (!raf) raf = requestAnimationFrame(tick); return m;
+        m.vis = true; mounts.add(m); if (!raf) raf = requestAnimationFrame(tick); return m;
     }
 
     /* =========================================================================== shop ==== */
@@ -389,7 +399,7 @@
             const own = isOwn(f), eq = (p.finisher || 'f-none') === f.id;
             const b = document.createElement('button'); b.type = 'button'; b.className = 'm-skin fn-card' + (eq ? ' eq' : '') + (f.premium ? ' prem' : '') + (f.rarity === 'legendary' ? ' leg' : '');
             b.style.setProperty('--rc', RARITY[f.rarity].color);
-            b.innerHTML = '<span class="m-skin-pv"><canvas width="460" height="336" class="fn-pv"></canvas></span><b>' + f.name + '</b>' +
+            b.innerHTML = '<span class="m-skin-pv"><canvas width="340" height="248" class="fn-pv"></canvas></span><b>' + f.name + '</b>' +
                 '<span class="m-skin-f"><span class="buy-hint">Tap again</span><span class="' + (own ? (eq ? 'eqd' : 'own') : 'price') + '">' + (own ? (eq ? 'EQUIPPED' : 'OWNED') : f.premium ? icon('gem') + ' ' + f.gemPrice : icon('coin') + ' ' + f.price.toLocaleString('en-US')) + '</span></span>';
             mount(b.querySelector('canvas'), f, { span: f.pv || 340, oy: .84 });
             b.onclick = () => {

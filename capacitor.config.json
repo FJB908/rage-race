@@ -7,6 +7,14 @@
     "allowMixedContent": false
   },
   "plugins": {
-    "SplashScreen": { "launchShowDuration": 0 }
+    "SplashScreen": {
+      "launchShowDuration": 0
+    },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": [
+        "google.com"
+      ]
+    }
   }
 }

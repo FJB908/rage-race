@@ -86,6 +86,12 @@
 
     /* ------------------------------------------------------------------- Android back button ---- */
     const App = P.App;
+    // The app leaves the screen (home button, another app, screen off): silence the music, and pause a race in progress.
+    if (App && App.addListener) App.addListener('appStateChange', st => {
+        if (!st || st.isActive) { try { if (window.SFX) SFX.unlock(); } catch (e) {} return; }
+        try { if (window.SFX) SFX.suspend(); } catch (e) {}
+        try { if (typeof state !== 'undefined' && (state === 'playing' || state === 'countdown')) { const b = document.getElementById('btn-pause'); if (b) b.click(); } } catch (e) {}
+    });
     if (App && App.addListener) App.addListener('backButton', () => {
         const click = id => { const e = document.getElementById(id); if (e) e.click(); };
         if (window.lootboxOpen || document.getElementById('lootbox')) return;                // chest screens close themselves
