@@ -19,7 +19,7 @@
     const TIME_KEY = 'rr_pk_best_time';                                              // lower is better, 0 = none
     const DIM_KEYS = ['rr_pk_levels_v1', 'rr_pk_levels_v2'];
     const FLAG_KEYS = ['rr_tutorial_done'];
-    const MAX_FIELDS = ['xp', 'races', 'wins', 'passPoints', 'passPointsEarned', 'cosmeticPity', 'nameChanges'];
+    const MAX_FIELDS = ['xp', 'races', 'wins', 'passPoints', 'passPointsEarned', 'passEndClaimed', 'cosmeticPity', 'nameChanges'];
 
     /* ------------------------------------------------------------ local snapshot ---- */
     const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };

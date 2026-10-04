@@ -152,3 +152,11 @@
    The glow is static now; only cheap transform/opacity animations remain. */
 .pz-col.ready .pz-node { animation:none; box-shadow:0 0 0 6px rgba(255,207,63,.25),0 3px 0 #0a0d14; }
 .pz-card.ready { animation:none; box-shadow:0 6px 0 #0a0d14,0 0 18px rgba(255,207,63,.5); }
+
+/* endless tier after tier 30 */
+.pz-end { display:flex; align-items:center; gap:12px; margin:8px 14px 4px; padding:10px 12px; border-radius:16px; border:1.5px solid rgba(179,169,255,.45); background:linear-gradient(120deg,rgba(179,169,255,.18),#141a24 70%); }
+.pz-end.locked { opacity:.75; } .pz-end.ready { border-color:#ffcf3f; box-shadow:0 0 18px -6px #ffcf3f; }
+.pze-art { flex:none; width:46px; height:46px; } .pze-art svg { width:100%; height:100%; --ic:#b3a9ff; }
+.pze-tx { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; text-align:left; } .pze-tx b { font:900 13px/1.1 "Bricolage Grotesque",system-ui,sans-serif; letter-spacing:.07em; } .pze-tx small { font-size:11px; color:#aab3c4; font-weight:600; line-height:1.3; }
+.pze-bar { display:block; height:5px; border-radius:3px; background:rgba(255,255,255,.1); overflow:hidden; } .pze-bar u { display:block; height:100%; background:#b3a9ff; }
+.pze-claim { flex:none; padding:10px 16px; border:0; border-radius:12px; background:#ffcf3f; color:#2a1c00; font:900 14px/1 system-ui; box-shadow:0 4px 0 #a8730a; } .pze-claim b { margin-left:4px; }

@@ -12,7 +12,8 @@
         const claimable = [];
         for (let i = 0; i < done; i++) if (PASS_TIERS[i].t !== 'none' && !p.passClaimed.includes(i)) claimable.push(i);
         const rageClaimable = []; for (let i = 0; i < done; i++) if (!(p.rageClaimed || []).includes(i)) rageClaimable.push(i);
-        return { pts, done, claimable, rageClaimable, into: done >= N ? PASS_COST[N - 1] : passInto(pts), cost: done >= N ? PASS_COST[N - 1] : PASS_COST[done] };
+        const END = PASS_END_PTS, endPts = Math.max(0, pts - PASS_CUM[N - 1]), endEarned = done >= N ? Math.floor(endPts / END) : 0, endReady = Math.max(0, endEarned - (p.passEndClaimed || 0));
+        return { pts, done, claimable, rageClaimable, endReady, endInto: endPts % END, into: done >= N ? PASS_COST[N - 1] : passInto(pts), cost: done >= N ? PASS_COST[N - 1] : PASS_COST[done] };
     }
 
     const plain = t => {
@@ -36,11 +37,12 @@
             const pick = st.claimable.length ? { t: PASS_TIERS[st.claimable[0]], claim: true } : (p.rage && st.rageClaimable.length) ? { t: RAGE_TIERS[st.rageClaimable[0]], claim: true } : null;
             let txt = '', cl = false;
             if (pick) { txt = 'Claim: ' + plain(pick.t); cl = true; }
-            else { for (let i = st.done; i < N; i++) if (PASS_TIERS[i].t !== 'none') { txt = 'Next: ' + plain(PASS_TIERS[i]); break; } if (!txt && st.done >= N) txt = 'Season complete'; }
+            else if (st.endReady) { txt = 'Claim: ' + (st.endReady > 1 ? st.endReady + ' epic chests' : 'epic chest'); cl = true; }
+            else { for (let i = st.done; i < N; i++) if (PASS_TIERS[i].t !== 'none') { txt = 'Next: ' + plain(PASS_TIERS[i]); break; } if (!txt && st.done >= N) txt = 'Endless: epic chest in ' + (PASS_END_PTS - st.endInto); }
             nx.textContent = txt; nx.classList.toggle('claim', cl);
         }
         const art = document.querySelector('.m-pass-art');
-        const nClaim = st.claimable.length + (p.rage ? st.rageClaimable.length : 0);
+        const nClaim = st.claimable.length + (p.rage ? st.rageClaimable.length : 0) + st.endReady;
         setBadge(document.getElementById('btn-pass-open'), nClaim);
         if (art) { art.textContent = String(st.done).padStart(2, '0'); art.classList.toggle('has-claim', nClaim > 0); art.classList.toggle('rage', !!p.rage); }
     };
@@ -126,11 +128,11 @@
         const p = prog(), st = state(p);
         document.getElementById('pz-pts').innerHTML = R('pass', st.pts);
         document.getElementById('pz-lvl').textContent = st.done;
-        document.getElementById('pz-next-txt').textContent = st.done >= N ? 'SEASON COMPLETE' : 'TIER ' + (st.done + 1) + ' IN';
-        document.getElementById('pz-prog-num').innerHTML = st.done >= N ? '' : R('pass', (st.cost - st.into) + ' to go');
-        document.getElementById('pz-bar-fill').style.width = (st.done >= N ? 100 : st.into) + '%';
+        document.getElementById('pz-next-txt').textContent = st.done >= N ? 'NEXT EPIC CHEST IN' : 'TIER ' + (st.done + 1) + ' IN';
+        document.getElementById('pz-prog-num').innerHTML = st.done >= N ? R('pass', (PASS_END_PTS - st.endInto) + ' to go') : R('pass', (st.cost - st.into) + ' to go');
+        document.getElementById('pz-bar-fill').style.width = (st.done >= N ? Math.round(st.endInto / PASS_END_PTS * 100) : Math.round(st.into / st.cost * 100)) + '%';
         renderRage(p);
-        const all = document.getElementById('pz-claimall'), n = st.claimable.length + (p.rage ? st.rageClaimable.length : 0);
+        const all = document.getElementById('pz-claimall'), n = st.claimable.length + (p.rage ? st.rageClaimable.length : 0) + st.endReady;
         all.hidden = !n; all.innerHTML = 'CLAIM ALL <b>' + n + '</b>';
 
         const track = document.getElementById('pz-track'), keepX = track.scrollLeft;
@@ -151,6 +153,12 @@
             col.append(top, node, bot); track.appendChild(col);
         });
         track.scrollLeft = keepX;
+        // ENDLESS: after tier 30 every PASS_END_PTS pass points pays an epic chest, for as long as you keep playing
+        let end = document.getElementById('pz-end');
+        if (!end) { end = document.createElement('div'); end.id = 'pz-end'; end.className = 'pz-end'; track.parentNode.insertBefore(end, track); }
+        end.className = 'pz-end' + (st.endReady ? ' ready' : '') + (st.done < N ? ' locked' : '');
+        end.innerHTML = '<span class="pze-art">' + icon('drop-epic') + '</span><span class="pze-tx"><b>ENDLESS EPIC CHEST</b><small>' + (st.done < N ? 'Finish tier ' + N + ', then every ' + PASS_END_PTS + ' pass points gives an epic chest' : 'Every ' + PASS_END_PTS + ' pass points &middot; ' + (PASS_END_PTS - st.endInto) + ' to the next') + '</small><i class="pze-bar"><u style="width:' + (st.done < N ? 0 : Math.round(st.endInto / PASS_END_PTS * 100)) + '%"></u></i></span>' + (st.endReady ? '<button type="button" class="pze-claim">CLAIM <b>' + st.endReady + '</b></button>' : '');
+        const eb = end.querySelector('.pze-claim'); if (eb) eb.onclick = () => claimEnd();
         requestAnimationFrame(layoutLine);
     };
     function layoutLine() {
@@ -231,6 +239,19 @@
         try { for (const [lane, i] of list) { await grant(lane, i); refreshMenu(); renderPassScreen(); } }
         finally { busy = false; }
     }
-    window.claimAllPass = () => { const p = prog(), st = state(p); claim(st.claimable.map(i => ['f', i]).concat(p.rage ? st.rageClaimable.map(i => ['r', i]) : [])); };
+    async function claimEnd() {
+        if (busy) return; busy = true;
+        try {
+            let st = state(prog());
+            while (st.endReady > 0) {
+                const q = prog(); q.passEndClaimed = (q.passEndClaimed || 0) + 1; saveProg(q);
+                const drop = awardLootDrop(newLootId('pass'), { coins:120, xp:90, passPoints:0 }, { tier:'epic' });
+                await new Promise(res => openLootbox(drop, { title:'ENDLESS CHEST', onDone:res }));
+                refreshMenu(); st = state(prog());
+            }
+            renderPassScreen();
+        } finally { busy = false; }
+    }
+    window.claimAllPass = async () => { const p = prog(), st = state(p); await claim(st.claimable.map(i => ['f', i]).concat(p.rage ? st.rageClaimable.map(i => ['r', i]) : [])); if (state(prog()).endReady) await claimEnd(); };
     window.addEventListener('resize', () => { if (document.getElementById('pz-track') && document.getElementById('s-pass').style.display !== 'none') layoutLine(); });
 })();

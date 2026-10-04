@@ -4387,7 +4387,7 @@ function refreshShopBadge(){
     const p = prog(), ids = shopItems().map(i => i.id);
     if (!Array.isArray(p.shopSeen)){ p.shopSeen = ids; saveProg(p); }
     const fresh = ids.filter(id => !p.shopSeen.includes(id) && !p.owned.includes(id)).length;
-    setBadge(document.querySelector('.m-nav [data-go="shop"]'), fresh);
+    setBadge(document.querySelector('.m-nav [data-go="shop"]'), fresh + (window.Ads ? Ads.ready() : 0));
 }
 function markShopSeen(){ const p = prog(); p.shopSeen = shopItems().map(i => i.id); saveProg(p); refreshShopBadge(); }
 function menuTab(tab){

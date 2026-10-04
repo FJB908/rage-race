@@ -1,3 +1,4 @@
+html, body, * { -webkit-tap-highlight-color: transparent; }
 /* Fonts load from the device: no internet needed. Real embedded webfonts get dropped in on the desktop build. */
 
     :root {

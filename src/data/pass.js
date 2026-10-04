@@ -4,6 +4,7 @@ const PASS_TIER_PTS = 100;                 // the first tier; later tiers cost m
 // Every tier costs more than the one before it: 100 points for tier 1 up to ~350 for tier 30. PASS_CUM[i] = points needed to finish tier i+1.
 const PASS_COST = Array.from({ length: 30 }, (_, i) => Math.round((100 + i * 5 + i * i * 0.12) / 10) * 10);
 const PASS_CUM = PASS_COST.reduce((a, c) => { a.push((a.length ? a[a.length - 1] : 0) + c); return a; }, []);
+const PASS_END_PTS = 500;          // after the last tier: an epic chest for every 500 pass points, forever
 function passTiersDone(pts) { let n = 0; while (n < PASS_CUM.length && pts >= PASS_CUM[n]) n++; return n; }
 function passInto(pts) { const n = passTiersDone(pts); return n >= PASS_CUM.length ? PASS_COST[PASS_COST.length - 1] : pts - (n ? PASS_CUM[n - 1] : 0); }
 const PASS_TIERS = [

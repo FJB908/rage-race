@@ -86,10 +86,19 @@
         const left = A.left('coin'), w = A.wait('coin'); b.hidden = left <= 0;
         b.disabled = w > 0; b.classList.toggle('cool', w > 0);
         const num = b.querySelector('b'); if (num) num.textContent = w > 0 ? mmss(w) : String(CFG.coin.amount);
-        setBadge(b, w > 0 ? 0 : left);
+        setBadge(b, 0);                       // the green FREE tag is the notice here; a number would cover the amount
+        A.refreshShop();
+    };
+    // how many video rewards can be claimed right now (shop nav badge + "FREE" tag on the Gems pill)
+    A.ready = () => ['coin', 'drop'].reduce((n, k) => n + (A.left(k) > 0 && A.wait(k) <= 0 ? A.left(k) : 0), 0);
+    A.refreshShop = function () {
+        const n = A.ready(), pill = document.querySelector('.m-pill[data-cat="resources"]');
+        if (pill) { let f = pill.querySelector(':scope > .pill-free'); if (n && !f) { f = document.createElement('i'); f.className = 'pill-free'; f.textContent = 'FREE'; pill.appendChild(f); } else if (!n && f) f.remove(); }
+        if (typeof refreshShopBadge === 'function') refreshShopBadge();
     };
     A.renderShop = function (box) {
         const sec = document.createElement('div'); sec.className = 'ad-row';
+        const hd = document.createElement('div'); hd.className = 'ad-head'; hd.textContent = 'FREE REWARDS - WATCH A VIDEO';
         const mk = (kind, art, label, fn) => {
             const left = A.left(kind), w = A.wait(kind), b = document.createElement('button'); b.type = 'button'; b.className = 'ad-chip'; b.dataset.kind = kind;
             b.disabled = left <= 0 || w > 0; b.classList.toggle('cool', w > 0 && left > 0);
@@ -100,7 +109,7 @@
         A.refreshHome();
         sec.appendChild(mk('coin', icon('coin'), '+' + CFG.coin.amount, A.watchCoins));
         sec.appendChild(mk('drop', icon('drop-common'), 'Free chest', A.watchDrop));
-        box.prepend(sec);
+        box.prepend(sec); box.prepend(hd);
     };
 
     /* -------------------------------------------------------- interstitial ---- */
