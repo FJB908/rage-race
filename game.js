@@ -3993,8 +3993,12 @@ function renderLook(cv, look, opts){
     const c = cv.getContext('2d'); if (!c) return;
     const W = cv.width, H = cv.height;
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
-    const s = W * ((opts && opts.scale) || 0.24), k = s/12;
-    c.translate(W/2, H * ((opts && opts.cy) || 0.6));
+    let s = W * ((opts && opts.scale) || 0.24);
+    const cyy = H * ((opts && opts.cy) || 0.6);
+    // tall hats (crown, top hat, chef, storm...) must never be cut off by the top of the canvas: shrink the whole look just enough to fit
+    if (look.hat && look.hat !== 'none' && !(opts && opts.nofit)) { const need = 3.0 * s, have = cyy - 2; if (need > have) s *= have / need; }
+    const k = s/12;
+    c.translate(W/2, cyy);
     const def = skinById(look.skin), tt = (opts && opts.t != null) ? opts.t : 0.3;
     const cs = (look.costume && look.costume !== 'none' && window.Costumes && Costumes.has(look.costume)) ? look.costume : null;
     if (cs) Costumes.back(c, s, k, cs, tt);
