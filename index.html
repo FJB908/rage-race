@@ -12,25 +12,26 @@
 <style>html.acct-pending #s-start{visibility:hidden}</style>
 <meta name="darkreader-lock">
 <title>RAGE RACE</title>
-<link rel="stylesheet" href="game.css?v=10041633">
-<link rel="stylesheet" href="src/ui/icons.css?v=10041633">
-<link rel="stylesheet" href="src/ui/party.css?v=10041633">
-<link rel="stylesheet" href="src/ui/boosters.css?v=10041633">
-<link rel="stylesheet" href="src/ui/levelrewards.css?v=10041633">
-<link rel="stylesheet" href="src/ui/gemcrate.css?v=10041633">
-<link rel="stylesheet" href="src/ui/emotes.css?v=10041633">
-<link rel="stylesheet" href="src/ui/lootbox.css?v=10041633">
-<link rel="stylesheet" href="src/ui/pass.css?v=10041633">
-<link rel="stylesheet" href="src/ui/odds.css?v=10041633">
-<link rel="stylesheet" href="src/modes/builder.css?v=10041633">
-<link rel="stylesheet" href="src/ui/missions.css?v=10041633">
-<link rel="stylesheet" href="src/tutorial/tutorial.css?v=10041633">
-<link rel="stylesheet" href="src/ui/streak.css?v=10041633">
-<link rel="stylesheet" href="src/modes/gauntlet.css?v=10041633">
-<link rel="stylesheet" href="src/modes/ranked.css?v=10041633">
-<link rel="stylesheet" href="src/cloud/cloud.css?v=10041633">
-<link rel="stylesheet" href="src/ads/ads.css?v=10041633">
-<link rel="stylesheet" href="src/social/social.css?v=10041633">
+<link rel="stylesheet" href="game.css?v=10041650">
+<link rel="stylesheet" href="src/ui/icons.css?v=10041650">
+<link rel="stylesheet" href="src/ui/party.css?v=10041650">
+<link rel="stylesheet" href="src/ui/boosters.css?v=10041650">
+<link rel="stylesheet" href="src/ui/levelrewards.css?v=10041650">
+<link rel="stylesheet" href="src/ui/gemcrate.css?v=10041650">
+<link rel="stylesheet" href="src/ui/emotes.css?v=10041650">
+<link rel="stylesheet" href="src/ui/lootbox.css?v=10041650">
+<link rel="stylesheet" href="src/ui/pass.css?v=10041650">
+<link rel="stylesheet" href="src/ui/odds.css?v=10041650">
+<link rel="stylesheet" href="src/modes/builder.css?v=10041650">
+<link rel="stylesheet" href="src/modes/tag.css?v=10041650">
+<link rel="stylesheet" href="src/ui/missions.css?v=10041650">
+<link rel="stylesheet" href="src/tutorial/tutorial.css?v=10041650">
+<link rel="stylesheet" href="src/ui/streak.css?v=10041650">
+<link rel="stylesheet" href="src/modes/gauntlet.css?v=10041650">
+<link rel="stylesheet" href="src/modes/ranked.css?v=10041650">
+<link rel="stylesheet" href="src/cloud/cloud.css?v=10041650">
+<link rel="stylesheet" href="src/ads/ads.css?v=10041650">
+<link rel="stylesheet" href="src/social/social.css?v=10041650">
 </head>
 <body>
 
@@ -81,7 +82,7 @@
             </div>
             <div class="m-pair">
                 <button class="m-card violet sm" type="button" id="btn-parkour" data-mode="parkour"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-levels"/></svg></span><span class="mc-copy"><b>Levels</b><span>Dimensions</span><small id="start-pk"></small></span><em></em></button>
-                <button class="m-card red sm" type="button" id="btn-escape" data-mode="escape"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-escape"/></svg></span><span class="mc-copy"><b>Escape</b><span>Climb or fall</span><small id="start-best"></small></span><em></em></button>
+                <button class="m-card red sm" type="button" id="btn-tag" data-mode="tag"><span class="mc-ico"><svg class="ico" aria-hidden="true"><use href="#ico-mode-tag"/></svg></span><span class="mc-copy"><b>Boom Tag</b><span>Pass the bomb</span><small id="start-best"></small></span><em class="new-tag">NEW</em></button>
             </div>
             <div class="m-mini3" hidden><strong id="m-d1"></strong><span id="m-d2box"><strong id="m-d2"></strong></span><strong id="m-tower"></strong></div>
         </section>
@@ -348,45 +349,46 @@
     <div id="countdown">3</div>
 </div>
 
-<script src="src/constants/values.js?v=10041633"></script>
-<script src="src/data/bot-names.js?v=10041633"></script>
-<script src="src/data/items.js?v=10041633"></script>
-<script src="src/ui/icons.js?v=10041633"></script>
-<script src="src/ui/boosters.js?v=10041633"></script>
-<script src="src/ui/trail-fx.js?v=10041633"></script>
-<script src="src/data/pass.js?v=10041633"></script>
-<script src="src/data/gems.js?v=10041633"></script>
-<script src="src/data/streak.js?v=10041633"></script>
-<script src="src/data/levelrewards.js?v=10041633"></script>
-<script src="src/data/skin-styles.js?v=10041633"></script>
-<script src="src/data/trail-styles.js?v=10041633"></script>
-<script src="src/data/accessory-styles.js?v=10041633"></script>
-<script src="src/data/custom-cosmetics.js?v=10041633"></script>
-<script src="src/data/premium-cosmetics.js?v=10041633"></script>
-<script src="src/ui/pass.js?v=10041633"></script>
-<script src="src/audio/sfx.js?v=10041633"></script>
-<script src="game.js?v=10041633"></script>
-<script src="src/data/cosmetic-fx.js?v=10041633"></script>
-<script src="src/ui/lootbox.js?v=10041633"></script>
-<script src="src/modes/roster.js?v=10041633"></script>
-<script src="src/modes/gauntlet.js?v=10041633"></script>
-<script src="src/modes/builder.js?v=10041633"></script>
-<script src="src/modes/ranked.js?v=10041633"></script>
-<script src="src/ads/ads.js?v=10041633"></script>
-<script src="src/cloud/cloud.js?v=10041633"></script>
-<script src="src/social/social.js?v=10041633"></script>
-<script src="src/ui/party.js?v=10041633"></script>
-<script src="src/cloud/account.js?v=10041633"></script>
-<script src="src/tutorial/tutorial.js?v=10041633"></script>
-<script src="src/ui/streak.js?v=10041633"></script>
-<script src="src/ui/levelrewards.js?v=10041633"></script>
-<script src="src/ui/gemcrate.js?v=10041633"></script>
-<script src="src/ui/emotes.js?v=10041633"></script>
-<script src="src/ui/costumes.js?v=10041633"></script>
-<script src="src/ui/finishers.js?v=10041633"></script>
-<script src="src/ui/missions.js?v=10041633"></script>
-<script src="src/ui/collection.js?v=10041633"></script>
-<script src="src/ui/odds.js?v=10041633"></script>
-<script src="src/native/native.js?v=10041633"></script>
+<script src="src/constants/values.js?v=10041650"></script>
+<script src="src/data/bot-names.js?v=10041650"></script>
+<script src="src/data/items.js?v=10041650"></script>
+<script src="src/ui/icons.js?v=10041650"></script>
+<script src="src/ui/boosters.js?v=10041650"></script>
+<script src="src/ui/trail-fx.js?v=10041650"></script>
+<script src="src/data/pass.js?v=10041650"></script>
+<script src="src/data/gems.js?v=10041650"></script>
+<script src="src/data/streak.js?v=10041650"></script>
+<script src="src/data/levelrewards.js?v=10041650"></script>
+<script src="src/data/skin-styles.js?v=10041650"></script>
+<script src="src/data/trail-styles.js?v=10041650"></script>
+<script src="src/data/accessory-styles.js?v=10041650"></script>
+<script src="src/data/custom-cosmetics.js?v=10041650"></script>
+<script src="src/data/premium-cosmetics.js?v=10041650"></script>
+<script src="src/ui/pass.js?v=10041650"></script>
+<script src="src/audio/sfx.js?v=10041650"></script>
+<script src="game.js?v=10041650"></script>
+<script src="src/data/cosmetic-fx.js?v=10041650"></script>
+<script src="src/ui/lootbox.js?v=10041650"></script>
+<script src="src/modes/roster.js?v=10041650"></script>
+<script src="src/modes/gauntlet.js?v=10041650"></script>
+<script src="src/modes/tag.js?v=10041650"></script>
+<script src="src/modes/builder.js?v=10041650"></script>
+<script src="src/modes/ranked.js?v=10041650"></script>
+<script src="src/ads/ads.js?v=10041650"></script>
+<script src="src/cloud/cloud.js?v=10041650"></script>
+<script src="src/social/social.js?v=10041650"></script>
+<script src="src/ui/party.js?v=10041650"></script>
+<script src="src/cloud/account.js?v=10041650"></script>
+<script src="src/tutorial/tutorial.js?v=10041650"></script>
+<script src="src/ui/streak.js?v=10041650"></script>
+<script src="src/ui/levelrewards.js?v=10041650"></script>
+<script src="src/ui/gemcrate.js?v=10041650"></script>
+<script src="src/ui/emotes.js?v=10041650"></script>
+<script src="src/ui/costumes.js?v=10041650"></script>
+<script src="src/ui/finishers.js?v=10041650"></script>
+<script src="src/ui/missions.js?v=10041650"></script>
+<script src="src/ui/collection.js?v=10041650"></script>
+<script src="src/ui/odds.js?v=10041650"></script>
+<script src="src/native/native.js?v=10041650"></script>
 </body>
 </html>

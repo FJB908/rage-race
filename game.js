@@ -375,6 +375,7 @@ function capUpwardVelocity(p){
     if (p.vy < -MAX_UP_VEL) p.vy = -MAX_UP_VEL;
 }
 function launchPlayer(p, dx, dy) {
+    if (gameMode === 'tag' && p.stunT > 0) return;           // Boom Tag: a zapped player cannot jump
     if (p.local && window.Missions) Missions.event('jump');
     const mult = playerPowMul(p, false);
     // Launch purely from the drag: don't inherit the moving platform's velocity,
@@ -407,6 +408,7 @@ function playerG(p){ return GRAVITY * (p.chainT > 0 ? CHAIN_GRAV : 1); }
 function playerPowMul(p, air){
     let m = 1;
     if (p.charged && !air) m *= BOOST_MULT;
+    if (gameMode === 'tag' && p.bomb) m *= 1.16;            // Boom Tag: whoever holds the bomb jumps a little harder, so catching is possible
     if (p.chainT > 0) m *= CHAIN_POW;
         return m;
 }
@@ -1464,7 +1466,7 @@ function stepPlayer(p, dt) {
             if (Math.abs(p.x - pl.x) > pl.w / 2 + SUPPORT_K * p.r){ p.mode='air'; p.plat=null; }
             // fragile trigger
             else if (pl.type==='fragile' && !pl.breaking){ pl.breaking=true; pl.breakT=0.9; }
-            if (p.mode === 'idle' && !p.local) updateBot(p, dt);
+            if (p.mode === 'idle' && !p.local && !p.noAI) updateBot(p, dt);
         }
     }
 
@@ -1911,6 +1913,7 @@ function update(dt) {
     else if (gameMode === 'parkour') updateParkour(dt);
     else if (gameMode === 'level') updateLevel(dt);
     else if (gameMode === 'gauntlet') updateGauntlet(dt);
+    else if (gameMode === 'tag' && window.Tag) Tag.update(dt);
     else if (window.buildMatch && window.Build) Build.update(dt);
 
     // camera — follows you normally, or the player you're spectating after you've finished
@@ -1919,7 +1922,7 @@ function update(dt) {
         : null;
     const camP = (spectating && spectateTarget && !spectateTarget.finished) ? spectateTarget : (gameMode === 'gauntlet' ? gtCamTarget() : (escapeSpectate || players[0]));
     if (freeCam && !canFreeCam()) freeCam = false;
-    if (!freeCam){
+    if (!freeCam && gameMode !== 'tag'){      // Boom Tag: one fixed screen
         const targetCam = camP.y - VH*0.62;
         cameraY += (targetCam - cameraY) * Math.min(1, 12*dt);
     }
@@ -2070,7 +2073,7 @@ function drawCosmeticTrails(viewTop, viewBottom){
 var _menuPainted = false;                  // in the menu the world canvas is just a flat colour behind the UI: paint it once, not 60 times a second
 function draw() {
     if (state==='menu' && _menuPainted) return;
-    ctx.fillStyle = (gameMode === 'gauntlet' && window.GT_BG) || '#0d1017';   // Gauntlet stages tint the floor colour (a cheap sky)
+    ctx.fillStyle = (gameMode === 'gauntlet' && window.GT_BG) || (gameMode === 'tag' && window.TG_BG) || '#0d1017';   // Gauntlet stages tint the floor colour (a cheap sky)
     ctx.fillRect(0,0,CW,CH);
     _menuPainted = state==='menu';
     if (state==='menu') return;
@@ -2420,6 +2423,7 @@ function draw() {
     drawUfoCraft();
     if (gameMode === 'escape') drawEscapeWorldFront();
     else if (gameMode === 'gauntlet') gtDrawWorldFront(viewTop, viewBottom);
+    else if (gameMode === 'tag' && window.Tag) Tag.drawFront(ctx);
     if (window.Emotes) Emotes.draw(ctx);                          // emote bubbles above players
     if (window.Finishers) Finishers.draw(ctx);                    // your finish effect (world space)
     ctx.restore();
@@ -2436,6 +2440,7 @@ function draw() {
     else if (gameMode === 'parkour') drawParkourGauge();
     else if (gameMode === 'level') drawLevelGauge();
     else if (gameMode === 'gauntlet'){ gtDrawOverlay(); gtDrawGauge(); }
+    else if (gameMode === 'tag'){ if (window.Tag) Tag.drawOverlay(ctx, CW, CH); }
     else drawMinimap();
 }
 
@@ -2610,6 +2615,7 @@ function resumeRace() {
     state = 'playing';
 }
 function quitToMenu() {
+    if (gameMode === 'tag' && window.Tag){ Tag.leave(true); return; }
     if (window.buildMatch && window.Build){ Build.leave(true); return; }
     if (typeof stopSpectate === 'function') stopSpectate();
     state = 'menu'; dragging = false;
@@ -2636,6 +2642,7 @@ function restartRace() {
     else if (gameMode === 'parkour') { pkClearSave(); pkStart(null); }   // "Restart" = a fresh climb from the ground
     else if (gameMode === 'level') lvStart(lv.idx);
     else if (gameMode === 'gauntlet') gtForfeit();
+    else if (gameMode === 'tag' && window.Tag) Tag.restart();
     else startMatchmaking();
 }
 function giveUpToResults() {
@@ -2713,6 +2720,7 @@ document.getElementById('set-reset').addEventListener('click', () => {
 });
 document.getElementById('btn-pause').addEventListener('click', () => {
     if (gameMode === 'gauntlet'){ gtPauseMenu(); return; }
+    if (gameMode === 'tag' && window.Tag){ Tag.pauseMenu(); return; }
     if (window.rankedMatch){ Ranked.pauseMenu(); return; }
     const btns = [
         ['Resume', resumeRace],
@@ -4030,8 +4038,8 @@ function randomBotLook(){
     };
 }
 
-const MODE_LABEL = { race:'Race · Quick match', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
-const MODE_ICON = { race:'mode-race', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
+const MODE_LABEL = { race:'Race · Quick match', tag:'Boom Tag · Pass the bomb', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
+const MODE_ICON = { race:'mode-race', tag:'mode-tag', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
 let _freeIds = null;
 function freeItemIds(){
     if (!_freeIds) _freeIds = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.price === 0 && !i.premium && !i.exclusive && !i.priceLock).map(i => i.id);
@@ -4070,7 +4078,7 @@ function prog(){
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
     if (!d.hat || !HATS.some(h => h.id === d.hat)) d.hat = 'none';
     if (!d.face || !FACES.some(f => f.id === d.face)) d.face = 'none';
-    if (!['race', 'escape', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';
+    if (!['race', 'tag', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';
     return d;
 }
 function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} if (window.Cloud) Cloud.touch(); }
@@ -4532,7 +4540,7 @@ function playSelected(){
     const m = prog().lastMode;
     window.gauntletParty = null;
     if (window.Party && Party.intercept(m)) return;                    // in a party the leader starts for everyone
-    if (m === 'escape') startEscape();
+    if (m === 'tag' && window.Tag) Tag.open();
     else if (m === 'parkour') openLevels();
     else if (m === 'gauntlet') Gauntlet.open();
     else if (m === 'ranked') Ranked.open();
@@ -4571,7 +4579,7 @@ document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.addEvent
 function refreshStartMeta(){
     settlePendingDrops();
     const best = load('rr_esc_best_score', 0), coins = load('rr_coins', 0);
-    document.getElementById('start-best').textContent = best > 0 ? 'Best ' + best.toLocaleString('en-US') : '';
+    { let bs = 0; try { bs = +localStorage.getItem('rr_tag_best') || 0; } catch(e){} document.getElementById('start-best').textContent = bs > 0 ? 'Best streak ' + bs : ''; }
     document.getElementById('wallet-num').textContent = coins;
     document.getElementById('gem-num').textContent = gemCount().toLocaleString('en-US');
     _walletPrev = { rr_coins: +coins || 0, rr_gems: gemCount() };

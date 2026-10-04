@@ -191,6 +191,8 @@ const SFX = (() => {
         equip() { noise({ type: 'bandpass', f: 600, f2: 2400, t: 0.12, v: 0.045, a: 0.02, verb: 0.2 }); I.pluck(mtof(81), { at: 0.06, t: 0.3, v: 0.09, verb: 0.3 }); },
         levelup() { [0, 2, 4, 5, 7].forEach(i => I.vibe(mtof(pent(67, i)), { at: i * 0.08, t: 1.1, v: 0.08, verb: 0.4 })); [60, 64, 67, 71].forEach(m => I.piano(mtof(m), { at: 0.45, t: 1.2, v: 0.07, verb: 0.4 })); },
         // chest
+        boom() { noise({ type: 'lowpass', f: 2200, f2: 90, q: 1, t: 1.0, v: 0.34, a: 0.003, verb: 0.3 }); voice({ f: 130, f2: 38, t: 0.6, v: 0.34, a: 0.003, glide: 0.5 }); voice({ f: 60, f2: 30, t: 0.9, v: 0.2, a: 0.01 }); },
+        tick(k = 0) { voice({ f: 980 + k * 900, t: 0.05, v: 0.07 + k * 0.05, a: 0.002, r: 0.03 }); },
         knock(n = 0) { const k = Math.min(6, n); voice({ f: 190 + k * 18, f2: 110 + k * 8, t: 0.1, v: 0.22 }); noise({ type: 'bandpass', f: 1400 + k * 150, q: 2, t: 0.04, v: 0.1 }); I.pluck(mtof(pent(55, k)), { t: 0.25, v: 0.07, verb: 0.2 }); },
         tierup() { [0, 1, 2, 3, 4, 5].forEach(i => I.vibe(mtof(pent(67, i + 1)), { at: i * 0.06, t: 1, v: 0.07, verb: 0.4 })); },
         open() { [48, 55, 59, 64, 67, 71, 74].forEach((m, i) => I.piano(mtof(m), { at: i * 0.012, t: 1.8, v: 0.06, verb: 0.5 }));
@@ -214,7 +216,7 @@ const SFX = (() => {
         shatter() { for (let i = 0; i < 4; i++) I.pluck(mtof(pent(84, i + Math.floor(Math.random() * 3))), { at: i * 0.035, t: 0.25, v: 0.045, verb: 0.35 }); },
     };
     const COOLDOWN = { coin: 45, land: 70, pickup: 90, item: 70, combo: 120, shatter: 150, chain: 200, block: 200, jump: 40, tap: 60, knock: 30 };
-    const CRITICAL = new Set(['jump', 'land', 'finish', 'go', 'count', 'fail', 'boost', 'stumble', 'open', 'knock']);
+    const CRITICAL = new Set(['jump', 'land', 'finish', 'go', 'count', 'fail', 'boost', 'stumble', 'open', 'knock', 'boom', 'tick']);
     const lastPlay = {};
 
     /* ================================================================== music ==== */
@@ -436,7 +438,7 @@ const SFX = (() => {
             if (!inGame && typeof state !== 'undefined' && state === 'menu') return 'menu';
             const m = typeof gameMode !== 'undefined' ? gameMode : 'race';
             if (m === 'escape') return 'escape';
-            if (m === 'gauntlet') return 'gauntlet';
+            if (m === 'gauntlet' || m === 'tag') return 'gauntlet';
             if (m === 'level' || m === 'parkour') return 'levels';
             return 'race';
         } catch (e) { return 'race'; }

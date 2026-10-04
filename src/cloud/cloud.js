@@ -15,7 +15,7 @@
     const SDK = 'https://www.gstatic.com/firebasejs/10.14.1/';
     const META_KEY = 'rr_cloud_meta';
     const PUSH_DELAY = 5000;
-    const NUM_KEYS = ['rr_coins', 'rr_gems', 'rr_esc_best_score', 'rr_pk_best'];     // higher is better, merged with max
+    const NUM_KEYS = ['rr_coins', 'rr_gems', 'rr_esc_best_score', 'rr_pk_best', 'rr_tag_best', 'rr_tag_wins'];     // higher is better, merged with max
     const TIME_KEY = 'rr_pk_best_time';                                              // lower is better, 0 = none
     const DIM_KEYS = ['rr_pk_levels_v1', 'rr_pk_levels_v2'];
     const FLAG_KEYS = ['rr_tutorial_done'];

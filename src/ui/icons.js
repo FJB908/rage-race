@@ -13,6 +13,7 @@
         '<linearGradient id="ggC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe0f8"/><stop offset="1" stop-color="#ff6fd8"/></linearGradient>' +
         '<linearGradient id="ggL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5fd2"/><stop offset="1" stop-color="#a0128a"/></linearGradient>' +
         '<linearGradient id="ggR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e63cb8"/><stop offset="1" stop-color="#6a0a5a"/></linearGradient>' +
+        '<radialGradient id="gbm" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#6a7690"/><stop offset=".45" stop-color="#1d2331"/><stop offset="1" stop-color="#06080d"/></radialGradient>' +
         '<linearGradient id="gfl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe45e"/><stop offset=".5" stop-color="#ff9a1f"/><stop offset="1" stop-color="#e0301e"/></linearGradient>' +
         '<symbol id="ico-coin" viewBox="0 0 64 64">' +
           '<circle cx="32" cy="34" r="29" fill="#7a4300" opacity=".35"/>' +
@@ -109,6 +110,16 @@
           '<rect x="30" y="26" width="28" height="9" rx="4" fill="#7c6bff" stroke="#1d1650" stroke-width="2.5"/>' +
           '<path d="M10 14 l7 -7 l7 7 l-3 3 l-4 -4 l-4 4z" fill="#ff5470" stroke="#5a0f24" stroke-width="2" stroke-linejoin="round"/>' +
           '<path d="M44 8 l10 10 M44 18 l10 -10" stroke="#ffcf3f" stroke-width="4" stroke-linecap="round"/>' +
+        '</symbol>' +
+        '<symbol id="ico-mode-tag" viewBox="0 0 64 64">' +
+          '<ellipse cx="30" cy="57" rx="19" ry="3.5" fill="#000" opacity=".28"/>' +
+          '<circle cx="30" cy="36" r="21" fill="url(#gbm)" stroke="#06080d" stroke-width="3"/>' +
+          '<path d="M16 24 Q22 15 33 14" fill="none" stroke="#fff" stroke-opacity=".38" stroke-width="3.2" stroke-linecap="round"/>' +
+          '<rect x="24" y="10" width="13" height="8" rx="2.5" fill="#8892a6" stroke="#06080d" stroke-width="2.5"/>' +
+          '<path d="M31 10 Q36 3 45 6" fill="none" stroke="#d8b06a" stroke-width="3" stroke-linecap="round"/>' +
+          '<path d="M47 0 L49.2 5 L54.5 5.4 L50.4 8.6 L51.8 13.8 L47 11 L42.2 13.8 L43.6 8.6 L39.5 5.4 L44.8 5 Z" fill="#ffe27a" stroke="#ff7a2e" stroke-width="1.8" stroke-linejoin="round"/>' +
+          '<circle cx="23" cy="35" r="4.6" fill="#fff"/><circle cx="37" cy="35" r="4.6" fill="#fff"/><circle cx="24" cy="36" r="2.3" fill="#06080d"/><circle cx="36" cy="36" r="2.3" fill="#06080d"/>' +
+          '<path d="M17 28 L27 32 M43 28 L33 32" stroke="#ff5470" stroke-width="3" stroke-linecap="round"/>' +
         '</symbol>' +
         '<symbol id="ico-mode-escape" viewBox="0 0 64 64">' +
           '<path d="M3 47 Q11 41 19 47 T35 47 T51 47 T61 47 V62 H3 Z" fill="#14060c" opacity=".5" transform="translate(0 2)"/>' +
