@@ -93,7 +93,7 @@
         const mk = (kind, art, label, fn) => {
             const left = A.left(kind), w = A.wait(kind), b = document.createElement('button'); b.type = 'button'; b.className = 'ad-chip'; b.dataset.kind = kind;
             b.disabled = left <= 0 || w > 0; b.classList.toggle('cool', w > 0 && left > 0);
-            b.innerHTML = '<span class="ad-art">' + art + icon('video', 'ad-play') + '</span><b class="ad-lbl">' + (left <= 0 ? 'Done' : w > 0 ? mmss(w) : label) + '</b><small>' + left + ' left today</small>';
+            b.innerHTML = '<span class="ad-art">' + art + icon('video', 'ad-play') + (left > 0 ? '<i class="ad-free">FREE</i>' : '') + '</span><b class="ad-lbl">' + (left <= 0 ? 'Done' : w > 0 ? mmss(w) : label) + '</b><small>' + left + ' left today</small>';
             b.onclick = async () => { b.disabled = true; await fn(); renderResourceShop(); };
             return b;
         };

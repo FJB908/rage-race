@@ -571,7 +571,7 @@ body.online-race #btn-pause { display: none; }
 .pf-lv-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; } .pf-lv-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; } .pf-lv-top b { font-size: 16px; } .pf-lv-top em { font-style: normal; font-size: 12px; color: var(--muted); }
 .pf-level .m-xpbar { display: block; height: 7px; } .pf-level .m-xpbar > span { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 4px; transition: width .5s; }
 .pf-level .ico-chev-r { width: 18px; height: 18px; flex: none; transform: scaleX(-1); color: var(--muted); }
-.pf-eq { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.pf-eq { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .pf-slot { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 9px; border-radius: 14px; background: #161b24; border: 1px solid rgba(255,255,255,.07); color: inherit; font: inherit; min-width: 0; }
 .pf-slot canvas { width: 100%; max-width: 72px; height: 64px; object-fit: contain; border-radius: 10px; background: #1d2330; }
 .pf-slot small { font-size: 10px; letter-spacing: .08em; color: var(--muted); margin-top: 4px; text-transform: uppercase; } .pf-slot b { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -615,7 +615,6 @@ body.online-race #btn-pause { display: none; }
 /* shop tabs: two tidy rows instead of a sideways scroll */
 .m-pills { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; overflow:visible; margin:0; padding:0; }
 .m-pills .m-pill { padding:0 4px; height:38px; font-size:13px; display:flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap; }
-.m-pills .m-pill:last-child { grid-column:span 2; }
 .m-pills .m-pill .ico { width:15px; height:15px; }
 
 .m-pass-next { display:block; margin-top:2px; font-style:normal; font-size:11px; font-weight:700; color:#c5bcff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .m-pass-next.claim { color:#ffcf3f; }

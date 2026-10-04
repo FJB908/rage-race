@@ -27,7 +27,7 @@
     /* ---------------------------------------------------------------- helpers ---- */
     const fs = () => S.api.fb.fs, db = () => S.api.fb.db;
     const col = (...p) => fs().collection(db(), ...p), dref = (...p) => fs().doc(db(), ...p);
-    function myLook() { const l = myLook_(); return { skin:l.skin, hat:l.hat, face:l.face, trail:l.trail }; }
+    function myLook() { const l = myLook_(); return { skin:l.skin, hat:l.hat, face:l.face, trail:l.trail, costume:l.costume || 'none' }; }
     const myLook_ = () => window.myLook ? window.myLook() : prog();
     function publicProfile() {
         const p = prog(), L = levelInfo(p.xp), rk = (window.Ranked && Ranked.state) ? Ranked.state() : null;
@@ -182,7 +182,7 @@
             .concat(fill.map((b, k) => ({ uid:'f' + k, name:b.name, look:b.look, human:false, rb:b })));
         slots.slice(0, 3).forEach((sl, k) => {
             const p = players[k + 1]; if (!p) return;
-            const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, sl.look || {});
+            const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none', costume:'none' }, sl.look || {});
             Object.assign(p, { remote:true, uid:sl.uid, name:sl.name, look, afk:false, botType:null, color:skinById(look.skin).color, samples:[], rkColor:null, human:sl.human, lastT:performance.now(), rb:sl.rb });
             LIVE.remotes.push(p);
             const feed = path => m.onValue(m.ref(rt.db, base + path), snap => {

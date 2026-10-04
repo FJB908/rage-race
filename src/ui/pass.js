@@ -8,11 +8,11 @@
 
     function state(p) {
         const pts = p.passPointsEarned || 0;
-        const done = Math.min(N, Math.floor(pts / PASS_TIER_PTS));              // tiers fully earned
+        const done = Math.min(N, passTiersDone(pts));              // tiers fully earned
         const claimable = [];
         for (let i = 0; i < done; i++) if (PASS_TIERS[i].t !== 'none' && !p.passClaimed.includes(i)) claimable.push(i);
         const rageClaimable = []; for (let i = 0; i < done; i++) if (!(p.rageClaimed || []).includes(i)) rageClaimable.push(i);
-        return { pts, done, claimable, rageClaimable, into: done >= N ? PASS_TIER_PTS : pts % PASS_TIER_PTS };
+        return { pts, done, claimable, rageClaimable, into: done >= N ? PASS_COST[N - 1] : passInto(pts), cost: done >= N ? PASS_COST[N - 1] : PASS_COST[done] };
     }
 
     const plain = t => {
@@ -30,7 +30,7 @@
         const st = state(p), el = document.getElementById('m-pass-progress');
         if (!el) return;
         el.textContent = st.done >= N ? 'Complete' : 'Tier ' + st.done + ' / ' + N;
-        document.getElementById('m-pass-meter-fill').style.width = (st.done >= N ? 100 : st.into) + '%';
+        document.getElementById('m-pass-meter-fill').style.width = (st.done >= N ? 100 : Math.round(st.into / st.cost * 100)) + '%';
         const nx = document.getElementById('m-pass-next');
         if (nx) {
             const pick = st.claimable.length ? { t: PASS_TIERS[st.claimable[0]], claim: true } : (p.rage && st.rageClaimable.length) ? { t: RAGE_TIERS[st.rageClaimable[0]], claim: true } : null;
@@ -127,7 +127,7 @@
         document.getElementById('pz-pts').innerHTML = R('pass', st.pts);
         document.getElementById('pz-lvl').textContent = st.done;
         document.getElementById('pz-next-txt').textContent = st.done >= N ? 'SEASON COMPLETE' : 'TIER ' + (st.done + 1) + ' IN';
-        document.getElementById('pz-prog-num').innerHTML = st.done >= N ? '' : R('pass', (PASS_TIER_PTS - st.into) + ' to go');
+        document.getElementById('pz-prog-num').innerHTML = st.done >= N ? '' : R('pass', (st.cost - st.into) + ' to go');
         document.getElementById('pz-bar-fill').style.width = (st.done >= N ? 100 : st.into) + '%';
         renderRage(p);
         const all = document.getElementById('pz-claimall'), n = st.claimable.length + (p.rage ? st.rageClaimable.length : 0);
@@ -167,7 +167,7 @@
         const cf = first.querySelector('.pz-card.free').getBoundingClientRect(), cr = first.querySelector('.pz-card.rage').getBoundingClientRect(), sh = document.querySelector('.pz-shell').getBoundingClientRect();
         ln.children[0].style.cssText = 'top:' + (cf.top - sh.top) + 'px;height:' + cf.height + 'px'; ln.children[1].style.cssText = 'top:' + (cr.top - sh.top) + 'px;height:' + cr.height + 'px';
         line.style.left = x0 + 'px'; line.style.width = (x1 - x0) + 'px';
-        const prog01 = Math.min(N - 1, Math.max(0, (st.pts / PASS_TIER_PTS) - 1));
+        const prog01 = Math.min(N - 1, Math.max(0, st.done + (st.done >= N ? 0 : st.into / st.cost) - 1));
         fill.style.width = (prog01 * w) + 'px';
     }
     window.passScrollToNext = function () {

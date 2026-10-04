@@ -2356,7 +2356,10 @@ function draw() {
             const f = s / GT_SPRITE.half;
             ctx.drawImage(p._spr, -GT_SPRITE.w / 2 * f, -GT_SPRITE.cy * f, GT_SPRITE.w * f, GT_SPRITE.h * f);
         } else {
-        if (p.look && p.look.skin){ drawSkinBody(ctx, s, k, skinById(p.look.skin)); }
+        const cs = (p.look && p.look.costume && p.look.costume !== 'none' && window.Costumes && Costumes.has(p.look.costume)) ? p.look.costume : null;     // full-body costume
+        if (cs){ ctx.shadowBlur = 0; Costumes.back(ctx, s, k, cs, nowT); }
+        if (cs && Costumes.body(ctx, s, k, cs, nowT)){ /* the costume is the body */ }
+        else if (p.look && p.look.skin){ drawSkinBody(ctx, s, k, skinById(p.look.skin)); }
         else { ctx.fillStyle = p.color; roundRect(-s, -s, s*2, s*2, 4*k); ctx.fill(); }
         ctx.shadowBlur=0;
         if (p.chainT > 0){ ctx.fillStyle='rgba(17,20,28,0.30)'; roundRect(-s,-s,s*2,s*2,4*k); ctx.fill(); }
@@ -2366,12 +2369,13 @@ function draw() {
         // eyes
         ctx.fillStyle='#0d1017';
         const lx=Math.max(-3,Math.min(3,p.vx/500))*k, ly=Math.max(-2,Math.min(2,p.vy/900))*k;
-        ctx.beginPath(); ctx.arc(-4*k+lx,-2*k+ly,2.4*k,0,7); ctx.arc(4*k+lx,-2*k+ly,2.4*k,0,7); ctx.fill();
+        if (!(cs && Costumes.eyes(ctx, s, k, cs, nowT, lx, ly))){ ctx.beginPath(); ctx.arc(-4*k+lx,-2*k+ly,2.4*k,0,7); ctx.arc(4*k+lx,-2*k+ly,2.4*k,0,7); ctx.fill(); }
         if (p.chainT > 0){          
             ctx.strokeStyle='#0d1017'; ctx.lineWidth=1.6*k; ctx.beginPath();
             ctx.moveTo(-7*k,-7*k); ctx.lineTo(-2*k,-5.5*k); ctx.moveTo(7*k,-7*k); ctx.lineTo(2*k,-5.5*k); ctx.stroke();
         }
         if (p.look){ drawFaceAcc(ctx, s, k, p.look.face); drawHatAcc(ctx, s, k, p.look.hat, nowT); }
+        if (cs) Costumes.front(ctx, s, k, cs, nowT);
         }
         ctx.shadowBlur=0;
         
@@ -3786,11 +3790,52 @@ function drawHatAcc(c, s, k, id, t){
             c.beginPath(); c.moveTo(x, y - r*2); c.lineTo(x + r*0.5, y - r*0.5); c.lineTo(x + r*2, y); c.lineTo(x + r*0.5, y + r*0.5); c.lineTo(x, y + r*2); c.lineTo(x - r*0.5, y + r*0.5); c.lineTo(x - r*2, y); c.lineTo(x - r*0.5, y - r*0.5); c.closePath(); c.fill(); }
     }
     if (id === 'crown'){
-        const g = c.createLinearGradient(0, top - 11*k, 0, top + 1*k); g.addColorStop(0, '#fff1a8'); g.addColorStop(0.5, '#ffcf3f'); g.addColorStop(1, '#c98c14');
-        c.fillStyle = g; c.beginPath(); c.moveTo(-s*0.85, top + 1*k); c.lineTo(-s*0.85, top - 7*k); c.lineTo(-s*0.45, top - 3*k); c.lineTo(0, top - 11*k); c.lineTo(s*0.45, top - 3*k); c.lineTo(s*0.85, top - 7*k); c.lineTo(s*0.85, top + 1*k); c.closePath(); c.fill(); outline(c, k);
-        c.fillStyle = '#b8781a'; c.fillRect(-s*0.85, top - 1.5*k, s*1.7, 2*k);
-        for (const [x, y, col] of [[0, -11, '#ff5470'], [-s*0.85/k, -7, '#5b8def'], [s*0.85/k, -7, '#5b8def']]){ c.fillStyle = col; c.beginPath(); c.arc(x*k, top + y*k, 1.5*k, 0, 7); c.fill(); outline(c, k, 0.7); }
-        c.fillStyle = '#35e0c8'; c.beginPath(); c.arc(0, top - 0.5*k, 1.3*k, 0, 7); c.fill();
+        // the legendary crown: a tall five-point gold crown on a velvet cap, pearls on every tip, jewels that pulse, a light sweeping across the gold, a halo and orbiting sparkles
+        const tt = t || 0, pulse = 0.5 + 0.5*Math.sin(tt*2.6);
+        const px = [-0.95, -0.48, 0, 0.48, 0.95].map(v => v*s), ph = [10, 15.5, 21, 15.5, 10].map(v => v*k), vy = 5*k;          // tip x, tip height, valley height
+        const hy = top - 6*k;
+        const glow = c.createRadialGradient(0, hy, s*0.2, 0, hy, s*1.9); glow.addColorStop(0, 'rgba(255,214,90,' + (0.42 + 0.18*pulse) + ')'); glow.addColorStop(1, 'rgba(255,214,90,0)');
+        c.fillStyle = glow; c.beginPath(); c.arc(0, hy, s*1.9, 0, 7); c.fill();
+        // velvet inside, visible between the points
+        const vg = c.createLinearGradient(0, top - 14*k, 0, top + 2*k); vg.addColorStop(0, '#c2193a'); vg.addColorStop(1, '#5a0a1c');
+        c.fillStyle = vg; c.beginPath(); c.moveTo(-s*0.9, top + 1*k); c.lineTo(-s*0.9, top - 9*k); c.quadraticCurveTo(0, top - 17*k, s*0.9, top - 9*k); c.lineTo(s*0.9, top + 1*k); c.closePath(); c.fill();
+        // gold body of the crown
+        const crownPath = () => {
+            c.beginPath(); c.moveTo(-s, top + 2.5*k); c.lineTo(-s, top - ph[0]);
+            for (let i = 0; i < 5; i++){ c.lineTo(px[i], top - ph[i]); if (i < 4) c.lineTo((px[i] + px[i+1])/2, top - vy); }
+            c.lineTo(s, top - ph[4]); c.lineTo(s, top + 2.5*k); c.closePath();
+        };
+        const gg = c.createLinearGradient(0, top - 22*k, 0, top + 3*k); gg.addColorStop(0, '#fff7c4'); gg.addColorStop(0.35, '#ffd24a'); gg.addColorStop(0.75, '#e0a01c'); gg.addColorStop(1, '#a8680c');
+        c.shadowBlur = 10*k; c.shadowColor = 'rgba(255,205,70,0.9)'; c.fillStyle = gg; crownPath(); c.fill(); c.shadowBlur = 0; outline(c, k, 1.1);
+        // light sweeping across (clipped to the crown)
+        c.save(); crownPath(); c.clip();
+        const sx = -s*1.6 + ((tt*0.55) % 1.6) * s*2.2;
+        const sg = c.createLinearGradient(sx - 4*k, 0, sx + 4*k, 0); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(0.5, 'rgba(255,255,255,0.8)'); sg.addColorStop(1, 'rgba(255,255,255,0)');
+        c.fillStyle = sg; c.fillRect(sx - 6*k, top - 24*k, 12*k, 30*k);
+        c.restore();
+        // engraved band with five jewels
+        c.fillStyle = '#9a5c08'; c.fillRect(-s, top - 3*k, s*2, 3.2*k);
+        c.fillStyle = 'rgba(255,240,170,0.7)'; c.fillRect(-s, top - 3*k, s*2, 0.9*k);
+        const jc = ['#ff3d63', '#4fa2ff', '#43e08a', '#4fa2ff', '#ff3d63'];
+        for (let i = 0; i < 5; i++){
+            const jx = px[i]*0.92, jp = 0.55 + 0.45*Math.sin(tt*3 + i*1.3);
+            c.fillStyle = jc[i]; c.shadowBlur = (3 + 4*jp)*k; c.shadowColor = jc[i]; c.beginPath(); c.arc(jx, top - 1.4*k, 1.7*k, 0, 7); c.fill(); c.shadowBlur = 0; outline(c, k, 0.6);
+            c.fillStyle = 'rgba(255,255,255,' + (0.5 + 0.4*jp) + ')'; c.beginPath(); c.arc(jx - 0.5*k, top - 2*k, 0.6*k, 0, 7); c.fill();
+        }
+        // big diamond on the middle point and a pearl on every tip
+        const dy = top - 15*k, dg = c.createLinearGradient(0, dy - 4*k, 0, dy + 4*k); dg.addColorStop(0, '#ffffff'); dg.addColorStop(1, '#7fe3ff');
+        c.fillStyle = dg; c.shadowBlur = 8*k; c.shadowColor = '#9fefff'; c.beginPath(); c.moveTo(0, dy - 4.2*k); c.lineTo(3*k, dy); c.lineTo(0, dy + 4.2*k); c.lineTo(-3*k, dy); c.closePath(); c.fill(); c.shadowBlur = 0; outline(c, k, 0.7);
+        for (let i = 0; i < 5; i++){
+            const bx = px[i], by = top - ph[i] - 1.2*k, br = (i === 2 ? 2.5 : 1.9)*k, pg = c.createRadialGradient(bx - br*0.3, by - br*0.3, 0.2*k, bx, by, br);
+            pg.addColorStop(0, '#ffffff'); pg.addColorStop(1, '#d6d0e8'); c.fillStyle = pg; c.beginPath(); c.arc(bx, by, br, 0, 7); c.fill(); outline(c, k, 0.6);
+        }
+        // sparkles that drift around it
+        for (let i = 0; i < 5; i++){
+            const a = tt*0.9 + i*1.26, rx = s*(1.25 + 0.08*Math.sin(i*2.1)), x = Math.cos(a)*rx, y = top - 9*k + Math.sin(a)*(7*k) - 3*k, tw = 0.5 + 0.5*Math.sin(tt*5 + i*2), r = (0.8 + 1.6*tw)*k;
+            c.globalAlpha = 0.35 + 0.65*tw; c.fillStyle = '#fff8d0';
+            c.beginPath(); c.moveTo(x, y - r*2); c.lineTo(x + r*0.5, y - r*0.5); c.lineTo(x + r*2, y); c.lineTo(x + r*0.5, y + r*0.5); c.lineTo(x, y + r*2); c.lineTo(x - r*0.5, y + r*0.5); c.lineTo(x - r*2, y); c.lineTo(x - r*0.5, y - r*0.5); c.closePath(); c.fill();
+        }
+        c.globalAlpha = 1;
     }
     if (id === 'flighthelm'){
         const g=c.createLinearGradient(0,top-11*k,0,top+3*k);g.addColorStop(0,'#e7f0f5');g.addColorStop(.5,'#9daeba');g.addColorStop(1,'#4e626f');
@@ -3919,12 +3964,16 @@ function renderLook(cv, look, opts){
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
     const s = W * ((opts && opts.scale) || 0.24), k = s/12;
     c.translate(W/2, H * ((opts && opts.cy) || 0.6));
-    const def = skinById(look.skin);
-    drawSkinBody(c, s, k, def);
+    const def = skinById(look.skin), tt = (opts && opts.t != null) ? opts.t : 0.3;
+    const cs = (look.costume && look.costume !== 'none' && window.Costumes && Costumes.has(look.costume)) ? look.costume : null;
+    if (cs) Costumes.back(c, s, k, cs, tt);
+    if (!(cs && Costumes.body(c, s, k, cs, tt))) drawSkinBody(c, s, k, def);
     rrPath(c, -s, -s, s*2, s*2, 4*k); c.strokeStyle = 'rgba(13,16,23,0.55)'; c.lineWidth = 2*k*0.6; c.stroke();
-    c.fillStyle = '#0d1017'; c.beginPath(); c.arc(-4*k, -2*k, 2.4*k, 0, 7); c.arc(4*k, -2*k, 2.4*k, 0, 7); c.fill();
+    c.fillStyle = '#0d1017';
+    if (!(cs && Costumes.eyes(c, s, k, cs, tt, 0, 0))){ c.beginPath(); c.arc(-4*k, -2*k, 2.4*k, 0, 7); c.arc(4*k, -2*k, 2.4*k, 0, 7); c.fill(); }
     drawFaceAcc(c, s, k, look.face);
-    drawHatAcc(c, s, k, look.hat, 0.3);
+    drawHatAcc(c, s, k, look.hat, tt);
+    if (cs) Costumes.front(c, s, k, cs, tt);
 }
 // Bots start a bit weaker and reach full strength after about 15 races, so beginners can actually win.
 function newPlayerEase(){ let r = 0; try { r = prog().races || 0; } catch(e){} return 0.86 + 0.14 * Math.min(1, r / 15); }
@@ -3941,7 +3990,7 @@ function randomBotLook(){
     const fins = window.Finishers ? Finishers.FINISHERS.filter(f => f.id !== 'f-none') : [];
     return {
         skin: Math.random() < (flashy ? 0.95 : 0.5) ? pick(Math.random() < (flashy ? 0.7 : 0.2) && rare(SKINS).length ? rare(SKINS) : SKINS) : null,
-        hat: slot(HATS, 0.3), face: slot(FACES, 0.22), trail: slot(TRAILS, 0.18),
+        hat: slot(HATS, 0.3), face: slot(FACES, 0.22), trail: slot(TRAILS, 0.18), costume: (flashy && window.Costumes && Math.random() < 0.3) ? pick(Costumes.COSTUMES.filter(c => c.id !== 'none')) : 'none',
         finisher: fins.length && Math.random() < (flashy ? 0.85 : 0.3) ? pick(fins) : 'f-none',
     };
 }
@@ -3981,6 +4030,7 @@ function prog(){
     if (!d.owned.includes('classic')) d.owned.push('classic');
     for (const id of freeItemIds()) if (!d.owned.includes(id)) d.owned.push(id);              // everything that costs 0 coins is yours from the start
     if (!d.trail || !TRAILS.some(trail => trail.id === d.trail)) d.trail = 'none';
+    if (typeof d.costume !== 'string' || (window.Costumes && d.costume !== 'none' && !Costumes.BY[d.costume])) d.costume = 'none';
     if (!d.lootGrants || typeof d.lootGrants !== 'object') d.lootGrants = {};
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
     if (!d.hat || !HATS.some(h => h.id === d.hat)) d.hat = 'none';
@@ -3995,7 +4045,7 @@ function levelInfo(xp){
     return { lvl, into, need };
 }
 function skinById(id){ return SKINS.find(s => s.id === id) || SKINS[0]; }
-function myLook(){ const p = prog(); return { skin: p.skin, hat: p.hat, face: p.face, trail:p.trail }; }
+function myLook(){ const p = prog(); return { skin: p.skin, hat: p.hat, face: p.face, trail:p.trail, costume: p.costume || 'none' }; }
 function skinColor(){ return skinById(prog().skin).color; }
 function addXp(n){ const p = prog(); p.xp += Math.max(0, Math.round(n)); saveProg(p); }
 function gemCount(){ return load('rr_gems', 0); }
@@ -4241,10 +4291,10 @@ function renderShop(cat){
                     `<b>${it.name}</b>` +
                     (cat === 'trail' ? `<canvas class="tr-pv" width="400" height="200"></canvas>` : '') +
                     `<span class="m-skin-f"><span class="buy-hint">Tap again</span><span class="${owned ? (eq ? 'eqd' : 'own') : 'price'}">${owned ? (eq ? 'EQUIPPED' : 'OWNED') : it.premium ? R('gem', it.gemPrice) : R('coin', it.price)}</span></span>` + (it.premium ? `<span class="prem-tag">${icon('gem')}</span>` : '');
-                const preview = { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail };
-                renderLook(b.querySelector('canvas'), preview, { scale:0.22, cy:0.62 });
+                const preview = cat === 'costume' ? { skin:current.skin, hat:'none', face:'none', trail:'none', costume:it.id } : { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail, costume:'none' };
+                renderLook(b.querySelector('canvas'), preview, { scale:cat === 'costume' ? 0.2 : 0.22, cy:cat === 'costume' ? 0.64 : 0.62 });
                 { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it, undefined, 1.7); }
-                if (it.premium && cat !== 'trail') animated.push([b.querySelector('canvas'), preview]);
+                if ((it.premium || it.id === 'crown' || cat === 'costume') && cat !== 'trail') animated.push([b.querySelector('canvas'), preview]);
                 b.addEventListener('click', () => {
                     const q = prog();
                     const slot = cat;
@@ -4290,7 +4340,7 @@ function renderShop(cat){
     clearInterval(renderShop._anim);
     if (animated.length) renderShop._anim = setInterval(() => {
         const gr = document.getElementById('m-skins'); if (gr.hidden || !gr.offsetParent){ clearInterval(renderShop._anim); return; }
-        for (const [cv, look] of animated) renderLook(cv, look, { scale:0.22, cy:0.62 });
+        for (const [cv, look] of animated) renderLook(cv, look, { scale:look.costume && look.costume !== 'none' ? 0.2 : 0.22, cy:look.costume && look.costume !== 'none' ? 0.64 : 0.62, t:performance.now()/1000 });
     }, 70);
 }
 // Red number badge ("something to claim / new"). n = 0 hides it.
@@ -4302,7 +4352,7 @@ function setBadge(el, n){
     b.textContent = n > 99 ? '99+' : n;
 }
 // Shop items you have not seen yet (new releases). Everything that exists on the first launch counts as seen.
-function shopItems(){ return [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.price > 0 || i.premium); }
+function shopItems(){ return [...SKINS, ...HATS, ...FACES, ...TRAILS, ...(COS_BY.costume || [])].filter(i => i.price > 0 || i.premium); }
 function refreshShopBadge(){
     const p = prog(), ids = shopItems().map(i => i.id);
     if (!Array.isArray(p.shopSeen)){ p.shopSeen = ids; saveProg(p); }
@@ -4329,6 +4379,7 @@ function renderProfile(p, L, stars){
     slotCanvas('pf-c-skin', Object.assign({}, base, { skin:p.skin }));
     slotCanvas('pf-c-hat', Object.assign({}, base, { hat:p.hat }), 0.26);
     slotCanvas('pf-c-face', Object.assign({}, base, { face:p.face }));
+    if (document.getElementById('pf-c-costume')) { slotCanvas('pf-c-costume', Object.assign({}, base, { skin:p.skin, costume:p.costume || 'none' }), (p.costume && p.costume !== 'none') ? 0.2 : 0.3); const cn = document.getElementById('pf-n-costume'); if (cn) cn.textContent = ((COS_BY.costume || []).find(c => c.id === (p.costume || 'none')) || { name:'None' }).name; }
     const trail = TRAIL_BY_ID[p.trail] || TRAILS[0], tc = document.getElementById('pf-c-trail');
     if (tc){ const g = tc.getContext('2d'); g.clearRect(0, 0, tc.width, tc.height); if (trail.id !== 'none'){ try { drawTrailPreview(tc, trail); } catch(e){} } }
     document.getElementById('pf-n-skin').textContent = skinById(p.skin).name;
@@ -4342,7 +4393,7 @@ function renderProfile(p, L, stars){
     const rkEl = document.getElementById('pf-rank');
     if (rkEl && window.Ranked){ const s = Ranked.state(); rkEl.innerHTML = s.placed ? Ranked.emblem(s.tier, 22) + '<b>' + s.rank.label + '</b><small>' + s.rk.rp + ' RP</small>' : '<small>Unranked</small>'; }
     // records
-    const bestT = load('rr_pk_best_time', 0), bestM = load('rr_pk_best', 0), esc = load('rr_esc_best_score', 0), passTier = Math.min(30, Math.floor((p.passPointsEarned || 0) / 100));
+    const bestT = load('rr_pk_best_time', 0), bestM = load('rr_pk_best', 0), esc = load('rr_esc_best_score', 0), passTier = Math.min(30, passTiersDone(p.passPointsEarned || 0));
     const rows = [
         ['crown', 'Crowns', p.gt.wins],
         ['mode-escape', 'Escape best', esc ? esc.toLocaleString('en-US') : '--'],

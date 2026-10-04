@@ -27,3 +27,8 @@
 .ad-lbl { font-size: 17px; font-weight: 900; margin-top: 6px; color: #ffcf3f; } .ad-chip[data-kind=drop] .ad-lbl { color: #35e0c8; }
 .ad-chip small { font-size: 11px; color: #8b95a7; }
 .ad-chip.cool, .ad-chip:disabled { filter: grayscale(1); opacity: .6; } .ad-chip.cool .ad-lbl { color: #fff; font-variant-numeric: tabular-nums; }
+
+/* small but loud: video rewards are free */
+.ad-free { position:absolute; left:-8px; top:-6px; z-index:2; padding:2px 6px 2px; border-radius:7px; background:#7ee787; color:#052b0d; font:900 9px/1.1 "Bricolage Grotesque",system-ui,sans-serif; font-style:normal; letter-spacing:.08em; box-shadow:0 2px 0 rgba(0,0,0,.35), 0 0 12px rgba(126,231,135,.65); transform:rotate(-8deg); pointer-events:none; animation:adfree 1.8s ease-in-out infinite; }
+@keyframes adfree { 50% { box-shadow:0 2px 0 rgba(0,0,0,.35), 0 0 18px rgba(126,231,135,.95); transform:rotate(-8deg) scale(1.08); } }
+.m-adpill.cool .ad-free { display:none; }

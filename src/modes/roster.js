@@ -88,6 +88,7 @@
             hat: some(flashy ? 0.8 : 0.16 + t * 0.14, HATS),
             face: some(flashy ? 0.6 : 0.1 + t * 0.12, FACES),
             trail: some(flashy ? 0.5 : 0.04 + t * 0.1, TRAILS),
+            costume: (window.Costumes && flashy && r() < 0.25 + t * 0.2) ? weightedPick(Costumes.COSTUMES.filter(c => c.id !== 'none'), want, r).id : 'none',
         };
     }
     function makeName(i, r, used) {
