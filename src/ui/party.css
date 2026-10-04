@@ -37,3 +37,10 @@
 .pt-btn { border: 0; border-radius: 14px; padding: 14px; font: 900 14px/1 system-ui; letter-spacing: .06em; } .pt-btn.bad { background: #3a1a24; color: #ff8aa0; }
 .pt-lv { position:absolute; left:50%; bottom:-48px; transform:translateX(-50%); font:800 10px/1 system-ui; letter-spacing:.1em; color:#8b95a7; white-space:nowrap; }
 .pt-row { padding-bottom: 20px; }
+.pt-bar .pt-mode { background:#232b3a; color:#aab3c4; } .pt-bar .pt-mode.on { background:#35e0c8; color:#062b25; }
+.so-modes { display:flex; gap:8px; margin:8px 0; } .so-modes button { flex:1; border:0; border-radius:12px; padding:11px 8px; background:#232b3a; color:#aab3c4; font:900 12px/1 system-ui; letter-spacing:.06em; } .so-modes button.on { background:#35e0c8; color:#062b25; } .so-modes button:disabled { opacity:.8; }
+
+/* the characters stay centred; the plus floats beside the group and is deliberately quiet */
+.pt-plus { position: absolute; left: calc(50% + (var(--n, 1) * var(--pw, 150px) + (var(--n, 1) - 1) * var(--pw, 150px) * .18) / 2 + 12px); bottom: calc(var(--pw, 150px) * .5 + 8px); margin: 0; align-self: auto; width: 36px; height: 36px; border: 1.5px dashed rgba(255,255,255,.28); background: rgba(255,255,255,.04); color: rgba(255,255,255,.5); font-size: 24px; }
+.m-stage.party .pt-plus { width: 34px; height: 34px; font-size: 22px; }
+.pt-plus:active { background: rgba(53,224,200,.15); color: #35e0c8; border-color: rgba(53,224,200,.6); }

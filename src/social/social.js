@@ -144,6 +144,7 @@
         const p = S.party; if (!p) return;
         try { await fs().setDoc(dref('invites', uid + '_' + p.code), { from:S.uid, fromName:publicProfile().name, to:uid, code:p.code, t:Date.now() }); say('Invite sent'); } catch (e) { say('Could not invite'); }
     }
+    async function setMode(m) { const p = S.party; if (!p || p.host !== S.uid) return; try { await fs().updateDoc(dref('parties', p.code), { mode:m }); } catch (e) {} }
     async function kick(uid) { try { await fs().deleteDoc(dref('parties', S.party.code, 'members', uid)); } catch (e) {} }
     async function startParty() {
         const p = S.party; if (!p || p.host !== S.uid) return;
@@ -335,8 +336,9 @@
                 slots.push(m ? '<div class="so-slot">' + avatar(m.look) + '<strong>' + esc(m.name) + '</strong><small>' + (m.lvl ? 'Lv ' + m.lvl + ' · ' : '') + (m.uid === P.host ? 'HOST' : (host ? '<a data-a="kick" data-id="' + m.uid + '">REMOVE</a>' : '')) + '</small></div>' : '<div class="so-slot empty">Invite</div>');
             }
             pc = '<div class="so-party-h"><b>Your party</b><span>' + S.members.length + ' / ' + PARTY_MAX + '</span></div><div class="so-slots">' + slots.join('') + '</div>' +
+                '<div class="so-modes">' + ['race', 'gauntlet'].map(k => '<button type="button" data-a="mode" data-m="' + k + '"' + ((window.Party ? Party.mode() : 'race') === k ? ' class="on"' : '') + (host ? '' : ' disabled') + '>' + (k === 'race' ? 'QUICK RACE' : 'GAUNTLET') + '</button>').join('') + '</div>' +
                 '<div class="so-pcode"><span>Party code</span><strong>' + esc(P.code) + '</strong></div>' +
-                (host ? '<button type="button" class="so-big" data-a="start">START RACE</button>' : '<div class="so-wait">Waiting for the host to start</div>') +
+                (host ? '<button type="button" class="so-big" data-a="start">PLAY</button>' : '<div class="so-wait">Waiting for the host to start</div>') +
                 '<button type="button" class="so-link" data-a="leave">' + (host ? 'Close party' : 'Leave party') + '</button>';
         }
         $('soc-party').innerHTML = pc;
@@ -362,7 +364,8 @@
         else if (a === 'ok') answer(id, true); else if (a === 'no') answer(id, false);
         else if (a === 'create') createParty();
         else if (a === 'leave') leaveParty();
-        else if (a === 'start') startParty();
+        else if (a === 'start') { if (window.Party) Party.intercept(Party.mode() === 'gauntlet' ? 'gauntlet' : 'race') || (Party.mode() === 'gauntlet' && Gauntlet.open()); }
+        else if (a === 'mode') { if (window.Party) Party.setMode(t.dataset.m); }
         else if (a === 'invite') invite(id);
         else if (a === 'kick') kick(id);
         else if (a === 'join-inv') { await fs().deleteDoc(dref('invites', id)).catch(() => {}); joinParty(t.dataset.code); }
@@ -393,5 +396,5 @@
         return [...S.friends].filter(([, v]) => v.status === 'accepted').map(([u]) => { const d = (S.profiles.get(u) || {}).d || {}; return { uid:u, name:d.name || 'Player', look:d.look || {}, lvl:d.lvl || 1, online:online(d), inParty:S.members.some(m => m.uid === u) }; })
             .sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
     }
-    window.Social = { friendList, createParty, joinParty, leaveParty, invite, kick, startParty, pretty, ready:() => !!S.api, answerInvite:(i, ok) => ok ? (fs().deleteDoc(dref('invites', i.id)).catch(() => {}), joinParty(i.code)) : fs().deleteDoc(dref('invites', i.id)).catch(() => {}), stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
+    window.Social = { setMode, friendList, createParty, joinParty, leaveParty, invite, kick, startParty, pretty, ready:() => !!S.api, answerInvite:(i, ok) => ok ? (fs().deleteDoc(dref('invites', i.id)).catch(() => {}), joinParty(i.code)) : fs().deleteDoc(dref('invites', i.id)).catch(() => {}), stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
 })();

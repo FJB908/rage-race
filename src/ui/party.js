@@ -11,7 +11,7 @@
     const S = () => (window.Social && Social.state) || { party:null, members:[], invites:[], uid:'' };
     const sheet = { el:null, kind:'' };
     const invited = new Set();
-    const SIZE = { 1:150, 2:116, 3:90, 4:72 };                  // visible character width per party size; the canvas is bigger so crowns and wings never crop
+    const SIZE = { 1:150, 2:116, 3:80, 4:72 };                  // visible character width per party size; the canvas is bigger so crowns and wings never crop
 
     function members() {                                        // you first, then the others in join order
         const s = S(), list = s.party ? s.members.filter(m => m.uid !== s.uid) : [];
@@ -19,6 +19,14 @@
         return [me].concat(list.map(m => Object.assign({ host:s.party && s.party.host === m.uid }, m))).slice(0, MAX);
     }
     const inParty = () => members().length > 1;
+    // the mode the party plays: the leader's choice (Quick race or Gauntlet), stored on the party so everyone sees it
+    const myMode = () => { const m = prog().lastMode; return m === 'gauntlet' ? 'gauntlet' : (!m || m === 'race') ? 'race' : 'other'; };
+    const mode = () => { const s = S(); return (s.party && s.party.host !== s.uid && s.party.mode) ? s.party.mode : myMode(); };
+    function setMode(m) {
+        if (!isHost()) { toast('Only the party leader picks the mode'); return; }
+        const q = prog(); q.lastMode = m; saveProg(q); refreshMenu(); render(); syncMode();
+    }
+    function syncMode() { const s = S(); if (s.party && s.party.host === s.uid && s.party.mode !== myMode() && myMode() !== 'other' && window.Social) { s.party.mode = myMode(); Social.setMode(myMode()); } }
     const isHost = () => { const s = S(); return !s.party || s.party.host === s.uid; };
 
     function paint(cv, look) {
@@ -30,8 +38,8 @@
     function render() {
         const list = members(), n = list.length, w = SIZE[n] || 72, s = S();
         const hero = $('m-hero');
-        const key = JSON.stringify([n, list.map(m => [m.uid, m.name, m.host, m.lvl]), !!s.party, s.invites.map(i => i.id)]);
-        stage.style.setProperty('--pw', w + 'px'); stage.classList.toggle('party', n > 1);
+        const key = JSON.stringify([mode(), n, list.map(m => [m.uid, m.name, m.host, m.lvl]), !!s.party, s.invites.map(i => i.id)]);
+        stage.style.setProperty('--pw', w + 'px'); stage.style.setProperty('--n', n); stage.classList.toggle('party', n > 1);
         if (key !== sig) {
             sig = key;
             const keep = hero; row.innerHTML = '';
@@ -46,7 +54,7 @@
             });
             if (n < MAX) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-plus'; b.setAttribute('aria-label', 'Invite a friend'); b.innerHTML = '<span>+</span>'; row.appendChild(b); }
             $('pt-bar').hidden = !s.party || n < 2;
-            if (!$('pt-bar').hidden) $('pt-bar').innerHTML = '<b>PARTY ' + n + '/' + MAX + '</b><span>' + (isHost() ? 'You lead: press PLAY' : 'Waiting for the leader') + '</span><button type="button" data-a="leave">LEAVE</button>';
+            if (!$('pt-bar').hidden) $('pt-bar').innerHTML = '<b>PARTY ' + n + '/' + MAX + '</b>' + ['race', 'gauntlet'].map(k => '<button type="button" class="pt-mode' + (mode() === k ? ' on' : '') + '" data-a="mode" data-m="' + k + '">' + (k === 'race' ? 'RACE' : 'GAUNTLET') + '</button>').join('') + '<button type="button" data-a="leave">LEAVE</button>';
             renderInvites();
         }
         row.querySelectorAll('.pt-slot').forEach(slot => { const m = list[+slot.dataset.i]; if (m && !m.me) paint(slot.querySelector('canvas'), m.look || {}); });
@@ -98,7 +106,7 @@
         const slot = e.target.closest('.pt-slot');
         if (slot && inParty()) { e.stopPropagation(); memberSheet(members()[+slot.dataset.i]); }
     }, true);
-    $('pt-bar').addEventListener('click', e => { if (e.target.dataset.a === 'leave') { if (window.Social) Social.leaveParty(); } });
+    $('pt-bar').addEventListener('click', e => { const a = e.target.dataset.a; if (a === 'leave') { if (window.Social) Social.leaveParty(); } else if (a === 'mode') setMode(e.target.dataset.m); });
     $('pt-inv').addEventListener('click', e => {
         const t = e.target.closest('[data-a]'); if (!t || !window.Social) return;
         const inv = S().invites.find(i => i.id === t.dataset.id); if (inv) Social.answerInvite(inv, t.dataset.a === 'join');
@@ -114,7 +122,7 @@
         if (mode === 'race' || !mode) { Social.startParty(); return true; }
         toast('Parties play Quick race and Gauntlet'); return true;
     }
-    window.Party = { members, intercept, render, active:inParty, standIns:() => (inParty() ? members().slice(1) : []) };
-    render();
-    setInterval(() => { if (!document.hidden) render(); }, 4000);          // your own look can change from the shop
+    window.Party = { members, mode, setMode, intercept, render, active:inParty, standIns:() => (inParty() ? members().slice(1) : []) };
+    render(); syncMode();
+    setInterval(() => { if (!document.hidden) { render(); syncMode(); } }, 4000);          // your own look can change from the shop
 })();
