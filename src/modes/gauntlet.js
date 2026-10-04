@@ -140,10 +140,9 @@
         if (sel.type === 'wager') { const w = $('gt-entry').querySelector('.gt-wager'), sc = $('gt-entry').querySelector('.gt-scroll'); if (w && sc) sc.scrollTop = sc.scrollHeight; }
     }
 
-    const UNLOCK_LEVEL = 5;                       // the Gauntlet opens at player level 5
-    const unlocked = () => levelInfo(prog().xp).lvl >= UNLOCK_LEVEL;
+    const unlocked = () => !window.Gentle || Gentle.unlocked('gauntlet');       // opens after a few race wins (see Gentle)
     function openEntry() {
-        if (!unlocked()) { toast('Gauntlet unlocks at level ' + UNLOCK_LEVEL); return; }
+        if (!unlocked()) { toast('Win ' + Gentle.LOCKS.gauntlet + ' races to unlock the Gauntlet'); return; }
         const g = pk_();
         GT._entered = true;
         renderEntry();
@@ -868,9 +867,9 @@
     GT.refreshHome = function () {
         const g = prog().gt, el = $('m-gt-sub'), tag = $('m-gt-tag'), pcard = $('p-gt-sub');
         const lock = !unlocked(), card = $('btn-gauntlet'); if (card) card.classList.toggle('locked', lock);
-        if (el) el.textContent = lock ? 'Unlocks at level ' + UNLOCK_LEVEL : g.crowned ? 'You hold the crown' : '32 players · 3 stages';
+        if (el) el.textContent = lock ? 'Win ' + Gentle.LOCKS.gauntlet + ' races to unlock' : g.crowned ? 'You hold the crown' : '32 players · 3 stages';
         if (tag) { tag.innerHTML = g.crowned ? icon('crown') : icon('users'); }
-        if (pcard) pcard.textContent = lock ? 'Reach level ' + UNLOCK_LEVEL + ' to play' : '3 stages, 1 crown';
+        if (pcard) pcard.textContent = lock ? '' : '3 stages, 1 crown';
     };
     GT.refreshHome();
 

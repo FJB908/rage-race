@@ -1,0 +1,19 @@
+#ob-root { position:fixed; inset:0; z-index:2000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:24px; box-sizing:border-box; color:#eef2f8; font-family:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+  background:radial-gradient(90% 55% at 50% 38%, rgba(53,224,200,.28), transparent 62%), #0a0d13; opacity:0; transition:opacity .5s; overflow:hidden; }
+#ob-root.in { opacity:1; } #ob-root.out { opacity:0; transition:opacity .45s; }
+.ob-stage { position:relative; width:min(78vw,330px); height:min(78vw,330px); transform:scale(.35) translateY(40px); opacity:0; transition:transform 1.3s cubic-bezier(.2,1.25,.3,1), opacity .5s; }
+#ob-root.in .ob-stage { transform:scale(1.18) translateY(0); opacity:1; }
+#ob-root.ask .ob-stage { transform:scale(.8) translateY(-10px); transition:transform .8s cubic-bezier(.3,1.2,.4,1); }
+#ob-c { width:100%; height:100%; animation:heroBob 2.6s ease-in-out infinite; }
+.ob-sh { position:absolute; left:22%; right:22%; bottom:11%; height:12px; border-radius:50%; background:rgba(0,0,0,.5); }
+.ob-copy { text-align:center; width:100%; max-width:360px; } .ob-copy small { display:block; font-size:12px; font-weight:800; letter-spacing:.3em; color:#35e0c8; opacity:0; transition:opacity .6s .5s; }
+.ob-copy h1 { margin:4px 0 0; font:900 40px/1 "Bricolage Grotesque",system-ui,sans-serif; letter-spacing:.02em; opacity:0; transform:translateY(10px); transition:all .6s .7s; }
+#ob-root.in .ob-copy small, #ob-root.in .ob-copy h1 { opacity:1; transform:none; }
+.ob-ask { margin-top:16px; display:flex; flex-direction:column; gap:10px; opacity:0; transform:translateY(16px); pointer-events:none; transition:all .6s; }
+#ob-root.ask .ob-ask { opacity:1; transform:none; pointer-events:auto; }
+.ob-ask label { font-size:16px; font-weight:700; color:#cfd6e4; }
+#ob-name { width:100%; box-sizing:border-box; padding:15px 16px; border-radius:16px; border:2px solid rgba(53,224,200,.5); background:#101621; color:#fff; font:800 20px/1 "Bricolage Grotesque",system-ui,sans-serif; text-align:center; outline:none; }
+#ob-name:focus { border-color:#35e0c8; box-shadow:0 0 0 4px rgba(53,224,200,.18); }
+#ob-go { padding:16px; border:0; border-radius:16px; background:#35e0c8; color:#06201b; font:900 17px/1 system-ui; letter-spacing:.06em; box-shadow:0 5px 0 #17806f; }
+#ob-go:disabled { background:#26303d; color:#6c7788; box-shadow:0 5px 0 #161c25; } #ob-go:not(:disabled):active { transform:translateY(3px); box-shadow:0 2px 0 #17806f; }
+.ob-ask p { margin:0; font-size:12px; color:#6c7788; }

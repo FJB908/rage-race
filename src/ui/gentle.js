@@ -7,9 +7,9 @@
 (function () {
     'use strict';
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const LOCKS = { parkour:2, build:3, escape:4, gauntlet:5, ranked:6 };            // mode -> level
-    const OPENS = {                                                                  // level -> what it opens (shown on level-up)
-        2: ['Levels'], 3: ['Build Race', 'Daily rewards', 'Missions', 'Rage pass', 'Friends & parties'], 4: ['Escape'], 5: ['Gauntlet'], 6: ['Ranked'] };
+    const LOCKS = { parkour:3, build:3, escape:3, gauntlet:3, ranked:5 };            // mode -> race WINS needed (Quick play, Build Race etc. all count)
+    const OPENS = { 3: ['Daily rewards', 'Missions', 'Rage pass'] };                  // level -> what it opens (shown on level-up)
+    const WIN_OPENS = { 3: ['Levels', 'Build Race', 'Escape', 'Gauntlet'], 5: ['Ranked'] };      // wins -> modes that open
     const TITLES = [[1, 'Rookie'], [2, 'Hopper'], [3, 'Bouncer'], [5, 'Climber'], [8, 'Daredevil'], [12, 'Sky Runner'], [16, 'Stunt Pro'], [20, 'Rage Racer'], [26, 'Legend'], [35, 'Mythic']];
     const lvlOf = () => { try { return levelInfo(prog().xp).lvl; } catch (e) { return 1; } };
     const title = lvl => { let t = TITLES[0][1]; for (const [l, n] of TITLES) if (lvl >= l) t = n; return t; };
@@ -21,6 +21,7 @@
         const lose = clamp((p.loseStreak || 0) * 0.22, 0, 0.66);                      // 2 losses in a row: noticeably kinder
         return clamp(base + lose, 0, 1);
     }
-    const unlocked = mode => lvlOf() >= (LOCKS[mode] || 1);
-    window.Gentle = { ease, LOCKS, OPENS, TITLES, lvlOf, title, unlocked, simple: () => lvlOf() < 3 };
+    const winsOf = () => { try { return prog().wins || 0; } catch (e) { return 0; } };
+    const unlocked = mode => winsOf() >= (LOCKS[mode] || 0);
+    window.Gentle = { ease, LOCKS, OPENS, WIN_OPENS, winsOf, TITLES, lvlOf, title, unlocked, simple: () => lvlOf() < 3 };
 })();

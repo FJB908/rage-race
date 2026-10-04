@@ -44,7 +44,7 @@
         document.body.appendChild(el); clearPending();
         const gbtn = el.querySelector('.ac-g'), note = el.querySelector('.ac-note');
         const done = v => { try { localStorage.setItem(CHOICE, v); } catch (e) {} el.remove(); };
-        el.querySelector('.ac-new').onclick = () => done('new');
+        el.querySelector('.ac-new').onclick = () => { done('new'); if (window.Onboard) Onboard.start(); };
         const upd = () => { const ok = Cloud.status === 'ok' || Cloud.status === 'syncing'; gbtn.disabled = !ok; note.textContent = ok ? 'Already have an account? Sign in to get your progress back.' : (Cloud.status === 'offline' || Cloud.status === 'error' ? 'Sign-in needs an internet connection.' : 'Connecting...'); };
         Cloud.on(upd); upd();
         gbtn.onclick = async () => {

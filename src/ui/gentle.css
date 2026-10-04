@@ -1,8 +1,7 @@
 .m-title { margin-top:-4px; font-size:11px; font-weight:800; letter-spacing:.12em; color:#8b95a7; text-transform:uppercase; }
 .m-who { gap:3px; }
 /* a plainer home until level 3: just you, the mode and PLAY */
-body.gentle-simple #btn-pass-open, body.gentle-simple #btn-streak-open, body.gentle-simple #btn-missions, body.gentle-simple #m-boosts, body.gentle-simple .m-nav [data-go="friends"], body.gentle-simple .pt-plus, body.gentle-simple .m-split { display:none !important; }
-body.gentle-simple .m-nav { grid-template-columns:repeat(4,1fr); }
+body.gentle-simple #btn-pass-open, body.gentle-simple #btn-streak-open, body.gentle-simple #btn-missions, body.gentle-simple #m-boosts, body.gentle-simple .m-split { display:none !important; }
 .m-card.lvl-locked { opacity:.55; filter:saturate(.45); }
 .m-card .lock-tag { position:absolute; right:12px; top:12px; padding:4px 9px; border-radius:99px; background:rgba(13,16,23,.85); border:1px solid rgba(255,255,255,.2); color:#cfd6e4; font:900 10px/1 system-ui; letter-spacing:.1em; font-style:normal; }
 .m-card.lvl-locked .new-tag { display:none; }

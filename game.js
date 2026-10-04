@@ -4556,7 +4556,7 @@ document.querySelectorAll('#s-start .m-pill[data-cat]').forEach(b => b.addEventL
 document.querySelectorAll('#s-start [data-shop]').forEach(b => b.addEventListener('click', () => { menuTab('shop'); renderShop(b.dataset.shop); }));
 // Tap a mode on the Play tab to select it (it shows on the home screen), then press PLAY there.
 function selectMode(mode){
-    if (window.Gentle && !Gentle.unlocked(mode)){ toast('Reach level ' + Gentle.LOCKS[mode] + ' to unlock'); SFX.play('error'); return; }
+    if (window.Gentle && !Gentle.unlocked(mode)){ toast('Win ' + Gentle.LOCKS[mode] + ' races to unlock (' + Gentle.winsOf() + '/' + Gentle.LOCKS[mode] + ')'); SFX.play('error'); return; }
     const p = prog(); p.lastMode = mode; saveProg(p);
     refreshMenu(); menuTab('home'); SFX.play('count');
 }
@@ -4569,7 +4569,6 @@ function playSelected(){
     else if (m === 'gauntlet') Gauntlet.open();
     else if (m === 'ranked') Ranked.open();
     else if (m === 'build') Build.open();
-    else if (window.Tutorial && !Tutorial.done && (prog().races || 0) === 0) Tutorial.start();       // the very first PLAY is the tutorial
     else startMatchmaking();
 }
 document.getElementById('btn-home-play').addEventListener('click', playSelected);
