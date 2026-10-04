@@ -143,18 +143,31 @@
     }
 
     // Reward pops: an icon with an amount next to it (no windows) -------------------------------
-    function countUp(node, value, skipped) {
+    function countUp(node, value, skipped, onStep) {
         const steps = skipped() ? 1 : 22; let i = 0;
-        return new Promise(res => { const iv = setInterval(() => { i++; node.textContent = '+' + Math.round(value * (1 - Math.pow(1 - i / steps, 3))).toLocaleString(); if (i % 4 === 0) sfx('coin'); if (i >= steps) { clearInterval(iv); res(); } }, 36); });
+        return new Promise(res => { const iv = setInterval(() => { i++; const v = Math.round(value * (1 - Math.pow(1 - i / steps, 3))); node.textContent = '+' + v.toLocaleString(); if (onStep) onStep(v); if (i % 4 === 0) sfx('coin'); if (i >= steps) { clearInterval(iv); res(); } }, 36); });
+    }
+    // the wallet strip on top of the opening screen: the balances before the reward, ticking up while the reward counts (cosmetics have no balance)
+    function walletStrip(o, final) {
+        const gems = (typeof gemCount === 'function') ? gemCount() : 0, p = prog();
+        const now = { coin: Math.max(0, +localStorage.getItem('rr_coins') || 0), gem: gems, xp: p.xp || 0, pass: p.passPoints || 0 };
+        const add = { coin: final.coins || 0, gem: final.gems || 0, xp: final.xp || 0, pass: final.passPoints || 0 };
+        const kinds = ['coin', 'gem', 'xp', 'pass'].filter(k => k === 'coin' || k === 'gem' || add[k] > 0);
+        if (!add.coin && !add.gem && !add.xp && !add.pass) return { set() {} };
+        const strip = document.createElement('div'); strip.className = 'lb-wallet';
+        strip.innerHTML = kinds.map(k => '<div class="lbw lbw-' + k + '" data-k="' + k + '">' + icon(k) + '<b>' + Math.max(0, now[k] - add[k]).toLocaleString() + '</b></div>').join('');
+        o.el.appendChild(strip); void strip.offsetWidth; strip.classList.add('show');
+        return { set(k, v) { const b = strip.querySelector('.lbw-' + k + ' b'); if (!b) return; const val = Math.max(0, now[k] - add[k]) + v; b.textContent = val.toLocaleString(); const c = b.parentNode; c.classList.remove('tick'); void c.offsetWidth; c.classList.add('tick'); } };
     }
     async function revealRewards(o, final, skipped) {
         const pops = o.$('.lb-pops'), sleep = ms => skipped() ? Promise.resolve() : wait(ms);
         const row = document.createElement('div'); row.className = 'lb-row'; pops.appendChild(row);
+        const ws = walletStrip(o, final);
         for (const [kind, n] of [['coin', final.coins], ['xp', final.xp], ['pass', final.passPoints], ['gem', final.gems]]) {
             if (!n) continue;
             const d = document.createElement('div'); d.className = 'lb-pop pop-' + kind; d.innerHTML = icon(kind) + '<b>+0</b>' + (final.boost > 1 && kind !== 'gem' ? '<i class="bx">x' + final.boost + '</i>' : ''); row.appendChild(d); void d.offsetWidth; d.classList.add('show');
             sfx('item'); const r = d.getBoundingClientRect(); o.emit(10, { x:r.left + 28, y:r.top + 28, speed:260, size:7, colors:kind === 'coin' ? ['#ffcf3f', '#fff3b0'] : kind === 'xp' ? ['#6cc4ff', '#bfe9ff'] : kind === 'gem' ? ['#ff6fd8', '#ffe0f8'] : ['#b3a9ff', '#e4defd'], g:500 });
-            await countUp(d.querySelector('b'), n, skipped); await sleep(160);
+            await countUp(d.querySelector('b'), n, skipped, v => ws.set(kind, v)); ws.set(kind, n); await sleep(160);
         }
         if ((final.boosts || []).length) {
             o.el.classList.add('dense');

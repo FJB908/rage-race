@@ -32,7 +32,7 @@
     const rangeOf = k => PIECES[k].range || 0;
 
     const ORIG = { f: FINISH_Y, t: TRACK };
-    const B = { on: false, round: 0, scores: [0, 0, 0, 0], prevRank: [0, 1, 2, 3], roster: null, phase: 'idle', raceT: 0, startedRace: false, pieces: [], placed: [], cur: -1, fx: [], movers: [], parts: [], fuse: null, shake: 0, flash: 0, lastT: 0, turnEnd: 0, ready: [false, false, false, false], idc: 1, zapT: [0, 0, 0, 0], lootId: '', specStarted: false };
+    const B = { on: false, round: 0, scores: [0, 0, 0, 0], prevRank: [0, 1, 2, 3], roster: null, phase: 'idle', raceT: 0, startedRace: false, pieces: [], placed: [], cur: -1, fx: [], movers: [], stuck: [null, null, null, null], bestY: [0, 0, 0, 0], parts: [], fuse: null, shake: 0, flash: 0, lastT: 0, turnEnd: 0, ready: [false, false, false, false], idc: 1, zapT: [0, 0, 0, 0], lootId: '', specStarted: false };
     window.buildMatch = false;
 
     /* -------------------------------------------------------------------------------------- course ---- */
@@ -346,11 +346,22 @@
             gr.addColorStop(0, 'rgba(255,248,200,' + (0.95 * (1 - a)) + ')'); gr.addColorStop(0.45, 'rgba(255,150,40,' + (0.7 * (1 - a)) + ')'); gr.addColorStop(1, 'rgba(255,60,20,0)');
             cx.fillStyle = gr; cx.beginPath(); cx.arc(wx(f.x), wy(f.y), r0, 0, 7); cx.fill();
         }
+        if (B.phase === 'build') {                                           // furthest point of everybody who did not finish last round
+            const lines = B.stuck.map((y, i) => y === null ? null : { y, i }).filter(Boolean).sort((a, b2) => a.y - b2.y);
+            lines.forEach((l, k) => {
+                const y = wy(l.y); if (y < -20 || y > view.h + 20) return;
+                cx.save(); cx.strokeStyle = PCOL[l.i]; cx.globalAlpha = 0.85; cx.lineWidth = 2; cx.setLineDash([9, 6]); cx.beginPath(); cx.moveTo(wx(0), y); cx.lineTo(wx(PLAY_W()), y); cx.stroke(); cx.setLineDash([]);
+                const label = (l.i === 0 ? 'YOU' : B.roster[l.i].name.slice(0, 9)) + (k === 0 ? ' · FURTHEST' : ' · STUCK HERE'), tw = cx.measureText(label).width;
+                cx.font = '900 10px system-ui'; const w = cx.measureText(label).width + 14; cx.globalAlpha = 1; cx.fillStyle = PCOL[l.i]; rrect(wx(PLAY_W()) - w - 4, y - 18, w, 17, 8); cx.fill(); cx.fillStyle = '#10131b'; cx.textAlign = 'right'; cx.fillText(label, wx(PLAY_W()) - 11, y - 6);
+                cx.restore();
+            });
+        }
         cx.fillStyle = '#35e0c8'; cx.font = '800 11px system-ui'; cx.textAlign = 'center'; cx.fillText('START', wx(PLAY_W() / 2), wy(START_Y) - 16);
         cx.restore();
         if (B.flash > 0.02) { cx.fillStyle = 'rgba(255,244,214,' + (B.flash * 0.6) + ')'; cx.fillRect(0, 0, view.w, view.h); B.flash *= Math.pow(0.0005, dtp); }
         const mx = view.w - 28, top = 150, bot = view.h - 190, k = (bot - top) / (START_Y - FINISH_Y + 200);
         cx.fillStyle = 'rgba(255,255,255,.06)'; cx.fillRect(mx - 8, top, 16, bot - top);
+        if (B.phase === 'build') B.stuck.forEach((sy, i) => { if (sy === null) return; cx.fillStyle = PCOL[i]; cx.fillRect(mx - 10, top + (sy - (FINISH_Y - 100)) * k, 20, 3); });
         for (const pl of platforms) { if (pl.ground || pl.type === 'finish') continue; const yy = top + (pl.y - (FINISH_Y - 100)) * k; cx.fillStyle = pl.piece ? PCOL[pl.owner] : 'rgba(255,255,255,.3)'; cx.fillRect(mx - 6, yy, 12, pl.piece ? 3 : 2); }
         cx.strokeStyle = '#fff'; cx.lineWidth = 1.5; cx.strokeRect(mx - 8, top + (view.camTop - (FINISH_Y - 100)) * k, 16, (view.h / S) * k);
     }
@@ -529,7 +540,7 @@
         } else t.hidden = true;
     }, 200);
     function startRace() {
-        B.phase = 'race'; B.raceT = 0; B.startedRace = false; B.specStarted = false; B.hitFor = [new Set(), new Set(), new Set(), new Set()]; B.zapT = [0, 0, 0, 0]; B.trapPts = [0, 0, 0, 0];
+        B.phase = 'race'; B.raceT = 0; B.startedRace = false; B.bestY = [START_Y, START_Y, START_Y, START_Y]; B.specStarted = false; B.hitFor = [new Set(), new Set(), new Set(), new Set()]; B.zapT = [0, 0, 0, 0]; B.trapPts = [0, 0, 0, 0];
         const keep = B.roster; initPlayers();
         players.forEach((p, i) => { if (i === 0) return; p.name = keep[i].name; p.look = keep[i].look; p.finisherId = keep[i].finisher; p.skill = keep[i].skill; p.botType = 'standard'; p.afk = false; });
         resetDynamic(); finishedCount = 0; botsDonePrompted = true; hudChip.hidden = false; paintHud(true);
@@ -556,6 +567,7 @@
         if (!B.on || B.phase !== 'race') return;
         if (state === 'playing') {
             B.startedRace = true; B.raceT += dt;
+            for (let i = 0; i < players.length; i++) if (!players[i].finished && players[i].y < B.bestY[i]) B.bestY[i] = players[i].y;
             for (const pl of platforms) {                                           // saws slide, blink platforms flicker out
                 if (pl.piece === 'saw') pl.x = pl.baseX + Math.sin(B.raceT * 1.9 + pl.phase) * pl.range;
                 else if (pl.piece === 'blink' && pl.active) { pl.blinkT -= dt; if (pl.blinkT <= 0) { pl.active = false; pl.respawn = 1.5; pl.blinkT = 2.3; for (const p of players) if (p.plat === pl) { p.mode = 'air'; p.plat = null; } } }
@@ -586,6 +598,7 @@
         if (!B.on || B.phase !== 'race' || ending) return; ending = true; B.phase = 'result'; state = 'finished'; dragging = false;
         if (typeof stopSpectate === 'function') stopSpectate();
         document.body.classList.remove('build-race'); hudChip.hidden = true;
+        B.stuck = players.map((p, i) => (!p.finished && B.bestY[i] < START_Y - 60) ? B.bestY[i] : null);      // where each player who did not finish got stuck
         const before = rankOf();
         const fin = players.filter(p => p.finished).sort((a, b) => a.finishTime - b.finishTime);
         const rows = players.map((p, i) => { const pl = fin.indexOf(p); return { i, place: pl >= 0 ? pl + 1 : 0, fp: pl >= 0 ? POINTS[pl] : 0, tp: B.trapPts[i], time: p.finished ? p.finishTime : 0, old: B.scores[i] }; });
@@ -652,7 +665,7 @@
         B.on = true; window.buildMatch = true; ending = false;
         gameMode = 'race'; esc = null; pk = null; lv = null; showScreen('');
         document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level');
-        B.round = 1; B.scores = [0, 0, 0, 0]; B.pieces = []; B.fx = []; B.lootId = newLootId('race');
+        B.round = 1; B.scores = [0, 0, 0, 0]; B.pieces = []; B.fx = []; B.stuck = [null, null, null, null]; B.lootId = newLootId('race');
         makeCourse(matchSeed);
         initPlayers();
         B.roster = players.map((p, i) => ({ name: p.name, look: p.look, finisher: p.look && p.look.finisher, skill: p.skill, pers: i === 0 ? 'you' : ['trapper', 'helper', 'chaos', 'trapper'][Math.floor(Math.random() * 4)], ctrl: i === 0 ? 'local' : (api.remote.includes(i) ? 'remote' : 'bot') }));
@@ -660,7 +673,7 @@
     }
     function start() { window.buildQueued = true; startMatchmaking(); }
     function leave(toMenu) {
-        B.on = false; window.buildMatch = false; B.phase = 'idle'; B.movers = []; net.waiters = {}; if (B.cancelTurn) B.cancelTurn(); root.hidden = true; panel.hidden = true; hudChip.hidden = true; ghost.kind = null; ending = false;
+        B.on = false; window.buildMatch = false; B.phase = 'idle'; B.movers = []; B.stuck = [null, null, null, null]; net.waiters = {}; if (B.cancelTurn) B.cancelTurn(); root.hidden = true; panel.hidden = true; hudChip.hidden = true; ghost.kind = null; ending = false;
         document.body.classList.remove('bd-building', 'build-race');
         FINISH_Y = ORIG.f; TRACK = ORIG.t;
         if (toMenu) { state = 'menu'; gameMode = 'race'; hud.style.display = 'none'; refreshStartMeta(); showScreen('start'); }

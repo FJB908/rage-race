@@ -2628,7 +2628,7 @@ function restartRace() {
     else startMatchmaking();
 }
 function giveUpToResults() {
-    state = 'finished';
+    state = 'finished'; if (typeof showFinishMenu === 'function') showFinishMenu(false);
     showScreen('');
     showResults();
 }
@@ -2771,7 +2771,7 @@ function leaveRaceToMenu(){
     document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level');
     refreshStartMeta(); showScreen('start');
 }
-finishMenuBtn.addEventListener('click', e => { e.stopPropagation(); SFX.play('count'); leaveRaceToMenu(); });
+finishMenuBtn.addEventListener('click', e => { e.stopPropagation(); SFX.play('count'); giveUpToResults(); });      // while spectating: jump to the results (play again / main menu are there)
 function maybePromptBotsDone() {
     if (window.buildMatch || botsDonePrompted || !players[0].finished) return;   // only makes sense once YOU'RE already done
     if (players.slice(1).every(b => b.finished)) return;    // everyone's in — the race is just ending normally
@@ -2781,10 +2781,9 @@ function maybePromptBotsDone() {
         return a.finished ? -1 : b.finished ? 1 : a.y - b.y;
     }).indexOf(players[0]) + 1;
     setTimeout(() => openPrompt('YOU FINISHED ' + ordinal(place).toUpperCase(), "The others are still racing. What do you want to do?", [
-        ['Keep watching', startSpectate],
+        ['Play again', restartRace],
         ['View results', giveUpToResults, true],
-        ['Restart', restartRace, true],
-        ['Main menu', leaveRaceToMenu, true],
+        ['Spectate', startSpectate, true],
     ]), 900);
 }
 

@@ -89,10 +89,10 @@
 .pop-gem b { color:#ff9be8; }
 .lb-itempop .rar .ico { width:14px; height:14px; vertical-align:-2px; }
 
-.lb-equip { position:absolute; z-index:6; bottom:calc(104px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%) translateY(20px); min-width:200px; min-height:46px; padding:0 22px; border:2px solid var(--c); border-radius:14px; background:rgba(13,16,23,.85); color:var(--c); font:900 15px/1 "Space Grotesk",system-ui,sans-serif; letter-spacing:.1em; opacity:0; pointer-events:none; transition:all .35s ease; display:flex; align-items:center; justify-content:center; gap:8px; }
+.lb-equip { position:absolute; z-index:6; bottom:calc(104px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%) translateY(20px); min-width:210px; min-height:50px; padding:0 24px; border:none; border-radius:14px; background:var(--accent,#35e0c8); color:#05201c; box-shadow:0 10px 30px -8px rgba(53,224,200,.6); font:800 16px/1 "Bricolage Grotesque","Space Grotesk",system-ui,sans-serif; letter-spacing:.06em; opacity:0; pointer-events:none; transition:all .35s ease; display:flex; align-items:center; justify-content:center; gap:8px; }
 .lb-equip.show { opacity:1; pointer-events:auto; transform:translateX(-50%); }
 .lb-equip:active { transform:translateX(-50%) translateY(3px); }
-.lb-equip.done { color:#7ee787; border-color:#7ee787; }
+.lb-equip.done { background:rgba(53,224,200,.16); color:var(--accent,#35e0c8); box-shadow:none; }
 .lb-equip .ico { width:18px; height:18px; }
 
 /* crate life: a shine sweeps across it and sparkles twinkle (used by the opening screen and the "tap to open" crate) */
@@ -146,3 +146,11 @@
 body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-chest .rk-cta, body.await-chest #board, body.await-chest #result-sub { visibility:hidden; pointer-events:none; }
 
 .lb.tier-legendary .lb-rays { display:none; }
+
+/* wallet strip while a chest opens: balances tick up as the rewards count */
+.lb-wallet { position:absolute; z-index:7; top:calc(66px + env(safe-area-inset-top,0px)); left:0; right:0; display:flex; justify-content:center; gap:8px; flex-wrap:wrap; padding:0 14px; opacity:0; transform:translateY(-10px); transition:all .3s ease; pointer-events:none; }
+.lb-wallet.show { opacity:1; transform:none; }
+.lbw { display:flex; align-items:center; gap:7px; padding:7px 14px 7px 9px; border-radius:99px; background:rgba(13,16,23,.88); border:1px solid rgba(255,255,255,.14); font:900 18px/1 "Bricolage Grotesque",system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+.lbw .ico { width:22px; height:22px; }
+.lbw-coin b { color:#ffcf3f; } .lbw-gem b { color:#ff9be8; } .lbw-xp b { color:#6cc4ff; } .lbw-pass b { color:#b3a9ff; }
+.lbw.tick { animation:lbwtick .22s ease-out; } @keyframes lbwtick { 40% { transform:scale(1.12); border-color:rgba(255,255,255,.5); } }
