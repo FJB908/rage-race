@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "889174064806",
+    "firebase_url": "https://rage-race-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "rage-race",
+    "storage_bucket": "rage-race.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:889174064806:android:2bb45632b8e8ea4fd3fe67",
+        "android_client_info": {
+          "package_name": "com.fjb908.ragerace"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "889174064806-p8p1u8339fvu42v3clipksu7grmup8hm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfWl3B4ESG0lgRyZOuhPC_UI2AvA9AXOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "889174064806-p8p1u8339fvu42v3clipksu7grmup8hm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
