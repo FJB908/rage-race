@@ -1,8 +1,9 @@
 // Profile-tab card for the cloud account. Needs cloud.js.
 (function () {
     'use strict';
+    const clearPending = () => document.documentElement.classList.remove('acct-pending');
     const box = document.getElementById('m-acct'), title = document.getElementById('ma-title'), sub = document.getElementById('ma-sub'), btn = document.getElementById('ma-btn');
-    if (!box || !window.Cloud) return;
+    if (!box || !window.Cloud) { clearPending(); return; }
     const ago = t => { const s = Math.max(0, (Date.now() - t) / 1000); return s < 60 ? 'just now' : s < 3600 ? Math.floor(s / 60) + ' min ago' : s < 86400 ? Math.floor(s / 3600) + ' h ago' : Math.floor(s / 86400) + ' d ago'; };
     function render() {
         const c = Cloud, st = c.status;
@@ -33,13 +34,14 @@
     const CHOICE = 'rr_acct_choice';
     const hasProgress = () => { try { const q = JSON.parse(localStorage.getItem('rr_profile') || 'null'); return !!(q && (q.xp > 0 || q.races > 0 || q.passPointsEarned > 0 || (q.owned || []).filter(x => x !== 'classic' && x !== 'none').length > 0)) || +localStorage.getItem('rr_coins') > 0; } catch (e) { return false; } };   // the game itself writes an empty profile on first start
     let chosen = null; try { chosen = localStorage.getItem(CHOICE); if (!chosen && hasProgress()) { localStorage.setItem(CHOICE, 'existing'); chosen = 'existing'; } } catch (e) {}
+    if (chosen) clearPending();
     if (!chosen) {
         const el = document.createElement('div'); el.id = 'acct-choose';
         el.innerHTML = '<div class="ac-card"><h1>RAGE RACE</h1><p>How do you want to play?</p>' +
             '<button type="button" class="ac-new">NEW PLAYER</button>' +
             '<button type="button" class="ac-g" disabled>SIGN IN WITH GOOGLE</button>' +
             '<small class="ac-note">Already have an account? Sign in to get your progress back.</small></div>';
-        document.body.appendChild(el);
+        document.body.appendChild(el); clearPending();
         const gbtn = el.querySelector('.ac-g'), note = el.querySelector('.ac-note');
         const done = v => { try { localStorage.setItem(CHOICE, v); } catch (e) {} el.remove(); };
         el.querySelector('.ac-new').onclick = () => done('new');
