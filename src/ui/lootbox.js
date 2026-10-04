@@ -15,7 +15,7 @@
     const buildChest = (uid, tier) => {
         const T = { common:0, rare:1, epic:2, legendary:3 }[tier] || 0, k = uid || '';
         const dark = '#0b0e16';
-        const rays = T === 3 ? '<g opacity=".3" fill="var(--c)">' + [-62, -38, -14, 14, 38, 62].map(a => '<path d="M100 84 L' + (100 + Math.sin(a * Math.PI / 180) * 150).toFixed(0) + ' ' + (84 - Math.cos(a * Math.PI / 180) * 150).toFixed(0) + ' L' + (100 + Math.sin((a + 9) * Math.PI / 180) * 150).toFixed(0) + ' ' + (84 - Math.cos((a + 9) * Math.PI / 180) * 150).toFixed(0) + ' Z"/>').join('') + '</g>' : '';
+        const rays = '';                              // no light rays behind any chest (legendary used to have them)
         const crown = T === 3 ? '<path d="M46 42 L54 14 L76 34 L100 6 L124 34 L146 14 L154 42 Z" fill="var(--c)" stroke="' + dark + '" stroke-width="3" stroke-linejoin="round"/><g fill="#fff"><circle cx="54" cy="15" r="3.4"/><circle cx="100" cy="7" r="4"/><circle cx="146" cy="15" r="3.4"/></g>' : '';
         const rivets = T >= 1 ? '<g fill="' + dark + '" opacity=".75"><circle cx="54" cy="98" r="2.6"/><circle cx="54" cy="152" r="2.6"/><circle cx="146" cy="98" r="2.6"/><circle cx="146" cy="152" r="2.6"/><circle cx="30" cy="62" r="3"/><circle cx="170" cy="62" r="3"/></g>' : '';
         const caps = T >= 2 ? '<path d="M24 108 V100 Q24 88 36 88 H44 M176 108 V100 Q176 88 164 88 H156 M24 146 V154 Q24 166 36 166 H44 M176 146 V154 Q176 166 164 166 H156" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>' +
@@ -152,7 +152,7 @@
         const row = document.createElement('div'); row.className = 'lb-row'; pops.appendChild(row);
         for (const [kind, n] of [['coin', final.coins], ['xp', final.xp], ['pass', final.passPoints], ['gem', final.gems]]) {
             if (!n) continue;
-            const d = document.createElement('div'); d.className = 'lb-pop pop-' + kind; d.innerHTML = icon(kind) + '<b>+0</b>'; row.appendChild(d); void d.offsetWidth; d.classList.add('show');
+            const d = document.createElement('div'); d.className = 'lb-pop pop-' + kind; d.innerHTML = icon(kind) + '<b>+0</b>' + (final.boost > 1 && kind !== 'gem' ? '<i class="bx">x' + final.boost + '</i>' : ''); row.appendChild(d); void d.offsetWidth; d.classList.add('show');
             sfx('item'); const r = d.getBoundingClientRect(); o.emit(10, { x:r.left + 28, y:r.top + 28, speed:260, size:7, colors:kind === 'coin' ? ['#ffcf3f', '#fff3b0'] : kind === 'xp' ? ['#6cc4ff', '#bfe9ff'] : kind === 'gem' ? ['#ff6fd8', '#ffe0f8'] : ['#b3a9ff', '#e4defd'], g:500 });
             await countUp(d.querySelector('b'), n, skipped); await sleep(160);
         }
@@ -246,6 +246,10 @@
         const o = makeOverlay(tier,
             '<div class="lb-stage"><div class="lb-title"></div><div class="lb-chest">' + (opts.variant === 'gem' ? buildGemChest('og') : buildChest('o', tier)) + '<div class="lb-ring"></div></div>' +
             '<div class="lb-pips">' + TIERS.map(() => '<i></i>').join('') + '</div><div class="lb-hint">TAP</div></div>');
+        if (window.Boost && drop.pending) {                 // a chest booster that will apply to this chest is shown before you open it
+            const a = Boost.active('chest');
+            if (a && Boost.appliesToChest(drop.id)) { const bdg = document.createElement('div'); bdg.className = 'lb-boostbadge'; bdg.innerHTML = Boost.art({ kind: 'chest', mult: a.mult }) + '<span><b>CHEST BOOSTER</b><small>x' + a.mult + ' rewards · ' + a.total + ' left</small></span>'; o.el.appendChild(bdg); }
+        }
         const el = o.el, chest = o.$('.lb-chest'), stage = o.$('.lb-stage'), title = o.$('.lb-title'), pips = [...el.querySelectorAll('.lb-pips i')], btn = o.$('.lb-btn'), skipBtn = o.$('.lb-skip');
         let taps = 0, busy = true, opened = false, skipped = false;
         const chestPos = () => { const r = chest.getBoundingClientRect(); return { x:r.left + r.width / 2, y:r.top + r.height * .42 }; };
@@ -262,6 +266,7 @@
             opened = true; busy = true;
             const final = pending ? (resolveDrop(drop.id, tier) || drop) : drop;
             const ft = final.tier || tier; if (ft !== tier) { tier = ft; paint(); }
+            { const sm = el.querySelector('.lb-boostbadge small'); if (sm && final.boost > 1) { const a = Boost.active('chest'); sm.textContent = 'x' + final.boost + ' applied · ' + (a ? a.total : 0) + ' left'; } }
             el.classList.remove('ready', 'tapped'); o.flash(); o.shake(); buzz([40, 30, 80]); sfx('open');
             el.classList.add('burst'); el.style.setProperty('--charge', 1);
             const p = chestPos(); o.emit(120, { x:p.x, y:p.y, dir:-Math.PI / 2, spread:2.4, speed:760, size:11, colors:[TIER_COLOR[tier], '#fff', '#ffcf3f', '#35e0c8'], g:1100 });

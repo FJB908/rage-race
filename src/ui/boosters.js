@@ -20,7 +20,9 @@
         // Chest contents multiplier (>= 1) for one chest id.
         // Only chests earned by playing count (race, escape, gauntlet, levels, ranked, tower). Chests from the pass, daily calendar,
         // level rewards or videos are left alone and do not use a charge.
-        chest(id) { return /^(race|escape|gauntlet|level|party|rk|tower):/.test(String(id)) ? (use('chest', 1, id) || 1) : 1; },
+        appliesToChest(id) { return /^(race|escape|gauntlet|level|party|rk|tower):/.test(String(id)); },
+        chest(id) { return B.appliesToChest(id) ? (use('chest', 1, id) || 1) : 1; },
+        announce,
         art(r, big) {
             const k = KINDS[r.kind];
             return '<span class="bo-art bo-' + r.kind + (big ? ' big' : '') + '" style="--bc:' + k.color + '">' + icon(r.kind === 'coin' ? 'coin' : 'drop') + '<b>x' + r.mult + '</b></span>';
@@ -40,13 +42,22 @@
         },
     };
 
+    // a banner whenever a booster is actually used, so you always see it working
+    function announce(kind, mult, left) {
+        try {
+            const k = KINDS[kind], el = document.createElement('div'); el.className = 'bo-banner'; el.style.setProperty('--bc', k.color);
+            el.innerHTML = B.art({ kind, mult }) + '<span><b>x' + mult + ' ' + k.name + '</b><small>' + (left > 0 ? left + (kind === 'coin' ? (left === 1 ? ' match left' : ' matches left') : (left === 1 ? ' chest left' : ' chests left')) : 'last one used') + '</small></span>';
+            document.body.appendChild(el); setTimeout(() => el.remove(), 2900);
+        } catch (e) {}
+    }
     function use(kind, n, id) {
         const p = prog(), b = st(p), key = kind + ':' + id;
         const hit = b.used.find(u => u.k === key);
         if (hit) return kind === 'coin' ? Math.round(n * hit.m) : hit.m;
         const e = best(b[kind]);
         if (!e) return kind === 'coin' ? n : 1;
-        const m = e.mult; e.left--; b[kind] = b[kind].filter(x => x.left > 0);
+        const m = e.mult; e.left--; b[kind] = b[kind].filter(x => x.left > 0); const leftNow = b[kind].reduce((s, x) => s + x.left, 0);
+        setTimeout(() => announce(kind, m, leftNow), 0);
         b.used.push({ k:key, m }); if (b.used.length > 30) b.used.shift();
         saveProg(p);
         try { B.refreshHome(); } catch (er) {}
