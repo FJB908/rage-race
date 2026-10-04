@@ -85,7 +85,7 @@
         const b = document.getElementById('btn-ad-home'); if (!b) return;
         const left = A.left('coin'), w = A.wait('coin'); b.hidden = left <= 0;
         b.disabled = w > 0; b.classList.toggle('cool', w > 0);
-        const num = b.querySelector('b'); if (num) num.textContent = w > 0 ? mmss(w) : String(CFG.coin.amount);
+        const num = b.querySelector('b'); if (num) num.textContent = w > 0 ? mmss(w) : '+' + CFG.coin.amount;
         setBadge(b, 0);                       // the green FREE tag is the notice here; a number would cover the amount
         A.refreshShop();
     };

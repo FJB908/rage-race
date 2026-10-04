@@ -113,12 +113,13 @@
         ['gesturestart', 'gesturechange', 'dblclick'].forEach(t => el.addEventListener(t, e => e.preventDefault()));
         const cv = el.querySelector('.lb-fx'), g = cv.getContext('2d'), parts = [];
         let W = 0, H = 0, raf = 0, closed = false;
-        const fit = () => { const d = Math.min(window.devicePixelRatio || 1, 1.5); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); };
+        const fit = () => { const d = 1; W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); };
         fit(); addEventListener('resize', fit);
         const api = {
             el, $: s => el.querySelector(s), get W() { return W; }, get H() { return H; }, get closed() { return closed; },
             emit(n, o) {
-                for (let i = 0; i < n && parts.length < 260; i++) {
+                n = Math.ceil(n * .55);
+                for (let i = 0; i < n && parts.length < 110; i++) {
                     const a = o.dir !== undefined ? o.dir + (Math.random() - .5) * o.spread : Math.random() * 6.283, s = o.speed * (.35 + Math.random() * .65);
                     parts.push({ x:o.x, y:o.y, vx:Math.cos(a) * s, vy:Math.sin(a) * s, life:1, decay:.5 + Math.random() * .8, size:o.size * (.5 + Math.random()), g:o.g === undefined ? 900 : o.g, c:o.colors[i % o.colors.length], rot:Math.random() * 6, vr:(Math.random() - .5) * 12 });
                 }
@@ -137,7 +138,7 @@
             for (const p of parts) {
                 p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; p.life -= p.decay * dt;
                 if (p.life <= 0) continue; parts[k++] = p;
-                g.globalAlpha = Math.min(1, p.life * 1.6); g.fillStyle = p.c; g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * .6); g.restore();
+                g.globalAlpha = Math.min(1, p.life * 1.6); g.fillStyle = p.c; g.fillRect(p.x - p.size / 2, p.y - p.size / 3, p.size, p.size * .6);
             }
             parts.length = k; g.globalAlpha = 1; raf = requestAnimationFrame(tick);
         })(lastT);
@@ -146,9 +147,9 @@
     }
 
     // Reward pops: an icon with an amount next to it (no windows) -------------------------------
-    function countUp(node, value, skipped, onStep) {
+    function countUp(node, value, skipped, onStep, from) {
         const steps = skipped() ? 1 : 22; let i = 0;
-        return new Promise(res => { const iv = setInterval(() => { i++; const v = Math.round(value * (1 - Math.pow(1 - i / steps, 3))); node.textContent = '+' + v.toLocaleString(); if (onStep) onStep(v); if (i % 4 === 0) sfx('coin'); if (i >= steps) { clearInterval(iv); res(); } }, 36); });
+        return new Promise(res => { const iv = setInterval(() => { i++; const v = Math.round((from || 0) + (value - (from || 0)) * (1 - Math.pow(1 - i / steps, 3))); node.textContent = '+' + v.toLocaleString(); if (onStep) onStep(v); if (i % 4 === 0) sfx('coin'); if (i >= steps) { clearInterval(iv); res(); } }, 36); });
     }
     // the wallet strip on top of the opening screen: the balances before the reward, ticking up while the reward counts (cosmetics have no balance)
     function walletStrip(o, final) {
@@ -168,30 +169,29 @@
         const ws = walletStrip(o, final);
         for (const [kind, n] of [['coin', final.coins], ['xp', final.xp], ['pass', final.passPoints], ['gem', final.gems]]) {
             if (!n) continue;
-            const d = document.createElement('div'); d.className = 'lb-pop pop-' + kind; d.innerHTML = icon(kind) + '<b>+0</b>' + (final.boost > 1 && kind !== 'gem' ? '<i class="bx">x' + final.boost + '</i>' : ''); row.appendChild(d); void d.offsetWidth; d.classList.add('show');
+            const d = document.createElement('div'); d.className = 'lb-pop pop-' + kind; d.innerHTML = icon(kind) + '<b>+0</b>'; row.appendChild(d); void d.offsetWidth; d.classList.add('show');
             sfx('item'); const r = d.getBoundingClientRect(); o.emit(10, { x:r.left + 28, y:r.top + 28, speed:260, size:7, colors:kind === 'coin' ? ['#ffcf3f', '#fff3b0'] : kind === 'xp' ? ['#6cc4ff', '#bfe9ff'] : kind === 'gem' ? ['#ff6fd8', '#ffe0f8'] : ['#b3a9ff', '#e4defd'], g:500 });
-            await countUp(d.querySelector('b'), n, skipped, v => ws.set(kind, v)); ws.set(kind, n); await sleep(160);
-        }
-        if ((final.boosts || []).length) {
-            o.el.classList.add('dense');
-            const brow = document.createElement('div'); brow.className = 'lb-row lb-boosts'; pops.appendChild(brow);
-            for (const bo of final.boosts) {
-                const d = document.createElement('div'); d.className = 'lb-pop pop-boost'; d.innerHTML = Boost.art(bo) + '<b>' + Boost.short(bo) + '</b>'; brow.appendChild(d); void d.offsetWidth; d.classList.add('show');
-                sfx('item'); await sleep(380);
+            const mult = kind !== 'gem' && final.boost > 1 ? final.boost : 1, base = Math.round(n / mult);
+            await countUp(d.querySelector('b'), base, skipped, v => ws.set(kind, v)); ws.set(kind, base);
+            if (mult > 1) {                      // the booster doubles it live: the number jumps on from the base amount
+                const st = document.createElement('i'); st.className = 'bx'; st.textContent = 'x' + mult; d.appendChild(st); sfx('boost'); await sleep(260);
+                await countUp(d.querySelector('b'), n, skipped, v => ws.set(kind, v), base); ws.set(kind, n);
             }
+            await sleep(160);
         }
-        if (final.boost > 1) { const d = document.createElement('div'); d.className = 'lb-pop pop-boost'; d.innerHTML = '<b style="color:#35e0c8">CHEST BOOSTER x' + final.boost + '</b>'; row.appendChild(d); void d.offsetWidth; d.classList.add('show'); await sleep(300); }
         const cos = final.cosmetic;
         if (cos) {
             await sleep(350);
             const slot = slotOf(cos), rc = RARITY[cos.rarity].color, big = cos.rarity === 'legendary' || cos.rarity === 'mythic' || cos.rarity === 'epic';
             o.el.style.setProperty('--c', rc);
             const it = document.createElement('div'); it.className = 'lb-itempop'; it.style.setProperty('--ic', rc);
-            it.innerHTML = '<i class="glow"></i><canvas width="440" height="440"></canvas><div class="rar">' + (cos.premium ? icon('gem') + ' PREMIUM' : RARITY[cos.rarity].label.toUpperCase()) + '</div><div class="nm">' + esc(cos.name) + '</div><span class="new">NEW</span>' +
-                (slot === 'trail' ? '<canvas class="trp" width="320" height="100"></canvas>' : '');
+            it.innerHTML = '<i class="glow"></i>' + (slot === 'trail' ? '<canvas class="trw" width="480" height="240"></canvas>' : '<canvas width="440" height="440"></canvas>') + '<div class="rar">' + (cos.premium ? icon('gem') + ' PREMIUM' : RARITY[cos.rarity].label.toUpperCase()) + '</div><div class="nm">' + esc(cos.name) + '</div><span class="new">NEW</span>';
             pops.appendChild(it);
-            try { renderLook(it.querySelector('canvas'), Object.assign(myLook(), { [slot]:cos.id }), { scale:.3, cy:.6 }); } catch (e) {}
-            if (slot === 'trail') try { drawTrailPreview(it.querySelector('canvas.trp'), cos); } catch (e) {}
+            if (slot === 'trail') {                   // a trail is shown as the effect itself, looping big (like the shop), not as a character
+                const cv = it.querySelector('canvas.trw'); let last = 0;
+                const tick = ts => { if (!it.isConnected) return; if (ts - last > 32) { last = ts; try { drawTrailPreview(cv, cos, ts / 1000, 1.9, true); } catch (e) {} } requestAnimationFrame(tick); };
+                requestAnimationFrame(tick);
+            } else try { renderLook(it.querySelector('canvas'), Object.assign(myLook(), { [slot]:cos.id }), { scale:.3, cy:.6 }); } catch (e) {}
             void it.offsetWidth; o.flash(); o.shake(); buzz(big ? [30, 40, 60] : 40); sfx('finish'); if (big) sfx('boost');
             o.el.classList.add('burst'); it.classList.add('show');
             o.emit(big ? 110 : 60, { x:o.W / 2, y:o.H * .5, speed:620, size:10, colors:[rc, '#fff', rc, '#ffcf3f'], g:500 });

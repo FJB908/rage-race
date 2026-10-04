@@ -167,7 +167,7 @@
         document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level');
         document.body.classList.add('mode-gauntlet');
         gtPrevQ = qLevel;
-        if (qLevel < 1) { qLevel = 1; dprCap = QUALITY_STEPS[1].dpr; glowK = QUALITY_STEPS[1].glow; }   // 32 players: start one quality step down
+        if (qLevel < 2) { qLevel = 2; dprCap = QUALITY_STEPS[2].dpr; glowK = QUALITY_STEPS[2].glow; }   // 32 players: start two quality steps down (1x pixels, no glow)
         WORLD_W = GT_W; resize();
         hitStop = 0; spectating = false; showFinishMenu(false);
 
@@ -832,7 +832,7 @@
         const wasPlaying = !!gt;
         gt = null;
         window.GT_BG = null;
-        if (qLevel === 1 && gtPrevQ === 0) { qLevel = 0; dprCap = QUALITY_STEPS[0].dpr; glowK = QUALITY_STEPS[0].glow; }
+        if (qLevel >= 1 && gtPrevQ < qLevel) { qLevel = gtPrevQ; dprCap = QUALITY_STEPS[qLevel].dpr; glowK = QUALITY_STEPS[qLevel].glow; }
         WORLD_W = 356; resize();
         document.body.classList.remove('mode-gauntlet');
         hud.style.display = 'none'; rewardsBtn.style.display = 'none';

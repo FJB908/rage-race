@@ -5,7 +5,7 @@ const ctx = canvas.getContext('2d');
 let CW = 0, CH = 0, DPR = 1;
 // Adaptive quality: phones render 2-3x more pixels than needed, and canvas glow (shadowBlur) is
 // very costly on mobile GPUs. Start capped and step down automatically if frames run slow.
-const QUALITY_STEPS = [{dpr:1.5, glow:1}, {dpr:1.25, glow:0.5}, {dpr:1, glow:0}];
+const QUALITY_STEPS = [{dpr:1.5, glow:1}, {dpr:1.25, glow:0.5}, {dpr:1, glow:0}, {dpr:0.8, glow:0}];
 let qLevel = 0, dprCap = QUALITY_STEPS[0].dpr, glowK = 1;
 const _sbDesc = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'shadowBlur');
 Object.defineProperty(CanvasRenderingContext2D.prototype, 'shadowBlur', {
@@ -172,7 +172,7 @@ function shatterCeiling(x, y, w){
             color: Math.random()<0.5 ? '#8a93a8' : '#5b6272'
         });
     }
-    { const maxS = [140, 80, 40][qLevel]; if (shardParticles.length > maxS) shardParticles.splice(0, shardParticles.length-maxS); }
+    { const maxS = [140, 80, 40, 30][qLevel]; if (shardParticles.length > maxS) shardParticles.splice(0, shardParticles.length-maxS); }
     ring(x, y, '#c9d1e3', 60, true);
     burst(x, y, '#eef2f8', 10, 160);
 }
@@ -1945,7 +1945,7 @@ function update(dt) {
     }
     particles.length = pIdx;
     // Cap live particles (lower on slower quality levels) — the oldest are recycled first.
-    const maxP = [320, 180, 100][qLevel] * (gameMode === 'gauntlet' ? 0.5 : 1);
+    const maxP = [320, 180, 100, 80][qLevel] * (gameMode === 'gauntlet' ? 0.5 : 1);
     if (particles.length > maxP) { const dead = particles.splice(0, particles.length - maxP); for (const q of dead) particlePool.push(q); }
 
     // floaters
@@ -2549,6 +2549,8 @@ function loop(t){
     // The simulation runs at a fixed 60 Hz, but screens refresh at 60/90/120 Hz and frame times
     // jitter. Draw the world blended between the last two sim states so motion stays even.
     const a = Math.min(1, simAcc / SIM_DT);
+    // Gauntlet on a slow phone (quality already stepped down): draw every other frame. A steady 30 fps feels better than a stuttering 40.
+    if (gameMode === 'gauntlet' && qLevel >= 2 && drewOnce && (loop._n = (loop._n || 0) + 1) % 2) { requestAnimationFrame(loop); return; }
     const restore = applyInterp(a);
     draw();
     restore();

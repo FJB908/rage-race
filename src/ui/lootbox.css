@@ -24,7 +24,7 @@
 .lb-stage { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:14px; transition:transform .6s cubic-bezier(.5,0,.2,1), opacity .5s ease; }
 .lb-stage.away { transform:translateY(-14vh) scale(.55); opacity:0; pointer-events:none; }
 .lb-title { font-weight:900; letter-spacing:.2em; font-size:13px; color:var(--c); text-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent); }
-.lb-chest { width:min(66vw,300px); cursor:pointer; filter:drop-shadow(0 0 calc(10px + var(--charge)*34px) color-mix(in srgb,var(--c) calc(30% + var(--charge)*55%),transparent));
+.lb-chest { width:min(66vw,300px); cursor:pointer; filter:drop-shadow(0 0 22px color-mix(in srgb,var(--c) 55%,transparent));       /* static: a filter that changes with every tap repaints the whole chest */
   transform:translateY(-110vh); -webkit-tap-highlight-color:transparent; }
 .lb.in .lb-chest { animation:lbDrop .8s cubic-bezier(.3,1.5,.5,1) .15s forwards; }
 @keyframes lbDrop { 0% { transform:translateY(-110vh) rotate(-8deg); } 70% { transform:translateY(8px) rotate(1deg); } 100% { transform:translateY(0); } }
@@ -158,3 +158,6 @@ body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-ches
 .lbw.tick { animation:lbwtick .22s ease-out; } @keyframes lbwtick { 40% { transform:scale(1.12); border-color:rgba(255,255,255,.5); } }
 
 .lb-odds { position:absolute; z-index:8; left:14px; top:calc(14px + env(safe-area-inset-top,0px)); padding:7px 12px; border-radius:99px; border:1px solid rgba(255,255,255,.2); background:rgba(13,16,23,.6); color:#cfd6e4; font:800 11px/1 system-ui; letter-spacing:.08em; }
+
+.lb-itempop canvas.trw { width:min(86vw,340px); height:auto; aspect-ratio:2/1; }
+.lb.dense .lb-itempop canvas.trw { width:min(80vw,280px); }
