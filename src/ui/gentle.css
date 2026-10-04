@@ -1,0 +1,18 @@
+.m-title { margin-top:-4px; font-size:11px; font-weight:800; letter-spacing:.12em; color:#8b95a7; text-transform:uppercase; }
+.m-who { gap:3px; }
+/* a plainer home until level 3: just you, the mode and PLAY */
+body.gentle-simple #btn-pass-open, body.gentle-simple #btn-streak-open, body.gentle-simple #btn-missions, body.gentle-simple #m-boosts, body.gentle-simple .m-nav [data-go="friends"], body.gentle-simple .pt-plus, body.gentle-simple .m-split { display:none !important; }
+body.gentle-simple .m-nav { grid-template-columns:repeat(4,1fr); }
+.m-card.lvl-locked { opacity:.55; filter:saturate(.45); }
+.m-card .lock-tag { position:absolute; right:12px; top:12px; padding:4px 9px; border-radius:99px; background:rgba(13,16,23,.85); border:1px solid rgba(255,255,255,.2); color:#cfd6e4; font:900 10px/1 system-ui; letter-spacing:.1em; font-style:normal; }
+.m-card.lvl-locked .new-tag { display:none; }
+.lvup { position:fixed; inset:0; z-index:1100; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(5,7,11,.82); opacity:0; transition:opacity .25s; }
+.lvup.in { opacity:1; }
+.lvup-card { width:min(100%,340px); text-align:center; padding:26px 20px 20px; border-radius:26px; background:radial-gradient(120% 70% at 50% -10%, rgba(255,207,63,.32), transparent 60%), #151a25; border:1.5px solid rgba(255,207,63,.6); transform:scale(.8); transition:transform .45s cubic-bezier(.2,1.5,.3,1); }
+.lvup.in .lvup-card { transform:none; }
+.lvup-card small { font-size:12px; font-weight:900; letter-spacing:.3em; color:#ffcf3f; }
+.lvup-n { margin:6px auto 2px; width:104px; height:104px; border-radius:50%; display:grid; place-items:center; background:linear-gradient(160deg,#ffe27a,#ffb02e); color:#2a1c00; font:900 52px/1 "Bricolage Grotesque",system-ui,sans-serif; box-shadow:0 0 0 6px rgba(255,207,63,.25), 0 0 36px rgba(255,207,63,.5); }
+.lvup-card h2 { margin:10px 0 2px; font:900 26px/1 "Bricolage Grotesque",system-ui,sans-serif; } .lvup-card p { margin:0 0 12px; color:#9aa4b6; font-size:13px; }
+.lvup-open { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:14px; } .lvup-open b { width:100%; font-size:10px; letter-spacing:.16em; color:#5eead4; }
+.lvup-open span { padding:6px 12px; border-radius:99px; background:rgba(94,234,212,.14); border:1px solid rgba(94,234,212,.45); font-weight:800; font-size:13px; }
+.lvup-card button { width:100%; padding:15px; border:0; border-radius:16px; background:linear-gradient(#ffe27a,#f5a81c); color:#3a2400; font:900 16px/1 system-ui; letter-spacing:.06em; box-shadow:0 5px 0 #8a5a00; }

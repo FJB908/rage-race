@@ -223,16 +223,19 @@ function generateLevelTrack() {
     let lastX = pw/2;
     let row = 0;
     const ceilingCandidates = [];   // platforms eligible for a ceiling, filled in below
+    const EZ = (window.Gentle && !window.rankedMatch && !window.partyMatch) ? Gentle.ease() : 0;     // beginners: wider ledges, shorter gaps, fewer traps
     while (y > FINISH_Y + 300) {
         const diff = 1 - ((y - FINISH_Y) / TRACK);   // 0..1
         // Smaller vertical gaps = easier, less chance of one long fall
-        const gap = 120 + rnd(0,45) + diff*55;
+        const gap = (120 + rnd(0,45) + diff*55) * (1 - 0.14 * EZ);
 
         // Wider platforms overall, shrink more gently with difficulty
         let width = 145 - diff*55 + rnd(0,25);
         if (width < 60) width = 60;
+        width *= 1 + 0.6 * EZ;
 
-        const r = Math.random();
+        let r = Math.random();
+        if (EZ > 0 && r > 0.12 + diff*0.04) r = r + (1 - r) * 0.6 * EZ;      // fewer crumbling / sliding / icy ledges
         let type = 'normal', speed=0, dir=1;
 
         if (r < 0.12 + diff*0.04)            { type='boost'; width=Math.max(width,70); }
@@ -360,6 +363,7 @@ function initPlayers() {
             look: local ? myLook() : randomBotLook(),
             skill: local ? 1 : rnd(0.82, 1.15) * newPlayerEase(),   // per-bot variation, easier for your first races
         }));
+        if (!local && window.Gentle) { const pp = players[players.length - 1], ez = Gentle.ease(); pp.thinkScale = 1 + 0.9 * ez; pp.afk = pp.afk || (ez > 0.6 && Math.random() < 0.12); }
     }
 }
 
@@ -2881,7 +2885,7 @@ function startGame() {
     generateLevel(matchSeed); initPlayers(); botsDonePrompted = false;
     if (window.matchBots && window.BotRoster) BotRoster.applyTo(players.slice(1), window.matchBots);   // Ranked: roster opponents with their own skill
     // Quick match: now and then one bot is genuinely good (a roster bot rated like a top player), so wins are earned. Not for beginners.
-    else if (!window.rankedMatch && !window.partyMatch && window.BotRoster && prog().races >= 5 && Math.random() < 0.35) {
+    else if (!window.rankedMatch && !window.partyMatch && window.BotRoster && prog().races >= 12 && Gentle.ease() < 0.15 && Math.random() < 0.22) {
         const slot = 1 + Math.floor(Math.random() * 3), rb = BotRoster.pick(1, { mmr: 1450 + Math.random() * 250, spread: 50 })[0];
         if (rb) BotRoster.applyTo([players[slot]], [Object.assign({}, rb, { name: players[slot].name, look: players[slot].look })], { color: false });
     }
@@ -4036,7 +4040,7 @@ function renderLook(cv, look, opts){
     if (cs) Costumes.front(c, s, k, cs, tt);
 }
 // Bots start a bit weaker and reach full strength after about 15 races, so beginners can actually win.
-function newPlayerEase(){ let r = 0; try { r = prog().races || 0; } catch(e){} return 0.86 + 0.14 * Math.min(1, r / 15); }
+function newPlayerEase(){ const e = window.Gentle ? Gentle.ease() : 0; return 1 + 1.15 * e; }      // skill scales the bots' aiming error: beginners meet clumsier bots
 function randomBotLook(){
     // Bots wear everything: plain skins, but also epic, legendary and gem cosmetics, trails and a finish effect.
     const real = arr => arr.filter(i => i.id !== 'none' && !i.exclusive);
@@ -4055,7 +4059,7 @@ function randomBotLook(){
     };
 }
 
-const MODE_LABEL = { race:'Quick play · 4 players', tag:'Boom Tag · Pass the bomb', arcade:'Arcade · Random minigames', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
+const MODE_LABEL = { race:'Quick play', tag:'Boom Tag · Pass the bomb', arcade:'Arcade · Random minigames', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
 const MODE_ICON = { race:'mode-race', tag:'mode-tag', arcade:'mode-arcade', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
 let _freeIds = null;
 function freeItemIds(){
@@ -4095,8 +4099,7 @@ function prog(){
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
     if (!d.hat || !HATS.some(h => h.id === d.hat)) d.hat = 'none';
     if (!d.face || !FACES.some(f => f.id === d.face)) d.face = 'none';
-    if (d.lastMode === 'tag') d.lastMode = 'arcade';
-    if (!['race', 'arcade', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';
+    if (!['race', 'escape', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';      // (Arcade and Boom Tag are parked)
     return d;
 }
 function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} if (window.Cloud) Cloud.touch(); }
@@ -4432,7 +4435,7 @@ function refreshShopBadge(){
     const p = prog(), ids = shopItems().map(i => i.id);
     if (!Array.isArray(p.shopSeen)){ p.shopSeen = ids; saveProg(p); }
     const fresh = ids.filter(id => !p.shopSeen.includes(id) && !p.owned.includes(id)).length;
-    setBadge(document.querySelector('.m-nav [data-go="shop"]'), fresh + (window.Ads ? Ads.ready() : 0));
+    setBadge(document.querySelector('.m-nav [data-go="shop"]'), (window.Gentle && Gentle.simple() ? 0 : fresh) + (window.Ads ? Ads.ready() : 0));      // no "new items" noise for brand-new players
 }
 function markShopSeen(){ const p = prog(); p.shopSeen = shopItems().map(i => i.id); saveProg(p); refreshShopBadge(); }
 function menuTab(tab){
@@ -4500,6 +4503,7 @@ function refreshMenu(){
     if (window.Streak) Streak.refreshHome();
     if (window.Gauntlet) Gauntlet.refreshHome();
     refreshShopBadge();
+    if (window.GentleUI) GentleUI.refresh(p, L);
     // these canvases are bigger than their frames (padding all round), so crowns, wings and flames are never cropped
     const bigLook = (id, scale, cy, baseW) => { const cv = document.getElementById(id); if (!cv) return; const lk = myLook(), key = JSON.stringify(lk); if (cv._lk === key) return; cv._lk = key; const W = cv.width; renderLook(cv, lk, { scale:scale * baseW / W, cy:((W - baseW) / 2 + cy * baseW) / W }); };      // only redraw when the look really changed
     bigLook('m-hero', 0.22, 0.62, 360); bigLook('m-hero2', 0.22, 0.62, 200); bigLook('m-av', 0.25, 0.68, 96);
@@ -4534,6 +4538,7 @@ function rewardRace(place, finished, lootId){
         q.lootGrants[id] = { id, tier:'common', coins, xp, passPoints, cosmetic:null, noDrop:true }; saveProg(q); store('rr_coins', load('rr_coins', 0) + coins);
     }
     if (!drop) drop = { noDrop:true, coins, xp, passPoints };
+    if (gameMode === 'race' && !window.rankedMatch && !window.partyMatch && finished){ const q = prog(); q.loseStreak = place >= 3 ? Math.min(6, (q.loseStreak || 0) + 1) : 0; saveProg(q); }
     rewardRace.keyEarned = false;
     if (!alreadyGranted){
         const p = prog(); p.races++; if (finished && place === 1) p.wins++;
@@ -4551,6 +4556,7 @@ document.querySelectorAll('#s-start .m-pill[data-cat]').forEach(b => b.addEventL
 document.querySelectorAll('#s-start [data-shop]').forEach(b => b.addEventListener('click', () => { menuTab('shop'); renderShop(b.dataset.shop); }));
 // Tap a mode on the Play tab to select it (it shows on the home screen), then press PLAY there.
 function selectMode(mode){
+    if (window.Gentle && !Gentle.unlocked(mode)){ toast('Reach level ' + Gentle.LOCKS[mode] + ' to unlock'); SFX.play('error'); return; }
     const p = prog(); p.lastMode = mode; saveProg(p);
     refreshMenu(); menuTab('home'); SFX.play('count');
 }
@@ -4558,11 +4564,12 @@ function playSelected(){
     const m = prog().lastMode;
     window.gauntletParty = null;
     if (window.Party && Party.intercept(m)) return;                    // in a party the leader starts for everyone
-    if (m === 'arcade' && window.Arcade) Arcade.open();
+    if (m === 'escape') startEscape();
     else if (m === 'parkour') openLevels();
     else if (m === 'gauntlet') Gauntlet.open();
     else if (m === 'ranked') Ranked.open();
     else if (m === 'build') Build.open();
+    else if (window.Tutorial && !Tutorial.done && (prog().races || 0) === 0) Tutorial.start();       // the very first PLAY is the tutorial
     else startMatchmaking();
 }
 document.getElementById('btn-home-play').addEventListener('click', playSelected);
@@ -4597,7 +4604,7 @@ document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.addEvent
 function refreshStartMeta(){
     settlePendingDrops();
     const best = load('rr_esc_best_score', 0), coins = load('rr_coins', 0);
-    { let bs = 0; try { bs = +localStorage.getItem('rr_tag_best') || 0; } catch(e){} document.getElementById('start-best').textContent = bs > 0 ? 'Best streak ' + bs : ''; }
+    document.getElementById('start-best').textContent = best > 0 ? 'Best ' + best.toLocaleString('en-US') : '';
     document.getElementById('wallet-num').textContent = coins;
     document.getElementById('gem-num').textContent = gemCount().toLocaleString('en-US');
     _walletPrev = { rr_coins: +coins || 0, rr_gems: gemCount() };

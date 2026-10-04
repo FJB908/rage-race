@@ -26,7 +26,7 @@
         if (!isHost()) { toast('Only the party leader picks the mode'); return; }
         const q = prog(); q.lastMode = m; saveProg(q); refreshMenu(); render(); syncMode();
     }
-    const LABEL = { race:'Quick play · 4 players', arcade:'Arcade · Random minigames', gauntlet:'Gauntlet · 32 players' };
+    const LABEL = { race:'Quick play', arcade:'Arcade · Random minigames', gauntlet:'Gauntlet · 32 players' };
     const modeLabel = () => LABEL[mode()] || 'Pick a mode';
     // same idea as the Mode row on the home screen: the leader goes to the Play tab to pick, everyone else just sees it
     function pickMode() { if (!isHost()) { toast('Only the party leader picks the mode'); return; } if (typeof menuTab === 'function') menuTab('play'); }
@@ -58,7 +58,7 @@
             });
             if (n < MAX) { const b = document.createElement('button'); b.type = 'button'; b.className = 'pt-plus'; b.setAttribute('aria-label', 'Invite a friend'); b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>'; row.appendChild(b); }
             $('pt-bar').hidden = !s.party || n < 2;
-            if (!$('pt-bar').hidden) $('pt-bar').innerHTML = '<b>PARTY ' + n + '/' + MAX + '</b>' + ['race', 'arcade', 'gauntlet'].map(k => '<button type="button" class="pt-mode' + (mode() === k ? ' on' : '') + '" data-a="mode" data-m="' + k + '">' + (k === 'race' ? 'QUICK PLAY' : k === 'arcade' ? 'ARCADE' : 'GAUNTLET') + '</button>').join('') + '<button type="button" data-a="leave">LEAVE</button>';
+            if (!$('pt-bar').hidden) $('pt-bar').innerHTML = '<b>PARTY ' + n + '/' + MAX + '</b>' + ['race', 'gauntlet'].map(k => '<button type="button" class="pt-mode' + (mode() === k ? ' on' : '') + '" data-a="mode" data-m="' + k + '">' + (k === 'race' ? 'QUICK PLAY' : k === 'arcade' ? 'ARCADE' : 'GAUNTLET') + '</button>').join('') + '<button type="button" data-a="leave">LEAVE</button>';
             renderInvites();
         }
         row.querySelectorAll('.pt-slot').forEach(slot => { const m = list[+slot.dataset.i]; if (m && !m.me) paint(slot.querySelector('canvas'), m.look || {}); });
