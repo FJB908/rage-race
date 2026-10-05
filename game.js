@@ -236,7 +236,7 @@ function generateLevelTrack() {
         // Wider platforms overall, shrink more gently with difficulty
         let width = 145 - diff*55 + rnd(0,25);
         if (width < 60) width = 60;
-        width *= 1 + 0.6 * EZ;
+        width = Math.min(width * (1 + 0.3 * Math.min(EZ, 1)), 185);          // beginners get up to 30% wider ledges, never wider than 185
 
         let r = Math.random();
         if (EZ > 0 && r > 0.12 + diff*0.04) r = r + (1 - r) * 0.6 * EZ;      // fewer crumbling / sliding / icy ledges
