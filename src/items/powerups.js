@@ -1,15 +1,12 @@
-// POWER-UPS: Cannon, Double jump and Magnet, plus the spring under a Super Bounce player. Classic script, loaded AFTER game.js (it uses game.js globals at call time).
+// POWER-UPS: Cannon and Double jump, plus the spring under a Super Bounce player. Classic script, loaded AFTER game.js (it uses game.js globals at call time).
 // game.js calls into window.PU from a handful of hooks (item roll, activate, tick, input, draw); party races sync the state through the 10 Hz samples (PU.sample / PU.apply).
 //  CANNON  : you turn into a standing cannon (also when used in mid-air: it falls, lands, then deploys). Aim with a drag, release to fire at full power, very far up the track.
 //  DOUBLE  : for 14 s you can jump once more in mid-air (one extra jump per flight). A cloud puffs under you; everybody sees it.
-//  MAGNET  : your next 3 jumps are pulled to the middle of the platform you are aiming at (and a little higher if you fall just short). The aim preview shows the corrected arc.
 (function () {
     'use strict';
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
     const DJ_TIME = 14, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
-    const MAGNET_TIME = 14, MAGNET_N = 3, MAGNET_REACH = 1.12;          // seconds, assisted jumps, how much stronger than a full drag the pull may jump
-    const SHORT_TOL = 135, MISS_TOL = 100;                              // how far short / how far beside a platform the magnet still saves the jump
-    const clouds = [], rings = [], dbg = {};
+    const clouds = [];
     const sc = a => Math.max(-CANNON_ANG, Math.min(CANNON_ANG, a));
     const angOf = (dx, dy) => Math.atan2(dx, -dy);                      // 0 = straight up, negative = left
     const cannonVel = a => ({ vx: Math.sin(a) * CANNON_V, vy: -Math.cos(a) * CANNON_V });
@@ -131,83 +128,6 @@
         airJumpVel(p, best.sol.vx + rnd(-1, 1) * sk, best.sol.vy + rnd(-1, 1) * BOT_BASE.aimY * p.skill * 0.7);
     }
 
-    /* ------------------------------------------------------------------------------ MAGNET ---- */
-    // Given the jump the player is aiming (vx, vy), find the platform they are heading for and return a corrected jump that lands in its middle.
-    // Only helps when the aim is close: a clear miss stays a miss, so it never plays the game for you. Returns null when it has nothing to fix.
-    function magnetPlan(p, vx, vy) {
-        const maxV = playerMaxV(p, false), g = playerG(p), r = p.r, nat = predict(p, vx, vy, { maxT: 2.8 });
-        const orig = Math.hypot(vx, vy);
-        const cand = platforms.filter(pl => pl.active && pl.type !== 'spike' && pl.type !== 'finish' && pl.y < p.y - 10 && pl.y > p.y - 1100);
-        let best = null;
-        for (const pl of cand) {
-            const top = pl.y - pl.h / 2 - r;
-            // where does the plain arc meet this platform's level on its way down?
-            const g2 = g * 0.5, a = g2, b = vy, c = p.y - top;
-            const disc = b * b - 4 * a * c; let ex = null, dv = 0, tcross = 0;
-            if (disc >= 0) {
-                const tc = (-b + Math.sqrt(disc)) / (2 * a);
-                if (tc > 0.05) { tcross = tc; const xc = Math.max(r, Math.min(PLAY_W() - r, p.x + vx * tc)); ex = xc - predictPlatX(pl, tc); }
-            }
-            if (ex !== null && nat.land && nat.land.pl !== pl && nat.land.t <= tcross - 0.01) continue;      // the plain arc lands on something else first: that is the platform you are really aiming at
-            if (ex === null) {                                            // never reaches that height: how far short, and is it at least beside it?
-                const tap = -vy / g, ya = p.y + vy * tap + g2 * tap * tap, xa = Math.max(r, Math.min(PLAY_W() - r, p.x + vx * tap));
-                dv = ya - top; if (dv <= 0 || dv > SHORT_TOL) continue;
-                if (nat.land && nat.land.pl && nat.land.pl.y <= pl.y) continue;                  // it lands on something higher already
-                ex = xa - predictPlatX(pl, tap);
-                if (Math.abs(ex) > pl.w / 2 + MISS_TOL) continue;
-            }
-            const miss = Math.max(0, Math.abs(ex) - (pl.w / 2 + SUPPORT_K * r));
-            if (miss > MISS_TOL) continue;
-            const err = miss / MISS_TOL + dv / SHORT_TOL + (nat.land && nat.land.pl === pl ? 0 : 0.05) - (p.y - pl.y) / 20000;
-            if (!best || err < best.err) best = { pl, err, dv };
-        }
-        if (!best) { dbg.r = 'nocand'; return null; }
-        const pl = best.pl, landY = pl.y - pl.h / 2 - r, limit = maxV * MAGNET_REACH, dy = landY - p.y;
-        const sols = [];
-        for (let t = 0.3; t <= 1.9; t += 0.025) {                         // every flight time that reaches the middle of the platform at full-or-less power
-            const dx = predictPlatX(pl, t) - p.x, sy = (dy - 0.5 * g * t * t - 0.5 * g * SIM_DT * t) / t, sx = dx / t;
-            if (sy > 0 || sy + g * t < 180) continue;                     // launched upward, arriving clearly descending
-            const sp = Math.hypot(sx, sy); if (sp > limit) continue;
-            sols.push({ vx: sx, vy: sy, t, cost: Math.abs(sp - orig) + Math.abs(t - 0.75) * 40 });
-        }
-        sols.sort((a, b) => a.cost - b.cost);
-        // the flight must really end in the middle of that platform (or of one at least as high that happens to be in the way on the descent)
-        let pick = null;
-        for (let i = 0; i < Math.min(sols.length, 16) && !pick; i++) {
-            const q = predict(p, sols[i].vx, sols[i].vy, { maxT: 2.8 }), L = q.land;
-            if (L && L.pl && (L.pl === pl || L.pl.y <= pl.y + 1) && Math.abs(L.off) <= L.pl.w * 0.3 + 8) pick = sols[i];
-        }
-        if (!pick) { dbg.r = sols.length ? 'chk' : 'nosol'; return null; }
-        const chk = predict(p, pick.vx, pick.vy, { maxT: 2.8, pts: true });
-        return { vx: pick.vx, vy: pick.vy, pl: chk.land.pl, kind: best.dv > 0 ? 'lift' : 'center', chk };
-    }
-    // used when the player lets go: swap the drag for the corrected one (as a drag vector, because launchPlayer multiplies by POWER)
-    function assistLaunch(p, dx, dy) {
-        if (!(p.magnetT > 0) || p.magnetN <= 0 || p.cannon) return null;
-        const m = playerPowMul(p, false), plan = magnetPlan(p, dx * POWER * m, dy * POWER * m);
-        if (!plan) return null;
-        p.magnetN--; p.magnetTgt = plan.pl; p.magnetFx = 1;
-        if (p.magnetN <= 0) { p.magnetT = Math.min(p.magnetT, 1.6); }     // last one used: the effect fades out shortly after
-        pullFx(p, plan.pl);
-        if (p.local) { SFX.play('magnet'); haptic([12, 20, 14]); }
-        return { dx: plan.vx / (POWER * m), dy: plan.vy / (POWER * m) };
-    }
-    function pullFx(p, pl) {
-        rings.push({ x: pl.x, y: pl.y - pl.h / 2, t: 0, pl });
-        ring(p.x, p.y, ITEMS.magnet.color, 56); burst(p.x, p.y, ITEMS.magnet.color, 14, 220);
-    }
-    function steer(p, dt) {                                               // in flight: the last stretch is pulled to the middle, firmly but smoothly
-        const pl = p.magnetTgt;
-        if (!pl || !pl.active) { p.magnetTgt = null; return; }
-        if (p.vy <= 0) return;
-        const top = pl.y - pl.h / 2 - p.r, dyy = top - p.y;
-        if (dyy < -6) { p.magnetTgt = null; return; }
-        if (dyy > 320) return;
-        const g = playerG(p), t = Math.max(0.06, (-p.vy + Math.sqrt(p.vy * p.vy + 2 * g * dyy)) / g), want = (predictPlatX(pl, t) - p.x) / t;
-        p.vx += (want - p.vx) * Math.min(1, 11 * dt);
-        if (Math.random() < dt * 40) particles.push({ x: p.x + rnd(-10, 10), y: p.y + rnd(-10, 10), vx: (pl.x - p.x) * 1.6 + rnd(-30, 30), vy: (top - p.y) * 1.6 + rnd(-30, 30), life: 1, decay: rnd(2.2, 3.2), color: ITEMS.magnet.color, size: rnd(1.6, 3) });
-    }
-
     /* ------------------------------------------------------------------------------ the rest ---- */
     function activate(p, it) {
         const k = p.r / BASE_R;
@@ -223,11 +143,6 @@
             ring(p.x, p.y, ITEMS.dj.color, 64 * k); burst(p.x, p.y, ITEMS.dj.color, 14, 200);
             return true;
         }
-        if (it === 'magnet') {
-            p.magnetT = MAGNET_TIME; p.magnetN = MAGNET_N; p.magnetTgt = null; hint(p, 'AIM NEAR A PLATFORM: THE MAGNET PULLS YOU TO ITS MIDDLE');
-            ring(p.x, p.y, ITEMS.magnet.color, 76 * k); ring(p.x, p.y, '#ffffff', 46 * k); burst(p.x, p.y, ITEMS.magnet.color, 18, 240);
-            return true;
-        }
         return false;
     }
     function tick(p, dt) {
@@ -237,7 +152,6 @@
         if (p.remote) return;
         if (p.mode === 'air') p.airT = (p.airT || 0) + dt; else { p.airT = 0; p.cannonFly = 0; }
         if (p.cannonFly > 0) p.cannonFly -= dt;
-        if (p.magnetFx > 0) p.magnetFx -= dt * 1.5;
         if (p.cannon) {
             p.cannonT -= dt;
             if (p.cannon === 1 && p.mode === 'idle') { p.cannon = 2; p.cannonThink = rnd(0.7, 1.3); deployFx(p); }
@@ -255,15 +169,10 @@
             }
         }
         if (p.djT > 0) { p.djT -= dt; if (p.djT <= 0) { p.djT = 0; } if (p.mode === 'idle') p.djUsed = false; else if (!p.local) botRescue(p); }
-        if (p.magnetT > 0) {
-            p.magnetT -= dt;
-            if (p.magnetT <= 0) { p.magnetT = 0; p.magnetN = 0; p.magnetTgt = null; }
-            else if (p.magnetTgt) { if (p.mode === 'air') steer(p, dt); else p.magnetTgt = null; }
-        } else if (p.magnetTgt) p.magnetTgt = null;
     }
     // Pointer: may this player start a drag now? Normal jumps from a platform, and the extra jump while Double Jump is ready.
     function canAim(p) { return !!p && !p.finished && (p.mode === 'idle' || airAim(p)); }
-    // The drag was released. Returns true when it was handled here (cannon shot, extra jump); false/undefined means: do the normal launch (possibly with the magnet).
+    // The drag was released. Returns true when it was handled here (cannon shot, extra jump); false means: do the normal launch.
     function onRelease(p, dx, dy) {
         if (p.cannon === 2) { cannonFire(p, angOf(dx, dy)); return true; }
         if (p.cannon === 1) return true;                                     // still falling: nothing to aim yet
@@ -282,10 +191,6 @@
             const a = sc(angOf(dx, dy)), v = cannonVel(a), pr = predict(lp, v.vx, v.vy, { pass: true, pts: true, maxT: 4.2 });
             dots(c, pr.pts, ITEMS.cannon.color, 0.9); landMark(c, pr.land, ITEMS.cannon.color);
             return true;
-        }
-        if (lp.mode === 'idle' && lp.magnetT > 0 && lp.magnetN > 0) {
-            const m = playerPowMul(lp, false), plan = magnetPlan(lp, dx * POWER * m, dy * POWER * m);
-            if (plan) { dots(c, plan.chk.pts, ITEMS.magnet.color, 0.95); landMark(c, plan.chk.land, ITEMS.magnet.color); return true; }
         }
         return false;
     }
@@ -317,10 +222,9 @@
         }
         c.restore();
     }
-    function reset() { clouds.length = 0; rings.length = 0; if (typeof hintEl !== 'undefined' && HINT0) hintEl.innerHTML = HINT0; }
+    function reset() { clouds.length = 0; if (typeof hintEl !== 'undefined' && HINT0) hintEl.innerHTML = HINT0; }
     function update(dt) {
         for (let i = clouds.length - 1; i >= 0; i--) { clouds[i].t += dt; if (clouds[i].t > 0.85) clouds.splice(i, 1); }
-        for (let i = rings.length - 1; i >= 0; i--) { rings[i].t += dt; if (rings[i].t > 1.4) rings.splice(i, 1); }
     }
 
     /* --------------------------------------------------------------------------------- drawing ---- */
@@ -342,22 +246,6 @@
     }
     function drawWorld(c) {
         for (const cl of clouds) drawCloud(c, cl);
-        const t = performance.now() / 1000;
-        for (const rg of rings) {                                           // the platform the magnet pulled you to
-            const pl = rg.pl, k = rg.t / 1.4, a = Math.max(0, 1 - k), y = pl.y - pl.h / 2;
-            c.save(); c.strokeStyle = ITEMS.magnet.color; c.lineWidth = 2.6; c.globalAlpha = a * 0.9;
-            c.beginPath(); c.ellipse(pl.x, y, 10 + 30 * k, 3.4 + 7 * k, 0, 0, 7); c.stroke();
-            c.globalAlpha = a * 0.5; c.beginPath(); c.moveTo(pl.x, y - 4); c.lineTo(pl.x, y - 18 - 8 * Math.sin(t * 10)); c.stroke();
-            c.restore();
-        }
-        for (const p of players) {                                          // the pull itself: a dotted beam from you to the platform's middle
-            if (!p.magnetTgt || p.mode !== 'air' || p.finished) continue;
-            const pl = p.magnetTgt, y = pl.y - pl.h / 2;
-            c.save(); c.strokeStyle = ITEMS.magnet.color; c.globalAlpha = 0.5 + 0.2 * Math.sin(t * 12); c.lineWidth = 2; c.setLineDash([3, 6]); c.lineDashOffset = -t * 40;
-            c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(pl.x, y); c.stroke(); c.setLineDash([]);
-            c.fillStyle = ITEMS.magnet.color; c.globalAlpha = 0.85; c.beginPath(); c.arc(pl.x, y, 3.2, 0, 7); c.fill();
-            c.restore();
-        }
     }
     // under the player's feet (called before the body is drawn)
     function drawSpring(c, p, t) {
@@ -423,21 +311,9 @@
         for (const s of [[-12, 1, 7], [-3, -3, 9], [8, -1, 8], [15, 2, 5.5]]) puff(c, s[0], s[1], s[2], a);
         c.restore();
     }
-    function drawMagnetAura(c, p, t) {
-        const k = p.r / BASE_R, x = p.x, y = p.y - p.r - 16 * k, col = ITEMS.magnet.color;
-        c.save(); c.translate(x, y); c.scale(k, k); c.lineCap = 'round';
-        c.strokeStyle = '#0d1017'; c.lineWidth = 7.4; c.beginPath(); c.moveTo(-6.5, 5); c.lineTo(-6.5, -2); c.arc(0, -2, 6.5, Math.PI, 0); c.lineTo(6.5, 5); c.stroke();
-        c.strokeStyle = '#ff4d6a'; c.lineWidth = 4.6; c.beginPath(); c.moveTo(-6.5, 3); c.lineTo(-6.5, -2); c.arc(0, -2, 6.5, Math.PI, 0); c.lineTo(6.5, 3); c.stroke();
-        c.strokeStyle = '#e8eefc'; c.lineWidth = 4.6; c.beginPath(); c.moveTo(-6.5, 5); c.lineTo(-6.5, 2.2); c.moveTo(6.5, 5); c.lineTo(6.5, 2.2); c.stroke();
-        c.restore();
-        c.save(); c.translate(p.x, p.y); c.strokeStyle = col; c.lineWidth = 1.8; c.globalAlpha = 0.5;
-        for (let i = 0; i < 2; i++) { const r = p.r * (1.5 + 0.3 * i), a0 = t * (2 + i) + i * 3; c.beginPath(); c.arc(0, 0, r, a0, a0 + 1.3); c.stroke(); c.beginPath(); c.arc(0, 0, r, a0 + Math.PI, a0 + Math.PI + 1.3); c.stroke(); }
-        c.restore();
-    }
     // returns true when the cube should NOT be drawn (a cannon stands there instead)
     function drawBody(c, p, t) { if (p.cannon > 0) { drawCannon(c, p, t); return true; } return false; }
     function drawOver(c, p, t) {                                          // after the player: auras, timer ring of the cannon
-        if (p.magnetT > 0) drawMagnetAura(c, p, t);
         if (p.cannon > 0) {
             const py = p.y - p.r * 4.4, f = Math.max(0, p.cannonT / CANNON_TIME);
             c.save(); c.lineWidth = 2.4; c.strokeStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.arc(p.x, py, 6, 0, 7); c.stroke();
@@ -449,22 +325,21 @@
     /* ------------------------------------------------------------------------------ item slot ---- */
     function hud(p) {
         if (p.cannon > 0) return { icon: 'cannon', badge: p.cannon === 2 ? 'GO' : '', prog: p.cannonT / CANNON_TIME, col: ITEMS.cannon.color };
-        if (p.magnetT > 0) return { icon: 'magnet', badge: p.magnetN > 0 ? p.magnetN + 'x' : '', prog: p.magnetT / MAGNET_TIME, col: ITEMS.magnet.color };
         if (p.djT > 0) return { icon: 'dj', badge: p.djUsed ? '0x' : '1x', prog: p.djT / DJ_TIME, col: ITEMS.dj.color };
         return null;
     }
 
     /* -------------------------------------------------------------------------- party sync ---- */
     const r1 = n => Math.round(n * 10) / 10;
-    function sample(p) { return { cn: p.cannon || (p.cannonFly > 0 ? 3 : 0), ca: Math.round((p.cannonAim || 0) * 100) / 100, dj: r1(Math.max(0, p.djT || 0)), du: p.djUsed ? 1 : 0, mg: r1(Math.max(0, p.magnetT || 0)) }; }
-    function parse(v) { return { cn: v.cn || 0, ca: v.ca || 0, dj: v.dj || 0, du: v.du || 0, mg: v.mg || 0 }; }
+    function sample(p) { return { cn: p.cannon || (p.cannonFly > 0 ? 3 : 0), ca: Math.round((p.cannonAim || 0) * 100) / 100, dj: r1(Math.max(0, p.djT || 0)), du: p.djUsed ? 1 : 0 }; }
+    function parse(v) { return { cn: v.cn || 0, ca: v.ca || 0, dj: v.dj || 0, du: v.du || 0 }; }
     function apply(p, b, prevVy, vy) {                                     // a friend's phone says how their power-ups look right now
         const was = p.cannon || 0;
         const cn = b.cn || 0; p.cannon = cn === 3 ? 0 : cn; p.cannonAim = b.ca || 0; p.cannonT = p.cannon ? CANNON_TIME * 0.5 : 0; if (cn === 3) p.cannonFly = 0.4;
-        p.djT = b.dj || 0; p.djUsed = !!b.du; p.magnetT = b.mg || 0;
+        p.djT = b.dj || 0; p.djUsed = !!b.du;
         if (was === 2 && !p.cannon) muzzleFx(p.x + Math.sin(p.cannonAim || 0) * p.r * 2.7, p.y - Math.cos(p.cannonAim || 0) * p.r * 2.7, p.r / BASE_R);
         if (p.bounceT > 0 && prevVy > 150 && vy < -150) p.spring = 1;       // a rebound: the spring squashes
     }
 
-    window.PU = { dbg, activate, tick, update, reset, canAim, airAim, onRelease, slotTap, preview, assistLaunch, drawWorld, drawUnder, drawBody, drawOver, hud, sample, parse, apply, cloud: spawnCloud, predict, magnetPlan, cannonPlan, cannonFire, CANNON_TIME, DJ_TIME, MAGNET_TIME };
+    window.PU = { activate, tick, update, reset, canAim, airAim, onRelease, slotTap, preview, drawWorld, drawUnder, drawBody, drawOver, hud, sample, parse, apply, cloud: spawnCloud, predict, cannonPlan, cannonFire, CANNON_TIME, DJ_TIME };
 })();

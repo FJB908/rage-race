@@ -537,7 +537,7 @@ function rollItem(p){
     if (gameMode === 'gauntlet') quakeW = 0;                      // no earthquakes in the Gauntlet
     // Shield is defensive: more useful (and more common) the further ahead you are —
     // you're the one everyone else's attacks are aimed at.
-    const shieldW = 0.16 + 0.16*(1-f);
+    const shieldW = 0.07 + 0.07*(1-f);                       // (it used to be the most common item for whoever was in front)
     // Wind is a mild offensive tool for whoever's behind: it doesn't touch the caster,
     // and a modest chance even near the front keeps it from feeling exclusively "loser-only".
     const windW = (others && gameMode !== 'gauntlet') ? 0.10 + 0.20*f : 0;     // and no wind there either
@@ -560,22 +560,23 @@ function rollItem(p){
         const lead = players.reduce((m, o) => (o !== p && !o.finished && o.y < m) ? o.y : m, p.y), gap = p.y - lead;
         if (gap > 650) cannonW = Math.min(0.55, 0.12 + (gap - 650) / 2600) * (f < 0.85 ? 0.6 : 1);
     }
-    const djW = inRace ? 0.15 + 0.10*f : 0, magnetW = inRace ? 0.14 + 0.10*f + 0.08*Math.min(1, easy) : 0;
+    const djW = inRace ? 0.15 + 0.10*f + (isLeader ? 0.06 : 0) : 0;
     const w = {
-        cannon: cannonW, dj: djW, magnet: magnetW,
+        cannon: cannonW, dj: djW,
         rocket: 0.06 + 0.50*f,
-        giant:  0.22,
-        bounce: 0.30 - 0.08*f,
+        giant:  0.19,
+        bounce: 0.25 - 0.05*f,
         chain:  (others && !isLeader) ? 0.12 + 0.16*f : 0,   // useless for the leader, so never roll it
         quake:  quakeW,
         shield: shieldW,
         wind:   windW,
         ufo:    ufoW,
     };
+    if (p.lastItem && w[p.lastItem] > 0) w[p.lastItem] *= 0.2;      // seldom the same item twice in a row: it spreads out
     let sum = 0; for (const k in w) sum += w[k];
     let r = Math.random()*sum;
-    for (const k in w){ r -= w[k]; if (r <= 0) return k; }
-    return 'bounce';
+    for (const k in w){ r -= w[k]; if (r <= 0){ p.lastItem = k; return k; } }
+    p.lastItem = 'bounce'; return 'bounce';
 }
 
 function updateItemBoxes(dt){
@@ -730,7 +731,7 @@ function botWantsItem(p){
         case 'wind':   return players.some(o => o !== p && !o.finished); // useless with nobody else left
         case 'ufo':    return p.mode === 'idle' || p.itemHold > 2;  // call it in from solid ground
         case 'cannon': return p.mode === 'idle';                    // deploy from solid ground
-        case 'magnet': case 'dj': return p.mode === 'idle';
+        case 'dj':     return p.mode === 'idle';
     }
     return true;
 }
@@ -743,7 +744,7 @@ function activateItem(p){
     if (it === 'chain' && !chainTarget) return false;
     p.item = null; p.itemState = null; p.itemCool = 4;
     const evx = {};
-    if (p.local) SFX.play({rocket:'rocket', shield:'shield', wind:'wind', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce', cannon:'cannon', dj:'cloud', magnet:'magnet'}[it] || 'item');
+    if (p.local) SFX.play({rocket:'rocket', shield:'shield', wind:'wind', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce', cannon:'cannon', dj:'cloud'}[it] || 'item');
     if (it === 'rocket') startRocket(p);
     else if (it === 'giant'){
         p.giantT = GIANT_TIME; p.rv += 60;
@@ -770,7 +771,7 @@ function activateItem(p){
         ring(p.x, p.y, ITEMS.shield.color, 50);
     } else if (it === 'wind'){
         evx.dir = startWind(p);
-    } else if (it === 'cannon' || it === 'dj' || it === 'magnet'){
+    } else if (it === 'cannon' || it === 'dj'){
         PU.activate(p, it);
     }
     if (window.partyMatch && partyMatch.live && (p.local || p.hostedBot)) Social.emitItem(p, it, evx, chainTarget);   // party race: tell the other phones
@@ -1079,7 +1080,6 @@ quake: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M4 
 shield: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icSh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6f5c2"/><stop offset="1" stop-color="#33b56a"/></linearGradient></defs><path d="M24 4 L40 10 V22 C40 33 33 41 24 44 C15 41 8 33 8 22 V10 Z" fill="url(#icSh)" stroke="#0d1017" stroke-width="1.6"/><path d="M24 10 L34 14 V22 C34 30 29.5 36 24 38 C18.5 36 14 30 14 22 V14 Z" fill="none" stroke="#eafff2" stroke-width="1.6" opacity=".8"/><path d="M18 23 L22.5 27.5 L31 17.5" fill="none" stroke="#0d1017" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 cannon: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icCn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a4a1a"/><stop offset=".45" stop-color="#ffb866"/><stop offset="1" stop-color="#8a4a12"/></linearGradient></defs><path d="M18 8 L16.5 28 H31.5 L30 8 Z" fill="url(#icCn)" stroke="#0d1017" stroke-width="2.4" stroke-linejoin="round"/><ellipse cx="24" cy="8" rx="6.6" ry="2.6" fill="#0d1017"/><rect x="12" y="28" width="24" height="8" rx="3" fill="#46506b" stroke="#0d1017" stroke-width="2.2"/><circle cx="15" cy="38" r="5" fill="#161b28" stroke="#c9d1e3" stroke-width="2"/><circle cx="33" cy="38" r="5" fill="#161b28" stroke="#c9d1e3" stroke-width="2"/><circle cx="24" cy="17" r="1.5" fill="#0d1017"/><g stroke="#ffcf3f" stroke-width="2.4" stroke-linecap="round"><path d="M24 2 V-2" opacity="0"/><path d="M14 4 L11 1 M34 4 L37 1"/></g></svg>`,
 dj: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M12 36 a7.5 7.5 0 0 1 1.5-14.8 a9.5 9.5 0 0 1 18-1 a7 7 0 0 1 1 15.8 Z" fill="#eaf6ff" stroke="#9fe8ff" stroke-width="2.4" stroke-linejoin="round"/><g fill="none" stroke="#9fe8ff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 15 L24 8 L31 15"/><path d="M17 24 L24 17 L31 24" opacity=".55"/></g></svg>`,
-magnet: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M12 38 V22 a12 12 0 0 1 24 0 V38" fill="none" stroke="#0d1017" stroke-width="12" stroke-linecap="butt"/><path d="M12 32 V22 a12 12 0 0 1 24 0 V32" fill="none" stroke="#ff4d6a" stroke-width="8" stroke-linecap="butt"/><path d="M12 38 V32 M36 38 V32" fill="none" stroke="#e8eefc" stroke-width="8"/><g stroke="#c77dff" stroke-width="2.6" stroke-linecap="round"><path d="M6 12 L10 15 M42 12 L38 15 M24 3 V7"/></g></svg>`,
 wind: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#8fd6ff" stroke-width="3.4" stroke-linecap="round"><path d="M4 16 H30 a5 5 0 1 0 -4.5 -7.2"/><path d="M4 25 H36 a5.5 5.5 0 1 1 -5 7.9"/><path d="M4 34 H24 a4 4 0 1 1 -3.6 5.8"/></g></svg>`,
 };
 const slotEl = document.getElementById('item-slot');
@@ -1155,8 +1155,6 @@ function endDrag(){
     if (d > 14) {
         if (d > MAX_DRAG){ dx=dx/d*MAX_DRAG; dy=dy/d*MAX_DRAG; }
         if (window.PU && PU.onRelease(p, dx, dy)){ hintEl.style.display='none'; return; }     // cannon shot / extra mid-air jump
-        const mg = window.PU && PU.assistLaunch(p, dx, dy);                                    // Magnet: the jump is pulled to the middle of the platform you aimed at
-        if (mg){ dx = mg.dx; dy = mg.dy; }
         launchPlayer(p, dx, dy);
         hintEl.style.display='none';
     }
@@ -1418,12 +1416,11 @@ function updateBot(p, dt) {
         // plus per-jump variability, instead of clean symmetric noise — reads as a person's
         // grip/timing quirk rather than a random-number generator.
         const person = p.fumbleBias || 0;
-        vx += (person * 0.6 + rnd(-1, 1) * 0.8) * BOT_BASE.aimX * p.skill * sprintMul * (p.magnetT > 0 ? 0.3 : 1);
-        vy += rnd(-1, 1) * BOT_BASE.aimY * 0.9 * p.skill * sprintMul * (p.magnetT > 0 ? 0.3 : 1);
+        vx += (person * 0.6 + rnd(-1, 1) * 0.8) * BOT_BASE.aimX * p.skill * sprintMul;
+        vy += rnd(-1, 1) * BOT_BASE.aimY * 0.9 * p.skill * sprintMul;
     } else {
-        const mgk = p.magnetT > 0 ? 0.3 : 1;        // Magnet: a bot's aim is much sharper while it lasts
-        vx += rnd(-1, 1) * BOT_BASE.aimX * p.skill * aimMul * sprintMul * mgk;
-        vy += rnd(-1, 1) * BOT_BASE.aimY * p.skill * aimMul * sprintMul * mgk;
+        vx += rnd(-1, 1) * BOT_BASE.aimX * p.skill * aimMul * sprintMul;
+        vy += rnd(-1, 1) * BOT_BASE.aimY * p.skill * aimMul * sprintMul;
     }
 
     // Clamp to power
@@ -2162,7 +2159,7 @@ function draw() {
         if (d>14){
             if (d>MAX_DRAG){ dx=dx/d*MAX_DRAG; dy=dy/d*MAX_DRAG; }
             const col = lp.charged ? 'rgba(53,224,200,0.85)' : lp.chainT>0 ? 'rgba(255,140,160,0.7)' : 'rgba(255,255,255,0.7)';
-            if (window.PU && PU.preview(ctx, lp, dx, dy)){ /* cannon / magnet drew its own arc */ }
+            if (window.PU && PU.preview(ctx, lp, dx, dy)){ /* the cannon drew its own arc */ }
             else if ((gameMode === 'parkour' || gameMode === 'level') && !(DIMENSIONS[curDim] && DIMENSIONS[curDim].tutorial)) {      // the tutorial teaches with the normal dotted line
                 // Parkour rules: only direction and power, never a hint of where you'll land.
                 // A plain arrow whose length tracks how far you've dragged, up to MAX_DRAG —
@@ -2363,7 +2360,7 @@ function draw() {
 
     drawCosmeticTrails(viewTop, viewBottom);
 
-    if (window.PU) PU.drawWorld(ctx);                              // double-jump clouds, the magnet's pull
+    if (window.PU) PU.drawWorld(ctx);                              // double-jump clouds
     // players
     const nowT = performance.now()/1000;
     if (gameMode === 'gauntlet') gtPrepareDraw(viewTop, viewBottom);

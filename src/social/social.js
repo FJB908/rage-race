@@ -171,7 +171,7 @@
         x:Math.round(p.x * 10) / 10, y:Math.round(p.y * 10) / 10, vy:Math.round(p.vy), f:p.finished ? p.finishTime : 0,
         gt:Math.round(Math.max(0, p.giantT || 0) * 10) / 10, st:Math.round(Math.max(0, p.shieldT || 0) * 10) / 10, bt:Math.round(Math.max(0, p.bounceT || 0) * 10) / 10,
         rf:Math.round(Math.max(0, p.rocketFx || 0) * 10) / 10, pi:p.mode === 'idle' && p.plat ? platforms.indexOf(p.plat) : -1,
-        ...(window.PU ? PU.sample(p) : {}),            // cannon / double jump / magnet state, so friends see it too
+        ...(window.PU ? PU.sample(p) : {}),            // cannon / double jump state, so friends see it too
     });
     function liveStart(d) {                          // after startGame(): friends and shared bots become remote players
         const rt = RT, m = rt.m, base = 'rooms/' + S.party.code + '/' + d.token + '/';

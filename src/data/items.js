@@ -10,6 +10,5 @@ const ITEMS = {
     ufo:    { name:'UFO!',          color:'#7CFF6B' },
     cannon: { name:'CANNON!',       color:'#ff9f43' },
     dj:     { name:'DOUBLE JUMP!',  color:'#9fe8ff' },
-    magnet: { name:'MAGNET!',       color:'#c77dff' },
 };
 const ITEM_KEYS = Object.keys(ITEMS);
