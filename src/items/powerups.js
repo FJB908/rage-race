@@ -1,11 +1,11 @@
 // POWER-UPS: Cannon and Double jump, plus the spring under a Super Bounce player. Classic script, loaded AFTER game.js (it uses game.js globals at call time).
 // game.js calls into window.PU from a handful of hooks (item roll, activate, tick, input, draw); party races sync the state through the 10 Hz samples (PU.sample / PU.apply).
 //  CANNON  : you turn into a standing cannon (also when used in mid-air: it falls, lands, then deploys). Aim with a drag, release to fire at full power, very far up the track.
-//  DOUBLE  : for 14 s you can jump once more in mid-air (one extra jump per flight). A cloud puffs under you; everybody sees it.
+//  DOUBLE  : for 7 s you can jump once more in mid-air (one extra jump per flight). A cloud puffs under you; everybody sees it.
 (function () {
     'use strict';
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
-    const DJ_TIME = 14, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
+    const DJ_TIME = 7, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
     const clouds = [];
     const sc = a => Math.max(-CANNON_ANG, Math.min(CANNON_ANG, a));
     const angOf = (dx, dy) => Math.atan2(dx, -dy);                      // 0 = straight up, negative = left

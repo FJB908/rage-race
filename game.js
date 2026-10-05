@@ -533,11 +533,11 @@ function rollItem(p){
     const isLeader = !players.some(o => o !== p && !o.finished && o.y < p.y);
     // Quake needs SOME gap to the leader before it can appear (never in 1st), then ramps up:
     // a real but modest chance in 2nd, growing into a strong comeback tool in 3rd/4th.
-    let quakeW = others ? Math.max(0, f - 0.18) * 1.1 : 0;
+    let quakeW = others ? Math.max(0, f - 0.18) * 0.72 : 0;
     if (gameMode === 'gauntlet') quakeW = 0;                      // no earthquakes in the Gauntlet
     // Shield is defensive: more useful (and more common) the further ahead you are —
     // you're the one everyone else's attacks are aimed at.
-    const shieldW = 0.07 + 0.07*(1-f);                       // (it used to be the most common item for whoever was in front)
+    const shieldW = 0.11 + 0.13*f;                           // modest in front, a little more likely further back (it used to be the favourite of whoever led)
     // Wind is a mild offensive tool for whoever's behind: it doesn't touch the caster,
     // and a modest chance even near the front keeps it from feeling exclusively "loser-only".
     const windW = (others && gameMode !== 'gauntlet') ? 0.10 + 0.20*f : 0;     // and no wind there either
