@@ -6,7 +6,7 @@
     'use strict';
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
     const DJ_TIME = 7, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
-    const BOMB_R = 58, BOMB_LIFE = 10, BOMB_STUN = 1.0, BOMB_IMM = 2.2, BOMB_PLACE = 5;      // zone radius, seconds it hangs there, stun length, immunity after a stun, seconds you get to place it
+    const BOMB_R = 58, BOMB_LIFE = 10, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds it hangs there, stun length, immunity after a stun
     const clouds = [], bombs = [];
     const sc = a => Math.max(-CANNON_ANG, Math.min(CANNON_ANG, a));
     const angOf = (dx, dy) => Math.atan2(dx, -dy);                      // 0 = straight up, negative = left
@@ -130,39 +130,19 @@
     }
 
     /* ---------------------------------------------------------------------------------- STUN BOMB ---- */
-    // You place it anywhere (tap the screen): it hangs in the air with a red danger zone around it for 10 s. Anyone who flies or lands inside the zone
-    // (except you) is dazed for 1 s: no jumping, momentum halved. Each player is stunned once per bomb. A shield blocks it.
-    function bombSpot(p) {                                                    // the best place without thinking: right where the nearest opponent is about to pass
-        let tgt = null, bd = 1e9;
-        for (const o of players) {
-            if (o === p || o.finished || o.gone) continue;
-            const ahead = o.y < p.y ? 0 : 400, d = Math.abs(o.y - p.y) + ahead; if (d < bd && d < 1300) { bd = d; tgt = o; }
-        }
-        if (!tgt) return { x: Math.max(60, Math.min(PLAY_W() - 60, p.x)), y: p.y - 150 };
-        if (tgt.mode === 'air') {
-            const pr = predict(tgt, tgt.vx, tgt.vy, { maxT: 2.6 });
-            if (pr.land && pr.land.pl) return { x: pr.land.x, y: pr.land.y - 34 };
-            return { x: tgt.x + tgt.vx * 0.3, y: tgt.y - 40 };
-        }
-        return { x: tgt.x, y: tgt.y - 120 };                                  // the jump up from where they stand
-    }
+    // Using the item drops the bomb right where you are. It stays hanging there for 10 s with a faint red danger zone around it. Anyone who flies or lands inside
+    // is dazed for 1 s: no jumping, momentum halved. Each player is hit once per bomb. You are safe inside your own zone until you have left it once; after that it counts for you too.
+    // A shield blocks it.
     function addBomb(x, y, by) {
         const pw = PLAY_W(); x = Math.max(BOMB_R * 0.35, Math.min(pw - BOMB_R * 0.35, x));
         bombs.push({ x, y, by, t: 0, hit: new Set(), seed: Math.random() * 6 });
         if (bombs.length > 6) bombs.shift();
         ring(x, y, ITEMS.bomb.color, BOMB_R * 1.1); burst(x, y, ITEMS.bomb.color, 14, 220);
     }
-    function placeBomb(p, x, y) {
-        p.bombMode = false; p.bombT = 0;
-        const ly = Math.max(p.y - 760, Math.min(p.y + 320, y));
-        addBomb(x, ly, p.id);
-        if (live(p) && window.Social && Social.emitBomb) Social.emitBomb(p, x, ly);
-        if (p.local) { SFX.play('bombset'); haptic([14, 20, 26]); if (typeof hintEl !== 'undefined') { hintTimer = 0; hintEl.style.opacity = 0; } }
-    }
-    function onTap(p, sx, sy) {                                               // a tap (not a drag) while you hold a bomb: place it there
-        if (!p.bombMode) return false;
-        placeBomb(p, (sx - VIEW_OX) / VIEW_K, sy / VIEW_K + cameraY);
-        return true;
+    function placeBomb(p) {
+        addBomb(p.x, p.y, p.id);
+        if (live(p) && window.Social && Social.emitBomb) Social.emitBomb(p, p.x, p.y);
+        if (p.local) { SFX.play('bombset'); haptic([14, 20, 26]); }
     }
     function zap(p) {
         p.zapT = BOMB_STUN; p.zapImm = BOMB_STUN + BOMB_IMM;
@@ -177,9 +157,10 @@
             if (b.t > BOMB_LIFE + 0.35) { burst(b.x, b.y, ITEMS.bomb.color, 10, 160); bombs.splice(i, 1); continue; }
             if (b.t > BOMB_LIFE) continue;                                     // popping
             for (const p of players) {
-                if (p.remote || p.finished || p.gone || p.id === b.by || b.hit.has(p.id)) continue;
-                if (p.zapT > 0 || p.zapImm > 0) continue;
-                if (Math.hypot(p.x - b.x, p.y - b.y) > BOMB_R + p.r * 0.4) continue;
+                if (p.remote || p.finished || p.gone || b.hit.has(p.id)) continue;
+                const inside = Math.hypot(p.x - b.x, p.y - b.y) <= BOMB_R + p.r * 0.4;
+                if (p.id === b.by && !b.ownerOut) { if (!inside) b.ownerOut = true; continue; }      // you are safe until you have stepped out of your own zone once
+                if (p.zapT > 0 || p.zapImm > 0 || !inside) continue;
                 b.hit.add(p.id);
                 if (shieldBlocks(p)) { burst(p.x, p.y, ITEMS.shield.color, 8, 160); continue; }
                 zap(p);
@@ -197,11 +178,7 @@
             if (p.cannon === 2) deployFx(p); else { ring(p.x, p.y, ITEMS.cannon.color, 70 * k); burst(p.x, p.y, ITEMS.cannon.color, 14, 220); if (p.local) SFX.play('cannon'); }
             return true;
         }
-        if (it === 'bomb') {
-            if (p.local) { p.bombMode = true; p.bombT = BOMB_PLACE; hint(p, 'TAP WHERE THE BOMB SHOULD HANG'); }
-            else { const sp = bombSpot(p); placeBomb(p, sp.x, sp.y); }                   // bots drop it right away
-            return true;
-        }
+        if (it === 'bomb') { placeBomb(p); return true; }
         if (it === 'dj') {
             p.djT = DJ_TIME; p.djUsed = false; hint(p, 'JUMP AGAIN IN MID-AIR: DRAG AND RELEASE');
             ring(p.x, p.y, ITEMS.dj.color, 64 * k); burst(p.x, p.y, ITEMS.dj.color, 14, 200);
@@ -216,7 +193,6 @@
         if (p.zapT > 0) p.zapT -= dt;
         if (p.zapImm > 0) p.zapImm -= dt;
         if (p.remote) return;
-        if (p.bombMode) { p.bombT -= dt; if (p.bombT <= 0) { const sp = bombSpot(p); placeBomb(p, sp.x, sp.y); } }
         if (p.mode === 'air') p.airT = (p.airT || 0) + dt; else { p.airT = 0; p.cannonFly = 0; }
         if (p.cannonFly > 0) p.cannonFly -= dt;
         if (p.cannon) {
@@ -238,18 +214,16 @@
         if (p.djT > 0) { p.djT -= dt; if (p.djT <= 0) { p.djT = 0; } if (p.mode === 'idle') p.djUsed = false; else if (!p.local && !(p.zapT > 0)) botRescue(p); }
     }
     // Pointer: may this player start a drag now? Normal jumps from a platform, and the extra jump while Double Jump is ready.
-    function canAim(p) { return !!p && !p.finished && !(p.zapT > 0) && (p.mode === 'idle' || airAim(p) || !!p.bombMode); }
+    function canAim(p) { return !!p && !p.finished && !(p.zapT > 0) && (p.mode === 'idle' || airAim(p)); }
     // The drag was released. Returns true when it was handled here (cannon shot, extra jump); false means: do the normal launch.
     function onRelease(p, dx, dy) {
         if (p.cannon === 2) { cannonFire(p, angOf(dx, dy)); return true; }
         if (p.cannon === 1) return true;                                     // still falling: nothing to aim yet
-        if (p.bombMode && p.mode !== 'idle' && !airAim(p)) return true;      // holding a bomb in mid-air: a drag does nothing (tap to place)
         if (p.mode === 'air' && airAim(p)) { airJump(p, dx, dy); return true; }
         return false;
     }
     function slotTap(p) {                                                    // tapping the item slot while the cannon is ready fires it
         if (p && p.cannon === 2) { cannonFire(p, p.cannonAim || 0); return true; }
-        if (p && p.bombMode) { const sp = bombSpot(p); placeBomb(p, sp.x, sp.y); return true; }      // tap the slot: place it at the best spot
         return false;
     }
     // aim preview. Returns true when it drew the whole thing.
@@ -318,11 +292,12 @@
         const life = b.t / BOMB_LIFE, pop = b.t > BOMB_LIFE ? Math.min(1, (b.t - BOMB_LIFE) / 0.35) : 0, col = ITEMS.bomb.color;
         const appear = Math.min(1, b.t / 0.25), R = BOMB_R * (0.55 + 0.45 * easeOutBack(appear)) * (1 + pop * 0.25), a = (1 - pop) * (b.t > BOMB_LIFE - 1.5 && !pop ? 0.55 + 0.45 * Math.abs(Math.sin(t * 10)) : 1);
         c.save(); c.globalAlpha = a;
-        // the danger zone
-        const g = c.createRadialGradient(b.x, b.y, R * 0.1, b.x, b.y, R); g.addColorStop(0, 'rgba(255,61,90,0.20)'); g.addColorStop(0.75, 'rgba(255,61,90,0.10)'); g.addColorStop(1, 'rgba(255,61,90,0.04)');
+        // the danger zone: a faint tint and a thin dashed rim, a little stronger when someone is inside
+        let busy = 0; for (const q of players) if (!q.finished && Math.hypot(q.x - b.x, q.y - b.y) <= R + q.r * 0.4) { busy = 1; break; }
+        const pulse = 0.5 + 0.5 * Math.sin(t * 3 + b.seed), g = c.createRadialGradient(b.x, b.y, R * 0.2, b.x, b.y, R); g.addColorStop(0, 'rgba(255,61,90,' + (0.05 + 0.03 * pulse + 0.04 * busy) + ')'); g.addColorStop(1, 'rgba(255,61,90,' + (0.10 + 0.04 * pulse + 0.06 * busy) + ')');
         c.fillStyle = g; c.beginPath(); c.arc(b.x, b.y, R, 0, 7); c.fill();
-        c.lineWidth = 2.4; c.strokeStyle = 'rgba(255,90,110,0.85)'; c.setLineDash([9, 8]); c.lineDashOffset = -t * 26; c.beginPath(); c.arc(b.x, b.y, R, 0, 7); c.stroke(); c.setLineDash([]);
-        c.lineWidth = 3.4; c.strokeStyle = col; c.globalAlpha = a * 0.9; c.beginPath(); c.arc(b.x, b.y, R + 5, -Math.PI / 2, -Math.PI / 2 + (1 - life) * Math.PI * 2); c.stroke(); c.globalAlpha = a;
+        c.lineWidth = 1.8; c.strokeStyle = 'rgba(255,100,120,' + (0.55 + 0.25 * busy) + ')'; c.setLineDash([5, 9]); c.lineDashOffset = -t * 14; c.beginPath(); c.arc(b.x, b.y, R, 0, 7); c.stroke(); c.setLineDash([]);
+        c.lineWidth = 2; c.strokeStyle = 'rgba(255,100,120,0.55)'; c.beginPath(); c.arc(b.x, b.y, R - 4, -Math.PI / 2, -Math.PI / 2 + (1 - life) * Math.PI * 2); c.stroke();
         // the bomb
         const by = b.y + Math.sin(t * 2.6 + b.seed) * 3.5, r = 10;
         c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(b.x, by + r + 6, r * 0.9, 3, 0, 0, 7); c.fill();
@@ -423,7 +398,6 @@
 
     /* ------------------------------------------------------------------------------ item slot ---- */
     function hud(p) {
-        if (p.bombMode) return { icon: 'bomb', badge: 'TAP', prog: p.bombT / BOMB_PLACE, col: ITEMS.bomb.color };
         if (p.cannon > 0) return { icon: 'cannon', badge: p.cannon === 2 ? 'GO' : '', prog: p.cannonT / CANNON_TIME, col: ITEMS.cannon.color };
         if (p.djT > 0) return { icon: 'dj', badge: p.djUsed ? '0x' : '1x', prog: p.djT / DJ_TIME, col: ITEMS.dj.color };
         return null;
@@ -441,5 +415,5 @@
         if (p.bounceT > 0 && prevVy > 150 && vy < -150) p.spring = 1;       // a rebound: the spring squashes
     }
 
-    window.PU = { activate, tick, update, reset, canAim, airAim, onRelease, slotTap, preview, drawWorld, drawUnder, drawBody, drawOver, hud, sample, parse, apply, cloud: spawnCloud, bomb: addBomb, onTap, predict, cannonPlan, cannonFire, CANNON_TIME, DJ_TIME };
+    window.PU = { activate, tick, update, reset, canAim, airAim, onRelease, slotTap, preview, drawWorld, drawUnder, drawBody, drawOver, hud, sample, parse, apply, cloud: spawnCloud, bomb: addBomb, predict, cannonPlan, cannonFire, CANNON_TIME, DJ_TIME };
 })();

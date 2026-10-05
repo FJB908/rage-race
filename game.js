@@ -732,7 +732,7 @@ function botWantsItem(p){
         case 'ufo':    return p.mode === 'idle' || p.itemHold > 2;  // call it in from solid ground
         case 'cannon': return p.mode === 'idle';                    // deploy from solid ground
         case 'dj':     return p.mode === 'idle';
-        case 'bomb':   return players.some(o => o !== p && !o.finished);
+        case 'bomb':   return players.some(o => o !== p && !o.finished && o.y > p.y - 60 && o.y < p.y + 520 && Math.abs(o.x - p.x) < 260);   // drop it when someone is about to pass this spot
     }
     return true;
 }
@@ -1160,7 +1160,7 @@ function endDrag(){
         if (window.PU && PU.onRelease(p, dx, dy)){ hintEl.style.display='none'; return; }     // cannon shot / extra mid-air jump
         launchPlayer(p, dx, dy);
         hintEl.style.display='none';
-    } else if (window.PU) PU.onTap(p, sx, sy);        // a tap while you hold a bomb places it
+    }
 }
 canvas.addEventListener('pointerup', () => { panDrag = null; endDrag(); });
 canvas.addEventListener('pointercancel', () => { panDrag = null; endDrag(); });
