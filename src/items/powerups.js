@@ -6,7 +6,7 @@
     'use strict';
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
     const DJ_TIME = 7, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
-    const BOMB_R = 174, BOMB_LIFE = 10, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds it hangs there, stun length, immunity after a stun
+    const BOMB_R = 174, BOMB_LIFE = 6, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds until it explodes, stun length, immunity after a stun
     const clouds = [], bombs = [];
     const sc = a => Math.max(-CANNON_ANG, Math.min(CANNON_ANG, a));
     const angOf = (dx, dy) => Math.atan2(dx, -dy);                      // 0 = straight up, negative = left
@@ -131,9 +131,8 @@
     }
 
     /* ---------------------------------------------------------------------------------- STUN BOMB ---- */
-    // Using the item drops the bomb right where you are. It stays hanging there for 10 s with a faint red danger zone around it. Anyone who flies or lands inside
-    // is dazed for 1 s: no jumping, momentum halved. Each player is hit once per bomb. You are safe inside your own zone until you have left it once; after that it counts for you too.
-    // A shield blocks it.
+    // Using the item drops the bomb right where you are. A faint red danger zone appears around it and a ring grows from the bomb to the rim of that zone.
+    // When the ring arrives the bomb explodes and everyone still inside is dazed for 1 s (no jumping, momentum halved). The owner counts too. A shield blocks it.
     function addBomb(x, y, by) {
         const pw = PLAY_W(); x = Math.max(BOMB_R * 0.35, Math.min(pw - BOMB_R * 0.35, x));
         bombs.push({ x, y, by, t: 0, hit: new Set(), seed: Math.random() * 6 });
@@ -155,17 +154,17 @@
     function updateBombs(dt) {
         for (let i = bombs.length - 1; i >= 0; i--) {
             const b = bombs[i]; b.t += dt;
-            if (b.t > BOMB_LIFE + 0.35) { burst(b.x, b.y, ITEMS.bomb.color, 10, 160); bombs.splice(i, 1); continue; }
-            if (b.t > BOMB_LIFE) continue;                                     // popping
+            if (b.t > BOMB_LIFE + 0.4) { bombs.splice(i, 1); continue; }
+            if (b.t < BOMB_LIFE || b.boom) continue;
+            b.boom = true;                                                    // the ring reached the rim: BOOM
+            ring(b.x, b.y, '#ffe45e', BOMB_R * 1.15); ring(b.x, b.y, ITEMS.bomb.color, BOMB_R * 0.7); burst(b.x, b.y, '#ffe45e', 26, 420); burst(b.x, b.y, ITEMS.bomb.color, 18, 300); burst(b.x, b.y, '#ffffff', 8, 460);
             for (const p of players) {
-                if (p.remote || p.finished || p.gone || b.hit.has(p.id)) continue;
-                const inside = Math.hypot(p.x - b.x, p.y - b.y) <= BOMB_R + p.r * 0.4;
-                if (p.id === b.by && !b.ownerOut) { if (!inside) b.ownerOut = true; continue; }      // you are safe until you have stepped out of your own zone once
-                if (p.zapT > 0 || p.zapImm > 0 || !inside) continue;
-                b.hit.add(p.id);
+                if (p.remote || p.finished || p.gone || p.zapT > 0 || p.zapImm > 0) continue;
+                if (Math.hypot(p.x - b.x, p.y - b.y) > BOMB_R + p.r * 0.4) continue;
                 if (shieldBlocks(p)) { burst(p.x, p.y, ITEMS.shield.color, 8, 160); continue; }
                 zap(p);
             }
+            if (players.some(p => p.local && Math.hypot(p.x - b.x, p.y - b.y) < BOMB_R * 2)) { camShake = Math.max(camShake, 9); SFX.play('quake'); haptic([40, 30, 90]); }
         }
     }
 
@@ -300,15 +299,19 @@
     }
     function drawBomb(c, b, t) {
         if (b.y + BOMB_R < cameraY - 60 || b.y - BOMB_R > cameraY + VH + 60) return;        // off screen: nothing to draw
-        const life = b.t / BOMB_LIFE, pop = b.t > BOMB_LIFE ? Math.min(1, (b.t - BOMB_LIFE) / 0.35) : 0, col = ITEMS.bomb.color;
-        const appear = Math.min(1, b.t / 0.25), R = BOMB_R * (0.55 + 0.45 * easeOutBack(appear)) * (1 + pop * 0.25), a = (1 - pop) * (b.t > BOMB_LIFE - 1.5 && !pop ? 0.55 + 0.45 * Math.abs(Math.sin(t * 10)) : 1);
-        c.save(); c.globalAlpha = a;
-        // the danger zone: a faint tint (one cached picture, so even this big a circle costs almost nothing) and a thin dashed rim, a little stronger when someone is inside
+        const life = Math.min(1, b.t / BOMB_LIFE), pop = b.t > BOMB_LIFE ? Math.min(1, (b.t - BOMB_LIFE) / 0.4) : 0, col = ITEMS.bomb.color;
+        const appear = Math.min(1, b.t / 0.25), R = BOMB_R * (0.55 + 0.45 * easeOutBack(appear)), a = 1 - pop * pop;
+        // the danger zone: a faint tint (one cached picture) and a thin dashed rim, a little stronger when someone is inside
         let busy = 0; for (const q of players) if (!q.finished && Math.hypot(q.x - b.x, q.y - b.y) <= R + q.r * 0.4) { busy = 1; break; }
         const pulse = 0.5 + 0.5 * Math.sin(t * 3 + b.seed), spr = zoneSprite();
-        c.globalAlpha = a * Math.min(1, 0.72 + 0.18 * pulse + 0.4 * busy);
+        c.save(); c.globalAlpha = a * Math.min(1, 0.72 + 0.18 * pulse + 0.4 * busy);
         c.save(); c.translate(b.x, b.y); c.rotate(t * 0.07 + b.seed); c.drawImage(spr, -R, -R, R * 2, R * 2); c.restore();
-        c.globalAlpha = a; c.lineWidth = 2; c.strokeStyle = 'rgba(255,100,120,0.5)'; c.beginPath(); c.arc(b.x, b.y, R - 8, -Math.PI / 2, -Math.PI / 2 + (1 - life) * Math.PI * 2); c.stroke();
+        // the fuse ring: grows from the bomb to the rim, then it blows
+        const fr = Math.max(4, R * (b.t < BOMB_LIFE ? life : 1)), hot = life > 0.75 ? 0.5 + 0.5 * Math.sin(t * 22) : 0;
+        c.globalAlpha = a; c.lineWidth = 3 + life * 2; c.strokeStyle = hot ? '#ffe45e' : 'rgba(255,120,130,0.95)'; c.beginPath(); c.arc(b.x, b.y, fr, 0, 7); c.stroke();
+        c.globalAlpha = a * 0.12 * (0.4 + life); c.fillStyle = '#ff3d5a'; c.beginPath(); c.arc(b.x, b.y, fr, 0, 7); c.fill();
+        if (pop) { c.globalAlpha = (1 - pop) * 0.8; c.fillStyle = '#fff3b0'; c.beginPath(); c.arc(b.x, b.y, R * (0.6 + 0.5 * pop), 0, 7); c.fill(); }
+        c.globalAlpha = a;
         // the bomb
         const by = b.y + Math.sin(t * 2.6 + b.seed) * 3.5, r = 10;
         c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(b.x, by + r + 6, r * 0.9, 3, 0, 0, 7); c.fill();

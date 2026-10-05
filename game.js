@@ -756,7 +756,7 @@ function activateItem(p){
         // Instant benefit: launches you into the air right away, so using it never
         // just burns the timer while you stand still waiting for it to end.
         p.mode = 'air'; p.plat = null;
-        p.vy = Math.min(p.vy, 0) - BOUNCE_KICK;
+        p.vy = Math.min(p.vy, -BOUNCE_KICK);          // no stacking on a jump that is already rising
         p.squash = 1.4;
         ring(p.x, p.y, ITEMS.bounce.color, 55);
     } else if (it === 'chain'){
@@ -863,7 +863,7 @@ function updateQuakes(dt){
 // not an autopilot. You keep steering; side walls, bounce, and gravity all still apply.
 const ROCKET_KICK = 1650;
 function startRocket(p){
-    p.vy -= ROCKET_KICK;                          // stacks on top of current vy (up is negative)
+    p.vy = p.vy < 0 ? Math.min(p.vy, -ROCKET_KICK) : p.vy - ROCKET_KICK;   // already flying up: you reach the rocket's speed, you do not add to it
     capUpwardVelocity(p);                          // ...but a boosted jump + rocket can't stack past the ceiling
     p.mode = 'air'; p.plat = null; p.squash = 1.5;
     p.rocketFx = 0.6;                              // flame trail duration, purely visual
