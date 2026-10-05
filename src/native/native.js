@@ -31,28 +31,43 @@
             } catch (e) {}
             try { await AdMob.initialize({ initializeForTesting: !NATIVE_CFG.live }); } catch (e) {}
         })());
-        const once = (event, fn) => new Promise(res => { let h; AdMob.addListener(event, a => { try { h && h.remove && h.remove(); } catch (e) {} res(fn ? fn(a) : a); }).then(x => { h = x; }); });
+        // All listeners are attached (and awaited) BEFORE the ad is shown, and a safety timer makes sure the wait can never hang: the reward
+        // is paid when the ad is dismissed, or 20 s after the reward event if the player stays on the end card.
+        const listen = (subs, event, fn) => AdMob.addListener(event, fn).then(h => { subs.push(h); });
+        const unlisten = subs => subs.forEach(h => { try { h.remove(); } catch (e) {} });
+        const why = t => { try { window.Ads.why = t; } catch (e) {} };
         window.Ads.setProvider({
             name: 'admob',
             async show(kind) {
+                why('');
                 await init();
+                const subs = [];
                 try {
                     if (kind === 'rewarded') {
-                        await AdMob.prepareRewardVideoAd({ adId: NATIVE_CFG.admob.rewarded, isTesting: !NATIVE_CFG.live });
-                        let rewarded = false;
-                        once('onRewardedVideoAdReward', () => { rewarded = true; });
-                        const closed = once('onRewardedVideoAdDismissed');
-                        await AdMob.showRewardVideoAd();
-                        await closed;
-                        for (let i = 0; i < 12 && !rewarded; i++) await new Promise(r => setTimeout(r, 150));      // the reward event can land just after the ad closes
+                        let rewarded = false, finish; const done = new Promise(r => { finish = r; });
+                        await Promise.all([
+                            listen(subs, 'onRewardedVideoAdReward', () => { rewarded = true; setTimeout(finish, 20000); }),
+                            listen(subs, 'onRewardedVideoAdDismissed', () => finish()),
+                            listen(subs, 'onRewardedVideoAdFailedToShow', () => { why('The ad could not be shown'); finish(); }),
+                        ]);
+                        try { await AdMob.prepareRewardVideoAd({ adId: NATIVE_CFG.admob.rewarded, isTesting: !NATIVE_CFG.live }); }
+                        catch (e) { why('No ad available right now, try again later'); return false; }
+                        const guard = setTimeout(finish, 180000);
+                        AdMob.showRewardVideoAd().then(item => { if (item) rewarded = true; }, () => { why('The ad could not be shown'); finish(); });
+                        await done; clearTimeout(guard);
+                        for (let i = 0; i < 8 && !rewarded; i++) await new Promise(r => setTimeout(r, 150));      // the reward event can land just after the ad closes
+                        if (!rewarded && !(window.Ads && Ads.why)) why('Watch the whole video to get the reward');
                         return rewarded;
                     }
-                    await AdMob.prepareInterstitial({ adId: NATIVE_CFG.admob.interstitial, isTesting: !NATIVE_CFG.live });
-                    const closed = once('onInterstitialAdDismissed');
-                    await AdMob.showInterstitial();
-                    await closed;
+                    let finish; const done = new Promise(r => { finish = r; });
+                    await Promise.all([listen(subs, 'onInterstitialAdDismissed', () => finish()), listen(subs, 'onInterstitialAdFailedToShow', () => finish())]);
+                    try { await AdMob.prepareInterstitial({ adId: NATIVE_CFG.admob.interstitial, isTesting: !NATIVE_CFG.live }); } catch (e) { return false; }
+                    const guard = setTimeout(finish, 120000);
+                    AdMob.showInterstitial().catch(() => finish());
+                    await done; clearTimeout(guard);
                     return true;
-                } catch (e) { return false; }
+                } catch (e) { why('Ad error: ' + ((e && e.message) || e)); return false; }
+                finally { unlisten(subs); }
             },
         });
     }

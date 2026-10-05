@@ -18,6 +18,8 @@
         return { p, a };
     };
     const A = { cfg: CFG, busy: false };
+    // silence everything while an ad plays (the audio clock freezes, so the music carries on from the same spot afterwards)
+    const quiet = on => { try { if (window.SFX) { if (on) SFX.hold(); else SFX.release(); } } catch (e) {} };
 
     /* ------------------------------------------------------- test provider ---- */
     function testProvider() {
@@ -60,11 +62,13 @@
         if (A.busy) return false;
         if (A.left(kind) <= 0) { toast('No more ads today'); return false; }
         if (A.wait(kind) > 0) { toast('Next ad in ' + mmss(A.wait(kind))); return false; }
-        A.busy = true;
+        A.busy = true; A.why = '';
         let ok = false;
+        quiet(true);                                    // the game's music and sounds stop while an ad is on screen
         try { ok = await provider.show('rewarded'); } catch (e) { ok = false; }
+        quiet(false);
         A.busy = false;
-        if (!ok) { toast('Ad not finished, no reward'); return false; }
+        if (!ok) { toast(A.why || 'Ad not finished, no reward'); return false; }
         const { p, a } = st(); a[kind]++; a.last = a[lastKey(kind)] = Date.now(); saveProg(p);
         return true;
     }
@@ -128,7 +132,9 @@
     async function maybeInterstitial(tries) {
         if (!eligible()) { if (tries < 4) setTimeout(() => maybeInterstitial(tries + 1), 1200); return; }
         A.busy = true; let ok = false;
+        quiet(true);
         try { ok = await provider.show('interstitial'); } catch (e) {}
+        quiet(false);
         A.busy = false;
         const { p, a } = st(); a.since = 0; if (ok) a.last = Date.now(); saveProg(p);
     }

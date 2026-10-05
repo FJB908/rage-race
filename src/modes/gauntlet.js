@@ -759,6 +759,26 @@
         return Math.max(0, Math.min(2, gt.localOutStage < 0 ? gt.stage : gt.localOutStage));
     }
 
+    // The podium: the winner, then whoever lasted longest. Players still on the course when the run ends count as ahead of those already out
+    // (higher up = better); everyone else is ranked by when they left, the last to go first.
+    function topThree() {
+        const still = gt.field.filter(p => p !== gt.winner && !gt.out.includes(p)).sort((a, b) => a.y - b.y);
+        return [gt.winner, ...still, ...gt.out.slice().reverse()].filter((p, i, a) => p && a.indexOf(p) === i).slice(0, 3);
+    }
+    function podiumHtml() {
+        const top = topThree(); if (top.length < 3) return '';
+        const cls = ['second', 'first', 'third'], rank = [2, 1, 3];
+        return '<div class="gt-podium" id="gt-podium">' + [1, 0, 2].map((k, c) => {
+            const pl = top[k], me = pl.local;
+            return '<div class="gt-pd ' + cls[c] + (me ? ' me' : '') + '"><div class="gt-pd-who">' + (k === 0 ? '<span class="gt-pd-crown">' + icon('crown') + '</span>' : '') +
+                '<canvas width="200" height="150" data-k="' + k + '"></canvas><b>' + (me ? 'YOU' : pl.name) + '</b></div><div class="gt-pd-step"><i>' + rank[c] + '</i></div></div>';
+        }).join('') + '</div>';
+    }
+    function drawPodium() {
+        const top = topThree();
+        document.querySelectorAll('#gt-podium canvas').forEach(cv => { const pl = top[+cv.dataset.k]; if (pl) { try { renderLook(cv, pl.look || {}, { scale:.2, cy:.6 }); } catch (e) {} } });
+    }
+
     function finishRun() {
         if (!gt || gt.phase === 'done') return;
         gt.phase = 'done'; setState('gtbreak');
@@ -814,6 +834,7 @@
                 '<small>' + (r.win ? 'GAUNTLET' : 'ELIMINATED IN') + '</small>' +
                 '<h1>' + (r.win ? 'CROWN WINNER' : names[r.reached]) + '</h1>' +
                 '<p>You placed <b>' + ord(r.place) + '</b> of ' + FIELD + (winner && !winner.local ? ' · Crown: ' + winner.name : '') + '</p></div>' +
+              podiumHtml() +
               '<div class="gt-rsteps">' + steps + '</div>' +
               '<div class="gt-rewards">' +
                 '<h2 class="gt-h2">' + (r.drop && !r.drop.noDrop ? 'Chest' : 'Rewards') + '</h2>' +
@@ -825,7 +846,7 @@
               '</div>' +
             '</div>' +
             '<div class="gt-cta two"><button class="gt-go" type="button" id="gt-again"><span>PLAY AGAIN</span></button><button class="gt-go ghost" type="button" id="gt-menu"><span>MAIN MENU</span></button></div>';
-        show($('gt-result'));
+        show($('gt-result')); drawPodium();
         if (r.drop && !r.drop.noDrop) renderLootDrop('gt-loot', r.drop);
         $('gt-again').onclick = () => { hide($('gt-result')); leave(true); setTimeout(openEntry, 60); };
         $('gt-menu').onclick = () => { hide($('gt-result')); leave(true); };

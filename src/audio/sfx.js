@@ -7,7 +7,7 @@
 // Loaded BEFORE game.js. API: SFX.play(name, arg), SFX.music.set(track|null) / stop / toggle / setVol, SFX.toggle / setMuted / setSfxVol / setMusVol / unlock.
 const SFX = (() => {
     let ac = null, comp = null, bankBus = null, sfxBus = null, musBus = null, verbIn = null, musVerb = null, dly = null, noiseBuf = null, muted = false, extCtx = null;
-    let sfxVol = 0.5, musVol = 0.5, lastBump = 0, lastAny = 0;
+    let sfxVol = 0.5, musVol = 0.5, lastBump = 0, lastAny = 0, held = false;      // held: an ad is on screen, nothing may sound or wake the audio context
     try { muted = localStorage.getItem('rr_mute') === '1'; } catch (e) {}
     try { const v = localStorage.getItem('rr_sfxvol'); if (v !== null) sfxVol = Math.max(0, Math.min(1, +v)); } catch (e) {}
     try { const v = localStorage.getItem('rr_musvol'); if (v !== null) musVol = Math.max(0, Math.min(1, +v)); } catch (e) {}
@@ -56,7 +56,7 @@ const SFX = (() => {
             noiseBuf = makeNoise(ac);
             bankDecode();
         }
-        if (!offline && ac.state === 'suspended' && ac.resume) { try { const r = ac.resume(); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+        if (!offline && !held && ac.state === 'suspended' && ac.resume) { try { const r = ac.resume(); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
         return ac;
     }
     const send = (g, amt, target) => { if (!amt || !target) return; const s = ac.createGain(); s.gain.value = amt; g.connect(s); s.connect(target); };
@@ -573,6 +573,7 @@ const SFX = (() => {
 
     return {
         play(name, arg) { try {
+            if (held) return;
             const now = performance.now(), cd = COOLDOWN[name] !== undefined ? COOLDOWN[name] : (CRITICAL.has(name) ? 0 : 45);
             if (cd && now - (lastPlay[name] || -1e9) < cd) return;
             lastPlay[name] = now; lastAny = now;
@@ -596,7 +597,9 @@ const SFX = (() => {
         get musVol() { return musVol; },
         setSfxVol(v) { sfxVol = Math.max(0, Math.min(1, v)); try { localStorage.setItem('rr_sfxvol', sfxVol); } catch (e) {} if (sfxBus) { try { sfxBus.gain.setTargetAtTime(sfxVol, ac.currentTime, 0.02); } catch (e) { sfxBus.gain.value = sfxVol; } } },
         setMusVol(v) { musVol = Math.max(0, Math.min(1, v)); try { localStorage.setItem('rr_musvol', musVol); } catch (e) {} MUSIC.setVol(musVol); },
-        unlock() { try { ctx(); bankDecode(); } catch (e) {} },
+        unlock() { if (held) return; try { ctx(); bankDecode(); } catch (e) {} },
+        hold() { held = true; this.suspend(); },                 // an ad starts: total silence
+        release() { held = false; this.unlock(); },              // the ad is over: the music carries on from the same spot
         suspend() { try { if (ac && ac.state === 'running' && ac.suspend) { const r = ac.suspend(); if (r && r.catch) r.catch(() => {}); } } catch (e) {} },      // app in the background / screen off: no sound
         trackFor,
         music: MUSIC,
@@ -608,6 +611,7 @@ const SFX = (() => {
         __bake: bakeSfx, __bakeList: () => Object.keys(P).map(n => [n, BAKE[n] || [undefined]]), __bank: bank, __bankKey: bankKey,
     };
 })();
+if (typeof window !== 'undefined') window.SFX = SFX;          // a top-level const is not a window property: other files test window.SFX
 if (typeof window !== 'undefined' && window.addEventListener) {
     // Browsers only allow sound after the first tap or key press: that first gesture unlocks the engine and starts the music for wherever you are.
     let kicked = false;
