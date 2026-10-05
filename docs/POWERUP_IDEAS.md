@@ -1,6 +1,6 @@
 # Powerup ideas (to approve)
 
-## Replacements for Wind (proposal, to approve)
+## Replacements for Wind (the Stun bomb is built, see POWERUPS.md; the rest is still a proposal)
 Why Wind fails: it pushes every player the same way, so they all end up on the same edge. These hit one player or one spot instead, and never push sideways. Wind's share of the rolls would go to whichever of these you pick.
 
 1. **Freeze ray**: the platform of the player directly ahead of you turns to ice for 5 s (their next landings slide). One target, readable, no clumping.

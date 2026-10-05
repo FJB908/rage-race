@@ -1,4 +1,4 @@
-// POWER-UPS: Cannon and Double jump, plus the spring under a Super Bounce player. Classic script, loaded AFTER game.js (it uses game.js globals at call time).
+// POWER-UPS: Cannon, Double jump and the Stun Bomb, plus the spring under a Super Bounce player. Classic script, loaded AFTER game.js (it uses game.js globals at call time).
 // game.js calls into window.PU from a handful of hooks (item roll, activate, tick, input, draw); party races sync the state through the 10 Hz samples (PU.sample / PU.apply).
 //  CANNON  : you turn into a standing cannon (also when used in mid-air: it falls, lands, then deploys). Aim with a drag, release to fire at full power, very far up the track.
 //  DOUBLE  : for 7 s you can jump once more in mid-air (one extra jump per flight). A cloud puffs under you; everybody sees it.
@@ -6,7 +6,8 @@
     'use strict';
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
     const DJ_TIME = 7, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
-    const clouds = [];
+    const BOMB_R = 58, BOMB_LIFE = 10, BOMB_STUN = 1.0, BOMB_IMM = 2.2, BOMB_PLACE = 5;      // zone radius, seconds it hangs there, stun length, immunity after a stun, seconds you get to place it
+    const clouds = [], bombs = [];
     const sc = a => Math.max(-CANNON_ANG, Math.min(CANNON_ANG, a));
     const angOf = (dx, dy) => Math.atan2(dx, -dy);                      // 0 = straight up, negative = left
     const cannonVel = a => ({ vx: Math.sin(a) * CANNON_V, vy: -Math.cos(a) * CANNON_V });
@@ -128,6 +129,64 @@
         airJumpVel(p, best.sol.vx + rnd(-1, 1) * sk, best.sol.vy + rnd(-1, 1) * BOT_BASE.aimY * p.skill * 0.7);
     }
 
+    /* ---------------------------------------------------------------------------------- STUN BOMB ---- */
+    // You place it anywhere (tap the screen): it hangs in the air with a red danger zone around it for 10 s. Anyone who flies or lands inside the zone
+    // (except you) is dazed for 1 s: no jumping, momentum halved. Each player is stunned once per bomb. A shield blocks it.
+    function bombSpot(p) {                                                    // the best place without thinking: right where the nearest opponent is about to pass
+        let tgt = null, bd = 1e9;
+        for (const o of players) {
+            if (o === p || o.finished || o.gone) continue;
+            const ahead = o.y < p.y ? 0 : 400, d = Math.abs(o.y - p.y) + ahead; if (d < bd && d < 1300) { bd = d; tgt = o; }
+        }
+        if (!tgt) return { x: Math.max(60, Math.min(PLAY_W() - 60, p.x)), y: p.y - 150 };
+        if (tgt.mode === 'air') {
+            const pr = predict(tgt, tgt.vx, tgt.vy, { maxT: 2.6 });
+            if (pr.land && pr.land.pl) return { x: pr.land.x, y: pr.land.y - 34 };
+            return { x: tgt.x + tgt.vx * 0.3, y: tgt.y - 40 };
+        }
+        return { x: tgt.x, y: tgt.y - 120 };                                  // the jump up from where they stand
+    }
+    function addBomb(x, y, by) {
+        const pw = PLAY_W(); x = Math.max(BOMB_R * 0.35, Math.min(pw - BOMB_R * 0.35, x));
+        bombs.push({ x, y, by, t: 0, hit: new Set(), seed: Math.random() * 6 });
+        if (bombs.length > 6) bombs.shift();
+        ring(x, y, ITEMS.bomb.color, BOMB_R * 1.1); burst(x, y, ITEMS.bomb.color, 14, 220);
+    }
+    function placeBomb(p, x, y) {
+        p.bombMode = false; p.bombT = 0;
+        const ly = Math.max(p.y - 760, Math.min(p.y + 320, y));
+        addBomb(x, ly, p.id);
+        if (live(p) && window.Social && Social.emitBomb) Social.emitBomb(p, x, ly);
+        if (p.local) { SFX.play('bombset'); haptic([14, 20, 26]); if (typeof hintEl !== 'undefined') { hintTimer = 0; hintEl.style.opacity = 0; } }
+    }
+    function onTap(p, sx, sy) {                                               // a tap (not a drag) while you hold a bomb: place it there
+        if (!p.bombMode) return false;
+        placeBomb(p, (sx - VIEW_OX) / VIEW_K, sy / VIEW_K + cameraY);
+        return true;
+    }
+    function zap(p) {
+        p.zapT = BOMB_STUN; p.zapImm = BOMB_STUN + BOMB_IMM;
+        p.vx *= 0.45; if (p.mode === 'air') p.vy *= 0.5;
+        if (p.cannon === 2) { /* the cannon waits until you can move again */ }
+        ring(p.x, p.y, '#ffe45e', 54); burst(p.x, p.y, '#ffe45e', 16, 260); burst(p.x, p.y, '#ffffff', 6, 320);
+        if (p.local) { camShake = Math.max(camShake, 6); haptic([30, 30, 70]); SFX.play('zap'); }
+    }
+    function updateBombs(dt) {
+        for (let i = bombs.length - 1; i >= 0; i--) {
+            const b = bombs[i]; b.t += dt;
+            if (b.t > BOMB_LIFE + 0.35) { burst(b.x, b.y, ITEMS.bomb.color, 10, 160); bombs.splice(i, 1); continue; }
+            if (b.t > BOMB_LIFE) continue;                                     // popping
+            for (const p of players) {
+                if (p.remote || p.finished || p.gone || p.id === b.by || b.hit.has(p.id)) continue;
+                if (p.zapT > 0 || p.zapImm > 0) continue;
+                if (Math.hypot(p.x - b.x, p.y - b.y) > BOMB_R + p.r * 0.4) continue;
+                b.hit.add(p.id);
+                if (shieldBlocks(p)) { burst(p.x, p.y, ITEMS.shield.color, 8, 160); continue; }
+                zap(p);
+            }
+        }
+    }
+
     /* ------------------------------------------------------------------------------ the rest ---- */
     function activate(p, it) {
         const k = p.r / BASE_R;
@@ -136,6 +195,11 @@
             p.quakePending = 0; p.cannon = p.mode === 'idle' ? 2 : 1; p.cannonT = CANNON_TIME; p.cannonAim = 0; p.cannonThink = rnd(0.7, 1.3); p.charged = false;
             hint(p, 'DRAG TO AIM THE CANNON, RELEASE TO FIRE');
             if (p.cannon === 2) deployFx(p); else { ring(p.x, p.y, ITEMS.cannon.color, 70 * k); burst(p.x, p.y, ITEMS.cannon.color, 14, 220); if (p.local) SFX.play('cannon'); }
+            return true;
+        }
+        if (it === 'bomb') {
+            if (p.local) { p.bombMode = true; p.bombT = BOMB_PLACE; hint(p, 'TAP WHERE THE BOMB SHOULD HANG'); }
+            else { const sp = bombSpot(p); placeBomb(p, sp.x, sp.y); }                   // bots drop it right away
             return true;
         }
         if (it === 'dj') {
@@ -149,7 +213,10 @@
         if (p.spring > 0) p.spring = Math.max(0, p.spring - dt * 5.5);
         if (p.cannonFly > 0 && p.remote) p.cannonFly -= dt;
         if (p.cannonFly > 0 && p.vy < -200) trailFx(p, dt);
+        if (p.zapT > 0) p.zapT -= dt;
+        if (p.zapImm > 0) p.zapImm -= dt;
         if (p.remote) return;
+        if (p.bombMode) { p.bombT -= dt; if (p.bombT <= 0) { const sp = bombSpot(p); placeBomb(p, sp.x, sp.y); } }
         if (p.mode === 'air') p.airT = (p.airT || 0) + dt; else { p.airT = 0; p.cannonFly = 0; }
         if (p.cannonFly > 0) p.cannonFly -= dt;
         if (p.cannon) {
@@ -158,7 +225,7 @@
             else if (p.cannon === 2 && p.mode !== 'idle') p.cannon = 1;
             if (p.cannon === 2) {
                 if (p.local) { if (dragging) { const dx = sx - cx, dy = sy - cy; if (Math.hypot(dx, dy) > 14) p.cannonAim = sc(angOf(dx, dy)); } }
-                else {
+                else if (!(p.zapT > 0)) {
                     p.cannonThink -= dt;
                     if (p.cannonThink <= 0) { const pl = cannonPlan(p); cannonFire(p, (pl ? pl.a : 0) + rnd(-1, 1) * 0.01 * p.skill); }
                 }
@@ -168,19 +235,21 @@
                 else { p.cannon = 0; burst(p.x, p.y, ITEMS.cannon.color, 10, 160); }                  // never landed: the cannon is lost
             }
         }
-        if (p.djT > 0) { p.djT -= dt; if (p.djT <= 0) { p.djT = 0; } if (p.mode === 'idle') p.djUsed = false; else if (!p.local) botRescue(p); }
+        if (p.djT > 0) { p.djT -= dt; if (p.djT <= 0) { p.djT = 0; } if (p.mode === 'idle') p.djUsed = false; else if (!p.local && !(p.zapT > 0)) botRescue(p); }
     }
     // Pointer: may this player start a drag now? Normal jumps from a platform, and the extra jump while Double Jump is ready.
-    function canAim(p) { return !!p && !p.finished && (p.mode === 'idle' || airAim(p)); }
+    function canAim(p) { return !!p && !p.finished && !(p.zapT > 0) && (p.mode === 'idle' || airAim(p) || !!p.bombMode); }
     // The drag was released. Returns true when it was handled here (cannon shot, extra jump); false means: do the normal launch.
     function onRelease(p, dx, dy) {
         if (p.cannon === 2) { cannonFire(p, angOf(dx, dy)); return true; }
         if (p.cannon === 1) return true;                                     // still falling: nothing to aim yet
+        if (p.bombMode && p.mode !== 'idle' && !airAim(p)) return true;      // holding a bomb in mid-air: a drag does nothing (tap to place)
         if (p.mode === 'air' && airAim(p)) { airJump(p, dx, dy); return true; }
         return false;
     }
     function slotTap(p) {                                                    // tapping the item slot while the cannon is ready fires it
         if (p && p.cannon === 2) { cannonFire(p, p.cannonAim || 0); return true; }
+        if (p && p.bombMode) { const sp = bombSpot(p); placeBomb(p, sp.x, sp.y); return true; }      // tap the slot: place it at the best spot
         return false;
     }
     // aim preview. Returns true when it drew the whole thing.
@@ -222,8 +291,9 @@
         }
         c.restore();
     }
-    function reset() { clouds.length = 0; if (typeof hintEl !== 'undefined' && HINT0) hintEl.innerHTML = HINT0; }
+    function reset() { clouds.length = 0; bombs.length = 0; if (typeof hintEl !== 'undefined' && HINT0) hintEl.innerHTML = HINT0; }
     function update(dt) {
+        updateBombs(dt);
         for (let i = clouds.length - 1; i >= 0; i--) { clouds[i].t += dt; if (clouds[i].t > 0.85) clouds.splice(i, 1); }
     }
 
@@ -244,7 +314,29 @@
         for (const s of sp) puff(c, s[0] * (0.7 + 0.5 * e), s[1], s[2] * (0.75 + 0.35 * e), a);
         c.restore();
     }
+    function drawBomb(c, b, t) {
+        const life = b.t / BOMB_LIFE, pop = b.t > BOMB_LIFE ? Math.min(1, (b.t - BOMB_LIFE) / 0.35) : 0, col = ITEMS.bomb.color;
+        const appear = Math.min(1, b.t / 0.25), R = BOMB_R * (0.55 + 0.45 * easeOutBack(appear)) * (1 + pop * 0.25), a = (1 - pop) * (b.t > BOMB_LIFE - 1.5 && !pop ? 0.55 + 0.45 * Math.abs(Math.sin(t * 10)) : 1);
+        c.save(); c.globalAlpha = a;
+        // the danger zone
+        const g = c.createRadialGradient(b.x, b.y, R * 0.1, b.x, b.y, R); g.addColorStop(0, 'rgba(255,61,90,0.20)'); g.addColorStop(0.75, 'rgba(255,61,90,0.10)'); g.addColorStop(1, 'rgba(255,61,90,0.04)');
+        c.fillStyle = g; c.beginPath(); c.arc(b.x, b.y, R, 0, 7); c.fill();
+        c.lineWidth = 2.4; c.strokeStyle = 'rgba(255,90,110,0.85)'; c.setLineDash([9, 8]); c.lineDashOffset = -t * 26; c.beginPath(); c.arc(b.x, b.y, R, 0, 7); c.stroke(); c.setLineDash([]);
+        c.lineWidth = 3.4; c.strokeStyle = col; c.globalAlpha = a * 0.9; c.beginPath(); c.arc(b.x, b.y, R + 5, -Math.PI / 2, -Math.PI / 2 + (1 - life) * Math.PI * 2); c.stroke(); c.globalAlpha = a;
+        // the bomb
+        const by = b.y + Math.sin(t * 2.6 + b.seed) * 3.5, r = 10;
+        c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(b.x, by + r + 6, r * 0.9, 3, 0, 0, 7); c.fill();
+        const bg = c.createRadialGradient(b.x - 3, by - 4, 1, b.x, by, r); bg.addColorStop(0, '#6a728c'); bg.addColorStop(0.5, '#262c3e'); bg.addColorStop(1, '#0e1119');
+        c.fillStyle = bg; c.beginPath(); c.arc(b.x, by, r, 0, 7); c.fill(); c.strokeStyle = '#05070b'; c.lineWidth = 1.6; c.stroke();
+        c.fillStyle = 'rgba(255,255,255,0.55)'; c.beginPath(); c.ellipse(b.x - 3.5, by - 4, 2.6, 1.6, -0.6, 0, 7); c.fill();
+        c.fillStyle = '#3b4259'; roundRect(b.x - 3.5, by - r - 3, 7, 5, 1.5); c.fill();
+        c.strokeStyle = '#c9a56b'; c.lineWidth = 1.8; c.lineCap = 'round'; c.beginPath(); c.moveTo(b.x, by - r - 2); c.quadraticCurveTo(b.x + 5, by - r - 8, b.x + 9, by - r - 6); c.stroke();
+        const fl = 0.6 + 0.4 * Math.sin(t * 30 + b.seed); c.fillStyle = '#ffe45e'; c.beginPath(); c.arc(b.x + 9, by - r - 6, 2.6 * fl + 1, 0, 7); c.fill(); c.fillStyle = '#ff7a3d'; c.beginPath(); c.arc(b.x + 9, by - r - 6, 1.4, 0, 7); c.fill();
+        c.restore();
+    }
     function drawWorld(c) {
+        const tt = performance.now() / 1000;
+        for (const b of bombs) drawBomb(c, b, tt);
         for (const cl of clouds) drawCloud(c, cl);
     }
     // under the player's feet (called before the body is drawn)
@@ -313,7 +405,14 @@
     }
     // returns true when the cube should NOT be drawn (a cannon stands there instead)
     function drawBody(c, p, t) { if (p.cannon > 0) { drawCannon(c, p, t); return true; } return false; }
-    function drawOver(c, p, t) {                                          // after the player: auras, timer ring of the cannon
+    function drawOver(c, p, t) {                                          // after the player: stun stars, timer ring of the cannon
+        if (p.zapT > 0) {
+            const k = p.r / BASE_R, cx0 = p.x, cy0 = p.y - p.r - 6 * k;
+            c.save(); c.globalAlpha = Math.min(1, p.zapT * 3);
+            for (let i = 0; i < 3; i++) { const an = t * 7 + i * 2.094, x = cx0 + Math.cos(an) * 13 * k, y = cy0 + Math.sin(an) * 4 * k - 4 * k; c.fillStyle = i % 2 ? '#ffe45e' : '#ffffff'; c.beginPath(); for (let j = 0; j < 8; j++) { const rr = j % 2 ? 1.6 * k : 4 * k, aa = j * Math.PI / 4 - Math.PI / 2; j ? c.lineTo(x + Math.cos(aa) * rr, y + Math.sin(aa) * rr) : c.moveTo(x + Math.cos(aa) * rr, y + Math.sin(aa) * rr); } c.closePath(); c.fill(); }
+            c.strokeStyle = '#ffe45e'; c.lineWidth = 1.8; c.lineCap = 'round'; const jx = Math.sin(t * 40) * 2; c.beginPath(); c.moveTo(p.x - p.r - 4 + jx, p.y - 4); c.lineTo(p.x - p.r - 9, p.y); c.lineTo(p.x - p.r - 5 - jx, p.y + 4); c.moveTo(p.x + p.r + 4 - jx, p.y + 4); c.lineTo(p.x + p.r + 9, p.y); c.lineTo(p.x + p.r + 5 + jx, p.y - 4); c.stroke();
+            c.restore();
+        }
         if (p.cannon > 0) {
             const py = p.y - p.r * 4.4, f = Math.max(0, p.cannonT / CANNON_TIME);
             c.save(); c.lineWidth = 2.4; c.strokeStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.arc(p.x, py, 6, 0, 7); c.stroke();
@@ -324,6 +423,7 @@
 
     /* ------------------------------------------------------------------------------ item slot ---- */
     function hud(p) {
+        if (p.bombMode) return { icon: 'bomb', badge: 'TAP', prog: p.bombT / BOMB_PLACE, col: ITEMS.bomb.color };
         if (p.cannon > 0) return { icon: 'cannon', badge: p.cannon === 2 ? 'GO' : '', prog: p.cannonT / CANNON_TIME, col: ITEMS.cannon.color };
         if (p.djT > 0) return { icon: 'dj', badge: p.djUsed ? '0x' : '1x', prog: p.djT / DJ_TIME, col: ITEMS.dj.color };
         return null;
@@ -331,15 +431,15 @@
 
     /* -------------------------------------------------------------------------- party sync ---- */
     const r1 = n => Math.round(n * 10) / 10;
-    function sample(p) { return { cn: p.cannon || (p.cannonFly > 0 ? 3 : 0), ca: Math.round((p.cannonAim || 0) * 100) / 100, dj: r1(Math.max(0, p.djT || 0)), du: p.djUsed ? 1 : 0 }; }
-    function parse(v) { return { cn: v.cn || 0, ca: v.ca || 0, dj: v.dj || 0, du: v.du || 0 }; }
+    function sample(p) { return { cn: p.cannon || (p.cannonFly > 0 ? 3 : 0), ca: Math.round((p.cannonAim || 0) * 100) / 100, dj: r1(Math.max(0, p.djT || 0)), du: p.djUsed ? 1 : 0, zp: r1(Math.max(0, p.zapT || 0)) }; }
+    function parse(v) { return { cn: v.cn || 0, ca: v.ca || 0, dj: v.dj || 0, du: v.du || 0, zp: v.zp || 0 }; }
     function apply(p, b, prevVy, vy) {                                     // a friend's phone says how their power-ups look right now
         const was = p.cannon || 0;
         const cn = b.cn || 0; p.cannon = cn === 3 ? 0 : cn; p.cannonAim = b.ca || 0; p.cannonT = p.cannon ? CANNON_TIME * 0.5 : 0; if (cn === 3) p.cannonFly = 0.4;
-        p.djT = b.dj || 0; p.djUsed = !!b.du;
+        p.djT = b.dj || 0; p.djUsed = !!b.du; if ((b.zp || 0) > 0 && !(p.zapT > 0)) p.zapT = b.zp; if (!(b.zp > 0)) p.zapT = 0;
         if (was === 2 && !p.cannon) muzzleFx(p.x + Math.sin(p.cannonAim || 0) * p.r * 2.7, p.y - Math.cos(p.cannonAim || 0) * p.r * 2.7, p.r / BASE_R);
         if (p.bounceT > 0 && prevVy > 150 && vy < -150) p.spring = 1;       // a rebound: the spring squashes
     }
 
-    window.PU = { activate, tick, update, reset, canAim, airAim, onRelease, slotTap, preview, drawWorld, drawUnder, drawBody, drawOver, hud, sample, parse, apply, cloud: spawnCloud, predict, cannonPlan, cannonFire, CANNON_TIME, DJ_TIME };
+    window.PU = { activate, tick, update, reset, canAim, airAim, onRelease, slotTap, preview, drawWorld, drawUnder, drawBody, drawOver, hud, sample, parse, apply, cloud: spawnCloud, bomb: addBomb, onTap, predict, cannonPlan, cannonFire, CANNON_TIME, DJ_TIME };
 })();

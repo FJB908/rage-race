@@ -8,6 +8,7 @@ const ITEMS = {
     shield: { name:'SHIELD!',       color:'#7ee787' },
     wind:   { name:'GUST!',         color:'#8fd6ff' },
     ufo:    { name:'UFO!',          color:'#7CFF6B' },
+    bomb:   { name:'STUN BOMB!',    color:'#ff3d5a' },
     cannon: { name:'CANNON!',       color:'#ff9f43' },
     dj:     { name:'DOUBLE JUMP!',  color:'#9fe8ff' },
 };

@@ -540,7 +540,7 @@ function rollItem(p){
     const shieldW = 0.11 + 0.13*f;                           // modest in front, a little more likely further back (it used to be the favourite of whoever led)
     // Wind is a mild offensive tool for whoever's behind: it doesn't touch the caster,
     // and a modest chance even near the front keeps it from feeling exclusively "loser-only".
-    const windW = (others && gameMode !== 'gauntlet') ? 0.10 + 0.20*f : 0;     // and no wind there either
+    const bombW = (others && gameMode !== 'gauntlet') ? 0.10 + 0.20*f : 0;     // the Stun Bomb took over the slot the Wind had (nothing for the Gauntlet)
     // UFO is a comeback lifeline: last place (or near it), and the further you've fallen
     // behind the next player up, the likelier it gets.
     let ufoW = 0;
@@ -569,7 +569,7 @@ function rollItem(p){
         chain:  (others && !isLeader) ? 0.12 + 0.16*f : 0,   // useless for the leader, so never roll it
         quake:  quakeW,
         shield: shieldW,
-        wind:   windW,
+        bomb:   bombW,
         ufo:    ufoW,
     };
     if (p.lastItem && w[p.lastItem] > 0) w[p.lastItem] *= 0.2;      // seldom the same item twice in a row: it spreads out
@@ -601,7 +601,7 @@ function updateItemBoxes(dt){
                 ring(b.x, b.y, '#ffffff', 40);
                 if (p.local){
                     // make the roulette end exactly on the item you get
-                    itemHUD.rollOffset = ((ITEM_KEYS.indexOf(p.item) - 13) % ITEM_KEYS.length + ITEM_KEYS.length) % ITEM_KEYS.length;
+                    itemHUD.rollOffset = ((WHEEL.indexOf(p.item) - 13) % WHEEL.length + WHEEL.length) % WHEEL.length;
                 }
                 break;
             }
@@ -732,6 +732,7 @@ function botWantsItem(p){
         case 'ufo':    return p.mode === 'idle' || p.itemHold > 2;  // call it in from solid ground
         case 'cannon': return p.mode === 'idle';                    // deploy from solid ground
         case 'dj':     return p.mode === 'idle';
+        case 'bomb':   return players.some(o => o !== p && !o.finished);
     }
     return true;
 }
@@ -744,7 +745,7 @@ function activateItem(p){
     if (it === 'chain' && !chainTarget) return false;
     p.item = null; p.itemState = null; p.itemCool = 4;
     const evx = {};
-    if (p.local) SFX.play({rocket:'rocket', shield:'shield', wind:'wind', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce', cannon:'cannon', dj:'cloud'}[it] || 'item');
+    if (p.local) SFX.play({rocket:'rocket', shield:'shield', bomb:'bombset', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce', cannon:'cannon', dj:'cloud'}[it] || 'item');
     if (it === 'rocket') startRocket(p);
     else if (it === 'giant'){
         p.giantT = GIANT_TIME; p.rv += 60;
@@ -771,7 +772,7 @@ function activateItem(p){
         ring(p.x, p.y, ITEMS.shield.color, 50);
     } else if (it === 'wind'){
         evx.dir = startWind(p);
-    } else if (it === 'cannon' || it === 'dj'){
+    } else if (it === 'cannon' || it === 'dj' || it === 'bomb'){
         PU.activate(p, it);
     }
     if (window.partyMatch && partyMatch.live && (p.local || p.hostedBot)) Social.emitItem(p, it, evx, chainTarget);   // party race: tell the other phones
@@ -1080,6 +1081,7 @@ quake: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M4 
 shield: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icSh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6f5c2"/><stop offset="1" stop-color="#33b56a"/></linearGradient></defs><path d="M24 4 L40 10 V22 C40 33 33 41 24 44 C15 41 8 33 8 22 V10 Z" fill="url(#icSh)" stroke="#0d1017" stroke-width="1.6"/><path d="M24 10 L34 14 V22 C34 30 29.5 36 24 38 C18.5 36 14 30 14 22 V14 Z" fill="none" stroke="#eafff2" stroke-width="1.6" opacity=".8"/><path d="M18 23 L22.5 27.5 L31 17.5" fill="none" stroke="#0d1017" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 cannon: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icCn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a4a1a"/><stop offset=".45" stop-color="#ffb866"/><stop offset="1" stop-color="#8a4a12"/></linearGradient></defs><path d="M18 8 L16.5 28 H31.5 L30 8 Z" fill="url(#icCn)" stroke="#0d1017" stroke-width="2.4" stroke-linejoin="round"/><ellipse cx="24" cy="8" rx="6.6" ry="2.6" fill="#0d1017"/><rect x="12" y="28" width="24" height="8" rx="3" fill="#46506b" stroke="#0d1017" stroke-width="2.2"/><circle cx="15" cy="38" r="5" fill="#161b28" stroke="#c9d1e3" stroke-width="2"/><circle cx="33" cy="38" r="5" fill="#161b28" stroke="#c9d1e3" stroke-width="2"/><circle cx="24" cy="17" r="1.5" fill="#0d1017"/><g stroke="#ffcf3f" stroke-width="2.4" stroke-linecap="round"><path d="M24 2 V-2" opacity="0"/><path d="M14 4 L11 1 M34 4 L37 1"/></g></svg>`,
 dj: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M12 36 a7.5 7.5 0 0 1 1.5-14.8 a9.5 9.5 0 0 1 18-1 a7 7 0 0 1 1 15.8 Z" fill="#eaf6ff" stroke="#9fe8ff" stroke-width="2.4" stroke-linejoin="round"/><g fill="none" stroke="#9fe8ff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 15 L24 8 L31 15"/><path d="M17 24 L24 17 L31 24" opacity=".55"/></g></svg>`,
+bomb: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="icBm" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#7a829c"/><stop offset=".5" stop-color="#2a3044"/><stop offset="1" stop-color="#0e1119"/></radialGradient></defs><circle cx="24" cy="27" r="19" fill="none" stroke="#ff5a6e" stroke-width="2.2" stroke-dasharray="4 4" opacity=".75"/><circle cx="24" cy="27" r="11" fill="url(#icBm)" stroke="#05070b" stroke-width="2"/><path d="M19 22 q3-4 7-3" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><rect x="20.5" y="13" width="7" height="5" rx="1.5" fill="#3b4259" stroke="#05070b" stroke-width="1.4"/><path d="M24 13 q5-6 10-3" fill="none" stroke="#c9a56b" stroke-width="2.2" stroke-linecap="round"/><circle cx="35" cy="9.5" r="3.4" fill="#ffe45e"/><circle cx="35" cy="9.5" r="1.7" fill="#ff7a3d"/></svg>`,
 wind: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#8fd6ff" stroke-width="3.4" stroke-linecap="round"><path d="M4 16 H30 a5 5 0 1 0 -4.5 -7.2"/><path d="M4 25 H36 a5.5 5.5 0 1 1 -5 7.9"/><path d="M4 34 H24 a4 4 0 1 1 -3.6 5.8"/></g></svg>`,
 };
 const slotEl = document.getElementById('item-slot');
@@ -1087,6 +1089,7 @@ const slotIcon = document.getElementById('item-icon');
 const slotBadge = document.getElementById('item-badge');
 const slotBar = document.getElementById('item-bar-fill');
 const itemHUD = { key:'', rollOffset:0 };
+const WHEEL = ITEM_KEYS.filter(k => k !== 'wind');            // the Wind is no longer handed out
 
 function updateItemHUD(){
     const p = players[0]; if (!p) return;
@@ -1095,7 +1098,7 @@ function updateItemHUD(){
         mode = 'rolling';
         const el = Math.max(0, ROLL_TIME - p.itemRoll);
         const idx = Math.min(13, Math.floor(Math.pow(el/ROLL_TIME, 0.55) * 14));   // decelerating wheel
-        icon = ITEM_KEYS[(idx + itemHUD.rollOffset) % ITEM_KEYS.length];
+        icon = WHEEL[(idx + itemHUD.rollOffset) % WHEEL.length];
     } else if (p.itemState === 'ready'){ mode = 'ready'; icon = p.item; }
     else if (window.PU && PU.hud(p)){ const h = PU.hud(p); mode = 'active'; icon = h.icon; badge = h.badge; prog = h.prog; col = h.col; }
     else if (p.giantT > 0){ mode = 'active'; icon = 'giant'; prog = p.giantT/GIANT_TIME; col = ITEMS.giant.color; }
@@ -1157,7 +1160,7 @@ function endDrag(){
         if (window.PU && PU.onRelease(p, dx, dy)){ hintEl.style.display='none'; return; }     // cannon shot / extra mid-air jump
         launchPlayer(p, dx, dy);
         hintEl.style.display='none';
-    }
+    } else if (window.PU) PU.onTap(p, sx, sy);        // a tap while you hold a bomb places it
 }
 canvas.addEventListener('pointerup', () => { panDrag = null; endDrag(); });
 canvas.addEventListener('pointercancel', () => { panDrag = null; endDrag(); });
@@ -1265,7 +1268,7 @@ function evalTarget(p, pl, ceilings) {
 
 function updateBot(p, dt) {
     if (p.mode !== 'idle') return;
-    if (p.cannon) return;                          // being a cannon: PU.tick fires it
+    if (p.cannon || p.zapT > 0) return;           // being a cannon: PU.tick fires it; stunned: no jumping
     // AFK: a rare player who just stands there — until, after 20s, a "backfill" bot takes
     // over their controls and starts playing normally (never with the human profile).
     if (p.afk){

@@ -224,6 +224,8 @@ const SFX = (() => {
             noise({ type: 'bandpass', f: 400, f2: 3200, q: 0.6, t: 0.7, v: 0.1, a: 0.04, at: 0.05, verb: 0.25 }); I.vibe(mtof(88), { at: 0.12, t: 0.9, v: 0.06, verb: 0.4 }); },
         cloud() { noise({ type: 'bandpass', f: 900, f2: 2600, q: 0.6, t: 0.22, v: 0.07, a: 0.04, verb: 0.25 }); I.pluck(mtof(88), { at: 0.03, t: 0.2, v: 0.05, verb: 0.3 }); I.vibe(mtof(93), { at: 0.07, t: 0.6, v: 0.045, verb: 0.4 }); },
         spring() { voice({ f: 220, f2: 640, glide: 0.12, t: 0.16, v: 0.11, a: 0.004, vib: 30, vibRate: 22, verb: 0.15 }); I.pluck(mtof(64), { at: 0.02, t: 0.25, v: 0.06 }); },
+        bombset() { voice({ f: 140, f2: 70, t: 0.16, v: 0.22, a: 0.004 }); noise({ type: 'bandpass', f: 1500, q: 2, t: 0.04, v: 0.08, a: 0.003 }); I.pluck(mtof(60), { at: 0.06, t: 0.25, v: 0.08, verb: 0.2 }); voice({ f: 520, f2: 880, glide: 0.12, t: 0.14, v: 0.05, at: 0.1, verb: 0.2 }); },
+        zap() { noise({ type: 'bandpass', f: 3200, f2: 900, q: 1.2, t: 0.28, v: 0.14, a: 0.003 }); voice({ type: 'sawtooth', f: 1400, f2: 180, glide: 0.2, t: 0.22, v: 0.09, a: 0.003, filter: { f: 2600, f2: 500 }, verb: 0.2 }); I.vibe(mtof(96), { at: 0.1, t: 0.5, v: 0.04, verb: 0.4 }); voice({ f: 90, f2: 50, t: 0.25, v: 0.2 }); },
         // stingers: the moments worth a little fanfare
         lead() { [0, 2, 4].forEach(i => I.vibe(mtof(pent(79, i)), { at: i * 0.05, t: 0.8, v: 0.07, verb: 0.35 })); I.pluck(mtof(91), { at: 0.15, t: 0.3, v: 0.05, verb: 0.3 }); },
         qualify() { [0, 1, 2, 4].forEach((k, i) => I.vibe(mtof(pent(72, k + 1)), { at: i * 0.07, t: 0.9, v: 0.08, verb: 0.35 })); I.piano(mtof(72), { at: 0.28, t: 1, v: 0.06, verb: 0.35 }); I.piano(mtof(79), { at: 0.28, t: 1, v: 0.05, verb: 0.35 }); },
@@ -241,7 +243,7 @@ const SFX = (() => {
         shatter() { for (let i = 0; i < 4; i++) I.pluck(mtof(pent(84, i + Math.floor(Math.random() * 3))), { at: i * 0.035, t: 0.25, v: 0.045, verb: 0.35 }); },
     };
     const COOLDOWN = { spring: 90, cloud: 80, coin: 45, land: 70, pickup: 90, item: 70, combo: 120, shatter: 150, chain: 200, block: 200, jump: 40, tap: 60, knock: 30 };
-    const CRITICAL = new Set(['cannon', 'cannonfire', 'cloud', 'win', 'gtwin', 'qualify', 'elim', 'lead', 'jump', 'land', 'finish', 'go', 'count', 'fail', 'boost', 'stumble', 'open', 'knock', 'boom', 'tick']);
+    const CRITICAL = new Set(['bombset', 'zap', 'cannon', 'cannonfire', 'cloud', 'win', 'gtwin', 'qualify', 'elim', 'lead', 'jump', 'land', 'finish', 'go', 'count', 'fail', 'boost', 'stumble', 'open', 'knock', 'boom', 'tick']);
     const lastPlay = {};
 
     /* ================================================================== music ==== */
