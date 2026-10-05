@@ -36,3 +36,9 @@
 .pd-stand { flex: none; margin-bottom: 12px; }
 .pd-stand ~ .tg-rows { display: none; }
 .pd-stand { margin-bottom: 22px; }
+/* one winner on a result screen that has more to show (levels, summit): a compact stand */
+.pd-stand.solo { margin: 0 auto 8px; }
+.pd-stand.solo .pd-who canvas { width: 104px; height: 120px; margin-bottom: -24px; }
+.pd-stand.solo .pd-col.first .pd-step { height: 40px; }
+.pd-stand.solo .pd-crown { width: 24px; height: 24px; margin-left: -12px; top: 12px; }
+.pd-stand.solo .pd-beam { height: 170px; }
