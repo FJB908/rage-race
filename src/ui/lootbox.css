@@ -175,3 +175,11 @@ body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-ches
 .res-goal b { color:#ffcf3f; }
 .res-goal u { display:block; height:5px; border-radius:99px; background:rgba(255,255,255,.12); overflow:hidden; text-decoration:none; }
 .res-goal s { display:block; height:100%; border-radius:99px; background:#ffcf3f; text-decoration:none; }
+
+/* the chest you just opened, shown open in its own rarity on the results screen */
+.opened-chest { flex:none; width:108px; margin-top:16px; --c:#35e0c8; --c2:#127b6c; }
+.opened-chest.tier-rare { --c:#5b8def; --c2:#1f3f8f; } .opened-chest.tier-epic { --c:#b3a9ff; --c2:#4f3fc4; } .opened-chest.tier-mythic { --c:#ff4d7d; --c2:#9c1b4a; } .opened-chest.tier-legendary { --c:#ffcf3f; --c2:#a86a00; }
+.opened-chest svg { display:block; width:100%; height:auto; overflow:visible; }
+.opened-chest .lb-lid { transform-box:fill-box; transform-origin:4% 96%; transform:translate(0,-6px) rotate(-17deg); }
+.opened-chest .lb-leak, .opened-chest .lb-shine, .opened-chest .lb-sparks { display:none; }
+.loot-drop:has(.opened-chest) { flex-direction:column; gap:10px; }

@@ -2101,8 +2101,9 @@ function draw() {
     else if (gameMode === 'gauntlet') gtDrawSky();
 
     ctx.save();
-    const shakeX = (Math.random()-0.5)*camShake;
-    const shakeY = (Math.random()-0.5)*camShake;
+    const cs = state === 'countdown' ? 0 : camShake;       // update() does not run during the countdown, so a shake left over from the last race would never fade: no shake until GO
+    const shakeX = (Math.random()-0.5)*cs;
+    const shakeY = (Math.random()-0.5)*cs;
     ctx.translate(VIEW_OX + shakeX, shakeY);
     ctx.scale(VIEW_K, VIEW_K);
     ctx.translate(0, -cameraY);
@@ -2917,7 +2918,7 @@ function staggerBotStarts(){
     }
 }
 function beginRound() {
-    lastPlace = 0;
+    lastPlace = 0; camShake = 0;
     hud.style.display='block';
     if (typeof SFX !== 'undefined' && SFX.music) SFX.music.set(SFX.trackFor(true));
     dragging = false;
@@ -4262,8 +4263,8 @@ function renderLootDrop(containerId, drop, opts){
             if (final.finisher) chips.push(`<span class="rwd rwd-fin" style="--rc:${RARITY[final.finisher.rarity].color}"><small>FINISHER</small><b>${final.finisher.name}</b></span>`);
             if (final.cosmetic) chips.push(`<span class="rwd rwd-item"><canvas class="mini-item" width="112" height="112" style="--rc:${RARITY[final.cosmetic.rarity].color}"></canvas></span>`);
             panel.classList.remove('big');
-            panel.innerHTML = `<div class="loot-crate opened tier-${final.tier || tier}" aria-hidden="true">${icon('check')}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;
-            panel.querySelector('.loot-crate').style.setProperty('--ic', TC[final.tier || tier]);
+            const ft = final.tier || tier;                            // the chest you just opened, open, in the rarity it had
+            panel.innerHTML = `<div class="opened-chest tier-${ft}" aria-hidden="true">${window.LB_CHEST ? LB_CHEST('rs' + Math.floor(Math.random() * 1e6), ft) : icon('check')}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;
             const mc = panel.querySelector('canvas.mini-item');
             if (mc && final.cosmetic){
                 const slot = ['skin', 'hat', 'face', 'trail'].find(k => COS_BY[k].some(i => i.id === final.cosmetic.id)) || 'skin';
