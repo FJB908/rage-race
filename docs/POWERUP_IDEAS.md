@@ -1,6 +1,6 @@
 # Powerup ideas (to approve)
 
-Current items: rocket, giant, bounce, chain, quake (always aims at the leader), shield, wind, ufo. Nothing below is built yet.
+Current items: rocket, giant, bounce (now with a spring), chain, quake (always aims at the leader), shield, wind, ufo, and the newly built Cannon, Double jump and Magnet (see POWERUPS.md). The rest below is not built yet.
 "Who" = who rolls it most (the game gives comeback tools to players further back, defence to players in front).
 
 ## Comeback (further back)

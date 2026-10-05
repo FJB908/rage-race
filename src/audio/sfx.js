@@ -217,6 +217,14 @@ const SFX = (() => {
         go() { [60, 64, 67, 71, 74].forEach((m, i) => I.piano(mtof(m), { at: i * 0.015, t: 1.1, v: 0.07, verb: 0.35 })); I.vibe(mtof(88), { at: 0.08, t: 1, v: 0.06, verb: 0.4 }); },
         finish() { [0, 2, 4, 5, 7, 9].forEach(i => I.vibe(mtof(pent(60, i)), { at: i * 0.07, t: 1.2, v: 0.085, verb: 0.4 }));
             [48, 55, 59, 64, 67].forEach(m => I.piano(mtof(m), { at: 0.5, t: 1.6, v: 0.07, verb: 0.45 })); },
+        // power-ups
+        cannon() { noise({ type: 'bandpass', f: 1900, q: 2, t: 0.05, v: 0.12, a: 0.004 }); voice({ f: 170, f2: 80, t: 0.25, v: 0.26, a: 0.004 }); I.pluck(mtof(43), { t: 0.5, v: 0.1, verb: 0.2 });
+            voice({ f: 300, f2: 720, glide: 0.32, t: 0.32, v: 0.05, a: 0.05, filter: { f: 900, f2: 2600 }, verb: 0.3 }); },
+        cannonfire() { noise({ type: 'lowpass', f: 3000, f2: 110, q: 1, t: 0.9, v: 0.36, a: 0.003, verb: 0.3 }); voice({ f: 150, f2: 36, t: 0.55, v: 0.4, a: 0.003, glide: 0.45 });
+            noise({ type: 'bandpass', f: 400, f2: 3200, q: 0.6, t: 0.7, v: 0.1, a: 0.04, at: 0.05, verb: 0.25 }); I.vibe(mtof(88), { at: 0.12, t: 0.9, v: 0.06, verb: 0.4 }); },
+        cloud() { noise({ type: 'bandpass', f: 900, f2: 2600, q: 0.6, t: 0.22, v: 0.07, a: 0.04, verb: 0.25 }); I.pluck(mtof(88), { at: 0.03, t: 0.2, v: 0.05, verb: 0.3 }); I.vibe(mtof(93), { at: 0.07, t: 0.6, v: 0.045, verb: 0.4 }); },
+        magnet() { voice({ type: 'triangle', f: 110, f2: 190, glide: 0.4, t: 0.5, v: 0.1, a: 0.05, filter: { f: 700, f2: 1400 }, verb: 0.3 }); voice({ f: 1800, f2: 640, glide: 0.14, t: 0.16, v: 0.06, at: 0.18 }); I.vibe(mtof(91), { at: 0.22, t: 0.8, v: 0.06, verb: 0.4 }); },
+        spring() { voice({ f: 220, f2: 640, glide: 0.12, t: 0.16, v: 0.11, a: 0.004, vib: 30, vibRate: 22, verb: 0.15 }); I.pluck(mtof(64), { at: 0.02, t: 0.25, v: 0.06 }); },
         // stingers: the moments worth a little fanfare
         lead() { [0, 2, 4].forEach(i => I.vibe(mtof(pent(79, i)), { at: i * 0.05, t: 0.8, v: 0.07, verb: 0.35 })); I.pluck(mtof(91), { at: 0.15, t: 0.3, v: 0.05, verb: 0.3 }); },
         qualify() { [0, 1, 2, 4].forEach((k, i) => I.vibe(mtof(pent(72, k + 1)), { at: i * 0.07, t: 0.9, v: 0.08, verb: 0.35 })); I.piano(mtof(72), { at: 0.28, t: 1, v: 0.06, verb: 0.35 }); I.piano(mtof(79), { at: 0.28, t: 1, v: 0.05, verb: 0.35 }); },
@@ -233,8 +241,8 @@ const SFX = (() => {
             voice({ f: 66, f2: 40, t: 0.7, v: 0.22, at: 0.65 }); voice({ f: 66, f2: 40, t: 1.2, v: 0.22, at: 2.2 }); bell(mtof(96), { at: 2.3, t: 1.8, v: 0.07 }); },
         shatter() { for (let i = 0; i < 4; i++) I.pluck(mtof(pent(84, i + Math.floor(Math.random() * 3))), { at: i * 0.035, t: 0.25, v: 0.045, verb: 0.35 }); },
     };
-    const COOLDOWN = { coin: 45, land: 70, pickup: 90, item: 70, combo: 120, shatter: 150, chain: 200, block: 200, jump: 40, tap: 60, knock: 30 };
-    const CRITICAL = new Set(['win', 'gtwin', 'qualify', 'elim', 'lead', 'jump', 'land', 'finish', 'go', 'count', 'fail', 'boost', 'stumble', 'open', 'knock', 'boom', 'tick']);
+    const COOLDOWN = { spring: 90, cloud: 80, coin: 45, land: 70, pickup: 90, item: 70, combo: 120, shatter: 150, chain: 200, block: 200, jump: 40, tap: 60, knock: 30 };
+    const CRITICAL = new Set(['cannon', 'cannonfire', 'cloud', 'magnet', 'win', 'gtwin', 'qualify', 'elim', 'lead', 'jump', 'land', 'finish', 'go', 'count', 'fail', 'boost', 'stumble', 'open', 'knock', 'boom', 'tick']);
     const lastPlay = {};
 
     /* ================================================================== music ==== */

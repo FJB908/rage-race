@@ -344,7 +344,7 @@ function makePlayer(o){
 }
 
 function initPlayers() {
-    players = []; finishedCount = 0;
+    players = []; finishedCount = 0; if (window.PU) PU.reset();
     const pw = PLAY_W();
     // Use the SAME names shown in the lobby, in the same slot order.
     const names = (matchBotNames && matchBotNames.length===3)
@@ -437,7 +437,8 @@ function springFx(p, kind){
     ring(rx, ry, ITEMS.bounce.color, 42*k, flat);
     burst(rx, ry, ITEMS.bounce.color, 12, 200);
     p.squash = kind === 'wall' ? 1 : 1.3;
-    if (p.local) camShake = Math.max(camShake, 3);
+    if (kind !== 'wall') p.spring = 1;                          // the spring under the player squashes, then springs back
+    if (p.local){ camShake = Math.max(camShake, 3); SFX.play('spring'); }
 }
 function updateShockwaves(dt){
     for (let i=shockwaves.length-1;i>=0;i--){
@@ -552,7 +553,16 @@ function rollItem(p){
             if (f < 0.9) ufoW *= 0.5;   // 3rd place: possible when far behind, but half as likely as last
         }
     }
+    // The new power-ups (not in the Gauntlet, which has its own balance). Cannon is the big comeback tool: only far behind the leader.
+    const inRace = gameMode !== 'gauntlet', easy = (window.Gentle && p.local) ? Gentle.ease() : 0;
+    let cannonW = 0;
+    if (inRace && others && !isLeader && f >= 0.5){
+        const lead = players.reduce((m, o) => (o !== p && !o.finished && o.y < m) ? o.y : m, p.y), gap = p.y - lead;
+        if (gap > 650) cannonW = Math.min(0.55, 0.12 + (gap - 650) / 2600) * (f < 0.85 ? 0.6 : 1);
+    }
+    const djW = inRace ? 0.15 + 0.10*f : 0, magnetW = inRace ? 0.14 + 0.10*f + 0.08*Math.min(1, easy) : 0;
     const w = {
+        cannon: cannonW, dj: djW, magnet: magnetW,
         rocket: 0.06 + 0.50*f,
         giant:  0.22,
         bounce: 0.30 - 0.08*f,
@@ -590,7 +600,7 @@ function updateItemBoxes(dt){
                 ring(b.x, b.y, '#ffffff', 40);
                 if (p.local){
                     // make the roulette end exactly on the item you get
-                    itemHUD.rollOffset = ((ITEM_KEYS.indexOf(p.item) - 13) % 4 + 4) % 4;
+                    itemHUD.rollOffset = ((ITEM_KEYS.indexOf(p.item) - 13) % ITEM_KEYS.length + ITEM_KEYS.length) % ITEM_KEYS.length;
                 }
                 break;
             }
@@ -652,6 +662,7 @@ function drawItemBoxes(){
 /* ---- Per-frame ability timers (called from stepPlayer) ---- */
 function tickAbilities(p, dt){
     if (p.itemCool > 0) p.itemCool -= dt;
+    if (window.PU) PU.tick(p, dt);
     if (p.itemState === 'rolling'){
         p.itemRoll -= dt;
         if (p.itemRoll <= 0){
@@ -718,6 +729,8 @@ function botWantsItem(p){
         case 'shield': return true;                 // hold it defensively as soon as it's ready
         case 'wind':   return players.some(o => o !== p && !o.finished); // useless with nobody else left
         case 'ufo':    return p.mode === 'idle' || p.itemHold > 2;  // call it in from solid ground
+        case 'cannon': return p.mode === 'idle';                    // deploy from solid ground
+        case 'magnet': case 'dj': return p.mode === 'idle';
     }
     return true;
 }
@@ -730,7 +743,7 @@ function activateItem(p){
     if (it === 'chain' && !chainTarget) return false;
     p.item = null; p.itemState = null; p.itemCool = 4;
     const evx = {};
-    if (p.local) SFX.play({rocket:'rocket', shield:'shield', wind:'wind', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce'}[it] || 'item');
+    if (p.local) SFX.play({rocket:'rocket', shield:'shield', wind:'wind', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce', cannon:'cannon', dj:'cloud', magnet:'magnet'}[it] || 'item');
     if (it === 'rocket') startRocket(p);
     else if (it === 'giant'){
         p.giantT = GIANT_TIME; p.rv += 60;
@@ -757,6 +770,8 @@ function activateItem(p){
         ring(p.x, p.y, ITEMS.shield.color, 50);
     } else if (it === 'wind'){
         evx.dir = startWind(p);
+    } else if (it === 'cannon' || it === 'dj' || it === 'magnet'){
+        PU.activate(p, it);
     }
     if (window.partyMatch && partyMatch.live && (p.local || p.hostedBot)) Social.emitItem(p, it, evx, chainTarget);   // party race: tell the other phones
     if (p.local) itemHUD.key = '';           // force a HUD refresh
@@ -1062,6 +1077,9 @@ bounce: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M1
 chain: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="icBall" cx=".35" cy=".35" r=".75"><stop offset="0" stop-color="#9aa3b8"/><stop offset=".45" stop-color="#3a4152"/><stop offset="1" stop-color="#11141c"/></radialGradient></defs><g fill="none" stroke-linecap="round"><rect x="4" y="6.5" width="12" height="7" rx="3.5" transform="rotate(40 10 10)" stroke="#c9d1e3" stroke-width="3"/><path d="M14.5 14 L19.5 18.5" stroke="#8a93a8" stroke-width="3.6"/><rect x="17" y="18" width="12" height="7" rx="3.5" transform="rotate(40 23 21.5)" stroke="#c9d1e3" stroke-width="3"/></g><circle cx="32" cy="33" r="11" fill="url(#icBall)"/><path d="M25.8 30.5 a6.5 6.5 0 0 1 4.6 -4.8" stroke="#fff" stroke-opacity=".45" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
 quake: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M4 34 L14 34 L18 24 L23 42 L28 18 L32 34 L44 34" fill="none" stroke="#ff5470" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 40h40" stroke="#8a2e3c" stroke-width="3" stroke-linecap="round" opacity=".6"/><path d="M9 15 L12 10 M39 15 L36 10 M24 9 L24 4" stroke="#ff5470" stroke-width="2.6" stroke-linecap="round" opacity=".75"/></svg>`,
 shield: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icSh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6f5c2"/><stop offset="1" stop-color="#33b56a"/></linearGradient></defs><path d="M24 4 L40 10 V22 C40 33 33 41 24 44 C15 41 8 33 8 22 V10 Z" fill="url(#icSh)" stroke="#0d1017" stroke-width="1.6"/><path d="M24 10 L34 14 V22 C34 30 29.5 36 24 38 C18.5 36 14 30 14 22 V14 Z" fill="none" stroke="#eafff2" stroke-width="1.6" opacity=".8"/><path d="M18 23 L22.5 27.5 L31 17.5" fill="none" stroke="#0d1017" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+cannon: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icCn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a4a1a"/><stop offset=".45" stop-color="#ffb866"/><stop offset="1" stop-color="#8a4a12"/></linearGradient></defs><path d="M18 8 L16.5 28 H31.5 L30 8 Z" fill="url(#icCn)" stroke="#0d1017" stroke-width="2.4" stroke-linejoin="round"/><ellipse cx="24" cy="8" rx="6.6" ry="2.6" fill="#0d1017"/><rect x="12" y="28" width="24" height="8" rx="3" fill="#46506b" stroke="#0d1017" stroke-width="2.2"/><circle cx="15" cy="38" r="5" fill="#161b28" stroke="#c9d1e3" stroke-width="2"/><circle cx="33" cy="38" r="5" fill="#161b28" stroke="#c9d1e3" stroke-width="2"/><circle cx="24" cy="17" r="1.5" fill="#0d1017"/><g stroke="#ffcf3f" stroke-width="2.4" stroke-linecap="round"><path d="M24 2 V-2" opacity="0"/><path d="M14 4 L11 1 M34 4 L37 1"/></g></svg>`,
+dj: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M12 36 a7.5 7.5 0 0 1 1.5-14.8 a9.5 9.5 0 0 1 18-1 a7 7 0 0 1 1 15.8 Z" fill="#eaf6ff" stroke="#9fe8ff" stroke-width="2.4" stroke-linejoin="round"/><g fill="none" stroke="#9fe8ff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 15 L24 8 L31 15"/><path d="M17 24 L24 17 L31 24" opacity=".55"/></g></svg>`,
+magnet: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M12 38 V22 a12 12 0 0 1 24 0 V38" fill="none" stroke="#0d1017" stroke-width="12" stroke-linecap="butt"/><path d="M12 32 V22 a12 12 0 0 1 24 0 V32" fill="none" stroke="#ff4d6a" stroke-width="8" stroke-linecap="butt"/><path d="M12 38 V32 M36 38 V32" fill="none" stroke="#e8eefc" stroke-width="8"/><g stroke="#c77dff" stroke-width="2.6" stroke-linecap="round"><path d="M6 12 L10 15 M42 12 L38 15 M24 3 V7"/></g></svg>`,
 wind: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#8fd6ff" stroke-width="3.4" stroke-linecap="round"><path d="M4 16 H30 a5 5 0 1 0 -4.5 -7.2"/><path d="M4 25 H36 a5.5 5.5 0 1 1 -5 7.9"/><path d="M4 34 H24 a4 4 0 1 1 -3.6 5.8"/></g></svg>`,
 };
 const slotEl = document.getElementById('item-slot');
@@ -1077,8 +1095,9 @@ function updateItemHUD(){
         mode = 'rolling';
         const el = Math.max(0, ROLL_TIME - p.itemRoll);
         const idx = Math.min(13, Math.floor(Math.pow(el/ROLL_TIME, 0.55) * 14));   // decelerating wheel
-        icon = ITEM_KEYS[(idx + itemHUD.rollOffset) % 4];
+        icon = ITEM_KEYS[(idx + itemHUD.rollOffset) % ITEM_KEYS.length];
     } else if (p.itemState === 'ready'){ mode = 'ready'; icon = p.item; }
+    else if (window.PU && PU.hud(p)){ const h = PU.hud(p); mode = 'active'; icon = h.icon; badge = h.badge; prog = h.prog; col = h.col; }
     else if (p.giantT > 0){ mode = 'active'; icon = 'giant'; prog = p.giantT/GIANT_TIME; col = ITEMS.giant.color; }
     else if (p.bounceT > 0){ mode = 'active'; icon = 'bounce'; badge = Math.ceil(p.bounceT)+'s'; prog = p.bounceT/BOUNCE_TIME; col = ITEMS.bounce.color; }
     else if (p.shieldT > 0){ mode = 'active'; icon = 'shield'; prog = p.shieldT/SHIELD_TIME; col = ITEMS.shield.color; }
@@ -1102,6 +1121,7 @@ function updateItemHUD(){
 slotEl.addEventListener('pointerdown', e => {
     e.preventDefault(); e.stopPropagation();
     const p = players[0];
+    if (p && window.PU && PU.slotTap(p)) return;
     if (p && activateItem(p)) slotEl.animate([{transform:'scale(.9)'},{transform:'scale(1)'}], {duration:180});
 });
 window.addEventListener('keydown', e => {
@@ -1116,7 +1136,7 @@ canvas.addEventListener('pointerdown', e => {
     if (e.clientX > CW - SIDEBAR) return;
     const p = players[0];
     if (canFreeCam()){ panDrag = { y0: e.clientY, cam0: cameraY }; freeCam = true; return; }
-    if (p.finished || p.mode !== 'idle') return;
+    if (!(window.PU ? PU.canAim(p) : (!p.finished && p.mode === 'idle'))) return;
     dragging = true; sx=cx=e.clientX; sy=cy=e.clientY;
 });
 canvas.addEventListener('pointermove', e => {
@@ -1129,11 +1149,14 @@ function endDrag(){
     dragging = false;
     if (state !== 'playing') return;   // released before GO: nothing happens
     const p = players[0];
-    if (p.finished || p.mode !== 'idle') return;
+    if (!(window.PU ? PU.canAim(p) : (!p.finished && p.mode === 'idle'))) return;
     let dx = sx-cx, dy = sy-cy;
     const d = Math.hypot(dx,dy);
     if (d > 14) {
         if (d > MAX_DRAG){ dx=dx/d*MAX_DRAG; dy=dy/d*MAX_DRAG; }
+        if (window.PU && PU.onRelease(p, dx, dy)){ hintEl.style.display='none'; return; }     // cannon shot / extra mid-air jump
+        const mg = window.PU && PU.assistLaunch(p, dx, dy);                                    // Magnet: the jump is pulled to the middle of the platform you aimed at
+        if (mg){ dx = mg.dx; dy = mg.dy; }
         launchPlayer(p, dx, dy);
         hintEl.style.display='none';
     }
@@ -1244,6 +1267,7 @@ function evalTarget(p, pl, ceilings) {
 
 function updateBot(p, dt) {
     if (p.mode !== 'idle') return;
+    if (p.cannon) return;                          // being a cannon: PU.tick fires it
     // AFK: a rare player who just stands there — until, after 20s, a "backfill" bot takes
     // over their controls and starts playing normally (never with the human profile).
     if (p.afk){
@@ -1394,11 +1418,12 @@ function updateBot(p, dt) {
         // plus per-jump variability, instead of clean symmetric noise — reads as a person's
         // grip/timing quirk rather than a random-number generator.
         const person = p.fumbleBias || 0;
-        vx += (person * 0.6 + rnd(-1, 1) * 0.8) * BOT_BASE.aimX * p.skill * sprintMul;
-        vy += rnd(-1, 1) * BOT_BASE.aimY * 0.9 * p.skill * sprintMul;
+        vx += (person * 0.6 + rnd(-1, 1) * 0.8) * BOT_BASE.aimX * p.skill * sprintMul * (p.magnetT > 0 ? 0.3 : 1);
+        vy += rnd(-1, 1) * BOT_BASE.aimY * 0.9 * p.skill * sprintMul * (p.magnetT > 0 ? 0.3 : 1);
     } else {
-        vx += rnd(-1, 1) * BOT_BASE.aimX * p.skill * aimMul * sprintMul;
-        vy += rnd(-1, 1) * BOT_BASE.aimY * p.skill * aimMul * sprintMul;
+        const mgk = p.magnetT > 0 ? 0.3 : 1;        // Magnet: a bot's aim is much sharper while it lasts
+        vx += rnd(-1, 1) * BOT_BASE.aimX * p.skill * aimMul * sprintMul * mgk;
+        vy += rnd(-1, 1) * BOT_BASE.aimY * p.skill * aimMul * sprintMul * mgk;
     }
 
     // Clamp to power
@@ -1408,7 +1433,7 @@ function updateBot(p, dt) {
 
     // Launch (respect boost charge)
     const wasCharged = p.charged;
-    p.vx = vx; p.vy = vy;
+    p.vx = vx; p.vy = vy; p.aimPl = best.pl;
     p.mode = 'air'; p.plat = null; p.squash = 1.35;
     if (wasCharged) { p.charged = false; burst(p.x, p.y, PLAT.boost, 12, 200); }
     else burst(p.x, p.y, p.color, 8, 140);
@@ -1423,7 +1448,7 @@ function landOn(p, pl) {
     // dust puff where the feet hit the platform; harder landings throw more
     burst(p.x, pl.y - pl.h / 2, '#c9d1e3', 3 + Math.min(8, Math.round(impact / 260)), 70 + Math.min(120, impact / 12));
     if (impact > 1300) ring(p.x, pl.y - pl.h / 2, '#c9d1e3', 34 + Math.min(30, impact / 60), true);
-    p.idleT = 0;
+    p.idleT = 0; p.cannonFly = 0;
     p.extraWait = (!p.local && pl.type !== 'fragile' && !(players[0] && players[0].finished) && Math.random() < 0.10) ? rnd(0.4, 1.0) : 0;
     p.y = pl.y - pl.h/2 - p.r;
     p.vy = 0; p.mode='idle'; p.plat=pl; p.squash = Math.max(0.55, 0.78 - impact / 9000);
@@ -1542,7 +1567,7 @@ function stepPlayer(p, dt) {
                 if (pTopPrev >= bottom - 2 && pTopNow <= bottom) {
                     if (p.x + p.r > pl.x - pl.w/2 && p.x - p.r < pl.x + pl.w/2) {
                         pl.ceiling = false; pl.ceilingBroken = true;
-                        p.y = bottom + p.r; p.vy = -p.vy * 0.3;   // still a soft bonk on the way through
+                        p.y = bottom + p.r; p.vy = p.cannonFly > 0 ? p.vy * 0.92 : -p.vy * 0.3;   // a soft bonk on the way through (a cannon shot just punches through)
                         shatterCeiling(p.x, bottom, pl.w);
                         camShake = Math.max(camShake, 7);
                         if (p.local) floatText(p.x, bottom + 20, "SHATTERED!", '#ffcf3f');
@@ -1913,6 +1938,7 @@ function update(dt) {
     updateQuakes(dt);
     updateWindFx(dt);
     updateUfos(dt);
+    if (window.PU) PU.update(dt);
     if (gameMode === 'escape') updateEscape(dt);
     else if (gameMode === 'parkour') updateParkour(dt);
     else if (gameMode === 'level') updateLevel(dt);
@@ -1927,7 +1953,8 @@ function update(dt) {
     const camP = (spectating && spectateTarget && !spectateTarget.finished) ? spectateTarget : (gameMode === 'gauntlet' ? gtCamTarget() : (escapeSpectate || players[0]));
     if (freeCam && !canFreeCam()) freeCam = false;
     if (!freeCam && !isArena()){      // Boom Tag: one fixed screen
-        const targetCam = camP.y - VH*0.62;
+        const lookUp = (camP === players[0] && players[0].cannon === 2 && dragging) ? VH*0.30 : 0;      // aiming the cannon: see further up the track
+        const targetCam = camP.y - VH*0.62 - lookUp;
         cameraY += (targetCam - cameraY) * Math.min(1, 12*dt);
     }
     refreshWatchBar();
@@ -2130,12 +2157,13 @@ function draw() {
 
     // trajectory preview
     const lp = players[0];
-    if ((state==='playing' || state==='countdown') && dragging && lp.mode==='idle' && !lp.finished) {
+    if ((state==='playing' || state==='countdown') && dragging && (lp.mode==='idle' || (window.PU && PU.airAim(lp))) && !lp.finished) {
         let dx=sx-cx, dy=sy-cy; const d=Math.hypot(dx,dy);
         if (d>14){
             if (d>MAX_DRAG){ dx=dx/d*MAX_DRAG; dy=dy/d*MAX_DRAG; }
             const col = lp.charged ? 'rgba(53,224,200,0.85)' : lp.chainT>0 ? 'rgba(255,140,160,0.7)' : 'rgba(255,255,255,0.7)';
-            if ((gameMode === 'parkour' || gameMode === 'level') && !(DIMENSIONS[curDim] && DIMENSIONS[curDim].tutorial)) {      // the tutorial teaches with the normal dotted line
+            if (window.PU && PU.preview(ctx, lp, dx, dy)){ /* cannon / magnet drew its own arc */ }
+            else if ((gameMode === 'parkour' || gameMode === 'level') && !(DIMENSIONS[curDim] && DIMENSIONS[curDim].tutorial)) {      // the tutorial teaches with the normal dotted line
                 // Parkour rules: only direction and power, never a hint of where you'll land.
                 // A plain arrow whose length tracks how far you've dragged, up to MAX_DRAG —
                 // past that it simply stops growing.
@@ -2152,7 +2180,7 @@ function draw() {
                 ctx.closePath(); ctx.fillStyle = col; ctx.fill();
                 ctx.restore();
             } else {
-                const mult = playerPowMul(lp, false);
+                const mult = playerPowMul(lp, false) * (lp.mode === 'air' ? 0.94 : 1);
                 const G = playerG(lp);
                 let X=lp.x, Y=lp.y, VX=dx*POWER*mult, VY=dy*POWER*mult;
                 const pw=PLAY_W();
@@ -2335,6 +2363,7 @@ function draw() {
 
     drawCosmeticTrails(viewTop, viewBottom);
 
+    if (window.PU) PU.drawWorld(ctx);                              // double-jump clouds, the magnet's pull
     // players
     const nowT = performance.now()/1000;
     if (gameMode === 'gauntlet') gtPrepareDraw(viewTop, viewBottom);
@@ -2352,6 +2381,7 @@ function draw() {
             const amt = 2 + k2*6;
             shakeX = (Math.random()-0.5)*amt; shakeY = (Math.random()-0.5)*amt*0.6;
         }
+        if (window.PU) PU.drawUnder(ctx, p, nowT);                  // the spring of a Super Bounce, the ready-cloud of a Double Jump
         ctx.save(); ctx.translate(p.x+shakeX,p.y+shakeY);
         let alpha = p.local ? 1 : 0.8;
         if (p.giantT > 0 && p.giantT < 1.6 && Math.floor(nowT*12) % 2 === 0) alpha *= 0.45;   // about to shrink
@@ -2378,7 +2408,8 @@ function draw() {
 
         // SQUARE body
         const s = p.r;
-        if (p._lod && p._spr){
+        if (window.PU && PU.drawBody(ctx, p, nowT)){ /* a cannon stands here instead of the cube */ }
+        else if (p._lod && p._spr){
             // Gauntlet crowd: a cached picture of the whole look (body, face, hat) instead of re-drawing every layer
             const f = s / GT_SPRITE.half;
             ctx.drawImage(p._spr, -GT_SPRITE.w / 2 * f, -GT_SPRITE.cy * f, GT_SPRITE.w * f, GT_SPRITE.h * f);
@@ -2419,6 +2450,7 @@ function draw() {
             ctx.globalAlpha = 1;
         }
         ctx.restore();
+        if (window.PU) PU.drawOver(ctx, p, nowT);
 
         // super bounce
         let tagY = p.y - p.r - 8;

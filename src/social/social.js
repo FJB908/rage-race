@@ -171,6 +171,7 @@
         x:Math.round(p.x * 10) / 10, y:Math.round(p.y * 10) / 10, vy:Math.round(p.vy), f:p.finished ? p.finishTime : 0,
         gt:Math.round(Math.max(0, p.giantT || 0) * 10) / 10, st:Math.round(Math.max(0, p.shieldT || 0) * 10) / 10, bt:Math.round(Math.max(0, p.bounceT || 0) * 10) / 10,
         rf:Math.round(Math.max(0, p.rocketFx || 0) * 10) / 10, pi:p.mode === 'idle' && p.plat ? platforms.indexOf(p.plat) : -1,
+        ...(window.PU ? PU.sample(p) : {}),            // cannon / double jump / magnet state, so friends see it too
     });
     function liveStart(d) {                          // after startGame(): friends and shared bots become remote players
         const rt = RT, m = rt.m, base = 'rooms/' + S.party.code + '/' + d.token + '/';
@@ -189,7 +190,7 @@
             const feed = path => m.onValue(m.ref(rt.db, base + path), snap => {
                 const v = snap.val();
                 if (!v) { if (sl.human && path === 'p/' + sl.uid && Date.now() - LIVE.t0 > 4000) p.left = true; return; }
-                p.lastT = performance.now(); p.samples.push({ t:p.lastT, x:v.x, y:v.y, vy:v.vy || 0, f:v.f || 0, gt:v.gt || 0, st:v.st || 0, bt:v.bt || 0, rf:v.rf || 0, pi:v.pi === undefined ? -1 : v.pi });
+                p.lastT = performance.now(); p.samples.push({ t:p.lastT, x:v.x, y:v.y, vy:v.vy || 0, f:v.f || 0, gt:v.gt || 0, st:v.st || 0, bt:v.bt || 0, rf:v.rf || 0, pi:v.pi === undefined ? -1 : v.pi, ...(window.PU ? PU.parse(v) : {}) });
                 if (p.samples.length > 20) p.samples.shift();
                 if (path !== 'p/' + sl.uid) p.botFed = true;
             });
@@ -236,11 +237,13 @@
     function emit(ev) { if (!LIVE) return; try { RT.m.push(RT.m.ref(RT.db, LIVE.base + 'ev'), Object.assign({ t:Date.now() }, ev)); } catch (e) {} }
     function emitItem(p, it, extra, target) { emit(Object.assign({ k:'item', by:uidOf(p), it, tgt:target ? uidOf(target) : '' }, extra)); }
     function emitBox(i) { emit({ k:'box', by:S.uid, i }); }
+    function emitDJ(p) { emit({ k:'dj', by:uidOf(p), x:Math.round(p.x), y:Math.round(p.y + p.r * 0.9) }); }
     const byUid = u => u === S.uid ? players[0] : players.find(p => p.uid === u);
     function applyEvent(ev) {                        // replay something a friend (or the phone simulating a bot) did
         if (!ev || !LIVE || Date.now() - ev.t > 20000) return;
         if (ev.by === S.uid || LIVE.hosted.some(h => h.uid === ev.by)) return;           // our own
         if (ev.k === 'box') { const b = itemBoxes[ev.i]; if (b && b.alive) { b.alive = false; b.respawn = 9; ring(b.x, b.y, '#ffffff', 40); } return; }
+        if (ev.k === 'dj') { if (window.PU) PU.cloud(ev.x, ev.y); return; }       // someone jumped again in mid-air: their cloud
         if (ev.k !== 'item') return;
         const src = byUid(ev.by); if (!src || !src.remote) return;
         if (ev.it === 'wind') startWind(src, ev.dir);
@@ -265,6 +268,7 @@
             p.lastS = b;
             if (b.gt > 0 && !(p.giantT > 0)) p.giantT = b.gt; if (!(b.gt > 0)) p.giantT = 0;
             p.shieldT = b.st; p.bounceT = b.bt; if (b.rf > 0 && !(p.rocketFx > 0)) p.rocketFx = b.rf;
+            if (window.PU) PU.apply(p, b, a.vy, b.vy);
         }
         if (p.y < p.best) p.best = p.y;
         if (b.f > 0 && !p.finished) { p.finished = true; p.finishTime = b.f; finishedCount++; p.x = b.x; p.y = b.y; burst(p.x, p.y, p.color, 24, 240); checkEnd(); }
@@ -396,5 +400,5 @@
         return [...S.friends].filter(([, v]) => v.status === 'accepted').map(([u]) => { const d = (S.profiles.get(u) || {}).d || {}; return { uid:u, name:d.name || 'Player', look:d.look || {}, lvl:d.lvl || 1, online:online(d), inParty:S.members.some(m => m.uid === u) }; })
             .sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
     }
-    window.Social = { render, setMode, friendList, createParty, joinParty, leaveParty, invite, kick, startParty, pretty, ready:() => !!S.api, answerInvite:(i, ok) => ok ? (fs().deleteDoc(dref('invites', i.id)).catch(() => {}), joinParty(i.code)) : fs().deleteDoc(dref('invites', i.id)).catch(() => {}), stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
+    window.Social = { emitDJ, render, setMode, friendList, createParty, joinParty, leaveParty, invite, kick, startParty, pretty, ready:() => !!S.api, answerInvite:(i, ok) => ok ? (fs().deleteDoc(dref('invites', i.id)).catch(() => {}), joinParty(i.code)) : fs().deleteDoc(dref('invites', i.id)).catch(() => {}), stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };
 })();
