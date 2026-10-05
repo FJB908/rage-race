@@ -24,7 +24,7 @@
 .lb-stage { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:14px; transition:transform .6s cubic-bezier(.5,0,.2,1), opacity .5s ease; }
 .lb-stage.away { transform:translateY(-14vh) scale(.55); opacity:0; pointer-events:none; }
 .lb-title { font-weight:900; letter-spacing:.2em; font-size:13px; color:var(--c); text-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent); }
-.lb-chest { width:min(66vw,300px); cursor:pointer; background:radial-gradient(closest-side, color-mix(in srgb,var(--c) 42%,transparent), transparent 100%) center 55% / 135% 120% no-repeat; will-change:transform;       /* a plain gradient glow: a blur filter on an animated SVG re-rendered every frame */
+.lb-chest { width:min(66vw,300px); cursor:pointer; will-change:transform;
   transform:translateY(-110vh); -webkit-tap-highlight-color:transparent; }
 .lb.in .lb-chest { animation:lbDrop .8s cubic-bezier(.3,1.5,.5,1) .15s forwards; }
 @keyframes lbDrop { 0% { transform:translateY(-110vh) rotate(-8deg); } 70% { transform:translateY(8px) rotate(1deg); } 100% { transform:translateY(0); } }
