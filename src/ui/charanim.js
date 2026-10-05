@@ -1,6 +1,8 @@
-// LIVING CHARACTERS: faces, polish and animation for the cube players.
-//   CharFX   drawing helpers: body gloss, eyes + mouth with expressions (used in the race, the menu, the shop previews and the podium)
-//   CharAnim animated characters on a canvas: idle breathing + blinking, a random face on every tap, a salto on a quick second tap,
+// LIVING CHARACTERS: polish and animation for the cube players.
+// The cube is mysterious on purpose: two plain dark eyes (no white around them), no mouth. Every mood is therefore played with the eyes
+// (their size, a drooping lid, a glance, a closed smile-arc, a wink) and with the body (a lean, a tilt, a hop, a slow nod), never with a mouth or a cartoon face.
+//   CharFX   drawing helpers: body gloss and the eyes with expressions (race, menu, shop previews, podium)
+//   CharAnim animated characters on a canvas: idle breathing, blinking and glancing; a small reaction on every tap, a salto on a quick second tap;
 //            win / cheer / lose moods for the podium and the result screens. One shared loop drives them all and sleeps when nothing is on screen.
 // Loaded AFTER game.js (it uses renderLook, lookMetrics, rrPath) and before the modes that show a podium.
 (function () {
@@ -8,19 +10,13 @@
     const TAU = Math.PI * 2, INK = '#0d1017';
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const sstep = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
-    const ease = { out: x => 1 - (1 - x) * (1 - x), inout: x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2 };
+    const ease = { inout: x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2 };
     const rnd = (a, b) => a + Math.random() * (b - a);
 
     /* ------------------------------------------------------------------------------ drawing ---- */
-    function heart(c, x, y, r) {
-        c.beginPath(); c.moveTo(x, y + r * .9);
-        c.bezierCurveTo(x - r * 1.6, y - r * .1, x - r * .9, y - r * 1.3, x, y - r * .4);
-        c.bezierCurveTo(x + r * .9, y - r * 1.3, x + r * 1.6, y - r * .1, x, y + r * .9); c.closePath();
-    }
-    function star(c, x, y, r, rot) {
-        c.beginPath();
-        for (let i = 0; i < 10; i++) { const a = rot + i * Math.PI / 5 - Math.PI / 2, q = i % 2 ? r * .46 : r; c[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * q, y + Math.sin(a) * q); }
-        c.closePath();
+    // a small four-point glint (used for the winner's sparkle)
+    function glint(c, x, y, r) {
+        c.beginPath(); c.moveTo(x, y - r); c.quadraticCurveTo(x, y, x + r * .8, y); c.quadraticCurveTo(x, y, x, y + r); c.quadraticCurveTo(x, y, x - r * .8, y); c.quadraticCurveTo(x, y, x, y - r); c.closePath();
     }
     // a soft light on the cube: bright top, darker bottom, a glow in the top-left corner and a thin rim, so it reads as a rounded toy instead of a flat square
     function gloss(c, s, k) {
@@ -34,97 +30,56 @@
         c.lineWidth = k * 1.1; c.strokeStyle = 'rgba(255,255,255,0.15)'; rrPath(c, -s + k * .9, -s + k * .9, s * 2 - k * 1.8, s * 2 - k * 1.8, 3.2 * k); c.stroke();
         c.restore();
     }
-    function brow(c, k, x, y, side, kind) {                      // kind 1 = sad (inner end up), -1 = angry (inner end down)
-        const inner = y - (kind > 0 ? 5.3 : 3.3) * k, outer = y - (kind > 0 ? 3.4 : 5.2) * k;
-        c.strokeStyle = INK; c.lineWidth = 1.5 * k; c.lineCap = 'round'; c.beginPath();
-        c.moveTo(x + side * 2.5 * k, outer); c.lineTo(x - side * 2.3 * k, inner); c.stroke();
-    }
-    function eye(c, k, side, e, t) {
-        const x = side * 4 * k + (e.lx || 0) * k, y = -2 * k + (e.ly || 0) * k, bl = e.blink || 0;
+    // One eye. e: eye ('dot' | 'happy' | 'closed' | 'wink'), eh/ew size, eh2 height of the right eye, lid (0..1 of the top covered), tilt (+ droopy / - sly),
+    // oy (eyes up/down), lx/ly (glance), blink (0..1). Always solid dark, nothing white.
+    function eye(c, k, side, e) {
+        const x = side * (4 + (e.sp || 0)) * k + (e.lx || 0) * k, y = (-2 + (e.oy || 0)) * k + (e.ly || 0) * k, bl = e.blink || 0;
         let m = e.eye || 'dot';
         if (m === 'wink') m = side < 0 ? 'dot' : 'happy';
         c.lineCap = 'round'; c.lineJoin = 'round';
-        if (m === 'dot' || m === 'sad' || m === 'angry') {
-            const r = (m === 'dot' ? 2.4 : 2.2) * k;
-            c.fillStyle = INK; c.beginPath(); c.ellipse(x, y, r, Math.max(.25 * k, r * (1 - .9 * bl)), 0, 0, TAU); c.fill();
-            if (bl < .45) { c.fillStyle = 'rgba(255,255,255,0.9)'; c.beginPath(); c.arc(x + .75 * k, y - .85 * k, .8 * k, 0, TAU); c.fill(); }
-            if (m !== 'dot') brow(c, k, x, y, side, m === 'sad' ? 1 : -1);
-        } else if (m === 'happy') {
-            c.strokeStyle = INK; c.lineWidth = 1.8 * k; c.beginPath(); c.arc(x, y + 1.2 * k, 2.4 * k, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
-        } else if (m === 'closed') {
-            c.strokeStyle = INK; c.lineWidth = 1.6 * k; c.beginPath(); c.moveTo(x - 2.3 * k, y); c.quadraticCurveTo(x, y + 1.6 * k, x + 2.3 * k, y); c.stroke();
-        } else if (m === 'wide') {
-            c.fillStyle = '#fff'; c.strokeStyle = INK; c.lineWidth = 1 * k; c.beginPath(); c.arc(x, y, 3.5 * k, 0, TAU); c.fill(); c.stroke();
-            c.fillStyle = INK; c.beginPath(); c.arc(x + (e.lx || 0) * .5 * k, y + (e.ly || 0) * .5 * k, 1.7 * k, 0, TAU); c.fill();
-            c.fillStyle = '#fff'; c.beginPath(); c.arc(x + .6 * k, y - .7 * k, .65 * k, 0, TAU); c.fill();
-        } else if (m === 'heart') {
-            const r = 2.9 * k * (1 + .13 * Math.sin(t * 9));
-            c.fillStyle = '#ff4f7b'; heart(c, x, y, r); c.fill(); c.strokeStyle = 'rgba(120,10,50,.55)'; c.lineWidth = .7 * k; c.stroke();
-            c.fillStyle = 'rgba(255,255,255,.75)'; c.beginPath(); c.arc(x - r * .45, y - r * .35, r * .2, 0, TAU); c.fill();
-        } else if (m === 'star') {
-            c.fillStyle = '#ffd23f'; c.strokeStyle = 'rgba(120,70,0,.6)'; c.lineWidth = .7 * k; star(c, x, y, 3.4 * k, t * 2.2 * side); c.fill(); c.stroke();
-        } else if (m === 'dizzy') {
-            c.strokeStyle = INK; c.lineWidth = 1.05 * k; c.beginPath();
-            const sp = t * 9 * -side;
-            for (let i = 0; i <= 34; i++) { const u = i / 34, a = sp + u * TAU * 2.4, r = u * 2.7 * k; c[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * r, y + Math.sin(a) * r); }
-            c.stroke();
-        } else if (m === 'squint') {
-            c.strokeStyle = INK; c.lineWidth = 1.7 * k; c.beginPath();
-            c.moveTo(x - side * 2.2 * k, y - 1.7 * k); c.lineTo(x + side * 1.5 * k, y); c.lineTo(x - side * 2.2 * k, y + 1.7 * k); c.stroke();
+        if (m === 'happy') {                                                  // eyes shut in a quiet smile: an arch
+            c.strokeStyle = INK; c.lineWidth = 1.7 * k; c.beginPath(); c.arc(x, y + 1.1 * k, 2.3 * k, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); return;
         }
+        if (m === 'closed') { c.strokeStyle = INK; c.lineWidth = 1.6 * k; c.beginPath(); c.moveTo(x - 2.2 * k, y + .2 * k); c.quadraticCurveTo(x, y + 1.3 * k, x + 2.2 * k, y + .2 * k); c.stroke(); return; }
+        const hm = (side > 0 && e.eh2 !== undefined) ? e.eh2 : (e.eh === undefined ? 1 : e.eh);
+        const rx = 2.4 * k * (e.ew === undefined ? 1 : e.ew), ry = Math.max(.3 * k, 2.4 * k * hm * (1 - .88 * bl)), lid = e.lid || 0;
+        c.fillStyle = INK;
+        if (lid > .01) {                                                      // a drooping (or sly) lid: cut the top off along a slanted line
+            const tilt = (e.tilt || 0) * ry, base = -ry + 2 * ry * lid;       // tilt > 0: the outer corner sits lower (sad), < 0: the inner corner (sly)
+            const yo = base + tilt, yi = base - tilt;
+            c.save(); c.beginPath(); c.moveTo(x + side * 3 * k, y + (yo)); c.lineTo(x - side * 3 * k, y + (yi)); c.lineTo(x - side * 3 * k, y + 4 * k); c.lineTo(x + side * 3 * k, y + 4 * k); c.closePath(); c.clip();
+            c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fill(); c.restore();
+        } else { c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fill(); }
     }
-    function mouth(c, k, e, t) {
-        const m = e.mouth; if (!m || m === 'none') return;
-        const y = 4.9 * k; c.lineCap = 'round'; c.lineJoin = 'round';
-        if (m === 'smile') {
-            c.strokeStyle = INK; c.lineWidth = 1.5 * k; c.beginPath(); c.arc(0, y - 1.5 * k, 3.1 * k, .18 * Math.PI, .82 * Math.PI); c.stroke();
-        } else if (m === 'grin') {
-            c.save(); c.beginPath(); c.moveTo(-4.2 * k, y - 1.8 * k); c.quadraticCurveTo(0, y + 5.2 * k, 4.2 * k, y - 1.8 * k); c.quadraticCurveTo(0, y - 2.9 * k, -4.2 * k, y - 1.8 * k); c.closePath();
-            c.fillStyle = INK; c.fill(); c.clip();
-            c.fillStyle = '#fff'; c.fillRect(-4.4 * k, y - 3 * k, 8.8 * k, 1.9 * k);
-            c.fillStyle = '#ff7a98'; c.beginPath(); c.ellipse(0, y + 2.7 * k, 2.6 * k, 1.8 * k, 0, 0, TAU); c.fill(); c.restore();
-        } else if (m === 'open') {
-            const o = e.mo === undefined ? 1 : e.mo;
-            c.fillStyle = INK; c.beginPath(); c.ellipse(0, y + .5 * k, 1.9 * k, 2.5 * k * o + .2 * k, 0, 0, TAU); c.fill();
-            c.fillStyle = '#ff7a98'; c.beginPath(); c.ellipse(0, y + 1.5 * k, 1.1 * k, 1 * k * o, 0, 0, TAU); c.fill();
-        } else if (m === 'tongue') {
-            const l = .78 + .22 * Math.sin(t * 14);
-            c.fillStyle = '#ff6f91'; c.strokeStyle = INK; c.lineWidth = .9 * k; c.beginPath();
-            c.moveTo(.2 * k, y - .7 * k); c.lineTo(.2 * k, y + 2.2 * k * l); c.quadraticCurveTo(2.2 * k, y + 4.4 * k * l, 4.1 * k, y + 2.2 * k * l); c.lineTo(4.1 * k, y - .7 * k); c.closePath(); c.fill(); c.stroke();
-            c.strokeStyle = 'rgba(120,20,50,.45)'; c.lineWidth = .6 * k; c.beginPath(); c.moveTo(2.2 * k, y + .2 * k); c.lineTo(2.2 * k, y + 2 * k * l); c.stroke();
-            c.strokeStyle = INK; c.lineWidth = 1.5 * k; c.beginPath(); c.moveTo(-4 * k, y - 1.3 * k); c.quadraticCurveTo(0, y + 1.2 * k, 4.4 * k, y - .9 * k); c.stroke();
-        } else if (m === 'frown') {
-            c.strokeStyle = INK; c.lineWidth = 1.5 * k; c.beginPath(); c.arc(0, y + 3.3 * k, 3 * k, 1.18 * Math.PI, 1.82 * Math.PI); c.stroke();
-        } else if (m === 'kiss') {
-            c.fillStyle = '#ff7a98'; c.strokeStyle = INK; c.lineWidth = .9 * k; c.beginPath(); c.ellipse(0, y + .2 * k, 1.5 * k, 1.3 * k, 0, 0, TAU); c.fill(); c.stroke();
-        } else if (m === 'wobble') {
-            c.strokeStyle = INK; c.lineWidth = 1.4 * k; c.beginPath();
-            for (let i = 0; i <= 16; i++) { const u = i / 16; c[i ? 'lineTo' : 'moveTo']((u - .5) * 8 * k, y + .6 * k + Math.sin(u * TAU * 2 + t * 10) * 1.1 * k); } c.stroke();
-        }
-    }
-    // draws both eyes (and a mouth when asked) with the origin in the middle of the body
-    function face(c, k, e, t) { eye(c, k, -1, e, t); eye(c, k, 1, e, t); mouth(c, k, e, t); }
-    // what a racer's face shows right now: a blink now and then, dizzy when stunned, happy at the finish, wide eyed in a hard fall
+    function face(c, k, e) { eye(c, k, -1, e); eye(c, k, 1, e); }
+    // what a racer's eyes show right now: a blink now and then, dazed when stunned, a quiet smile at the finish, wide in a hard fall, narrowed when shot upward
     function raceFace(p, t, lx, ly) {
-        const f = p._fx || (p._fx = { eye: 'dot', mouth: 'none', blink: 0, lx: 0, ly: 0, mo: 1 });
+        const f = p._fx || (p._fx = { eye: 'dot', blink: 0, lx: 0, ly: 0, eh: 1, ew: 1, lid: 0, tilt: 0, oy: 0 });
         const sd = p._blinkSeed === undefined ? (p._blinkSeed = Math.random() * 7) : p._blinkSeed, per = 3.2 + sd * .45, ph = ((t + sd) % per) / .13;
-        f.blink = ph < 1 ? Math.sin(Math.PI * ph) : 0; f.lx = lx; f.ly = ly; f.mouth = 'none'; f.eye = 'dot';
-        if (p.zapT > 0) { f.eye = 'dizzy'; f.mouth = 'wobble'; f.blink = 0; }
-        else if (p.finished) { f.eye = 'happy'; f.mouth = 'smile'; }
-        else if (p.mode === 'air' && p.vy > 950) { f.eye = 'wide'; f.mouth = 'open'; f.mo = clamp((p.vy - 950) / 600, .4, 1); f.blink = 0; }
-        else if (p.mode === 'air' && p.vy < -1000) { f.mouth = 'smile'; }
+        f.blink = ph < 1 ? Math.sin(Math.PI * ph) : 0; f.lx = lx; f.ly = ly; f.eye = 'dot'; f.eh = 1; f.ew = 1; f.lid = 0; f.tilt = 0; f.oy = 0;
+        if (p.zapT > 0) { f.blink = 0; f.lx = Math.sin(t * 13) * 1.5; f.ly = Math.cos(t * 13) * 1; f.eh = .85; }
+        else if (p.finished) { f.eye = 'happy'; }
+        else if (p.mode === 'air' && p.vy > 950) { f.eh = 1.3; f.ew = 1.08; f.blink = 0; }
+        else if (p.mode === 'air' && p.vy < -1000) { f.lid = .3; f.tilt = -.5; f.blink = 0; }
         return f;
     }
-    window.CharFX = { gloss, face, eye, mouth, heart, star, raceFace };
+    window.CharFX = { gloss, face, eye, glint, raceFace };
 
     /* -------------------------------------------------------------------------- the actors ---- */
+    // The little reactions on a tap. `body` shapes the motion, the rest is the look of the eyes.
+    const EYES = {
+        calm: {}, soft: { eh: .55, ew: 1.06 }, wide: { eh: 1.3, ew: 1.08 }, curious: { eh: 1.14, eh2: .74 }, sleepy: { lid: .5 }, shy: { eh: .8, ly: 1.3, lx: -1.4 },
+        sly: { lid: .42, tilt: -.4 }, sad: { lid: .38, tilt: .95, oy: .9, ly: .8 }, happy: { eye: 'happy' }, wink: { eye: 'wink' },
+    };
     const FACES = [
-        { eye: 'happy',  mouth: 'grin',   tilt: 0,    snd: 'chirp' },
-        { eye: 'wink',   mouth: 'tongue', tilt: .13,  snd: 'squeak' },
-        { eye: 'wide',   mouth: 'open',   tilt: 0,    snd: 'chirp', stretch: 1 },
-        { eye: 'heart',  mouth: 'kiss',   tilt: 0,    snd: 'chirp', hearts: 1, sway: 1 },
-        { eye: 'dizzy',  mouth: 'wobble', tilt: 0,    snd: 'squeak', wobble: 1 },
-        { eye: 'squint', mouth: 'tongue', tilt: 0,    snd: 'squeak', shake: 1 },
+        { id: 'look',   dur: 1.9 },                                    // a slow look to the right, then to the left, then back at you
+        { id: 'wink',   dur: 1.15, eyes: 'wink', snd: 'chirp' },
+        { id: 'curious', dur: 1.4, eyes: 'curious', snd: 'chirp' },
+        { id: 'content', dur: 1.5, eyes: 'happy' },
+        { id: 'surprise', dur: 1.05, eyes: 'wide', snd: 'chirp' },
+        { id: 'nod',    dur: 1.25, eyes: 'soft', snd: 'tap' },
+        { id: 'shy',    dur: 1.7, eyes: 'shy' },
+        { id: 'sly',    dur: 1.5, eyes: 'sly' },
     ];
     const actors = new Set(); let raf = 0, lastFace = -1;
 
@@ -132,141 +87,152 @@
         this.cv = cv; this.getLook = getLook; this.o = o || {}; this.mood = this.o.mood || 'idle';
         this.t0 = performance.now() / 1000; this.act = null; this.parts = []; this.pokes = [];
         this.gaze = { x: 0, y: 0, tx: 0, ty: 0, next: 1 }; this.blinkAt = this.t0 + rnd(1.2, 3); this.lastDraw = 0; this.key = ''; this.vis = true; this.visAt = 0; this.moodT = this.t0;
-        this.seed = Math.random() * 100; this.cycle = 0; this.dropT = 0;
+        this.seed = Math.random() * 100; this.idleAt = this.t0 + rnd(7, 12);
     }
-    Actor.prototype.setMood = function (m, delay) { this.mood = m; this.moodT = performance.now() / 1000 + (delay || 0); this.act = null; this.cycle = 0; this.parts.length = 0; wake(); };
+    Actor.prototype.setMood = function (m, delay) { this.mood = m; this.moodT = performance.now() / 1000 + (delay || 0); this.act = null; this.parts.length = 0; wake(); };
     Actor.prototype.setLook = function (look) { const k = JSON.stringify(look); if (k !== this._lk) { this._lk = k; this.look = look; this.key = ''; } wake(); };
     Actor.prototype.sound = function (n, a) { if (this.o.sound && window.SFX) { try { SFX.play(n, a); } catch (e) {} } };
     Actor.prototype.start = function (kind, data) { this.act = Object.assign({ kind, t0: performance.now() / 1000 }, data || {}); wake(); };
     Actor.prototype.busy = function (t) { return !!this.act || this.mood !== 'idle' || this.parts.length > 0 || t < this.moodT; };
-    // a tap on the character: one tap = a face, a quick second tap = a salto, then a double salto and a spin
+    Actor.prototype.react = function (i, quiet) { const f = FACES[i]; this.start('face', { dur: f.dur, f, i }); if (!quiet && f.snd) this.sound(f.snd, i); };
+    // a tap on the character: one tap = a small reaction, a quick second tap = a salto, then a slow twirl, then a double salto
     Actor.prototype.poke = function () {
-        const now = performance.now() / 1000; this.pokes = this.pokes.filter(x => now - x < 1.05); this.pokes.push(now);
-        if (this.act && (this.act.kind === 'flip' || this.act.kind === 'spin') && now - this.act.t0 < this.act.dur * .92) return;
+        const now = performance.now() / 1000; this.pokes = this.pokes.filter(x => now - x < 1.1); this.pokes.push(now);
+        if (this.act && (this.act.kind === 'flip' || this.act.kind === 'twirl') && now - this.act.t0 < this.act.dur * .9) return;
         const n = this.pokes.length;
-        if (typeof haptic === 'function') haptic(n === 1 ? 8 : [10, 20, 14]);
-        if (n === 1) { let i; do { i = Math.floor(Math.random() * FACES.length); } while (i === lastFace); lastFace = i; this.start('face', { dur: 1.25, f: FACES[i] }); this.sound(FACES[i].snd, i); }
-        else if (n === 2) { this.start('flip', { dur: 1, h: 1.6, turns: 1, dir: Math.random() < .5 ? 1 : -1 }); this.sound('flip'); }
-        else if (n === 3) { this.start('flip', { dur: 1.3, h: 2.1, turns: 2, dir: Math.random() < .5 ? 1 : -1, dizzy: 1 }); this.sound('flip'); }
-        else { this.start('spin', { dur: .95 }); this.sound('squeak'); this.pokes.length = 0; }
+        if (typeof haptic === 'function') haptic(n === 1 ? 7 : [8, 18, 12]);
+        if (n === 1) { let i; do { i = Math.floor(Math.random() * FACES.length); } while (i === lastFace); lastFace = i; this.react(i); }
+        else if (n === 2) { this.start('flip', { dur: 1.05, h: 1.25, turns: 1, dir: Math.random() < .5 ? 1 : -1 }); this.sound('flip'); }
+        else if (n === 3) { this.start('twirl', { dur: 1.25 }); this.sound('whoosh'); }
+        else { this.start('flip', { dur: 1.35, h: 1.8, turns: 2, dir: Math.random() < .5 ? 1 : -1 }); this.sound('flip'); this.pokes.length = 0; }
     };
     function wake() { if (!raf && actors.size) raf = requestAnimationFrame(loop); }
 
-    // the body pose for one moment: offsets in half-body units, squash/stretch, rotation, plus the face
+    // the body pose for one moment: offsets in half-body units, squash/stretch, rotation, plus the eyes
     function poseOf(a, t, P) {
-        P.dx = 0; P.dy = 0; P.rot = 0; P.sx = 1; P.sy = 1; P.eye = 'dot'; P.mouth = 'none'; P.blink = 0; P.mo = 1; P.lx = a.gaze.x; P.ly = a.gaze.y; P.shadow = 1;
-        const br = Math.sin((t - a.t0) * 2.3 + a.seed);                                            // breathing
-        P.sy = 1 + .02 * br; P.sx = 1 - .014 * br;
-        if (t >= a.blinkAt) { const u = (t - a.blinkAt) / .14; if (u < 1) P.blink = Math.sin(Math.PI * u); else a.blinkAt = t + rnd(2.2, 5.2) + (Math.random() < .25 ? -1.6 : 0); }
-        if (t >= a.gaze.next) { a.gaze.tx = rnd(-1.4, 1.4); a.gaze.ty = rnd(-.7, .7); a.gaze.next = t + rnd(1.4, 3.6); }
-        a.gaze.x += (a.gaze.tx - a.gaze.x) * .08; a.gaze.y += (a.gaze.ty - a.gaze.y) * .08;
+        P.dx = 0; P.dy = 0; P.rot = 0; P.sx = 1; P.sy = 1; P.blink = 0; P.lx = a.gaze.x; P.ly = a.gaze.y;
+        P.eye = 'dot'; P.eh = 1; P.eh2 = undefined; P.ew = 1; P.lid = 0; P.tilt = 0; P.oy = 0; P.sp = 0;
+        const br = Math.sin((t - a.t0) * 2.1 + a.seed);                                            // breathing
+        P.sy = 1 + .018 * br; P.sx = 1 - .012 * br;
+        if (t >= a.blinkAt) { const u = (t - a.blinkAt) / .15; if (u < 1) P.blink = Math.sin(Math.PI * u); else a.blinkAt = t + rnd(2.4, 5.4) + (Math.random() < .2 ? -1.8 : 0); }
+        if (t >= a.gaze.next) { a.gaze.tx = rnd(-1.3, 1.3); a.gaze.ty = rnd(-.6, .6); a.gaze.next = t + rnd(1.6, 4); }
+        a.gaze.x += (a.gaze.tx - a.gaze.x) * .07; a.gaze.y += (a.gaze.ty - a.gaze.y) * .07;
         const m = a.mood, mt = t - a.moodT;
         if (m !== 'idle' && mt >= 0) MOODS[m](a, t, mt, P);
+        else if (!a.act && a.o.sound && t > a.idleAt) { a.idleAt = t + rnd(9, 15); a.react(Math.random() < .5 ? 0 : 6, true); }       // now and then the menu character looks around or turns shy by itself
         if (a.act) {
             const u = (t - a.act.t0) / a.act.dur;
-            if (u >= 1) { const k = a.act.kind, dz = a.act.dizzy; a.act = null; if (dz) a.start('face', { dur: 1.1, f: FACES[4] }); else if (k === 'flip' || k === 'spin') a.act = null; }
-            else ACTS[a.act.kind](a, t, u, P);
+            if (u >= 1) a.act = null; else ACTS[a.act.kind](a, t, u, P);
         }
     }
-    // overshoot-and-settle after a landing: 0 -> 1 over `u`, returns the squash amount (positive = flatter)
-    const land = u => u < 0 ? 0 : Math.exp(-u * 5.5) * Math.cos(u * 14) * (1 - clamp(u, 0, 1) * .15);
+    // overshoot-and-settle after a landing: 1 at the touch-down, fading to 0
+    const land = u => u < 0 ? 0 : Math.exp(-u * 5.5) * Math.cos(u * 12) * (1 - clamp(u, 0, 1) * .15);
+    const setEyes = (P, name) => { const e = EYES[name]; if (!e) return; for (const k in e) P[k] = e[k]; };
 
     const ACTS = {
         face(a, t, u, P) {
-            const f = a.act.f, dur = a.act.dur;
-            // anticipation, hop, landing squash
-            if (u < .1) { const q = u / .1; P.sy *= 1 - .15 * q; P.sx *= 1 + .12 * q; }
-            else if (u < .42) { const q = (u - .1) / .32; P.dy = (f.stretch ? .35 : .62) * Math.sin(Math.PI * q); P.sy *= 1 + .12 * Math.sin(Math.PI * q) - .15 * (1 - q) * (1 - q); P.sx *= 1 - .08 * Math.sin(Math.PI * q); }
-            else { const q = (u - .42) / .58, l = land(q * .9); P.sy *= 1 - .14 * l; P.sx *= 1 + .1 * l; }
-            if (f.stretch) { const q = sstep((u - .1) / .1) * (1 - sstep((u - .8) / .18)); P.sy *= 1 + .12 * q; P.sx *= 1 - .07 * q; }
-            P.rot = (f.tilt || 0) * Math.sin(Math.PI * clamp(u * 1.05, 0, 1)) + (f.sway ? .09 * Math.sin(u * 22) * (1 - u) : 0) + (f.wobble ? .12 * Math.sin(u * 40) * (1 - u) : 0);
-            P.dx = f.shake ? .05 * Math.sin(u * 70) * (1 - u) : 0;
-            const on = u > .06 && u < .88; if (on) { P.eye = f.eye; P.mouth = f.mouth; P.blink = 0; P.lx = P.ly = 0; }
-            if (f.hearts && on && a.hc !== Math.floor(u * 9)) { a.hc = Math.floor(u * 9); a.emit('heart', P); }
-            if (!f.hearts) a.hc = -1;
+            const f = a.act.f, id = f.id; let on = true;
+            if (id === 'look') {
+                const g = u < .3 ? sstep(u / .3) * 1.7 : u < .62 ? 1.7 - sstep((u - .3) / .32) * 3.4 : -1.7 + sstep((u - .62) / .3) * 1.7;
+                P.lx = g; P.ly = .1; P.rot = g * .035; P.dx = g * .025; on = false;
+            } else if (id === 'wink') {
+                P.rot = .085 * Math.sin(Math.PI * clamp(u * 1.1, 0, 1)); P.dy = .22 * Math.sin(Math.PI * clamp((u - .05) / .5, 0, 1));
+                on = u > .12 && u < .75;
+            } else if (id === 'curious') {
+                const q = sstep(u / .25) * (1 - sstep((u - .78) / .22)); P.rot = .13 * q; P.sy *= 1 + .05 * q; P.sx *= 1 - .03 * q; P.lx = .8 * q; P.ly = -.4 * q;
+                on = u > .1 && u < .85;
+            } else if (id === 'content') {
+                const q = sstep(u / .15) * (1 - sstep((u - .82) / .18)); P.sy *= 1 + .028 * Math.sin(u * 30) * q; P.sx *= 1 - .02 * Math.sin(u * 30) * q; P.rot = .04 * Math.sin(u * 11) * q;
+                on = u > .08 && u < .88;
+            } else if (id === 'surprise') {
+                if (u < .12) { P.sy *= 1 - .1 * (u / .12); P.sx *= 1 + .07 * (u / .12); }
+                else if (u < .4) { const q = (u - .12) / .28; P.dy = .5 * Math.sin(Math.PI * q); P.sy *= 1 + .08 * Math.sin(Math.PI * q); P.sx *= 1 - .05 * Math.sin(Math.PI * q); }
+                else { const l = land((u - .4) / .6 * .9); P.sy *= 1 - .1 * l; P.sx *= 1 + .07 * l; }
+                on = u > .08 && u < .8;
+            } else if (id === 'nod') {
+                const d = Math.pow(Math.max(0, Math.sin(u * TAU * 2 * (1 - .0))), 2) * (u < .85 ? 1 : 0); P.sy *= 1 - .055 * d; P.sx *= 1 + .035 * d; P.rot = .03 * d; P.ly = .6 * d;
+                on = u < .9;
+            } else if (id === 'shy') {
+                const away = sstep(u / .22) * (1 - sstep((u - .62) / .25)), back = sstep((u - .6) / .2) * (1 - sstep((u - .9) / .1));
+                P.rot = -.075 * away; P.dx = -.05 * away; P.lx = -1.5 * away + .6 * back; P.ly = 1.2 * away - .3 * back; P.sy *= 1 - .03 * away; on = u < .95;
+            } else if (id === 'sly') {
+                const q = sstep(u / .2) * (1 - sstep((u - .8) / .2)); P.rot = -.05 * q; P.lx = (u < .55 ? 1.5 : -1.2) * q; P.sy *= 1 - .02 * q; on = u > .06 && u < .92;
+            }
+            if (on) setEyes(P, f.eyes), P.blink = 0;
         },
         flip(a, t, u, P) {
-            const A = a.act, h = A.h, dir = A.dir, T1 = .16, T2 = .8;
-            if (u < T1) { const q = sstep(u / T1); P.sy *= 1 - .22 * q; P.sx *= 1 + .17 * q; P.eye = 'happy'; P.mouth = 'smile'; P.blink = 0; if (!A.pf && u > T1 * .8) { A.pf = 1; a.emit('puff', P); } }
+            const A = a.act, h = A.h, dir = A.dir, T1 = .17, T2 = .8;
+            if (u < T1) { const q = sstep(u / T1); P.sy *= 1 - .2 * q; P.sx *= 1 + .14 * q; P.lid = .25 * q; P.tilt = -.5; if (!A.pf && u > T1 * .8) { A.pf = 1; a.emit('puff', P); } }
             else if (u < T2) {
                 const q = (u - T1) / (T2 - T1), air = 4 * q * (1 - q);
                 P.dy = h * air; P.rot = dir * TAU * A.turns * ease.inout(q);
-                const st = Math.sin(Math.PI * Math.min(1, q * 1.6)); P.sy *= 1 + .12 * st * (q < .5 ? 1 : 0); P.sx *= 1 - .08 * st * (q < .5 ? 1 : 0);
-                P.eye = q > .86 ? 'happy' : 'wide'; P.mouth = q > .86 ? 'grin' : 'open'; P.blink = 0; P.lx = P.ly = 0; P.mo = .8; P.shadow = clamp(1 - air * .45, .4, 1);
+                const st = q < .45 ? Math.sin(Math.PI * q / .45) : 0; P.sy *= 1 + .1 * st; P.sx *= 1 - .06 * st;
+                P.eh = 1.2; P.ew = 1.06; P.blink = 0;
             } else {
-                const q = (u - T2) / (1 - T2), l = land(q); P.sy *= 1 - .24 * l; P.sx *= 1 + .18 * l; P.eye = 'happy'; P.mouth = 'grin'; P.blink = 0; P.lx = P.ly = 0;
+                const q = (u - T2) / (1 - T2), l = land(q); P.sy *= 1 - .22 * l; P.sx *= 1 + .15 * l; if (q < .8) P.eye = 'happy';
                 if (!A.pl) { A.pl = 1; a.emit('land', P); a.sound('land'); }
             }
         },
-        spin(a, t, u, P) {
-            const q = sstep(u);
-            P.sx = Math.cos(q * TAU * 3) * (1 + .04 * Math.sin(q * 9)); if (Math.abs(P.sx) < .1) P.sx = (P.sx < 0 ? -1 : 1) * .1;
-            P.dy = .5 * Math.sin(Math.PI * clamp(u * 1.1, 0, 1)); P.eye = 'wide'; P.mouth = 'open'; P.mo = .6; P.blink = 0;
-            if (u > .78) { P.eye = 'dizzy'; P.mouth = 'wobble'; P.rot = .1 * Math.sin(u * 50) * (1 - u) * 4; }
+        twirl(a, t, u, P) {                                                                      // one slow turn on the spot, like a turn of the head and body
+            const q = sstep(u), ang = q * TAU;
+            P.sx = Math.cos(ang); if (Math.abs(P.sx) < .12) P.sx = (P.sx < 0 ? -1 : 1) * .12;
+            P.dy = .3 * Math.sin(Math.PI * clamp(u * 1.05, 0, 1)); P.sy *= 1 + .03 * Math.sin(Math.PI * u);
+            if (u > .8) { P.eye = 'happy'; P.blink = 0; }
         },
     };
 
     // moods: loops used on the podium and the result screens
     const MOODS = {
-        win(a, t, mt, P) {                                                                      // jumping for joy: hop, hop, salto
-            const cyc = 2.3, c = mt % cyc, n = Math.floor(mt / cyc), big = n % 2 === 1;
-            P.eye = 'happy'; P.mouth = 'grin'; P.blink = 0; P.lx = P.ly = 0;
-            const hop = (t0, t1, h) => { if (c >= t0 && c < t1) { const q = (c - t0) / (t1 - t0); P.dy = h * 4 * q * (1 - q); P.sy *= 1 + .14 * Math.sin(Math.PI * q); P.sx *= 1 - .09 * Math.sin(Math.PI * q); } else if (c >= t1 && c < t1 + .25) { const l = land((c - t1) / .25 * .9); P.sy *= 1 - .16 * l; P.sx *= 1 + .12 * l; } };
-            if (c < .12) { const q = c / .12; P.sy *= 1 - .14 * q; P.sx *= 1 + .1 * q; }
-            hop(.12, .62, .8); hop(.78, 1.28, .8);
-            if (c >= 1.42) {
-                const q = clamp((c - 1.42) / .72, 0, 1);
-                if (c < 1.52) { P.sy *= 1 - .2 * ((c - 1.42) / .1); P.sx *= 1 + .15 * ((c - 1.42) / .1); }
-                else if (q < 1) {
-                    const w = (c - 1.52) / .62, air = 4 * clamp(w, 0, 1) * (1 - clamp(w, 0, 1));
-                    P.dy = 1.6 * air; if (big) { P.rot = TAU * ease.inout(clamp(w, 0, 1)) * (n % 4 === 1 ? 1 : -1); P.eye = 'star'; } else { P.sx = Math.cos(clamp(w, 0, 1) * TAU * 2) || .05; if (Math.abs(P.sx) < .1) P.sx = .1; P.eye = 'star'; }
-                } else { const l = land((c - 2.14) / .16 * .9); P.sy *= 1 - .2 * l; P.sx *= 1 + .15 * l; }
-            }
-            if (t - (a.confT || 0) > (mt < 3.5 ? .1 : .32)) { a.confT = t; a.emit('confetti', P); }
+        win(a, t, mt, P) {                                                                      // proud: two calm hops, now and then one graceful salto
+            const cyc = 3.2, c = mt % cyc, n = Math.floor(mt / cyc), big = n % 2 === 1;
+            const hop = (t0, t1, h) => { if (c >= t0 && c < t1) { const q = (c - t0) / (t1 - t0); P.dy = h * 4 * q * (1 - q); P.sy *= 1 + .1 * Math.sin(Math.PI * q); P.sx *= 1 - .06 * Math.sin(Math.PI * q); P.eye = 'happy'; P.blink = 0; } else if (c >= t1 && c < t1 + .3) { const l = land((c - t1) / .3 * .9); P.sy *= 1 - .13 * l; P.sx *= 1 + .09 * l; P.eye = 'happy'; P.blink = 0; } };
+            if (c > .1 && c < .22) { const q = (c - .1) / .12; P.sy *= 1 - .12 * q; P.sx *= 1 + .08 * q; }
+            hop(.22, .82, .62);
+            if (big) {
+                if (c > 1.2 && c < 1.36) { const q = (c - 1.2) / .16; P.sy *= 1 - .16 * q; P.sx *= 1 + .11 * q; }
+                else if (c >= 1.36 && c < 2.2) { const w = (c - 1.36) / .84, air = 4 * w * (1 - w); P.dy = 1.2 * air; P.rot = TAU * ease.inout(w) * (n % 4 === 1 ? 1 : -1); P.eh = 1.15; }
+                else if (c >= 2.2 && c < 2.55) { const l = land((c - 2.2) / .35 * .9); P.sy *= 1 - .16 * l; P.sx *= 1 + .11 * l; P.eye = 'happy'; P.blink = 0; }
+            } else hop(1.1, 1.65, .36);
+            if (!(P.eye === 'happy')) { P.lx = 0; P.ly = 0; }
+            if (t - (a.glintT || 0) > .55) { a.glintT = t; a.emit('glint', P); }
             if (c < .05 && a.lastCyc !== n) { a.lastCyc = n; a.sound('cheer'); }
         },
-        cheer(a, t, mt, P) {                                                                    // second / third: happy little hops and a wink
-            const cyc = 1.5, c = (mt + a.seed) % cyc;
-            P.eye = c > .9 && c < 1.15 ? 'wink' : 'happy'; P.mouth = 'smile'; P.blink = 0; P.lx = P.ly = 0;
-            if (c < .5) { const q = c / .5; P.dy = .45 * 4 * q * (1 - q); P.sy *= 1 + .1 * Math.sin(Math.PI * q); P.sx *= 1 - .06 * Math.sin(Math.PI * q); P.rot = .06 * Math.sin(q * Math.PI * 2); }
-            else if (c < .68) { const l = land((c - .5) / .18 * .9); P.sy *= 1 - .12 * l; P.sx *= 1 + .08 * l; }
-            if (a.o.confetti && t - (a.confT || 0) > .5) { a.confT = t; a.emit('confetti', P, 3); }
+        cheer(a, t, mt, P) {                                                                    // second / third: a slow content bounce, a wink now and then
+            const cyc = 2.4, c = (mt + a.seed) % cyc;
+            P.eye = (c > 1.5 && c < 1.8) ? 'wink' : (c < .7 ? 'happy' : 'dot'); P.blink = c < .7 ? 0 : P.blink;
+            if (c < .6) { const q = c / .6; P.dy = .32 * 4 * q * (1 - q); P.sy *= 1 + .07 * Math.sin(Math.PI * q); P.sx *= 1 - .04 * Math.sin(Math.PI * q); }
+            else if (c < .85) { const l = land((c - .6) / .25 * .9); P.sy *= 1 - .09 * l; P.sx *= 1 + .06 * l; }
+            if (c > 1.5 && c < 1.8) P.rot = .06;
         },
         lose(a, t, mt, P) {                                                                     // slumped, a tear, a heavy sigh
-            const ent = sstep(mt / .5), sig = (mt % 3.8) / 3.8;
-            let sink = .13 * ent; if (sig > .5 && sig < .72) { const q = (sig - .5) / .22; sink += .07 * Math.sin(Math.PI * q); }
-            P.sy *= 1 - sink; P.sx *= 1 + sink * .6; P.rot = (-.07 + .03 * Math.sin(mt * .9)) * ent; P.dx = -.02 * ent;
-            P.eye = 'sad'; P.mouth = 'frown'; P.blink = (mt % 4.6) < .16 ? Math.sin(Math.PI * (mt % 4.6) / .16) : 0; P.lx = -.5; P.ly = 1.1; P.dy = -.04 * ent;
-            if (mt > .5 && t - (a.tearT || 0) > .95) { a.tearT = t; a.emit('tear', P); }
-            if (a.o.cloud) { if (t - (a.rainT || 0) > .09) { a.rainT = t; a.emit('rain', P); } }
+            const ent = sstep(mt / .6), sig = (mt % 4) / 4;
+            let sink = .12 * ent; if (sig > .5 && sig < .74) { const q = (sig - .5) / .24; sink += .06 * Math.sin(Math.PI * q); }
+            P.sy *= 1 - sink; P.sx *= 1 + sink * .6; P.rot = (-.06 + .025 * Math.sin(mt * .8)) * ent; P.dx = -.02 * ent; P.dy = -.03 * ent;
+            P.lid = .38 * ent; P.tilt = .95; P.oy = .9 * ent; P.ly = .8 * ent; P.lx = -.5 * ent; P.eh = 1; P.blink = (mt % 4.8) < .16 ? Math.sin(Math.PI * (mt % 4.8) / .16) : 0;
+            if (mt > .6 && t - (a.tearT || 0) > 1.1) { a.tearT = t; a.emit('tear', P); }
+            if (a.o.cloud && t - (a.rainT || 0) > .1) { a.rainT = t; a.emit('rain', P); }
             if (a.o.cloud && mt < .05) a.sound('sad');
         },
     };
 
     /* ---------------------------------------------------------------------- particles ---- */
-    Actor.prototype.emit = function (kind, P, n) {
+    Actor.prototype.emit = function (kind, P) {
         const L = this.last; if (!L) return; const s = L.s, ps = this.parts, cx = L.cx + P.dx * s, cy = L.cy - P.dy * s;
-        const add = o => { if (ps.length < 60) ps.push(Object.assign({ life: 1, t: 0, x: cx, y: cy, vx: 0, vy: 0, g: 0, r: 0, vr: 0, size: s * .2 }, o)); };
-        if (kind === 'heart') add({ type: 'heart', x: cx + rnd(-.5, .5) * s, y: cy - s * 1.1, vy: -s * 1.3, vx: rnd(-.4, .4) * s, life: 1.1, size: s * rnd(.2, .32), col: '#ff5d8a' });
-        else if (kind === 'confetti') for (let i = 0; i < (n || 2); i++) add({ type: 'conf', x: cx + rnd(-1.6, 1.6) * s, y: cy - s * rnd(1.4, 2.4), vx: rnd(-.5, .5) * s, vy: rnd(.1, .7) * s, g: s * .4, vr: rnd(-9, 9), r: rnd(0, 6), life: rnd(1.5, 2.3), size: s * rnd(.1, .17), col: ['#ffd23f', '#ff5d8a', '#4dd6ff', '#7cf29c', '#b78cff', '#ff9a3d'][Math.floor(Math.random() * 6)] });
-        else if (kind === 'tear') add({ type: 'tear', x: cx - s * .52, y: cy - s * .05, vy: s * .15, g: s * 2.6, life: .9, size: s * .13, col: '#7fd2ff' });
+        const add = o => { if (ps.length < 40) ps.push(Object.assign({ life: 1, t: 0, x: cx, y: cy, vx: 0, vy: 0, g: 0, size: s * .2 }, o)); };
+        if (kind === 'glint') add({ type: 'glint', x: cx + rnd(-1.5, 1.5) * s, y: cy - s * rnd(.2, 1.9), vy: -s * .25, life: rnd(.9, 1.4), size: s * rnd(.13, .22), col: Math.random() < .5 ? '#ffe9a6' : '#ffffff' });
+        else if (kind === 'tear') add({ type: 'tear', x: cx - s * .5, y: cy - s * .02, vy: s * .15, g: s * 2.6, life: .9, size: s * .12, col: '#7fd2ff' });
         else if (kind === 'rain') add({ type: 'rain', x: cx + rnd(-1.1, 1.1) * s, y: cy - s * 1.65, vy: s * 3.2, life: .55, size: s * .1, col: '#8fc8ff' });
-        else if (kind === 'puff' || kind === 'land') {
-            for (let i = 0; i < (kind === 'land' ? 7 : 4); i++) { const d = i % 2 ? 1 : -1; add({ type: 'dust', x: cx + d * s * rnd(.6, 1), y: cy + s, vx: d * s * rnd(.5, 1.6), vy: -s * rnd(.1, .5), life: .5, size: s * rnd(.08, .15), col: 'rgba(255,255,255,0.32)' }); }
-            if (kind === 'land') for (let i = 0; i < 5; i++) add({ type: 'star', x: cx + rnd(-1, 1) * s, y: cy + s * .6, vx: rnd(-1, 1) * s * 1.3, vy: -s * rnd(.8, 1.7), g: s * 3, life: .7, size: s * rnd(.12, .2), col: ['#ffd23f', '#fff4b8', '#7cf29c'][i % 3] });
-        }
+        else if (kind === 'puff' || kind === 'land') for (let i = 0; i < (kind === 'land' ? 5 : 3); i++) { const d = i % 2 ? 1 : -1; add({ type: 'dust', x: cx + d * s * rnd(.6, 1), y: cy + s, vx: d * s * rnd(.4, 1.1), vy: -s * rnd(.05, .3), life: .5, size: s * rnd(.07, .13), col: 'rgba(255,255,255,0.22)' }); }
     };
     function drawParts(a, c, dt) {
         const ps = a.parts;
         for (let i = ps.length - 1; i >= 0; i--) {
             const p = ps[i]; p.t += dt; if (p.t >= p.life) { ps.splice(i, 1); continue; }
-            p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.r += p.vr * dt;
-            const k = p.t / p.life, al = k > .6 ? 1 - (k - .6) / .4 : 1; c.globalAlpha = al;
-            if (p.type === 'heart') { c.fillStyle = p.col; heart(c, p.x, p.y, p.size * (.7 + .3 * Math.min(1, p.t * 6))); c.fill(); }
-            else if (p.type === 'conf') { c.save(); c.translate(p.x, p.y); c.rotate(p.r); c.scale(1, Math.cos(p.r * 1.7)); c.fillStyle = p.col; c.fillRect(-p.size, -p.size * .55, p.size * 2, p.size * 1.1); c.restore(); }
+            p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+            const k = p.t / p.life; c.globalAlpha = Math.sin(Math.PI * Math.min(1, k * 1.0)) * (p.type === 'glint' ? 1 : 1) * (p.type === 'glint' ? 1 : (k > .6 ? 1 - (k - .6) / .4 : 1));
+            if (p.type === 'glint') { c.fillStyle = p.col; glint(c, p.x, p.y, p.size * (.5 + .5 * Math.sin(Math.PI * k))); c.fill(); }
             else if (p.type === 'tear' || p.type === 'rain') { c.fillStyle = p.col; c.beginPath(); c.ellipse(p.x, p.y, p.size * .7, p.size * 1.25, 0, 0, TAU); c.fill(); }
             else if (p.type === 'dust') { c.fillStyle = p.col; c.beginPath(); c.arc(p.x, p.y, p.size * (1 + k), 0, TAU); c.fill(); }
-            else if (p.type === 'star') { c.fillStyle = p.col; star(c, p.x, p.y, p.size * (1 - k * .4), p.r); c.fill(); }
         }
         c.globalAlpha = 1;
     }
@@ -291,17 +257,15 @@
         poseOf(a, t, P);
         c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, M.W, M.H);
         const fx = M.W / 2 + P.dx * s, feet = M.cy + s;                                          // squash and stretch hang from the feet, the salto turns about the middle
-        a.last = { s, cx: M.W / 2, cy: M.cy, drop: 0 };
+        a.last = { s, cx: M.W / 2, cy: M.cy };
         if (a.o.cloud && a.mood === 'lose') drawCloud(c, M.W / 2, M.cy - s * 2.15, s * .95, t);
-        // ground shadow: shrinks while the character is in the air
-        const air = clamp(P.dy / 2, 0, 1); c.fillStyle = 'rgba(0,0,0,' + (.28 * (1 - air * .7)) + ')'; c.beginPath(); c.ellipse(M.W / 2, feet + s * .08, s * .95 * (1 - air * .35), s * .17 * (1 - air * .3), 0, 0, TAU); c.fill();
+        const air = clamp(P.dy / 1.6, 0, 1); c.fillStyle = 'rgba(0,0,0,' + (.28 * (1 - air * .7)) + ')'; c.beginPath(); c.ellipse(M.W / 2, feet + s * .08, s * .95 * (1 - air * .35), s * .17 * (1 - air * .3), 0, 0, TAU); c.fill();
         c.save(); c.translate(fx, feet - P.dy * s); c.scale(P.sx, P.sy); c.translate(0, -s); c.rotate(P.rot);
         c.drawImage(a.body, -M.W / 2, -M.cy);
-        if (!(a.cs && Costumes.eyes(c, s, k, a.cs, t, P.lx * k, P.ly * k))) face(c, k, P, t);
+        if (!(a.cs && Costumes.eyes(c, s, k, a.cs, t, P.lx * k, P.ly * k))) face(c, k, P);
         c.drawImage(a.top, -M.W / 2, -M.cy);
         c.restore();
         drawParts(a, c, dt);
-        if (a.o.onPose) a.o.onPose(P);
     }
     function visible(a, ts) {
         if (ts - a.visAt > 250) { a.visAt = ts; a.vis = a.cv.isConnected && a.cv.getClientRects().length > 0; }

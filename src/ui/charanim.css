@@ -35,3 +35,4 @@
 @media (prefers-reduced-motion: reduce) { .pd-col { animation-duration: .01s; animation-delay: 0s !important; } }
 .pd-stand { flex: none; margin-bottom: 12px; }
 .pd-stand ~ .tg-rows { display: none; }
+.pd-stand { margin-bottom: 22px; }
