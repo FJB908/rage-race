@@ -183,3 +183,8 @@ body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-ches
 .opened-chest .lb-lid { transform-box:fill-box; transform-origin:4% 96%; transform:translate(0,-6px) rotate(-17deg); }
 .opened-chest .lb-leak, .opened-chest .lb-shine, .opened-chest .lb-sparks { display:none; }
 .loot-drop:has(.opened-chest) { flex-direction:column; gap:10px; }
+
+/* the chest art is still: SVG animations repaint the whole drawing every frame, which was the biggest cost on phones. The crate itself still bobs and shakes (those run on the GPU). */
+.lb-shine, .lb-sparks .sp, .lb-leak, .lb-lid, .loot-big .lb-lid, .loot-big .lb-leak { animation:none !important; }
+.lb-sparks { display:none; }
+.lb-shine { display:none; }

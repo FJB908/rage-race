@@ -5,8 +5,8 @@
     const PRICE = 100, SECOND_CHANCE = 0.12;
     const ODDS = [['legendary', 0.12], ['mythic', 0.20], ['epic', 0.40], ['rare', 0.28]];
     const EXTRAS = {
-        rare:      { coins: 2500, xp: 400, gems: 20, boosts: [{ kind: 'coin', mult: 2, n: 8 }, { kind: 'chest', mult: 2, n: 5 }], bonus: ['epic', 'rare'] },
-        epic:      { coins: 1800, xp: 300, gems: 15, boosts: [{ kind: 'coin', mult: 2, n: 5 }, { kind: 'chest', mult: 2, n: 3 }], bonus: ['rare'] },
+        rare:      { coins: 2500, xp: 400, gems: 20, boosts: [{ kind: 'coin', mult: 2, n: 8 }, { kind: 'xp', mult: 2, n: 5 }], bonus: ['epic', 'rare'] },
+        epic:      { coins: 1800, xp: 300, gems: 15, boosts: [{ kind: 'coin', mult: 2, n: 5 }, { kind: 'xp', mult: 2, n: 3 }], bonus: ['rare'] },
         mythic:    { coins: 1500, xp: 270, gems: 12, boosts: [{ kind: 'coin', mult: 2, n: 4 }], bonus: ['rare'] },
         legendary: { coins: 1200, xp: 250, gems: 10, boosts: [{ kind: 'coin', mult: 2, n: 3 }], bonus: [] },
     };

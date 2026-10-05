@@ -187,6 +187,14 @@
             }
             await sleep(160);
         }
+        for (const bst of final.boosts || []) {                           // multiplier rewards (pass, daily, level rewards): shown as a pop with its icon, size and duration
+            const k = Boost.KINDS[bst.kind]; if (!k) continue;
+            const d = document.createElement('div'); d.className = 'lb-pop pop-boost'; d.style.setProperty('--bc', k.color);
+            d.innerHTML = Boost.art({ kind: bst.kind, mult: bst.mult }, true) + '<span class="bo-pop-t"><b>x' + bst.mult + ' ' + k.name + '</b><small>' + bst.n + ' ' + (bst.n === 1 ? k.unit : k.plural) + '</small></span>';
+            row.appendChild(d); void d.offsetWidth; d.classList.add('show'); sfx('boost');
+            const r = d.getBoundingClientRect(); o.emit(14, { x: r.left + 40, y: r.top + 40, speed: 280, size: 7, colors: [k.color, '#ffffff'] });
+            await sleep(520);
+        }
         const cos = final.cosmetic;
         if (cos) {
             await sleep(350);
@@ -270,10 +278,6 @@
         const o = makeOverlay(tier,
             '<div class="lb-stage"><div class="lb-title"></div><div class="lb-chest">' + (opts.variant === 'gem' ? buildGemChest('og') : buildChest('o', tier)) + '<div class="lb-ring"></div></div>' +
             '<div class="lb-pips">' + TIERS.map(() => '<i></i>').join('') + '</div><div class="lb-hint">TAP</div></div>');
-        if (window.Boost && drop.pending) {                 // a chest booster that will apply to this chest is shown before you open it
-            const a = Boost.active('chest');
-            if (a && Boost.appliesToChest(drop.id)) { const bdg = document.createElement('div'); bdg.className = 'lb-boostbadge'; bdg.innerHTML = Boost.art({ kind: 'chest', mult: a.mult }) + '<small>x' + a.mult + ' chest · ' + a.total + ' left</small>'; o.el.appendChild(bdg); }
-        }
         const el = o.el, chest = o.$('.lb-chest'), stage = o.$('.lb-stage'), title = o.$('.lb-title'), pips = [...el.querySelectorAll('.lb-pips i')], btn = o.$('.lb-btn'), skipBtn = o.$('.lb-skip');
         let taps = 0, busy = true, opened = false, skipped = false;
         const chestPos = () => { const r = chest.getBoundingClientRect(); return { x:r.left + r.width / 2, y:r.top + r.height * .42 }; };
@@ -290,7 +294,6 @@
             opened = true; busy = true;
             const final = pending ? (resolveDrop(drop.id, tier) || drop) : drop;
             const ft = final.tier || tier; if (ft !== tier) { tier = ft; paint(); }
-            { const sm = el.querySelector('.lb-boostbadge small'); if (sm && final.boost > 1) { const a = Boost.active('chest'); sm.textContent = 'x' + final.boost + ' applied · ' + (a ? a.total : 0) + ' left'; } }
             el.classList.remove('ready', 'tapped'); o.flash(); o.shake(); buzz([40, 30, 80]); sfx('open');
             el.classList.add('burst'); el.style.setProperty('--charge', 1);
             const p = chestPos(); o.emit(120, { x:p.x, y:p.y, dir:-Math.PI / 2, spread:2.4, speed:760, size:11, colors:[TIER_COLOR[tier], '#fff', '#ffcf3f', '#35e0c8'], g:1100 });

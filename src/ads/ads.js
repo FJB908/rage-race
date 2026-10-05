@@ -155,6 +155,7 @@
     window.Ads = A; A.refreshHome();
     // live countdown on the home button and the shop cards
     setInterval(() => {
+        if (typeof state !== 'undefined' && state !== 'menu') return;                 // nobody sees these while racing: no work during gameplay
         A.refreshHome();
         document.querySelectorAll('.ad-chip').forEach(b => {
             const kind = b.dataset.kind, left = A.left(kind), w = A.wait(kind), lb = b.querySelector('.ad-lbl');

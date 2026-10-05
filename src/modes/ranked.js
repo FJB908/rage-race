@@ -364,7 +364,7 @@
         const pc = placeCol[place - 1];
         // rewards (granted once)
         const id = 'rkm:' + (cur ? cur.id : Date.now()), p0 = prog();
-        const coins = window.Boost ? Boost.coins(PLACE_REWARD.coins[place - 1], id) : PLACE_REWARD.coins[place - 1], xp = PLACE_REWARD.xp[place - 1], pass = PLACE_REWARD.pass[place - 1];
+        const coins = window.Boost ? Boost.coins(PLACE_REWARD.coins[place - 1], id) : PLACE_REWARD.coins[place - 1], xp = window.Boost ? Boost.xp(PLACE_REWARD.xp[place - 1], id) : PLACE_REWARD.xp[place - 1], pass = PLACE_REWARD.pass[place - 1];
         let drop = null;
         if (!p0.lootGrants[id] && !p0.pendingDrops[id]) {
             const day = today(); const q = prog(); if (q.rk.dropDay !== day) { q.rk.dropDay = day; q.rk.dropN = 0; }

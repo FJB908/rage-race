@@ -20,7 +20,7 @@
         if (t.t === 'coins') return t.n.toLocaleString('en-US') + ' coins';
         if (t.t === 'gem') return t.n + ' gems';
         if (t.t === 'drop') return (t.tier ? t.tier[0].toUpperCase() + t.tier.slice(1) + ' ' : '') + 'chest';
-        if (t.t === 'boost') return 'x' + t.mult + ' ' + (t.kind === 'coin' ? 'coins' : 'chests');
+        if (t.t === 'boost') return 'x' + t.mult + ' ' + (t.kind === 'coin' ? 'coins' : 'XP');
         if (t.t === 'emote') return 'emote ' + Emotes.BY[t.id].text;
         if (t.t === 'finisher') return Finishers.BY[t.id].name;
         if (t.t === 'item' || t.t === 'prem') return itemOf(t).name;
@@ -67,7 +67,7 @@
         if (t.t === 'coins') return R('coin', t.n);
         if (t.t === 'gem') return R('gem', t.n);
         if (t.t === 'drop') return '<span class="pz-lbl">' + (t.tier ? t.tier.toUpperCase() + ' CHEST' : 'CHEST') + '</span>';
-        if (t.t === 'boost') { const k = Boost.KINDS[t.kind]; return '<span class="pz-lbl">x' + t.mult + (t.kind === 'coin' ? ' COINS' : ' CHESTS') + '</span><small class="bo-sub">' + t.n + ' ' + (t.n === 1 ? k.unit : k.plural) + '</small>'; }
+        if (t.t === 'boost') { const k = Boost.KINDS[t.kind]; return '<span class="pz-lbl">x' + t.mult + (t.kind === 'coin' ? ' COINS' : ' XP') + '</span><small class="bo-sub">' + t.n + ' ' + (t.n === 1 ? k.unit : k.plural) + '</small>'; }
         if (t.t === 'emote') return '<span class="pz-lbl">EMOTE</span>';
         if (t.t === 'finisher') return '<span class="pz-lbl">' + finOf(t).name.toUpperCase() + '</span>';
         return '<span class="pz-lbl">' + itemOf(t).name.toUpperCase() + '</span>';

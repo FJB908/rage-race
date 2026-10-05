@@ -1078,10 +1078,10 @@ giant: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="5" 
 bounce: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M10 43h28" stroke="#6b7489" stroke-width="4" stroke-linecap="round"/><path d="M15 40 L33 36.5 L15 33 L33 29.5 L15 26 L33 22.5" fill="none" stroke="#eef2f8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="14" y="4" width="20" height="17" rx="4.5" fill="#35e0c8"/><circle cx="20.5" cy="12" r="1.9" fill="#0d1017"/><circle cx="27.5" cy="12" r="1.9" fill="#0d1017"/><path d="M6 9h5M5 15h6M37 9h5M37 15h6" stroke="#35e0c8" stroke-width="2.4" stroke-linecap="round" opacity=".7"/></svg>`,
 chain: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="icBall" cx=".35" cy=".35" r=".75"><stop offset="0" stop-color="#9aa3b8"/><stop offset=".45" stop-color="#3a4152"/><stop offset="1" stop-color="#11141c"/></radialGradient></defs><g fill="none" stroke-linecap="round"><rect x="4" y="6.5" width="12" height="7" rx="3.5" transform="rotate(40 10 10)" stroke="#c9d1e3" stroke-width="3"/><path d="M14.5 14 L19.5 18.5" stroke="#8a93a8" stroke-width="3.6"/><rect x="17" y="18" width="12" height="7" rx="3.5" transform="rotate(40 23 21.5)" stroke="#c9d1e3" stroke-width="3"/></g><circle cx="32" cy="33" r="11" fill="url(#icBall)"/><path d="M25.8 30.5 a6.5 6.5 0 0 1 4.6 -4.8" stroke="#fff" stroke-opacity=".45" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
 quake: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M4 34 L14 34 L18 24 L23 42 L28 18 L32 34 L44 34" fill="none" stroke="#ff5470" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 40h40" stroke="#8a2e3c" stroke-width="3" stroke-linecap="round" opacity=".6"/><path d="M9 15 L12 10 M39 15 L36 10 M24 9 L24 4" stroke="#ff5470" stroke-width="2.6" stroke-linecap="round" opacity=".75"/></svg>`,
-shield: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icSh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6f5c2"/><stop offset="1" stop-color="#33b56a"/></linearGradient></defs><path d="M24 4 L40 10 V22 C40 33 33 41 24 44 C15 41 8 33 8 22 V10 Z" fill="url(#icSh)" stroke="#0d1017" stroke-width="1.6"/><path d="M24 10 L34 14 V22 C34 30 29.5 36 24 38 C18.5 36 14 30 14 22 V14 Z" fill="none" stroke="#eafff2" stroke-width="1.6" opacity=".8"/><path d="M18 23 L22.5 27.5 L31 17.5" fill="none" stroke="#0d1017" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+shield: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="icSh" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#d6ffe2" stop-opacity=".75"/><stop offset=".55" stop-color="#7ee787" stop-opacity=".28"/><stop offset="1" stop-color="#33b56a" stop-opacity=".5"/></radialGradient></defs><circle cx="24" cy="24" r="20" fill="url(#icSh)" stroke="#7ee787" stroke-width="3"/><path d="M11 20 a14 14 0 0 1 11-9" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="3" stroke-linecap="round"/><circle cx="36.5" cy="33" r="1.8" fill="#fff" fill-opacity=".7"/><rect x="16.5" y="17.5" width="15" height="15" rx="3.5" fill="#35e0c8" stroke="#0d1017" stroke-width="2"/><circle cx="21" cy="24" r="1.6" fill="#0d1017"/><circle cx="27" cy="24" r="1.6" fill="#0d1017"/></svg>`,
 cannon: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icCn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a4a1a"/><stop offset=".45" stop-color="#ffb866"/><stop offset="1" stop-color="#8a4a12"/></linearGradient></defs><path d="M18 8 L16.5 28 H31.5 L30 8 Z" fill="url(#icCn)" stroke="#0d1017" stroke-width="2.4" stroke-linejoin="round"/><ellipse cx="24" cy="8" rx="6.6" ry="2.6" fill="#0d1017"/><rect x="12" y="28" width="24" height="8" rx="3" fill="#46506b" stroke="#0d1017" stroke-width="2.2"/><circle cx="15" cy="38" r="5" fill="#161b28" stroke="#c9d1e3" stroke-width="2"/><circle cx="33" cy="38" r="5" fill="#161b28" stroke="#c9d1e3" stroke-width="2"/><circle cx="24" cy="17" r="1.5" fill="#0d1017"/><g stroke="#ffcf3f" stroke-width="2.4" stroke-linecap="round"><path d="M24 2 V-2" opacity="0"/><path d="M14 4 L11 1 M34 4 L37 1"/></g></svg>`,
 dj: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M12 36 a7.5 7.5 0 0 1 1.5-14.8 a9.5 9.5 0 0 1 18-1 a7 7 0 0 1 1 15.8 Z" fill="#eaf6ff" stroke="#9fe8ff" stroke-width="2.4" stroke-linejoin="round"/><g fill="none" stroke="#9fe8ff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 15 L24 8 L31 15"/><path d="M17 24 L24 17 L31 24" opacity=".55"/></g></svg>`,
-bomb: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="icBm" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#7a829c"/><stop offset=".5" stop-color="#2a3044"/><stop offset="1" stop-color="#0e1119"/></radialGradient></defs><circle cx="24" cy="27" r="19" fill="none" stroke="#ff5a6e" stroke-width="2.2" stroke-dasharray="4 4" opacity=".75"/><circle cx="24" cy="27" r="11" fill="url(#icBm)" stroke="#05070b" stroke-width="2"/><path d="M19 22 q3-4 7-3" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/><rect x="20.5" y="13" width="7" height="5" rx="1.5" fill="#3b4259" stroke="#05070b" stroke-width="1.4"/><path d="M24 13 q5-6 10-3" fill="none" stroke="#c9a56b" stroke-width="2.2" stroke-linecap="round"/><circle cx="35" cy="9.5" r="3.4" fill="#ffe45e"/><circle cx="35" cy="9.5" r="1.7" fill="#ff7a3d"/></svg>`,
+bomb: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="icBm" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#7a829c"/><stop offset=".5" stop-color="#2a3044"/><stop offset="1" stop-color="#0e1119"/></radialGradient></defs><circle cx="22" cy="29" r="15" fill="url(#icBm)" stroke="#05070b" stroke-width="2.4"/><path d="M13 24 q3-6 10-6" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2.6" stroke-linecap="round"/><rect x="17.5" y="10.5" width="9" height="7" rx="2" fill="#3b4259" stroke="#05070b" stroke-width="2"/><path d="M22 10.5 q6-8 14-4" fill="none" stroke="#d4b27a" stroke-width="3" stroke-linecap="round"/><g stroke="#ffe45e" stroke-width="2.4" stroke-linecap="round"><path d="M40 4 V1 M44 7 L47 5 M43 12 L46 13"/></g><circle cx="38" cy="5.5" r="3.4" fill="#ffe45e"/><circle cx="38" cy="5.5" r="1.7" fill="#ff7a3d"/></svg>`,
 wind: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#8fd6ff" stroke-width="3.4" stroke-linecap="round"><path d="M4 16 H30 a5 5 0 1 0 -4.5 -7.2"/><path d="M4 25 H36 a5.5 5.5 0 1 1 -5 7.9"/><path d="M4 34 H24 a4 4 0 1 1 -3.6 5.8"/></g></svg>`,
 };
 const slotEl = document.getElementById('item-slot');
@@ -4150,7 +4150,15 @@ function prog(){
     if (!['race', 'escape', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';      // (Arcade and Boom Tag are parked)
     return d;
 }
-function saveProg(p){ try { localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} if (window.Cloud) Cloud.touch(); }
+// Every match id that ever paid out is remembered so nothing is granted twice. Ids are never reused (they hold the time), so only the recent ones matter:
+// without a limit the profile grew by a few hundred bytes per match, making every save and every prog() slower (and the cloud save bigger).
+const LOOT_KEEP = 80;
+function trimLoot(p){
+    const keys = p.lootGrants && Object.keys(p.lootGrants);
+    if (keys && keys.length > LOOT_KEEP + 40) for (const k of keys.slice(0, keys.length - LOOT_KEEP)) delete p.lootGrants[k];
+    if (p.boost && Array.isArray(p.boost.used) && p.boost.used.length > 30) p.boost.used = p.boost.used.slice(-30);
+}
+function saveProg(p){ try { trimLoot(p); localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} if (window.Cloud) Cloud.touch(); }
 function levelInfo(xp){
     let lvl = 1, need = 120, into = Math.max(0, xp);
     while (into >= need){ into -= need; lvl++; need = 120 + (lvl-1)*40; }
@@ -4204,7 +4212,6 @@ function resolveDrop(id, tier){
     const p0 = prog();
     if (p0.lootGrants[id]) return p0.lootGrants[id];
     if (!p0.pendingDrops[id]) return null;
-    const cm = window.Boost ? Boost.chest(id) : 1;                    // chest booster (asked BEFORE the profile is loaded: it saves the profile itself)
     const p = prog(), pend = p.pendingDrops[id];
     tier = DROP_TIERS.includes(tier) ? tier : pend.tier;
     const drop = {
@@ -4239,7 +4246,6 @@ function resolveDrop(id, tier){
     if (tier === 'legendary'){                                      // legendary chests are rare, so they pay well: a coin booster on top
         drop.boosts = [{ type:'boost', kind:'coin', mult:2, n:3 }]; if (window.Boost) Boost.grant('coin', 2, 3);
     }
-    if (cm > 1){ drop.coins = Math.round(drop.coins * cm); drop.xp = Math.round(drop.xp * cm); drop.passPoints = Math.round(drop.passPoints * cm); drop.boost = cm; }
     p.xp += drop.xp;
     p.passPoints += drop.passPoints;
     p.passPointsEarned += drop.passPoints;
@@ -4595,7 +4601,8 @@ function rewardRace(place, finished, lootId){
     const id = lootId || newLootId('race');
     const coins0 = finished ? [60, 40, 25, 15][place-1] || 10 : 10;
     const coins = window.Boost ? Boost.coins(coins0, id) : coins0;       // coin booster
-    const xp    = finished ? [60, 45, 35, 25][place-1] || 15 : 15;
+    const xp0   = finished ? [60, 45, 35, 25][place-1] || 15 : 15;
+    const xp    = window.Boost ? Boost.xp(xp0, id) : xp0;                         // XP booster
     const passPoints = finished ? [50, 40, 32, 25][place-1] || 20 : 15;
     const pp = prog(), alreadyGranted = !!(pp.lootGrants[id] || pp.pendingDrops[id]);
     // Only the winner earns a chest; everyone else gets the base rewards straight away.
@@ -5294,7 +5301,7 @@ function lvComplete(p){
         const coins = bc(curDim === 0 ? Math.round(40 + f * 60) : Math.round(90 + f * 120));
         loot = awardLootDrop(lv.lootId, {coins, xp:25 + Math.round(f * 25), passPoints:50}, {tier});
     } else {
-        const coins = bc(gainedStars * 20), xp = 25, pp = 20 + stars * 10, q = prog();
+        const coins = bc(gainedStars * 20), xp = window.Boost ? Boost.xp(25, lv.lootId) : 25, pp = 20 + stars * 10, q = prog();
         if (!q.lootGrants[lv.lootId] && !q.pendingDrops[lv.lootId]){
             q.xp += xp; q.passPoints += pp; q.passPointsEarned += pp;
             q.lootGrants[lv.lootId] = { id:lv.lootId, tier:'common', coins, xp, passPoints:pp, cosmetic:null, noDrop:true }; saveProg(q);

@@ -129,5 +129,5 @@
     }
     window.Party = { members, mode, setMode, modeLabel, pickMode, intercept, render, active:inParty, standIns:() => (inParty() ? members().slice(1) : []) };
     render(); syncMode();
-    setInterval(() => { if (!document.hidden) { render(); syncMode(); } }, 4000);          // your own look can change from the shop
+    setInterval(() => { if (!document.hidden && (typeof state === 'undefined' || state === 'menu')) { render(); syncMode(); } }, 4000);          // your own look can change from the shop
 })();

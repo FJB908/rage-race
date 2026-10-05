@@ -151,6 +151,15 @@
         }
         const rd = rs.data(), remote = parse(rd.blob);
         if (!remote || !remote.d) { if (!pristine(local)) await write(local, meta); return false; }
+        // Another account than the one this phone last synced with (you signed in to a different one): take ITS save exactly as it is.
+        // Mixing the previous account in is what used to leave you with the old name, loadout and cosmetics. A copy of what was on the phone is kept just in case.
+        if (meta.uid && meta.uid !== user.uid) {
+            if (!pristine(local)) lsSet('rr_prev_account', JSON.stringify({ uid:meta.uid, at:Date.now(), snap:local }));
+            applySnapshot(remote);
+            if (!blank(remote.d.profile)) { lsSet('rr_onboarded', '1'); lsSet('rr_acct_choice', 'google'); }
+            meta.uid = user.uid; meta.synced = rd.ts; meta.localTs = remote.ts; meta.dirty = false; meta.force = false; setMeta(meta); C.last = rd.ts;
+            return true;
+        }
         if (meta.force) { await write(local, meta); return false; }                  // a reset on this device wins
         if (meta.uid === user.uid && meta.synced === rd.ts) {                         // cloud unchanged since our last sync
             if (meta.dirty) await write(local, meta);
@@ -293,6 +302,7 @@
         touch, afterReset, signOut, deleteAccount, call, api: () => (fb && user) ? { fb, user } : null, signInGoogle, sync: () => { ready = false; return sync(); },
         on: f => C.listeners.push(f),
         _merge:merge, _snapshot:snapshot,
+        _test:{ reconcile:(fbMock, u) => { fb = fbMock; user = u; return reconcile(); } },      // unit tests only
     });
     window.Cloud = C;
     document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(timer); push(); } });

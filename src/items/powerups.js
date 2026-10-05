@@ -6,7 +6,7 @@
     'use strict';
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
     const DJ_TIME = 7, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
-    const BOMB_R = 58, BOMB_LIFE = 10, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds it hangs there, stun length, immunity after a stun
+    const BOMB_R = 174, BOMB_LIFE = 10, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds it hangs there, stun length, immunity after a stun
     const clouds = [], bombs = [];
     const sc = a => Math.max(-CANNON_ANG, Math.min(CANNON_ANG, a));
     const angOf = (dx, dy) => Math.atan2(dx, -dy);                      // 0 = straight up, negative = left
@@ -18,11 +18,12 @@
 
     /* ------------------------------------------------------------------ flight prediction ---- */
     // Same integration as the game (gravity, side walls, swept platform landings, ceilings, finish line). Returns where a jump from p with (vx, vy) lands.
+    function nearPlats(p) { return platforms.filter(pl => pl.active && pl.type !== 'spike' && pl.type !== 'finish' && pl.y > p.y - 2800 && pl.y < p.y + 900); }
     function predict(p, vx, vy, o) {
         o = o || {};
         const g = playerG(p), pw = PLAY_W(), r = p.r, maxT = o.maxT || 3.6, SK = SUPPORT_K;
         const fin = platforms.find(pl => pl.type === 'finish');
-        const near = platforms.filter(pl => pl.active && pl.type !== 'spike' && pl.type !== 'finish' && pl.y > p.y - 2800 && pl.y < p.y + 900);
+        const near = o.near || nearPlats(p);
         const ceils = o.pass ? [] : near.filter(pl => pl.ceiling && !pl.ceilingBroken);
         let x = p.x, y = p.y, t = 0, i = 0, apex = { x, y }; const pts = o.pts ? [] : null;
         while (t < maxT) {
@@ -47,9 +48,9 @@
 
     /* ------------------------------------------------------------------------------ CANNON ---- */
     function cannonPlan(p) {                                              // the angle whose flight lands somewhere good (high, wide, safe, middle of the platform)
-        let best = null;
-        for (let a = -CANNON_ANG; a <= CANNON_ANG + 1e-6; a += 0.012) {
-            const v = cannonVel(a), pr = predict(p, v.vx, v.vy, { pass: true, maxT: 4.2 }), L = pr.land;
+        let best = null; const near = nearPlats(p);            // the platform list is built once, not once per angle
+        for (let a = -CANNON_ANG; a <= CANNON_ANG + 1e-6; a += 0.016) {
+            const v = cannonVel(a), pr = predict(p, v.vx, v.vy, { pass: true, maxT: 4.2, near }), L = pr.land;
             if (!L) continue;
             let s;
             if (L.finish) s = 6000;
@@ -211,7 +212,7 @@
                 else { p.cannon = 0; burst(p.x, p.y, ITEMS.cannon.color, 10, 160); }                  // never landed: the cannon is lost
             }
         }
-        if (p.djT > 0) { p.djT -= dt; if (p.djT <= 0) { p.djT = 0; } if (p.mode === 'idle') p.djUsed = false; else if (!p.local && !(p.zapT > 0)) botRescue(p); }
+        if (p.djT > 0) { p.djT -= dt; if (p.djT <= 0) { p.djT = 0; } if (p.mode === 'idle') p.djUsed = false; else if (!p.local && !(p.zapT > 0)) { p.rescueT = (p.rescueT || 0) - dt; if (p.rescueT <= 0) { p.rescueT = 0.09; botRescue(p); } } }
     }
     // Pointer: may this player start a drag now? Normal jumps from a platform, and the extra jump while Double Jump is ready.
     function canAim(p) { return !!p && !p.finished && !(p.zapT > 0) && (p.mode === 'idle' || airAim(p)); }
@@ -288,16 +289,26 @@
         for (const s of sp) puff(c, s[0] * (0.7 + 0.5 * e), s[1], s[2] * (0.75 + 0.35 * e), a);
         c.restore();
     }
+    let _zone = null;
+    function zoneSprite() {                                                    // the whole danger zone (tint + dashed rim) as ONE picture: a bomb costs a single drawImage
+        if (_zone) return _zone;
+        const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N; const x = cv.getContext('2d');
+        const g = x.createRadialGradient(N / 2, N / 2, N * 0.1, N / 2, N / 2, N / 2); g.addColorStop(0, 'rgba(255,61,90,0.06)'); g.addColorStop(1, 'rgba(255,61,90,0.15)');
+        x.fillStyle = g; x.beginPath(); x.arc(N / 2, N / 2, N / 2, 0, 7); x.fill();
+        x.lineWidth = 2.6; x.strokeStyle = 'rgba(255,100,120,0.8)'; x.setLineDash([9, 17]); x.lineCap = 'round'; x.beginPath(); x.arc(N / 2, N / 2, N / 2 - 3, 0, 7); x.stroke();
+        return (_zone = cv);
+    }
     function drawBomb(c, b, t) {
+        if (b.y + BOMB_R < cameraY - 60 || b.y - BOMB_R > cameraY + VH + 60) return;        // off screen: nothing to draw
         const life = b.t / BOMB_LIFE, pop = b.t > BOMB_LIFE ? Math.min(1, (b.t - BOMB_LIFE) / 0.35) : 0, col = ITEMS.bomb.color;
         const appear = Math.min(1, b.t / 0.25), R = BOMB_R * (0.55 + 0.45 * easeOutBack(appear)) * (1 + pop * 0.25), a = (1 - pop) * (b.t > BOMB_LIFE - 1.5 && !pop ? 0.55 + 0.45 * Math.abs(Math.sin(t * 10)) : 1);
         c.save(); c.globalAlpha = a;
-        // the danger zone: a faint tint and a thin dashed rim, a little stronger when someone is inside
+        // the danger zone: a faint tint (one cached picture, so even this big a circle costs almost nothing) and a thin dashed rim, a little stronger when someone is inside
         let busy = 0; for (const q of players) if (!q.finished && Math.hypot(q.x - b.x, q.y - b.y) <= R + q.r * 0.4) { busy = 1; break; }
-        const pulse = 0.5 + 0.5 * Math.sin(t * 3 + b.seed), g = c.createRadialGradient(b.x, b.y, R * 0.2, b.x, b.y, R); g.addColorStop(0, 'rgba(255,61,90,' + (0.05 + 0.03 * pulse + 0.04 * busy) + ')'); g.addColorStop(1, 'rgba(255,61,90,' + (0.10 + 0.04 * pulse + 0.06 * busy) + ')');
-        c.fillStyle = g; c.beginPath(); c.arc(b.x, b.y, R, 0, 7); c.fill();
-        c.lineWidth = 1.8; c.strokeStyle = 'rgba(255,100,120,' + (0.55 + 0.25 * busy) + ')'; c.setLineDash([5, 9]); c.lineDashOffset = -t * 14; c.beginPath(); c.arc(b.x, b.y, R, 0, 7); c.stroke(); c.setLineDash([]);
-        c.lineWidth = 2; c.strokeStyle = 'rgba(255,100,120,0.55)'; c.beginPath(); c.arc(b.x, b.y, R - 4, -Math.PI / 2, -Math.PI / 2 + (1 - life) * Math.PI * 2); c.stroke();
+        const pulse = 0.5 + 0.5 * Math.sin(t * 3 + b.seed), spr = zoneSprite();
+        c.globalAlpha = a * Math.min(1, 0.72 + 0.18 * pulse + 0.4 * busy);
+        c.save(); c.translate(b.x, b.y); c.rotate(t * 0.07 + b.seed); c.drawImage(spr, -R, -R, R * 2, R * 2); c.restore();
+        c.globalAlpha = a; c.lineWidth = 2; c.strokeStyle = 'rgba(255,100,120,0.5)'; c.beginPath(); c.arc(b.x, b.y, R - 8, -Math.PI / 2, -Math.PI / 2 + (1 - life) * Math.PI * 2); c.stroke();
         // the bomb
         const by = b.y + Math.sin(t * 2.6 + b.seed) * 3.5, r = 10;
         c.fillStyle = 'rgba(0,0,0,0.25)'; c.beginPath(); c.ellipse(b.x, by + r + 6, r * 0.9, 3, 0, 0, 7); c.fill();

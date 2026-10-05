@@ -790,6 +790,7 @@
         const place = placeOf(lp);
         const pr = PRIZES[reached], e = gt.entry;
         const bc = n => window.Boost ? Boost.coins(n, gt.lootId) : n;                                                       // coin booster
+        const xpBase = window.Boost ? Boost.xp(pr.xp, gt.lootId) : pr.xp;                                                    // XP booster
         const coinBase = bc(pr.coins);                                                                                       // the chest's own coins
         const wagerCoins = e.mult > 1 ? Math.max(0, bc(Math.round(pr.coins * e.mult)) - coinBase) : 0;                      // extra from the wager, paid straight away
         const refund = e.stake && reached >= 2 ? e.stake : 0;
@@ -805,16 +806,16 @@
             saveProg(p);
             if (refund) store('rr_coins', coins() + refund);
             if (wagerCoins) store('rr_coins', coins() + wagerCoins);
-            if (tier) drop = awardLootDrop(id, { coins:coinBase, xp:pr.xp, passPoints:pr.pass }, { tier });
+            if (tier) drop = awardLootDrop(id, { coins:coinBase, xp:xpBase, passPoints:pr.pass }, { tier });
             else {
-                const q = prog(); q.xp += pr.xp; q.passPoints += pr.pass; q.passPointsEarned += pr.pass;
-                q.lootGrants[id] = { id, tier:'common', coins:coinBase, xp:pr.xp, passPoints:pr.pass, cosmetic:null, noDrop:true };
+                const q = prog(); q.xp += xpBase; q.passPoints += pr.pass; q.passPointsEarned += pr.pass;
+                q.lootGrants[id] = { id, tier:'common', coins:coinBase, xp:xpBase, passPoints:pr.pass, cosmetic:null, noDrop:true };
                 saveProg(q); store('rr_coins', coins() + coinBase);
             }
         } else drop = p.pendingDrops[id] || p.lootGrants[id];
-        if (!drop) drop = { noDrop:true, coins:coinBase, xp:pr.xp, passPoints:pr.pass };
+        if (!drop) drop = { noDrop:true, coins:coinBase, xp:xpBase, passPoints:pr.pass };
         refreshMenu();
-        renderResult({ reached, win, place, drop, tier, coinBase, wagerCoins, refund, pr, e, lootId:id });
+        renderResult({ reached, win, place, drop, tier, coinBase, xpBase, wagerCoins, refund, pr, e, lootId:id });
     }
 
     function renderResult(r) {
@@ -838,7 +839,7 @@
               '<div class="gt-rsteps">' + steps + '</div>' +
               '<div class="gt-rewards">' +
                 '<h2 class="gt-h2">' + (r.drop && !r.drop.noDrop ? 'Chest' : 'Rewards') + '</h2>' +
-                (r.drop && !r.drop.noDrop ? '<div class="loot-drop" id="gt-loot"></div>' : '<div class="gt-chips">' + R('coin', r.coinBase, { plus:true }) + R('xp', r.pr.xp, { plus:true }) + R('pass', r.pr.pass, { plus:true }) + '</div>') +
+                (r.drop && !r.drop.noDrop ? '<div class="loot-drop" id="gt-loot"></div>' : '<div class="gt-chips">' + R('coin', r.coinBase, { plus:true }) + R('xp', r.xpBase, { plus:true }) + R('pass', r.pr.pass, { plus:true }) + '</div>') +
                 (r.e.stake ? '<div class="gt-wagerbox"><h2 class="gt-h2">Wager</h2>' +
                     (r.wagerCoins ? '<div class="gt-wrow win"><span>Wager bonus x' + r.e.mult + '</span><b>' + R('coin', r.wagerCoins, { plus:true }) + '</b></div>' : '') +
                     '<div class="gt-wrow ' + (r.refund ? 'ok' : 'lost') + '"><span>' + (r.refund ? 'Stake returned' : 'Stake lost') + '</span><b>' + (r.refund ? R('coin', r.e.stake, { plus:true }) : '<span class="gt-neg">-' + r.e.stake.toLocaleString('en-US') + '</span>') + '</b></div>' +
