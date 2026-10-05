@@ -1,5 +1,20 @@
 # Powerup ideas (to approve)
 
+## Replacements for Wind (proposal, to approve)
+Why Wind fails: it pushes every player the same way, so they all end up on the same edge. These hit one player or one spot instead, and never push sideways. Wind's share of the rolls would go to whichever of these you pick.
+
+1. **Freeze ray**: the platform of the player directly ahead of you turns to ice for 5 s (their next landings slide). One target, readable, no clumping.
+2. **Boomerang**: thrown up the track, knocks the first player ahead off their platform and flies back to you. Needs a clear shot; misses if nobody is in the lane.
+3. **Bomb trap**: a bomb lands on the leader's platform and goes off after 2 s with a visible warning ring; anyone on that platform is thrown off. Players can jump away in time.
+4. **Slime puddle**: you leave a puddle on your own platform; the next player who lands there slides off. A trap that waits, one victim.
+5. **Sticky gum**: the player directly ahead gets 40% less jump power for 5 s.
+6. **Anchor**: the player directly ahead falls 50% faster for 5 s (shorter, heavier jumps).
+7. **Swap**: swap places with the player directly ahead (only for 3rd and 4th). Dramatic comeback, rare.
+8. **Decoy box**: a fake item box on a platform ahead; whoever grabs it gets nothing and a sad sound. Harmless and funny.
+
+My three: Freeze ray, Boomerang and Bomb trap (all distinct from each other and from the quake).
+
+
 Current items: rocket, giant, bounce (now with a spring), chain, quake (always aims at the leader), shield, wind, ufo, and the newly built Cannon and Double jump (see POWERUPS.md; the Magnet was removed again). The rest below is not built yet.
 "Who" = who rolls it most (the game gives comeback tools to players further back, defence to players in front).
 
