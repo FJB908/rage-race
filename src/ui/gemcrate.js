@@ -2,13 +2,13 @@
 // The rarer the cosmetic, the smaller the pile, so you can never lose. Loaded AFTER game.js and lootbox.js.
 (function () {
     'use strict';
-    const PRICE = 100, SECOND_CHANCE = 0.12;
-    const ODDS = [['legendary', 0.12], ['mythic', 0.20], ['epic', 0.40], ['rare', 0.28]];
+    const PRICE = 100, SECOND_CHANCE = 0.3;
+    const ODDS = [['legendary', 0.18], ['mythic', 0.28], ['epic', 0.46], ['rare', 0.08]];       // 92% epic or better
     const EXTRAS = {
-        rare:      { coins: 2500, xp: 400, gems: 20, boosts: [{ kind: 'coin', mult: 2, n: 8 }, { kind: 'xp', mult: 2, n: 5 }], bonus: ['epic', 'rare'] },
-        epic:      { coins: 1800, xp: 300, gems: 15, boosts: [{ kind: 'coin', mult: 2, n: 5 }, { kind: 'xp', mult: 2, n: 3 }], bonus: ['rare'] },
-        mythic:    { coins: 1500, xp: 270, gems: 12, boosts: [{ kind: 'coin', mult: 2, n: 4 }], bonus: ['rare'] },
-        legendary: { coins: 1200, xp: 250, gems: 10, boosts: [{ kind: 'coin', mult: 2, n: 3 }], bonus: [] },
+        rare:      { coins: 4000, xp: 700, gems: 30, boosts: [{ kind: 'coin', mult: 2, n: 10 }, { kind: 'xp', mult: 2, n: 8 }], bonus: ['epic', 'epic', 'rare'] },
+        epic:      { coins: 3200, xp: 600, gems: 25, boosts: [{ kind: 'coin', mult: 2, n: 8 }, { kind: 'xp', mult: 2, n: 6 }], bonus: ['epic', 'rare'] },
+        mythic:    { coins: 2600, xp: 500, gems: 20, boosts: [{ kind: 'coin', mult: 2, n: 6 }, { kind: 'xp', mult: 2, n: 5 }], bonus: ['epic', 'rare'] },
+        legendary: { coins: 2200, xp: 450, gems: 15, boosts: [{ kind: 'coin', mult: 2, n: 5 }, { kind: 'xp', mult: 2, n: 4 }], bonus: ['rare'] },
     };
     const pool = (rar, p) => [...SKINS, ...HATS, ...FACES, ...TRAILS, ...(window.Finishers ? Finishers.FINISHERS : [])].filter(i => i.id !== 'f-none').filter(i => i.rarity === rar && i.price > 0 && !i.premium && !i.exclusive && !i.priceLock && !p.owned.includes(i.id));
 
@@ -41,7 +41,7 @@
         openLootbox(drop, { fixed: true, variant: 'gem', onDone: async () => {
             refreshMenu();
             if (second) await showRewardPops([{ type: 'item', item: second }], { tier: second.rarity });
-            for (const t of ex.bonus) await new Promise(res => openLootbox(awardLootDrop(newLootId('gemcrate'), { coins: 200, xp: 80, passPoints: 0 }, { tier: t }), { onDone: res }));
+            for (const t of ex.bonus) await new Promise(res => openLootbox(awardLootDrop(newLootId('gemcrate'), { coins: 400, xp: 150, passPoints: 0 }, { tier: t }), { onDone: res }));
             refreshMenu(); done();
         } });
         });
@@ -49,7 +49,7 @@
 
     function render(box) {
         const b = document.createElement('button'); b.type = 'button'; b.className = 'gc-hero';
-        const sub = 'A new cosmetic plus loads of loot';
+        const sub = 'Epic+ cosmetic, bonus chests, boosters';
         b.innerHTML = '<span class="gc-chest">' + LB_GEMCHEST('s') + '</span><span class="gc-tx"><b>Gem chest</b><small>' + sub + '</small></span><span class="gc-price">' + icon('gem') + '<b>' + PRICE + '</b></span>';
         let armed = false, t = 0;
         b.onclick = () => {

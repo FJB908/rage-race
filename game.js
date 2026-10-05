@@ -4160,8 +4160,8 @@ function trimLoot(p){
 }
 function saveProg(p){ try { trimLoot(p); localStorage.setItem('rr_profile', JSON.stringify(p)); } catch(e){} if (window.Cloud) Cloud.touch(); }
 function levelInfo(xp){
-    let lvl = 1, need = 120, into = Math.max(0, xp);
-    while (into >= need){ into -= need; lvl++; need = 120 + (lvl-1)*40; }
+    let lvl = 1, need = 150, into = Math.max(0, xp);
+    while (into >= need){ into -= need; lvl++; need = Math.round(150 + (lvl-1)*50 + (lvl-1)*(lvl-1)*2.2); }
     return { lvl, into, need };
 }
 function skinById(id){ return SKINS.find(s => s.id === id) || SKINS[0]; }
