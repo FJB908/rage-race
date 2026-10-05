@@ -766,18 +766,12 @@
         return [gt.winner, ...still, ...gt.out.slice().reverse()].filter((p, i, a) => p && a.indexOf(p) === i).slice(0, 3);
     }
     function podiumHtml() {
-        const top = topThree(); if (top.length < 3) return '';
-        const cls = ['second', 'first', 'third'], rank = [2, 1, 3];
-        return '<div class="gt-podium" id="gt-podium">' + [1, 0, 2].map((k, c) => {
-            const pl = top[k], me = pl.local;
-            return '<div class="gt-pd ' + cls[c] + (me ? ' me' : '') + '"><div class="gt-pd-who">' + (k === 0 ? '<span class="gt-pd-crown">' + icon('crown') + '</span>' : '') +
-                '<canvas width="200" height="150" data-k="' + k + '"></canvas><b>' + (me ? 'YOU' : pl.name) + '</b></div><div class="gt-pd-step"><i>' + rank[c] + '</i></div></div>';
-        }).join('') + '</div>';
+        const top = topThree(); if (!top.length || !window.Podium) return '';
+        const en = top.map(pl => ({ name:pl.name, look:pl.look || {}, color:pl.color, me:!!pl.local }));
+        const lp = gt.field[0], at = [gt.winner, ...gt.field.filter(p => p !== gt.winner && !gt.out.includes(p)).sort((a, b) => a.y - b.y), ...gt.out.slice().reverse()].filter((p, i, a) => p && a.indexOf(p) === i).indexOf(lp);
+        return '<div id="gt-pod">' + Podium.html(en, at > 2 ? { extra:{ name:lp.name, look:lp.look || {}, color:lp.color, me:true }, extraRank:at + 1 } : {}) + '</div>';
     }
-    function drawPodium() {
-        const top = topThree();
-        document.querySelectorAll('#gt-podium canvas').forEach(cv => { const pl = top[+cv.dataset.k]; if (pl) { try { renderLook(cv, pl.look || {}, { scale:.2, cy:.6 }); } catch (e) {} } });
-    }
+    function drawPodium() { if (window.Podium) Podium.start($('gt-pod')); }
 
     function finishRun() {
         if (!gt || gt.phase === 'done') return;

@@ -54,6 +54,12 @@
           '<g fill="#aab4c8"><rect x="14" y="31" width="7" height="6" rx="2"/><rect x="28.5" y="31" width="7" height="6" rx="2"/><rect x="43" y="31" width="7" height="6" rx="2"/><rect x="14" y="41" width="7" height="6" rx="2"/><rect x="43" y="41" width="7" height="6" rx="2"/></g>' +
           '<rect x="26.5" y="39" width="11" height="10" rx="3" fill="#ffb21f" stroke="#a65e00" stroke-width="2"/>' +
         '</symbol>' +
+        '<symbol id="ico-hanger" viewBox="0 0 64 64">' +
+          '<path d="M32 27 V21 C32 17.5 37.5 16.5 37.5 11.5 C37.5 6.5 31.5 5.5 28.8 9.3" fill="none" stroke="#10151f" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<path d="M32 27 L8.5 45.5 C5.5 48 7 52.5 11 52.5 H53 C57 52.5 58.5 48 55.5 45.5 Z" fill="none" stroke="#10151f" stroke-width="8" stroke-linejoin="round"/>' +
+          '<path d="M32 27 V21 C32 17.5 37.5 16.5 37.5 11.5 C37.5 6.5 31.5 5.5 28.8 9.3" fill="none" stroke="#eef2f9" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<path d="M32 27 L8.5 45.5 C5.5 48 7 52.5 11 52.5 H53 C57 52.5 58.5 48 55.5 45.5 Z" fill="rgba(53,224,200,.22)" stroke="#35e0c8" stroke-width="3.6" stroke-linejoin="round"/>' +
+        '</symbol>' +
         '<symbol id="ico-video" viewBox="0 0 64 64">' +
           '<rect x="6" y="14" width="52" height="38" rx="10" fill="#1b2130" stroke="#0a0d14" stroke-width="3"/>' +
           '<rect x="10" y="18" width="44" height="30" rx="7" fill="#2f3a52"/>' +

@@ -1,0 +1,37 @@
+/* the clothes hanger: only the icon, no window around it */
+.m-hanger { position: absolute; top: 4px; right: 6px; z-index: 3; width: 52px; height: 52px; padding: 0; border: 0; background: none; display: grid; place-items: center; color: inherit; -webkit-tap-highlight-color: transparent; filter: drop-shadow(0 3px 5px rgba(0,0,0,.55)); transition: transform .15s; }
+.m-hanger .ico { width: 40px; height: 40px; }
+.m-hanger:active { transform: scale(.88) rotate(-8deg); }
+.m-hero-c { animation: none !important; }
+.m-stage { -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+.pt-slot.me .pt-sh { display: none; }
+
+/* ---- the podium ---- */
+.pd-stand { position: relative; width: 100%; max-width: 380px; margin: 6px auto 4px; }
+.pd-beam { position: absolute; left: 50%; top: -6px; width: 190px; height: 260px; margin-left: -95px; background: radial-gradient(ellipse 50% 70% at 50% 0, rgba(255,214,90,.28), rgba(255,214,90,0) 70%); pointer-events: none; opacity: 0; animation: pdBeam 1s .9s forwards; }
+.pd-stand.n1 .pd-beam, .pd-stand.solo .pd-beam { opacity: 0; }
+.pd-row { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+.pd-col { position: relative; display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-width: 0; max-width: 128px; opacity: 0; transform: translateY(46px); animation: pdRise .55s cubic-bezier(.2,.9,.25,1.15) forwards; }
+.pd-col.third { animation-delay: .1s; } .pd-col.second { animation-delay: .5s; } .pd-col.first { animation-delay: .95s; } .pd-col.fourth { animation-delay: 1.25s; max-width: 92px; }
+.pd-who { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; }
+.pd-who canvas { width: 130px; height: 150px; margin-bottom: -30px; pointer-events: none; }
+.pd-col.fourth .pd-who canvas { width: 100px; height: 115px; margin-bottom: -23px; }
+.pd-who b { position: relative; z-index: 1; font-size: 12px; font-weight: 800; letter-spacing: .02em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px; color: #e8ecf5; }
+.pd-who small { font-size: 10.5px; font-weight: 700; color: var(--muted, #8b95a7); margin-top: 1px; }
+.pd-col.me .pd-who b { color: #35e0c8; }
+.pd-crown { position: absolute; top: 10px; left: 50%; width: 30px; height: 30px; margin-left: -15px; z-index: 2; filter: drop-shadow(0 2px 6px rgba(255,200,40,.7)); animation: pdCrown 1.8s ease-in-out infinite; }
+.pd-crown .ico { width: 100%; height: 100%; }
+.pd-step, .pd-plate { position: relative; width: 100%; display: grid; place-items: center; border-radius: 12px 12px 4px 4px; border: 1px solid rgba(255,255,255,.14); border-bottom: 0; }
+.pd-step i, .pd-plate i { font-style: normal; font-weight: 900; font-size: 22px; line-height: 1; color: rgba(13,16,23,.72); text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+.pd-col.first .pd-step { height: 76px; background: linear-gradient(180deg,#ffe27a,#f0a81c); box-shadow: 0 -4px 18px rgba(255,200,60,.35); }
+.pd-col.second .pd-step { height: 54px; background: linear-gradient(180deg,#e3e9f4,#98a4bb); }
+.pd-col.third .pd-step { height: 40px; background: linear-gradient(180deg,#f0b88a,#b86f3a); }
+.pd-plate { height: 26px; width: 74%; background: linear-gradient(180deg,#39435a,#242c3d); }
+.pd-plate i { font-size: 13px; color: #b8c2d6; text-shadow: none; }
+.pd-stand.solo .pd-col { max-width: 150px; }
+@keyframes pdRise { to { opacity: 1; transform: none; } }
+@keyframes pdBeam { to { opacity: 1; } }
+@keyframes pdCrown { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-4px) rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { .pd-col { animation-duration: .01s; animation-delay: 0s !important; } }
+.pd-stand { flex: none; margin-bottom: 12px; }
+.pd-stand ~ .tg-rows { display: none; }

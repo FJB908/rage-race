@@ -648,13 +648,15 @@
         const rw = rewardRace(place, true, B.lootId);
         sfx(place === 1 ? 'levelup' : 'finish');
         panel.hidden = false; panel.className = 'bd-panel fin';
-        const pod = [1, 0, 2].map(k => { const i = order[k]; return '<div class="bd-pod p' + (k + 1) + (i === 0 ? ' me' : '') + '" style="--pc:' + PCOL[i] + '"><b>' + (i === 0 ? 'YOU' : B.roster[i].name.slice(0, 9)) + '</b><strong>' + B.scores[i] + '</strong><span>' + (k + 1) + '</span></div>'; }).join('');
+        const en = order.map(i => ({ name:B.roster[i].name, look:B.roster[i].look || {}, color:PCOL[i], me:i === 0, sub:B.scores[i] + ' pts' }));
+        const pod = window.Podium ? Podium.html(en, place > 3 ? { extra:en[place - 1], extraRank:place } : {}) : '';
         panel.innerHTML = '<div class="bd-ph"><small>BUILD RACE &middot; FINAL</small><h2>' + (place === 1 ? 'YOU WIN!' : place === 2 ? '2ND PLACE' : place === 3 ? '3RD PLACE' : '4TH PLACE') + '</h2></div>' +
-            '<div class="bd-podium">' + pod + '</div>' +
+            pod +
             '<div class="bd-rows sm">' + order.map((i, k) => '<div class="bd-rr' + (i === 0 ? ' me' : '') + '" style="--pc:' + PCOL[i] + '"><span class="bd-pl' + (k === 0 ? ' g' : '') + '">' + (k + 1) + '</span><div class="bd-who"><b>' + (i === 0 ? 'YOU' : B.roster[i].name) + '</b></div><div class="bd-tot"><strong>' + B.scores[i] + '</strong><i>pts</i></div></div>').join('') + '</div>' +
             '<div class="loot-drop" id="bd-loot"></div>' +
             '<div class="bd-rw">' + (rw.noDrop ? R('coin', rw.coins, { plus: true }) + R('xp', rw.xp, { plus: true }) + R('pass', rw.passPoints, { plus: true }) : '') + '</div>' +
             '<button class="btn bd-next" id="bd-again" type="button">PLAY AGAIN</button><button class="btn ghost" id="bd-menu" type="button" style="margin-top:10px">MAIN MENU</button>';
+        if (window.Podium) setTimeout(() => Podium.start(panel), 60);
         if (!rw.noDrop) renderLootDrop('bd-loot', rw);
         $('bd-again').onclick = () => { panel.hidden = true; start(); };
         $('bd-menu').onclick = () => { panel.hidden = true; leave(true); };

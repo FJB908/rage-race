@@ -226,6 +226,13 @@ const SFX = (() => {
         spring() { voice({ f: 220, f2: 640, glide: 0.12, t: 0.16, v: 0.11, a: 0.004, vib: 30, vibRate: 22, verb: 0.15 }); I.pluck(mtof(64), { at: 0.02, t: 0.25, v: 0.06 }); },
         bombset() { voice({ f: 140, f2: 70, t: 0.16, v: 0.22, a: 0.004 }); noise({ type: 'bandpass', f: 1500, q: 2, t: 0.04, v: 0.08, a: 0.003 }); I.pluck(mtof(60), { at: 0.06, t: 0.25, v: 0.08, verb: 0.2 }); voice({ f: 520, f2: 880, glide: 0.12, t: 0.14, v: 0.05, at: 0.1, verb: 0.2 }); },
         zap() { noise({ type: 'bandpass', f: 3200, f2: 900, q: 1.2, t: 0.28, v: 0.14, a: 0.003 }); voice({ type: 'sawtooth', f: 1400, f2: 180, glide: 0.2, t: 0.22, v: 0.09, a: 0.003, filter: { f: 2600, f2: 500 }, verb: 0.2 }); I.vibe(mtof(96), { at: 0.1, t: 0.5, v: 0.04, verb: 0.4 }); voice({ f: 90, f2: 50, t: 0.25, v: 0.2 }); },
+        // character moods: tiny sounds for the little faces and tricks
+        chirp(i = 0) { const n = pent(79, 1 + (i % 3)); voice({ f: mtof(n - 5), f2: mtof(n + 2), glide: 0.06, t: 0.11, v: 0.07, a: 0.004, verb: 0.2 }); I.pluck(mtof(n + 12), { at: 0.05, t: 0.25, v: 0.045, verb: 0.3 }); },
+        squeak() { voice({ f: 560, f2: 1250, glide: 0.07, t: 0.1, v: 0.07, a: 0.003, vib: 18, vibRate: 26 }); voice({ f: 1250, f2: 900, glide: 0.06, t: 0.09, v: 0.05, at: 0.1, a: 0.003, verb: 0.15 }); },
+        flip() { noise({ type: 'bandpass', f: 400, f2: 2800, q: 0.7, t: 0.34, v: 0.07, a: 0.06, verb: 0.2 }); voice({ f: 300, f2: 760, glide: 0.28, t: 0.3, v: 0.07, a: 0.02, verb: 0.2 });
+            voice({ f: 150, f2: 62, t: 0.1, v: 0.2, at: 0.4, a: 0.003 }); [0, 1, 2].forEach(i => I.vibe(mtof(pent(84, i * 2)), { at: 0.42 + i * 0.05, t: 0.6, v: 0.05, verb: 0.35 })); },
+        sad() { [0, 0.22].forEach((d, i) => voice({ type: 'triangle', f: 330 - i * 40, f2: 250 - i * 50, glide: 0.18, t: 0.3, v: 0.08, at: d, a: 0.02, vib: 12, vibRate: 7, filter: { f: 900 }, verb: 0.3 })); },
+        cheer() { [0, 2, 4, 7].forEach((k, i) => I.pluck(mtof(pent(72, k)), { at: i * 0.05, t: 0.3, v: 0.07, verb: 0.25 })); noise({ type: 'bandpass', f: 2600, q: 0.8, t: 0.18, v: 0.03, at: 0.1, a: 0.02, verb: 0.2 }); },
         // stingers: the moments worth a little fanfare
         lead() { [0, 2, 4].forEach(i => I.vibe(mtof(pent(79, i)), { at: i * 0.05, t: 0.8, v: 0.07, verb: 0.35 })); I.pluck(mtof(91), { at: 0.15, t: 0.3, v: 0.05, verb: 0.3 }); },
         qualify() { [0, 1, 2, 4].forEach((k, i) => I.vibe(mtof(pent(72, k + 1)), { at: i * 0.07, t: 0.9, v: 0.08, verb: 0.35 })); I.piano(mtof(72), { at: 0.28, t: 1, v: 0.06, verb: 0.35 }); I.piano(mtof(79), { at: 0.28, t: 1, v: 0.05, verb: 0.35 }); },
@@ -438,10 +445,10 @@ const SFX = (() => {
         s.start(0, it[0], it[1]); return true;
     }
     const clamp01 = k => Math.max(0, Math.min(1, +k || 0));
-    const QUANT = { jump: k => Math.round(clamp01(k === undefined ? 0.6 : k) * 5), knock: n => Math.min(6, Math.max(0, n | 0)), tick: k => Math.round(clamp01(k) * 7), star: i => (i | 0) % 3, shatter: () => Math.floor(Math.random() * 3) };
+    const QUANT = { jump: k => Math.round(clamp01(k === undefined ? 0.6 : k) * 5), knock: n => Math.min(6, Math.max(0, n | 0)), tick: k => Math.round(clamp01(k) * 7), star: i => (i | 0) % 3, chirp: i => (i | 0) % 3, shatter: () => Math.floor(Math.random() * 3) };
     const bankKey = (name, arg) => QUANT[name] ? name + ':' + QUANT[name](arg) : name;
     // the build tool renders one sound (or every variant of it) to a buffer; this is the only place that synthesises in bulk
-    const BAKE = { jump: [0, 1, 2, 3, 4, 5].map(r => r / 5), knock: [0, 1, 2, 3, 4, 5, 6], tick: [0, 1, 2, 3, 4, 5, 6, 7].map(r => r / 7), star: [0, 1, 2], shatter: [0, 1, 2] };
+    const BAKE = { jump: [0, 1, 2, 3, 4, 5].map(r => r / 5), knock: [0, 1, 2, 3, 4, 5, 6], tick: [0, 1, 2, 3, 4, 5, 6, 7].map(r => r / 7), star: [0, 1, 2], shatter: [0, 1, 2], chirp: [0, 1, 2] };
     function bakeSfx(name, arg, sr, secs) {
         const oc = new OfflineAudioContext(1, Math.round(sr * secs), sr);
         const sb = oc.createGain(); sb.gain.value = 1; sb.connect(oc.destination);

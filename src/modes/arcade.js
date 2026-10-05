@@ -381,17 +381,22 @@
             ar.result = { place:pl, rw }; refreshMenu();
         }
     }
+    function podAr(standings, pl) {
+        if (!window.Podium) return '';
+        const en = standings.map(p => ({ name:p.name, look:p.look || {}, color:p.color, me:!!p.local, sub:p.line || '' }));
+        return Podium.html(en, pl > 3 ? { extra:en[pl - 1], extraRank:pl } : {});
+    }
     function showResult() {
         ar.resultShown = true; $('tg-root').classList.add('over');
         const R_ = ar.result || { place:4, rw:{} }, pl = R_.place, rw = R_.rw || {};
         const standings = players.slice().sort((a, b) => (a.place || 9) - (b.place || 9));
         const title = pl === 1 ? 'YOU WIN' : pl === 2 ? 'SO CLOSE' : 'BETTER LUCK NEXT TIME';
         const chips = rw.noDrop ? (R('coin', rw.coins, { plus:true }) + R('xp', rw.xp, { plus:true }) + R('pass', rw.passPoints, { plus:true })) : '';
-        $('tg-result').innerHTML = '<div class="tg-rc"><div class="tg-rtop' + (pl === 1 ? ' win' : '') + '"><small>' + escH(G.name.toUpperCase()) + '</small><h1>' + title + '</h1><p>' + escH(ar.note || '') + '</p></div>' +
+        $('tg-result').innerHTML = '<div class="tg-rc"><div class="tg-rtop' + (pl === 1 ? ' win' : '') + '"><small>' + escH(G.name.toUpperCase()) + '</small><h1>' + title + '</h1><p>' + escH(ar.note || '') + '</p></div>' + podAr(standings, pl) +
             '<div class="tg-rows">' + standings.map(p => '<div class="tg-row' + (p.local ? ' me' : '') + '"><b>' + (p.place || '') + '</b><i style="background:' + p.color + '"></i><span>' + (p.local ? 'YOU' : escH(p.name)) + '</span><em>' + escH(p.line || '') + '</em></div>').join('') + '</div>' +
             '<div class="tg-rew">' + chips + '</div>' + (pl === 1 ? '<p class="tg-note">A chest is waiting on the home screen</p>' : '') +
             '<button class="tg-go" id="ar-next" type="button">NEXT MINIGAME</button><button class="tg-ghost" id="ar-again" type="button">PLAY AGAIN</button><button class="tg-ghost" id="ar-menu" type="button">MAIN MENU</button></div>';
-        $('tg-result').classList.add('vis');
+        $('tg-result').classList.add('vis'); if (window.Podium) setTimeout(() => Podium.start($('tg-result')), 60);
         $('ar-next').onclick = () => { leave(false); next(); };
         $('ar-again').onclick = () => restart();
         $('ar-menu').onclick = () => leave(true);

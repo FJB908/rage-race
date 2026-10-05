@@ -359,6 +359,11 @@
     }
 
     /* -------------------------------------------------------------------- result ---- */
+    function podRk(order, place) {
+        if (!window.Podium) return '';
+        const en = order.map(o => ({ name:o.name, look:o.look || {}, me:o.id === 'me', sub:o.id === 'me' ? '' : ((B.rankOf(B.mmrToRp(o.mmr)) || {}).label || '') }));
+        return Podium.html(en, place > 3 ? { extra:en[place - 1], extraRank:place } : {});
+    }
     function renderResult(res, order) {
         const place = res.place, s = res.after, r = s.rk, tierCol = s.placed ? T[s.tier].c1 : '#8b95a7';
         const pc = placeCol[place - 1];
@@ -382,7 +387,7 @@
         const bar = barFor(s), from = res.placing ? 0 : barFill(res.before);
         $('rk-result').style.setProperty('--pc', pc);
         $('rk-result').innerHTML =
-            '<div class="rk-scroll res"><div class="rk-res-hero"><small>' + (place === 1 ? 'VICTORY' : 'RANKED RACE') + '</small><h1>' + ord(place) + '</h1></div>' +
+            '<div class="rk-scroll res"><div class="rk-res-hero"><small>' + (place === 1 ? 'VICTORY' : 'RANKED RACE') + '</small><h1>' + ord(place) + '</h1></div>' + podRk(order, place) +
             '<div class="rk-res-card" style="--tc:' + tierCol + '">' + emblem(s.tier, 74) + '<div class="rk-res-info"><b>' + (s.placed ? s.rank.label : 'UNRANKED') + '</b>' + rp + pl +
               '<div class="rk-track small"><i id="rk-res-fill" style="width:' + from + '%"></i></div></div></div>' +
             (res.demo ? '<p class="rk-note down">Demoted to ' + res.demo.to.label + '</p>' : '') +
@@ -390,7 +395,7 @@
             '<div class="rk-res-list">' + rows + '</div>' +
             '<div class="rk-rewards">' + (drop ? '<div class="loot-drop" id="rk-loot"></div>' : '<div class="rk-chips">' + R('coin', coins, { plus:true }) + R('xp', xp, { plus:true }) + R('pass', pass, { plus:true }) + '</div>') + '</div></div>' +
             '<div class="rk-cta two"><button class="rk-go" type="button" id="rk-again"><span>PLAY AGAIN</span></button><button class="rk-go ghost" type="button" id="rk-home"><span>BACK</span></button></div>';
-        show($('rk-result'));
+        show($('rk-result')); if (window.Podium) setTimeout(() => Podium.start($('rk-result')), 60);
         if (drop) renderLootDrop('rk-loot', drop);
         setTimeout(() => { const f = $('rk-res-fill'); if (f) f.style.width = (res.placing ? barFill(s) : barFill(s)) + '%'; }, 450);
         if (place === 1) SFX.play('finish'); else if (place === 4) SFX.play('fail');

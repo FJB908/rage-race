@@ -470,6 +470,11 @@
         clearTimeout(bannerT); bannerT = setTimeout(() => { b.className = 'tg-banner'; }, (secs || 1.3) * 1000);
     }
     function hideResult() { const r = $('tg-result'); if (r) { r.classList.remove('vis'); r.innerHTML = ''; } const sk = $('tg-skip'); if (sk) sk.classList.remove('vis'); }
+    function podTg(standings, pl, sub) {
+        if (!window.Podium) return '';
+        const en = standings.map(p => ({ name:p.name, look:p.look || {}, color:p.color, me:!!p.local, sub:sub(p) }));
+        return Podium.html(en, pl > 3 ? { extra:en[pl - 1], extraRank:pl } : {});
+    }
     function showResult() {
         tg.resultShown = true; $('tg-skip').classList.remove('vis'); $('tg-root').classList.add('over');
         const R_ = tg.result || { place:4, rw:{}, streak:0, bonus:0 }, me = tg.local, pl = R_.place;
@@ -478,13 +483,13 @@
         const rw = R_.rw || {};
         const chips = rw.noDrop ? (R('coin', rw.coins, { plus:true }) + R('xp', rw.xp, { plus:true }) + R('pass', rw.passPoints, { plus:true })) : '';
         const best = lsNum('rr_tag_best');
-        $('tg-result').innerHTML = '<div class="tg-rc"><div class="tg-rtop' + (pl === 1 ? ' win' : '') + '"><small>BOOM TAG</small><h1>' + title + '</h1><p>' + (tg.passes ? 'You passed the bomb ' + tg.passes + (tg.passes === 1 ? ' time' : ' times') : 'You never passed the bomb') + '</p></div>' +
+        $('tg-result').innerHTML = '<div class="tg-rc"><div class="tg-rtop' + (pl === 1 ? ' win' : '') + '"><small>BOOM TAG</small><h1>' + title + '</h1><p>' + (tg.passes ? 'You passed the bomb ' + tg.passes + (tg.passes === 1 ? ' time' : ' times') : 'You never passed the bomb') + '</p></div>' + podTg(standings, pl, p => p.place === 1 ? 'Survived' : 'Round ' + (p.round || '')) +
             '<div class="tg-rows">' + standings.map(p => '<div class="tg-row' + (p.local ? ' me' : '') + '"><b>' + (p.place || '') + '</b><i style="background:' + p.color + '"></i><span>' + (p.local ? 'YOU' : escH(p.name)) + '</span><em>' + (p.place === 1 ? 'Survived' : 'Round ' + (p.round || '')) + '</em></div>').join('') + '</div>' +
             '<div class="tg-rew">' + chips + (R_.bonus ? '<span class="tg-bonus">' + R('coin', R_.bonus, { plus:true }) + '<small>streak bonus</small></span>' : '') + '</div>' +
             '<div class="tg-streak' + (R_.streak > 1 ? ' hot' : '') + '"><b>' + R_.streak + '</b><span>' + (R_.streak ? 'win streak' : 'win streak: start one') + '</span><em>best ' + best + '</em></div>' +
             (pl === 1 ? '<p class="tg-note">A chest is waiting on the home screen</p>' : '') +
             (window.Arcade && Arcade.session() ? '<button class="tg-go" id="tg-next" type="button">NEXT MINIGAME</button><button class="tg-ghost" id="tg-again" type="button">PLAY AGAIN</button>' : '<button class="tg-go" id="tg-again" type="button">PLAY AGAIN</button>') + '<button class="tg-ghost" id="tg-menu" type="button">MAIN MENU</button></div>';
-        $('tg-result').classList.add('vis');
+        $('tg-result').classList.add('vis'); if (window.Podium) setTimeout(() => Podium.start($('tg-result')), 60);
         $('tg-again').onclick = () => restart();
         if ($('tg-next')) $('tg-next').onclick = () => { leave(false); Arcade.next(); };
         $('tg-menu').onclick = () => leave(true);
