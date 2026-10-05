@@ -673,7 +673,7 @@ body.build-race #finish-menu { display:none !important; }
 .m-coins .m-plus, .m-gems .m-plus { width: 22px; height: 22px; }
 .m-gear { width: 36px; height: 36px; }
 .m-who { min-width: 64px; } .m-name { font-size: 16px; }
-.m-avatar #m-lvl .nbadge, .m-avatar .m-lvl .nbadge { top: -12px; left: -14px; right: auto; min-width: 17px; height: 17px; font-size: 10px; padding: 0 4px; }
+.m-avatar #m-lvl .nbadge, .m-avatar .m-lvl .nbadge { top: -44px; right: -4px; left: auto; min-width: 14px; width: 14px; height: 14px; padding: 0; font-size: 0; border: 2px solid #0d1017; box-sizing: content-box; }      /* a plain red dot at the avatar's corner, never over the character */
 .m-card.stack { justify-content: flex-start; gap: 12px; }
 .m-card.stack .mc-copy { margin-top: 0; }
 #acct-sub, .set-line small, [id*="cloud"] small { white-space: normal; }

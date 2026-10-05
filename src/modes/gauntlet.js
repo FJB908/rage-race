@@ -34,7 +34,7 @@
           types:d => [['boost', .08 + d*.03], ['fragile', .18 + d*.10], ['moving', .26 + d*.10], ['ice', .16 + d*.06]] },
     ];
 
-    const ENTRY = { coins:0,   // 0 while testing (was 500)
+    const ENTRY = { coins:500,
          wagers:[{ stake:1000, mult:1.5 }, { stake:2500, mult:2.5 }, { stake:5000, mult:4 }] };
     // index = how far you got: 0 out in stage 1, 1 out in stage 2, 2 out in the Duel, 3 crown
     const PRIZES = [
@@ -124,7 +124,7 @@
               '</div>' +
               '<h2 class="gt-h2">Entry</h2>' +
               '<div class="gt-opts">' +
-                opt('coins', 'coin', '<span class="gt-oi">' + icon('coin') + '</span><span class="gt-ot"><b>' + (ENTRY.coins || 'Free') + '</b><small>' + (ENTRY.coins ? 'Open to everyone' : 'Free while we test') + '</small></span>') +
+                opt('coins', 'coin', '<span class="gt-oi">' + icon('coin') + '</span><span class="gt-ot"><b>' + (ENTRY.coins || 'Free') + '</b><small>' + (ENTRY.coins ? 'Standard entry' : 'Free while we test') + '</small></span>') +
                 opt('wager', 'wager', '<span class="gt-oi">' + icon('coin') + icon('coin') + '</span><span class="gt-ot"><b>Wager</b><small>Bigger stake, bigger coin prizes</small></span>') +
               '</div>' +
               (sel.type === 'wager'
@@ -378,10 +378,11 @@
         if (p.local) {
             SFX.play('finish'); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7);
             for (const c of ['#ffcf3f', '#ffffff', gt.st.color]) burst(p.x, p.y, c, 14, 340);
-            if (gt.stage < 2) banner('check', 'QUALIFIED', '#7ee787');
+            if (gt.stage < 2) banner('', 'QUALIFIED', '#7ee787');
         } else if (gt.stage === 2 && !gt.winner) SFX.play('count');
         if (gt.stage === 2 && !gt.winner) gt.winner = p;
         spotsPulse();
+        hudKey = ''; updateHud();                     // the counter must show the last qualifier too, before the stage ends
         checkStageEnd();
     };
 
@@ -413,6 +414,7 @@
         const al = alivePlayers().sort((a, b) => a.y - b.y);
         if (gt.stage === 2) { gt.winner = al[0] || gt.winner; return endStage(); }
         for (const p of al) { if (gt.qualified.length >= gt.st.need) break; p.finished = true; p.gone = true; gt.qualified.push(p); }
+        hudKey = ''; updateHud();
         endStage();
     }
 
@@ -447,7 +449,7 @@
             return after(1100, () => finishRun());
         }
         if (lp && gt.qualified.includes(lp)) {
-            if (!GT.debug.fast) banner('check', gt.stage === 0 ? 'STAGE CLEARED' : 'THROUGH TO THE DUEL', '#7ee787');
+            if (!GT.debug.fast) banner('', gt.stage === 0 ? 'STAGE CLEARED' : 'THROUGH TO THE DUEL', '#7ee787');
             after(1500, () => beginStage(gt.stage + 1));
         } else after(900, () => finishRun());
     }
@@ -696,7 +698,7 @@
     function banner(ico, text, color) {
         const b = $('gt-banner');
         b.style.display = 'flex';
-        b.innerHTML = '<span style="color:' + color + '">' + icon(ico) + '<b>' + text + '</b></span>';
+        b.innerHTML = '<span style="color:' + color + '">' + (ico ? icon(ico) : '') + '<b>' + text + '</b></span>';
         b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
     }
 

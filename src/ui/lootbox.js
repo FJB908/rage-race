@@ -193,7 +193,7 @@
             const slot = slotOf(cos), rc = RARITY[cos.rarity].color, big = cos.rarity === 'legendary' || cos.rarity === 'mythic' || cos.rarity === 'epic';
             o.el.style.setProperty('--c', rc);
             const it = document.createElement('div'); it.className = 'lb-itempop'; it.style.setProperty('--ic', rc);
-            it.innerHTML = '<i class="glow"></i>' + (slot === 'trail' ? '<canvas class="trw" width="480" height="240"></canvas>' : '<canvas width="440" height="440"></canvas>') + '<div class="rar">' + (cos.premium ? icon('gem') + ' PREMIUM' : RARITY[cos.rarity].label.toUpperCase()) + '</div><div class="nm">' + esc(cos.name) + '</div><span class="new">NEW</span>';
+            it.innerHTML = '<i class="glow"></i>' + (slot === 'trail' ? '<canvas class="trw" width="480" height="240"></canvas>' : '<canvas width="320" height="320"></canvas>') + '<div class="rar">' + (cos.premium ? icon('gem') + ' PREMIUM' : RARITY[cos.rarity].label.toUpperCase()) + '</div><div class="nm">' + esc(cos.name) + '</div><span class="new">NEW</span>';
             pops.appendChild(it);
             if (slot === 'trail') {                   // a trail is shown as the effect itself, looping big (like the shop), not as a character
                 const cv = it.querySelector('canvas.trw'); let last = 0;

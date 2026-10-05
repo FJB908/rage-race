@@ -4432,7 +4432,7 @@ function setBadge(el, n){
     if (!n){ if (b) b.remove(); return; }
     if (!b){ b = document.createElement('b'); b.className = 'nbadge'; el.appendChild(b); }
     b.textContent = typeof n === 'string' ? n : (n > 99 ? '99+' : n);
-    b.classList.toggle('free', typeof n === 'string');
+    b.classList.toggle('free', n === 'FREE');
 }
 // Shop items you have not seen yet (new releases). Everything that exists on the first launch counts as seen.
 function shopItems(){ return [...SKINS, ...HATS, ...FACES, ...TRAILS, ...(COS_BY.costume || [])].filter(i => i.price > 0 || i.premium); }
@@ -4440,11 +4440,11 @@ function refreshShopBadge(){
     const p = prog(), ids = shopItems().map(i => i.id);
     if (!Array.isArray(p.shopSeen)){ p.shopSeen = ids; saveProg(p); }
     const fresh = ids.filter(id => !p.shopSeen.includes(id) && !p.owned.includes(id)).length;
-    setBadge(document.querySelector('.m-nav [data-go="shop"]'), (window.Ads && Ads.ready() > 0) ? 'FREE' : (window.Gentle && Gentle.simple() ? 0 : fresh));      // a free video waiting says FREE; otherwise the number of new items      // no "new items" noise for brand-new players
+    setBadge(document.querySelector('.m-nav [data-go="shop"]'), (window.Ads && Ads.fresh()) ? 'FREE' : (window.Gentle && Gentle.simple() ? 0 : fresh));      // a free video waiting says FREE; otherwise the number of new items      // no "new items" noise for brand-new players
 }
 function markShopSeen(){ const p = prog(); p.shopSeen = shopItems().map(i => i.id); saveProg(p); refreshShopBadge(); }
 function menuTab(tab){
-    if (tab === 'shop') setTimeout(markShopSeen, 600);
+    if (tab === 'shop') setTimeout(() => { markShopSeen(); if (window.Ads) Ads.markSeen(); }, 600);
     document.querySelectorAll('.m-tab').forEach(el => el.classList.toggle('on', el.dataset.tab === tab));
     document.querySelectorAll('.m-nav [data-go]').forEach(el => el.classList.toggle('on', el.dataset.go === tab));
     document.getElementById('m-body').scrollTop = 0;

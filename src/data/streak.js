@@ -1,6 +1,6 @@
 // 30-day login streak. Claim once per day; missing a day restarts at day 1; after day 30 it starts over.
 // Reward kinds: coin | gem | xp | pass {n} | boost {kind,mult,n} | drop {tier} (supply drop that starts at that tier) | item {cat,id} | prem {cat,id} (premium cosmetic)
-const STREAK_CONFIG = { autoOpen:true };
+const STREAK_CONFIG = { autoOpen:false };      // the menu just opens; a "!" on the calendar says a reward is waiting
 const STREAK_REWARDS = [
     { t:'coin', n:100 },  { t:'coin', n:150 },  { t:'drop', tier:'common' },  { t:'boost', kind:'coin', mult:2, n:3 },  { t:'gem', n:10 },
     { t:'xp', n:100 },    { t:'item', cat:'hat', id:'bunny' },

@@ -91,8 +91,12 @@
     };
     // how many video rewards can be claimed right now (shop nav badge + "FREE" tag on the Gems pill)
     A.ready = () => ['coin', 'drop'].reduce((n, k) => n + (A.left(k) > 0 && A.wait(k) <= 0 ? A.left(k) : 0), 0);
+    // the FREE notice is a one-time nudge: opening the shop marks the current state as seen; a new video becoming available brings it back
+    const sig = () => today() + '|' + ['coin', 'drop'].map(k => A.left(k) + ':' + (A.wait(k) <= 0 ? 1 : 0)).join('|');
+    A.fresh = () => A.ready() > 0 && (prog().adsSeen || '') !== sig();
+    A.markSeen = () => { const p = prog(); if (p.adsSeen !== sig()) { p.adsSeen = sig(); saveProg(p); } A.refreshShop(); };
     A.refreshShop = function () {
-        const n = A.ready(), pill = document.querySelector('.m-pill[data-cat="resources"]');
+        const n = A.fresh() ? 1 : 0, pill = document.querySelector('.m-pill[data-cat="resources"]');
         if (pill) { let f = pill.querySelector(':scope > .pill-free'); if (n && !f) { f = document.createElement('i'); f.className = 'pill-free'; f.textContent = 'FREE'; pill.appendChild(f); } else if (!n && f) f.remove(); }
         if (typeof refreshShopBadge === 'function') refreshShopBadge();
     };

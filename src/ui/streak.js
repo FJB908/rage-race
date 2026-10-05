@@ -106,7 +106,7 @@
             const st = state(), b = document.getElementById('btn-streak-open'); if (!b) return;
             b.classList.toggle('has-fire', st.streak > 0); b.title = st.streak > 0 ? st.streak + ' day streak' : 'Daily rewards';
             b.querySelector('.ms-dot').hidden = true;
-            setBadge(b, st.canClaim ? 1 : 0);
+            setBadge(b, st.canClaim ? '!' : 0);
             b.classList.toggle('ready', st.canClaim);
         },
         debugClaimNow: claim,
