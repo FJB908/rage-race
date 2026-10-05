@@ -1,10 +1,12 @@
-// SOUND: calm, warm, satisfying. Everything is synthesised (no audio files).
+// SOUND: calm, warm, satisfying. Everything is SYNTHESISED once at build time (tools/bake-audio.js renders it with this very file) and shipped as
+// small ogg files in src/audio/bank/. At run time the game only plays finished recordings: no oscillators, filters or offline rendering happen while you
+// play, so a busy phone cannot make the sound crackle. The synthesis code below stays as the source of the sounds and as a fallback if the files are missing.
 //  * SFX: soft marimba / kalimba / vibraphone / felt sounds, all tuned to the same pentatonic C so rapid sounds always blend.
 //  * MUSIC: instrumental jazz-meets-classical tracks (walking bass, brushes, rhodes, vibraphone, flute, harpsichord, strings, piano).
 //    Tracks: menu (ballad), race (baroque swing), escape (nocturne), gauntlet (jazz waltz), levels (bossa).
 // Loaded BEFORE game.js. API: SFX.play(name, arg), SFX.music.set(track|null) / stop / toggle / setVol, SFX.toggle / setMuted / setSfxVol / setMusVol / unlock.
 const SFX = (() => {
-    let ac = null, comp = null, sfxBus = null, musBus = null, verbIn = null, musVerb = null, dly = null, noiseBuf = null, muted = false, extCtx = null;
+    let ac = null, comp = null, bankBus = null, sfxBus = null, musBus = null, verbIn = null, musVerb = null, dly = null, noiseBuf = null, muted = false, extCtx = null;
     let sfxVol = 0.5, musVol = 0.5, lastBump = 0, lastAny = 0;
     try { muted = localStorage.getItem('rr_mute') === '1'; } catch (e) {}
     try { const v = localStorage.getItem('rr_sfxvol'); if (v !== null) sfxVol = Math.max(0, Math.min(1, +v)); } catch (e) {}
@@ -48,9 +50,11 @@ const SFX = (() => {
                 const out = ac.createGain(); out.gain.value = 0.92; comp.connect(shaper); shaper.connect(out); out.connect(ac.destination);
             } catch (e) { comp.connect(ac.destination); }
             sfxBus = ac.createGain(); sfxBus.gain.value = sfxVol; sfxBus.connect(comp);
+            bankBus = ac.createGain(); bankBus.gain.value = 2; bankBus.connect(sfxBus);       // the recordings are baked 6 dB down (see tools/bake-audio.js)
             musBus = ac.createGain(); musBus.gain.value = 0.0001; musBus.connect(comp);
             const v1 = makeVerb(ac, 0.9, 0.5, 0.3); if (v1) { verbIn = v1.inG; v1.outG.connect(comp); } else verbIn = comp;
             noiseBuf = makeNoise(ac);
+            bankDecode();
         }
         if (!offline && ac.state === 'suspended' && ac.resume) { try { const r = ac.resume(); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
         return ac;
@@ -213,10 +217,24 @@ const SFX = (() => {
         go() { [60, 64, 67, 71, 74].forEach((m, i) => I.piano(mtof(m), { at: i * 0.015, t: 1.1, v: 0.07, verb: 0.35 })); I.vibe(mtof(88), { at: 0.08, t: 1, v: 0.06, verb: 0.4 }); },
         finish() { [0, 2, 4, 5, 7, 9].forEach(i => I.vibe(mtof(pent(60, i)), { at: i * 0.07, t: 1.2, v: 0.085, verb: 0.4 }));
             [48, 55, 59, 64, 67].forEach(m => I.piano(mtof(m), { at: 0.5, t: 1.6, v: 0.07, verb: 0.45 })); },
+        // stingers: the moments worth a little fanfare
+        lead() { [0, 2, 4].forEach(i => I.vibe(mtof(pent(79, i)), { at: i * 0.05, t: 0.8, v: 0.07, verb: 0.35 })); I.pluck(mtof(91), { at: 0.15, t: 0.3, v: 0.05, verb: 0.3 }); },
+        qualify() { [0, 1, 2, 4].forEach((k, i) => I.vibe(mtof(pent(72, k + 1)), { at: i * 0.07, t: 0.9, v: 0.08, verb: 0.35 })); I.piano(mtof(72), { at: 0.28, t: 1, v: 0.06, verb: 0.35 }); I.piano(mtof(79), { at: 0.28, t: 1, v: 0.05, verb: 0.35 }); },
+        elim() { [71, 67, 62].forEach((m, i) => I.epiano(mtof(m), { at: i * 0.18, t: i === 2 ? 1.1 : 0.45, v: 0.08, verb: 0.4 })); voice({ f: 90, f2: 48, t: 0.5, v: 0.14, a: 0.01 }); },
+        win() { [60, 64, 67, 72, 76, 79, 84].forEach((m, i) => I.vibe(mtof(m), { at: i * 0.06, t: 1.6, v: 0.085, verb: 0.4 }));
+            [48, 55, 60, 64, 67].forEach((m, j) => I.piano(mtof(m), { at: 0.42 + j * 0.012, t: 2.2, v: 0.075, verb: 0.45 }));
+            [55, 60, 64, 67].forEach(m => I.strings(mtof(m), { at: 0.4, t: 2.4, v: 0.04 }));
+            bell(mtof(96), { at: 0.55, t: 1.4, v: 0.06 }); voice({ f: 70, f2: 44, t: 0.5, v: 0.2, at: 0.42 });
+            [0, 1, 2, 3, 4].forEach(i => I.pluck(mtof(pent(84, i)), { at: 0.9 + i * 0.06, t: 0.4, v: 0.04, verb: 0.35 })); },
+        gtwin() { [0, 2, 4, 5, 7, 9, 11, 12].forEach((i, k) => I.vibe(mtof(pent(60, i)), { at: k * 0.07, t: 1.5, v: 0.08, verb: 0.4 }));
+            [[48, 55, 60, 64, 67], [53, 60, 65, 69, 72], [55, 59, 62, 67, 71], [48, 55, 60, 64, 72]].forEach((ch, c) => ch.forEach((m, j) => I.piano(mtof(m), { at: 0.65 + c * 0.55 + j * 0.012, t: c === 3 ? 2.6 : 1.1, v: 0.075, verb: 0.5 })));
+            [55, 60, 64, 67, 72].forEach(m => I.strings(mtof(m), { at: 0.6, t: 3.4, v: 0.045 }));
+            [0, 1, 2, 3, 4, 5, 6, 7].forEach(i => I.vibe(mtof(pent(84, i)), { at: 2.5 + i * 0.07, t: 1.2, v: 0.06, verb: 0.45 }));
+            voice({ f: 66, f2: 40, t: 0.7, v: 0.22, at: 0.65 }); voice({ f: 66, f2: 40, t: 1.2, v: 0.22, at: 2.2 }); bell(mtof(96), { at: 2.3, t: 1.8, v: 0.07 }); },
         shatter() { for (let i = 0; i < 4; i++) I.pluck(mtof(pent(84, i + Math.floor(Math.random() * 3))), { at: i * 0.035, t: 0.25, v: 0.045, verb: 0.35 }); },
     };
     const COOLDOWN = { coin: 45, land: 70, pickup: 90, item: 70, combo: 120, shatter: 150, chain: 200, block: 200, jump: 40, tap: 60, knock: 30 };
-    const CRITICAL = new Set(['jump', 'land', 'finish', 'go', 'count', 'fail', 'boost', 'stumble', 'open', 'knock', 'boom', 'tick']);
+    const CRITICAL = new Set(['win', 'gtwin', 'qualify', 'elim', 'lead', 'jump', 'land', 'finish', 'go', 'count', 'fail', 'boost', 'stumble', 'open', 'knock', 'boom', 'tick']);
     const lastPlay = {};
 
     /* ================================================================== music ==== */
@@ -298,6 +316,24 @@ const SFX = (() => {
         ] },
     };
     for (const T of Object.values(TRACKS)) for (const bar of T.bars) if (bar.m) bar.m = bar.m.map(([s, n, l]) => [s, nm(n), l]);
+    // more music from the same material: the same songs in another key, tempo and instrumentation (a safe way to get variety)
+    function variant(base, name, o) {
+        const sh = o.shift || 0, B0 = TRACKS[base];
+        const bars = (o.bars || B0.bars).map(b => ({ r: b.r + sh, q: b.q, v: b.v && b.v.map(x => x + sh), a: b.a && b.a.map(x => x + sh), m: b.m && b.m.map(([st, n, l]) => [st, n + sh, l]) }));
+        TRACKS[name] = Object.assign({}, B0, { base: B0.base || base, bars }, o.over || {});
+    }
+    variant('menu', 'menu2', { shift: -3, over: { bpm: 70, comp: 'guitar', mel: ['flute', 'vibe'] } });
+    variant('menu', 'menu3', { shift: 2, over: { bpm: 82, comp: 'piano', mel: ['vibe', 'piano'] } });
+    variant('race', 'race2', { shift: 3, over: { bpm: 142, comp: 'piano', mel: ['vibe', 'flute'] } });
+    variant('race', 'race3', { shift: -2, over: { bpm: 126, swing: 0.33, comp: 'harpsi', mel: ['piano', 'vibe'] } });
+    variant('escape', 'escape2', { shift: 5, over: { bpm: 92, mel: ['flute', 'cello'] } });
+    variant('gauntlet', 'gauntlet2', { shift: 2, over: { bpm: 168, mel: ['vibe', 'piano'] } });
+    variant('levels', 'levels2', { shift: 3, over: { bpm: 106, comp: 'guitar', mel: ['vibe', 'flute'] } });
+    variant('menu', 'results', { shift: 5, bars: TRACKS.menu.bars.slice(0, 8), over: { bpm: 70, comp: 'epiano', mel: ['vibe', 'vibe'], base: 'results' } });
+    // what plays where: every mode has a short playlist, so the music changes from race to race (and inside a long race)
+    const LISTS = { menu: ['menu', 'menu2', 'menu3'], race: ['race', 'race2', 'race3'], escape: ['escape', 'escape2'], gauntlet: ['gauntlet', 'gauntlet2'], levels: ['levels', 'levels2'], results: ['results'] };
+    const GAPS = { menu: [4, 11] };                     // the menu music rests between songs (silence is part of the mix); everything else runs on
+    const LOOPS = { results: true };
 
     // MUSIC is rendered ahead of time. Each loop is generated once into an AudioBuffer (an OfflineAudioContext renders it off the main thread),
     // then simply looped: no synthesis happens while you play, so a busy phone can never make it crackle.
@@ -353,7 +389,7 @@ const SFX = (() => {
             } else if (T.comp === 'piano') {
                 if (spb === 6) { if (i === 2 || i === 4) bar.v.forEach((m, j) => I.piano(mtof(m), { bus: 'mus', when: w + j * 0.008, v: 0.05 * vel, t: s8 * 1.6, verb: 0.35 })); }
                 else { const idx = [0, 1, 2, 3, 2, 1, 2, 3][i], a = bar.a; if (a) I.piano(mtof(a[idx % a.length]), { bus: 'mus', when: w, v: 0.055 * vel, t: s8 * 2.2, verb: 0.45 });
-                       if (i === 0) bar.v.forEach(m => I.piano(mtof(m - 12), { bus: 'mus', when: w, v: 0.035, t: s8 * 6, verb: 0.5 })); }
+                       if (i === 0 && bar.v) bar.v.forEach(m => I.piano(mtof(m - 12), { bus: 'mus', when: w, v: 0.035, t: s8 * 6, verb: 0.5 })); }
             } else if (T.comp === 'guitar') {
                 if (i === 0 || i === 3 || i === 6) bar.v.forEach((m, j) => I.guitar(mtof(m), { bus: 'mus', when: w + j * 0.014, v: 0.05 * vel, t: s8 * 1.5, verb: 0.25 }));
             }
@@ -370,18 +406,54 @@ const SFX = (() => {
             st.step++; st.next += s8;
         }
     }
+    /* ================================================================== finished recordings ==== */
+    const BANK_DIR = 'src/audio/bank/';
+    const decode = (A, ab) => new Promise((res, rej) => { try { const p = A.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); } catch (e) { rej(e); } });
+    const bank = { state: 'idle', map: null, raw: null, buf: null };          // idle -> fetched -> ready (or failed: then the old live synthesis takes over)
+    function bankFetch() {
+        if (bank.state !== 'idle' || typeof fetch === 'undefined' || extCtx) return;
+        bank.state = 'loading';
+        Promise.all([fetch(BANK_DIR + 'sfx.json').then(r => r.json()), fetch(BANK_DIR + 'sfx.ogg').then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })])
+            .then(([m, ab]) => { bank.map = m; bank.raw = ab; bank.state = 'fetched'; bankDecode(); }).catch(() => { bank.state = 'failed'; });
+    }
+    function bankDecode() {                              // decoded with the real context, so every buffer already has the device's sample rate (nothing is resampled while playing)
+        if (bank.state !== 'fetched' || !ac) return; bank.state = 'decoding';
+        decode(ac, bank.raw).then(b => { bank.buf = b; bank.raw = null; bank.state = 'ready'; }).catch(() => { bank.state = 'failed'; });
+    }
+    let bankActive = 0;
+    function playBank(key) {
+        const it = bank.map && bank.map.items[key]; if (!it || !bank.buf || !ac) return false;
+        if (muted || bankActive >= 14) return true;
+        const s = ac.createBufferSource(); s.buffer = bank.buf; s.connect(bankBus);
+        bankActive++; s.onended = () => { bankActive--; };
+        s.start(0, it[0], it[1]); return true;
+    }
+    const clamp01 = k => Math.max(0, Math.min(1, +k || 0));
+    const QUANT = { jump: k => Math.round(clamp01(k === undefined ? 0.6 : k) * 5), knock: n => Math.min(6, Math.max(0, n | 0)), tick: k => Math.round(clamp01(k) * 7), star: i => (i | 0) % 3, shatter: () => Math.floor(Math.random() * 3) };
+    const bankKey = (name, arg) => QUANT[name] ? name + ':' + QUANT[name](arg) : name;
+    // the build tool renders one sound (or every variant of it) to a buffer; this is the only place that synthesises in bulk
+    const BAKE = { jump: [0, 1, 2, 3, 4, 5].map(r => r / 5), knock: [0, 1, 2, 3, 4, 5, 6], tick: [0, 1, 2, 3, 4, 5, 6, 7].map(r => r / 7), star: [0, 1, 2], shatter: [0, 1, 2] };
+    function bakeSfx(name, arg, sr, secs) {
+        const oc = new OfflineAudioContext(1, Math.round(sr * secs), sr);
+        const sb = oc.createGain(); sb.gain.value = 1; sb.connect(oc.destination);
+        const v1 = makeVerb(oc, 0.9, 0.5, 0.6); if (v1) v1.outG.connect(oc.destination);       // live the reverb joined after the sfx volume (0.3); at the default volume 0.5 that equals 0.6 here
+        const g = { ac: oc, comp: null, sfxBus: sb, musBus: null, verbIn: v1 ? v1.inG : sb, musVerb: null, dly: null, noiseBuf: makeNoise(oc), offline: true };
+        const mu = muted; muted = false; try { runOn(g, () => P[name](arg)); } finally { muted = mu; }
+        return oc.startRendering();
+    }
+
+    /* ================================================================== music player ==== */
     const MUSIC = (() => {
         let musicOn = true; try { musicOn = localStorage.getItem('rr_music') !== '0'; } catch (e) {}
-        let cur = null, wanted = null, node = null, prefetching = false;
-        const cache = {}, pending = {};
+        let list = null, gen = 0, live = [];              // list: which playlist is on; gen: bumped on every change so stale async work stops; live: sources playing or queued
+        const buffers = {}, raws = {}, loading = {}, lastOf = {};
         const yieldMain = () => new Promise(r => setTimeout(r, 0));
-        function level(to) { const A = ctx(); if (!A) return; const g = musBus.gain;
-            try { g.cancelScheduledValues(A.currentTime); } catch (e) {}
-            g.setValueAtTime(Math.max(0.0001, g.value), A.currentTime); g.linearRampToValueAtTime(Math.max(0.0001, to), A.currentTime + 0.8); }
-        // render one full loop (plus the reverb tail, folded back onto the start so the loop is seamless)
+        const base = () => Math.max(0.0001, musVol * MUS_GAIN);
+        const listOf = n => LISTS[n] ? n : Object.keys(LISTS).find(k => LISTS[k].includes(n));
+        // the old live path, kept as a fallback only: one full loop rendered ahead of time (and the reverb tail folded back onto the start)
         async function build(name) {
-            const A = ctx(); if (!A) return null; const T = TRACKS[name], sr = 22050;       // music is warm and mellow: half the sample rate renders about 4x faster
-            const passes = PASSES[name] || 1, steps = T.bars.length * T.spb * passes, s8 = 60 / T.bpm / 2, secs = steps * s8, tail = 3;
+            const A = ctx(); if (!A) return null; const T = TRACKS[name], sr = 22050;
+            const passes = PASSES[T.base || name] || (name === 'results' ? 2 : 1), steps = T.bars.length * T.spb * passes, s8 = 60 / T.bpm / 2, secs = steps * s8, tail = 3;
             const L = Math.round(secs * sr), oc = (typeof OfflineAudioContext !== 'undefined') ? new OfflineAudioContext(1, L + Math.round(tail * sr), sr) : null;
             if (!oc) return null;
             const g = offlineGraph(oc); let sd = 7 + name.length * 13;
@@ -394,44 +466,97 @@ const SFX = (() => {
             const rms = Math.sqrt(sq / L) || 1e-6, k = Math.min(0.8 / (pk || 1), 0.06 / rms);       // every track about equally loud, never hot
             for (let i = 0; i < L; i++) dst[i] *= k;
             const fade = Math.round(0.004 * sr); for (let i = 0; i < fade; i++) { const f = i / fade; dst[i] *= f; dst[L - 1 - i] *= f; }   // the very ends meet at zero: no click at the loop point
-            cache[name] = out; return out;
+            return out;
         }
-        function stopNode(fade) {
-            if (!node) return; const A = ac, { s, g } = node; node = null;
-            try { g.gain.cancelScheduledValues(A.currentTime); g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), A.currentTime); g.gain.linearRampToValueAtTime(0.0001, A.currentTime + fade); s.stop(A.currentTime + fade + 0.05); } catch (e) {}
+        function fetchRaw(name) {
+            if (raws[name]) return Promise.resolve(raws[name]);
+            if (typeof fetch === 'undefined' || extCtx) return Promise.reject(0);
+            return fetch(BANK_DIR + 'music-' + name + '.ogg').then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(ab => (raws[name] = ab));
         }
-        function play(name) {
-            const A = ctx(); if (!A || !cache[name]) return;
-            stopNode(0.2);
-            const g = A.createGain(), s = A.createBufferSource(); s.buffer = cache[name]; s.loop = true;
-            g.gain.setValueAtTime(0.0001, A.currentTime); g.gain.linearRampToValueAtTime(1, A.currentTime + 0.5);
-            try { musBus.gain.cancelScheduledValues(A.currentTime); } catch (e) {}
-            musBus.gain.setValueAtTime(Math.max(0.0001, musVol * MUS_GAIN), A.currentTime);        // the bus itself is never faded: only the track is
-            s.connect(g); g.connect(musBus); s.start(); node = { s, g }; cur = name;
+        // a track's buffer: the finished recording, decoded once. Only the track that is needed right now may fall back to live synthesis.
+        function getBuf(name, synthOk) {
+            if (buffers[name]) return Promise.resolve(buffers[name]);
+            const A = ctx(); if (!A) return Promise.resolve(null);
+            if (!loading[name]) loading[name] = fetchRaw(name).then(ab => decode(A, ab.slice(0))).then(b => { delete raws[name]; return (buffers[name] = b); })
+                .catch(() => null).then(b => { delete loading[name]; return b; });
+            return loading[name].then(b => b || (synthOk ? build(name).then(o => (o ? (buffers[name] = o) : null)).catch(() => null) : null));
         }
-        function ensure(name) { return cache[name] ? Promise.resolve() : (pending[name] || (pending[name] = build(name).catch(() => null).then(() => { delete pending[name]; }))); }
-        async function prefetch() {                       // the other tracks are prepared quietly in the background
-            if (prefetching) return; prefetching = true;
-            for (const n of Object.keys(TRACKS)) { await ensure(n); await new Promise(r => setTimeout(r, 400)); }
+        function pickNext(l) {
+            const L = LISTS[l], opts = L.length > 1 ? L.filter(n => n !== lastOf[l]) : L, n = opts[Math.floor(Math.random() * opts.length)];
+            lastOf[l] = n; return n;
+        }
+        function startTrack(name, when, fadeIn, loop) {
+            const A = ctx(), g = A.createGain(), s = A.createBufferSource(), buf = buffers[name];
+            s.buffer = buf; s.loop = !!loop;
+            g.gain.setValueAtTime(0.0001, when); g.gain.linearRampToValueAtTime(1, when + fadeIn);
+            s.connect(g); g.connect(musBus); s.start(when);
+            const n = { s, g, name, when, end: loop ? Infinity : when + buf.duration };
+            live.push(n); s.onended = () => { live = live.filter(x => x !== n); };
+            return n;
+        }
+        // the next song is queued on the audio clock (right after this one, after a rest in the menu), so there is never a timer deciding when music starts
+        async function queueNext(prev, my) {
+            if (my !== gen || !list || LOOPS[list]) return;
+            const name = pickNext(list), b = await getBuf(name, false);
+            if (my !== gen || !b || !ac) return;
+            const gap = GAPS[list] ? GAPS[list][0] + Math.random() * (GAPS[list][1] - GAPS[list][0]) : 0.15;
+            const nxt = startTrack(name, Math.max(ac.currentTime + 0.05, prev.end + gap), 0.12, false);
+            prev.s.addEventListener('ended', () => queueNext(nxt, my));
+        }
+        function stopAll(fade) {
+            const A = ac; gen++;
+            for (const n of live) { try { n.s.onended = null; n.g.gain.cancelScheduledValues(A.currentTime); n.g.gain.setValueAtTime(Math.max(0.0001, n.g.gain.value), A.currentTime); n.g.gain.linearRampToValueAtTime(0.0001, A.currentTime + fade); n.s.stop(A.currentTime + fade + 0.05); } catch (e) {} }
+            live = [];
+        }
+        let pre = false;
+        async function prefetch() {                       // the other songs are fetched and decoded quietly in the background (decoding runs off the main thread)
+            if (pre) return; pre = true;
+            for (const l of Object.keys(LISTS)) for (const n of LISTS[l]) { await getBuf(n, false); await new Promise(r => setTimeout(r, 300)); }
         }
         return {
             get on() { return musicOn; },
-            get track() { return cur; },
+            get track() { const n = live.find(x => x.when <= (ac ? ac.currentTime : 0)); return n ? n.name : null; },
+            get list() { return list; },
+            get __queue() { return live.map(n => ({ name: n.name, when: +n.when.toFixed(2), end: +n.end.toFixed(2) })); },
             set(name) {
-                if (!musicOn || muted || !name || !TRACKS[name]) { this.stop(); return; }
-                wanted = name; if (!ctx()) return;
-                if (cur === name && node) return;
-                if (node) { stopNode(0.2); cur = null; }                                           // the old track leaves first: never two at once
-                const go = () => { if (wanted === name && musicOn && !muted) { play(name); prefetch(); } };
-                if (cache[name]) setTimeout(go, 160); else ensure(name).then(go);
+                if (!musicOn || muted || !name) { this.stop(); return; }
+                const l = listOf(name); if (!l) { this.stop(); return; }
+                if (!ctx()) return;
+                if (list === l && live.length) return;
+                const A = ac, hadMusic = live.length; if (hadMusic) stopAll(0.35); else gen++;
+                list = l; const my = gen, first = pickNext(l);
+                getBuf(first, true).then(b => {
+                    if (my !== gen || !b || !musicOn || muted) return;
+                    try { musBus.gain.cancelScheduledValues(A.currentTime); } catch (e) {}
+                    musBus.gain.setValueAtTime(base(), A.currentTime);
+                    const n = startTrack(first, A.currentTime + 0.05, hadMusic ? 0.5 : 0.25, !!LOOPS[l]);
+                    queueNext(n, my); prefetch();
+                });
             },
-            stop() { wanted = null; stopNode(0.4); cur = null; },
+            stop() { list = null; if (ac && live.length) stopAll(0.5); else gen++; },
+            // music steps back for a moment (a fanfare, a banner) and returns on its own
+            duck(level, secs) {
+                if (!ac || !musBus || !live.length) return; const t = ac.currentTime, g = musBus.gain, b = base();
+                try { g.cancelScheduledValues(t); g.setValueAtTime(Math.max(0.0001, g.value), t); g.linearRampToValueAtTime(b * level, t + 0.15); g.setValueAtTime(b * level, t + secs); g.linearRampToValueAtTime(b, t + secs + 0.9); } catch (e) {}
+            },
             setVol(v) { if (musBus && ac) { try { musBus.gain.cancelScheduledValues(ac.currentTime); } catch (e) {} musBus.gain.setValueAtTime(Math.max(0.0001, v * MUS_GAIN), ac.currentTime); } },
             toggle() { musicOn = !musicOn; try { localStorage.setItem('rr_music', musicOn ? '1' : '0'); } catch (e) {}
                 if (!musicOn) this.stop(); return musicOn; },
-            __build: name => ensure(name).then(() => cache[name]),       // tests: the finished loop
+            __build: name => build(name),                // the build tool: a finished loop of one track, rendered live (never used while playing)
         };
     })();
+
+    // fanfares: a sound plus what the music does around it
+    const STINGS = {
+        lead:    { sfx: 'lead', duck: [0.45, 1.3], gap: 9000 },                      // you took the lead
+        win:     { sfx: 'win', hush: 3600, then: 'results' },                        // you won
+        place:   { sfx: 'finish', hush: 2200, then: 'results' },                     // you finished, not first
+        lose:    { sfx: 'fail', hush: 2200, then: 'results' },                       // you did not finish
+        qualify: { sfx: 'qualify', duck: [0.4, 1.8] },                               // Gauntlet: through to the next stage
+        elim:    { sfx: 'elim', duck: [0.3, 2.6] },                                  // Gauntlet: you are out
+        gtwin:   { sfx: 'gtwin', hush: 5200, then: 'results' },                      // Gauntlet: you won it all
+    };
+    const lastSting = {};
 
     const trackFor = inGame => {
         try {
@@ -444,13 +569,24 @@ const SFX = (() => {
         } catch (e) { return 'race'; }
     };
 
+    bankFetch();                                         // the recordings start downloading at once (decoding waits for the first tap)
+
     return {
         play(name, arg) { try {
             const now = performance.now(), cd = COOLDOWN[name] !== undefined ? COOLDOWN[name] : (CRITICAL.has(name) ? 0 : 45);
             if (cd && now - (lastPlay[name] || -1e9) < cd) return;
-            if (active > 20 && !CRITICAL.has(name)) return;
             lastPlay[name] = now; lastAny = now;
-            if (P[name]) P[name](arg);
+            if (bank.state === 'ready') { if (playBank(bankKey(name, arg))) return; }        // the normal case: a finished recording, nothing is synthesised
+            else if (bank.state !== 'failed') return;                                          // still loading (a second or less): a moment of quiet beats live synthesis
+            if (active > 20 && !CRITICAL.has(name)) return;
+            if (P[name]) P[name](arg);                                                          // only when the files are missing
+        } catch (e) {} },
+        sting(kind) { try {
+            const E = STINGS[kind]; if (!E || muted) return; const now = performance.now();
+            if (E.gap && now - (lastSting[kind] || -1e9) < E.gap) return; lastSting[kind] = now;
+            this.play(E.sfx);
+            if (E.duck) MUSIC.duck(E.duck[0], E.duck[1]);
+            if (E.hush) { MUSIC.stop(); if (E.then) setTimeout(() => { if (!MUSIC.list && MUSIC.on && !muted) MUSIC.set(E.then); }, E.hush); }
         } catch (e) {} },
         get lastAny() { return lastAny; },
         toggle() { muted = !muted; try { localStorage.setItem('rr_mute', muted ? '1' : '0'); } catch (e) {} return muted; },
@@ -460,7 +596,7 @@ const SFX = (() => {
         get musVol() { return musVol; },
         setSfxVol(v) { sfxVol = Math.max(0, Math.min(1, v)); try { localStorage.setItem('rr_sfxvol', sfxVol); } catch (e) {} if (sfxBus) { try { sfxBus.gain.setTargetAtTime(sfxVol, ac.currentTime, 0.02); } catch (e) { sfxBus.gain.value = sfxVol; } } },
         setMusVol(v) { musVol = Math.max(0, Math.min(1, v)); try { localStorage.setItem('rr_musvol', musVol); } catch (e) {} MUSIC.setVol(musVol); },
-        unlock() { try { ctx(); } catch (e) {} },
+        unlock() { try { ctx(); bankDecode(); } catch (e) {} },
         suspend() { try { if (ac && ac.state === 'running' && ac.suspend) { const r = ac.suspend(); if (r && r.catch) r.catch(() => {}); } } catch (e) {} },      // app in the background / screen off: no sound
         trackFor,
         music: MUSIC,
@@ -469,6 +605,7 @@ const SFX = (() => {
         __use(c) { extCtx = c; ac = null; },          // tests: build the whole engine on an OfflineAudioContext
         __live() { return ac; },
         __play(name, arg) { if (P[name]) P[name](arg); },
+        __bake: bakeSfx, __bakeList: () => Object.keys(P).map(n => [n, BAKE[n] || [undefined]]), __bank: bank, __bankKey: bankKey,
     };
 })();
 if (typeof window !== 'undefined' && window.addEventListener) {

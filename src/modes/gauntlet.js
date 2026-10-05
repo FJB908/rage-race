@@ -376,7 +376,7 @@
         gt.qualified.push(p);
         burst(p.x, p.y, p.color, 26, 280); ring(p.x, p.y, gt.st.color, 90);
         if (p.local) {
-            SFX.play('finish'); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7);
+            SFX.sting(gt.stage < 2 ? 'qualify' : 'gtwin'); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7);
             for (const c of ['#ffcf3f', '#ffffff', gt.st.color]) burst(p.x, p.y, c, 14, 340);
             if (gt.stage < 2) banner('', 'QUALIFIED', '#7ee787');
         } else if (gt.stage === 2 && !gt.winner) SFX.play('count');
@@ -392,7 +392,7 @@
         gt.out.push(p);
         burst(p.x, p.y, '#ff5470', why === 'wall' ? 26 : 14, 260); ring(p.x, p.y, '#ff5470', why === 'wall' ? 80 : 50);
         if (p.local) {
-            gt.localOutStage = gt.stage; haptic([60, 40, 90]); SFX.play('fail'); camShake = Math.max(camShake, 9);
+            gt.localOutStage = gt.stage; haptic([60, 40, 90]); SFX.sting('elim'); camShake = Math.max(camShake, 9);
             if (why === 'wall') showOut();
         }
     }
@@ -442,7 +442,8 @@
             if (w) { burst(w.x, w.y, '#ffcf3f', 60, 420); ring(w.x, w.y, '#ffcf3f', 150); }
             if (w) {
                 // the game freezes for 2 s on the crown, then the winner is shown for 3 s, then the rewards
-                SFX.play('finish'); if (w.local) haptic([40, 40, 40, 40, 120]);
+                if (!w.local) SFX.sting('place');                 // your own win already played its fanfare when you crossed the line
+                if (w.local) haptic([40, 40, 40, 40, 120]);
                 after(2000, () => crownSpotlight(w));
                 return after(5200, () => finishRun());
             }
@@ -828,7 +829,8 @@
         if (r.drop && !r.drop.noDrop) renderLootDrop('gt-loot', r.drop);
         $('gt-again').onclick = () => { hide($('gt-result')); leave(true); setTimeout(openEntry, 60); };
         $('gt-menu').onclick = () => { hide($('gt-result')); leave(true); };
-        if (r.win) SFX.play('finish'); else if (r.reached === 0) SFX.play('fail');
+        if (!r.win && r.reached === 0) SFX.play('fail');
+        SFX.music.set('results');
     }
 
     /* ---------------------------------------------------------------- leaving ---- */

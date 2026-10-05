@@ -13,3 +13,7 @@
 
 ## Generators (for bulk work)
 `tools/gen_skins.py`, `gen_hats.py`, `gen_faces.py`, `gen_trails.py` regenerate the layered art. Run them from the project root, for example `python3 tools/gen_hats.py`. They write `src/data/skin-styles.js`, `accessory-styles.js`, `trail-styles.js` (restyles of built-ins) and the new items in `src/data/custom-cosmetics.js`. Note: they rewrite their own part of `custom-cosmetics.js`, so save designer work you want to keep as separate items first.
+
+## Audio (`bake-audio.js`)
+`node tools/bake-audio.js` renders every sound effect and music track from `src/audio/sfx.js` into ogg files in `src/audio/bank/` (needs playwright and ffmpeg).
+The game only plays those recordings, so nothing is synthesised while you play. Run it again after changing a sound, a track or the playlists, and commit the files.

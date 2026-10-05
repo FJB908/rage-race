@@ -793,29 +793,25 @@ function startWind(p, forcedDir){
     return dir;
 }
 function startQuake(p){
-    const alive = players.filter(o => !o.finished);
-    const avgY = alive.reduce((s,o) => s + o.y, 0) / alive.length;
-    // Only shake platforms clearly above the pack (a healthy margin, not "one row up"),
-    // and only in the stretch right above that margin — a comeback tool, not a purge of
-    // the whole upper track. Also cap how many platforms go at once.
-    const margin = 260;
-    const candidates = platforms.filter(pl =>
-        pl.active && pl.type !== 'safety' && pl.type !== 'finish' && pl.type !== 'moving' &&
-        pl !== p.plat && !players.some(o => o.plat === pl && o.mode === 'idle') && pl.y < avgY - margin && pl.y > avgY - margin - 900);
-    candidates.sort((a,b) => b.y - a.y);              // closest-above first
-    const hitList = candidates.slice(0, 6);
-    for (const pl of hitList){ pl.quakeWarn = QUAKE_WARN; pl.quakeDown = 0; }
-
-    // Directly close the gap: anyone well ahead of the caster gets shaken loose and
-    // actually FALLS a bounded distance — no teleport, you can see it happen. A short
-    // warning shake plays first, then gravity does the rest at a boosted fall speed so
-    // it reads as "the ground gave way", not a random jump in position.
-    const shaken = 0;                                  // nobody is knocked off their platform any more: the quake only shakes empty platforms
+    // The quake always comes for whoever is furthest ahead (never the caster): the leader's own platform and the ones around/above it shake,
+    // with the usual warning, so the leader has a moment to jump clear. A shield on the leader blocks it.
+    let leader = null;
+    for (const o of players) if (o !== p && !o.finished && (!leader || o.y < leader.y)) leader = o;
     ring(p.x, p.y, ITEMS.quake.color, 70);
     burst(p.x, p.y, ITEMS.quake.color, 20, 220);
     if (p.local) camShake = Math.max(camShake, 6);
-    const hit = hitList.length;
-    if (p.local && !hit && !shaken) floatText(p.x, p.y - p.r - 18, 'NO TARGETS', ITEMS.quake.color);
+    if (!leader){ if (p.local) floatText(p.x, p.y - p.r - 18, 'NO TARGETS', ITEMS.quake.color); return; }
+    if (shieldBlocks(leader)){ if (p.local) floatText(leader.x, leader.y - leader.r - 18, 'BLOCKED!', ITEMS.shield.color); return; }
+    const near = platforms.filter(pl =>
+        pl.active && pl.type !== 'safety' && pl.type !== 'finish' && pl.type !== 'moving' &&
+        pl !== p.plat && (pl === leader.plat || !players.some(o => o.plat === pl && o.mode === 'idle')) &&
+        pl.y < leader.y + 90 && pl.y > leader.y - 800);
+    near.sort((a, b) => (a === leader.plat ? -1 : b === leader.plat ? 1 : Math.abs(a.y - leader.y) - Math.abs(b.y - leader.y)));
+    const hitList = near.slice(0, 6);
+    for (const pl of hitList){ pl.quakeWarn = QUAKE_WARN; pl.quakeDown = 0; }
+    ring(leader.x, leader.y, ITEMS.quake.color, 60);
+    if (p.local || leader.local){ camShake = Math.max(camShake, leader.local ? 7 : 4); }
+    if (p.local && !hitList.length) floatText(p.x, p.y - p.r - 18, 'NO TARGETS', ITEMS.quake.color);
 }
 // Resolves the queued fall once the warning shake has played out.
 function triggerQueuedQuakeFall(o){
@@ -1443,7 +1439,7 @@ function handleFinish(p) {
     if (p.local && window.partyMatch && window.Social){ Social.onPartyFinish(p.finishTime, finishedCount); if (window.Missions) Missions.race(finishedCount, true); }
     burst(p.x, p.y, p.color, 30, 260);
     if (window.Finishers) Finishers.play(p);                           // your equipped finisher (and the bots' own)
-    if (p.local){ SFX.play('finish'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
+    if (p.local){ SFX.sting(finishedCount === 1 ? 'win' : 'place'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
     if (window.rankedMatch){ if (p.local) Ranked.onLocalFinish(finishedCount); return; }   // Ranked ends the moment YOU cross the line: nobody after you can pass you
     checkEnd();
     maybePromptBotsDone();
@@ -1986,6 +1982,7 @@ function updatePosition() {
         document.getElementById('pos-suf').textContent = pos===1 ? 'st' : pos===2 ? 'nd' : pos===3 ? 'rd' : 'th';
         el.className = 'place p' + Math.min(pos, 4);
         if (lastPlace) { void el.offsetWidth; el.classList.add('pop'); }   // pop on every change of place
+        if (pos === 1 && lastPlace > 1 && gameMode === 'race' && state === 'playing' && Date.now() - matchStart > 4000 && !(players.find(q => q.local) || {}).finished) SFX.sting('lead');   // you took the lead
         lastPlace = pos;
     }
 }
@@ -2025,6 +2022,7 @@ function showResults() {
     const msgs = ["Unbeatable.","Silver, so close.","Bronze, solid.","Fourth. Rage!"];
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
+    if (!(localP && localP.finished)) SFX.sting('lose');                  // a finished player already heard the fanfare; the results music follows it
     sub.innerHTML = (msgs[you-1] || "") + (rw.noRewards ? '  ·  Friendly match, no rewards' : rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
     { const me = sorted.find(p => p.local);                      // how close it was
       if (me && me.finished){
