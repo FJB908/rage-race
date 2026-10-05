@@ -1999,6 +1999,18 @@ function checkEnd() {
         setTimeout(showResults, 1100);
     }
 }
+// "2 more wins to unlock 4 new modes" with a bar, under the board (only while something is still locked)
+function renderResultGoal(){
+    const box = document.getElementById('result-goal'); if (!box) return;
+    box.hidden = true;
+    if (!window.Gentle || window.rankedMatch || window.partyMatch) return;
+    const wins = Gentle.winsOf(), locked = Object.keys(Gentle.LOCKS).filter(m => Gentle.LOCKS[m] > wins);
+    if (!locked.length) return;
+    const need = Math.min(...locked.map(m => Gentle.LOCKS[m])), names = locked.filter(m => Gentle.LOCKS[m] === need).map(m => (MODE_LABEL[m] || m).split(' · ')[0]);
+    const left = need - wins, what = names.length > 1 ? names.length + ' new modes' : names[0];
+    box.innerHTML = '<span><b>' + left + ' more ' + (left === 1 ? 'win' : 'wins') + '</b> to unlock ' + what + '</span><u><s style="width:' + Math.round(100 * wins / need) + '%"></s></u>';
+    box.hidden = false;
+}
 function showResults() {
     if (typeof stopSpectate === 'function') stopSpectate();
     hud.style.display='none';
@@ -2034,7 +2046,8 @@ function showResults() {
             <span>${p.name}</span><span class="time">${t}</span>`;
         board.appendChild(row);
     });
-    if (rw.noDrop) document.getElementById('loot-race').innerHTML = ''; else renderLootDrop('loot-race', rw);
+    if (rw.noDrop) document.getElementById('loot-race').innerHTML = ''; else renderLootDrop('loot-race', rw, { soft:true });      // the chest is a choice here, not a gate
+    renderResultGoal();
     showScreen('results');
 }
 
@@ -2848,7 +2861,7 @@ function maybePromptBotsDone() {
     ]), 900);
 }
 
-document.getElementById('btn-again').addEventListener('click', startMatchmaking);
+document.getElementById('btn-again').addEventListener('click', () => startMatchmaking(true));      // a repeat race skips most of the lobby theatre
 document.getElementById('btn-results-menu').addEventListener('click', () => {
     state = 'menu'; gameMode = 'race'; hud.style.display = 'none';
     document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level');
@@ -2859,7 +2872,7 @@ let matchLootId = '';
 let matchBotNames = [];   // the 3 bot names for THIS match (index 1..3)
 let matchHumanSlot = 0;    // 0 = no human-profile bot this race; 1-3 = which slot has one
 
-function startMatchmaking() {
+function startMatchmaking(quick) {
     window.rankedMatch = false; window.RACE_BAND = undefined; window.matchBots = null; window.partyMatch = null;   // a normal quick match
     window.buildMatch = !!window.buildQueued; window.buildQueued = false; if (!window.buildMatch && window.Build) Build.leave(false);
     matchLootId = newLootId('race');
@@ -2875,11 +2888,11 @@ function startMatchmaking() {
     const reveal = [true,false,false,false];
     buildLobby(reveal);
     showScreen('lobby');
-    const times = [700, 1500, 2200];
+    const fast = quick === true, times = fast ? [250, 500, 750] : [700, 1500, 2200];
     [1,2,3].forEach((idx,i)=>{
         setTimeout(()=>{ reveal[idx]=matchBotNames[i]; buildLobby(reveal); }, times[i]);
     });
-    setTimeout(startGame, 3100);
+    setTimeout(startGame, fast ? 1250 : 3100);
 }
 
 function startGame() {
@@ -4226,17 +4239,18 @@ async function openPendingChests(){
     } finally { _openingPending = false; }
 }
 function settlePendingDrops(){ clearTimeout(settlePendingDrops._t); settlePendingDrops._t = setTimeout(openPendingChests, 500); }
-function renderLootDrop(containerId, drop){
+function renderLootDrop(containerId, drop, opts){
     const panel = document.getElementById(containerId);
     if (!panel || !drop) return;
     const tier = drop.tier || 'common';
     const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' };
     panel.classList.remove('opening'); panel.classList.add('big');
     // after a match the only thing to press is VIEW RESULTS: it opens the chest straight away, then the results and the other buttons appear
-    document.body.classList.add('await-chest');
+    const soft = !!(opts && opts.soft);                      // soft: RACE AGAIN stays available, the chest is just a tile you may open
+    if (!soft) document.body.classList.add('await-chest'); else document.body.classList.remove('await-chest');
     clearInterval(renderLootDrop._wd);
     renderLootDrop._wd = setInterval(() => { if (!panel.isConnected || !panel.querySelector('.loot-view')) { document.body.classList.remove('await-chest'); clearInterval(renderLootDrop._wd); } }, 800);
-    panel.innerHTML = `<button class="loot-big loot-view tier-${tier}" type="button" aria-label="View results"><span class="lb-view">VIEW RESULTS</span></button>`;
+    panel.innerHTML = `<button class="loot-big loot-view tier-${tier}${soft ? ' soft' : ''}" type="button" aria-label="${soft ? 'Open chest' : 'View results'}"><span class="lb-view">${soft ? 'OPEN CHEST' : 'VIEW RESULTS'}</span></button>`;
     panel.querySelector('.loot-view').addEventListener('click', event => {
         const button = event.currentTarget;
         if (button.disabled) return;
@@ -4433,6 +4447,23 @@ function setBadge(el, n){
     if (!b){ b = document.createElement('b'); b.className = 'nbadge'; el.appendChild(b); }
     b.textContent = typeof n === 'string' ? n : (n > 99 ? '99+' : n);
     b.classList.toggle('free', n === 'FREE');
+    nudgeSoon();
+}
+// One loud notice at a time on the home screen: the most useful one stays a red badge, the others turn into small grey dots until it is dealt with.
+// Beginners (under 3 races) get dots only, so the first screen has nothing shouting at them.
+const NUDGE_ORDER = ['#m-lvl', '#btn-streak-open', '#btn-missions', '#btn-pass-open', '.m-nav [data-go="shop"]', '#btn-collection'];
+let _nudgeRaf = 0;
+function nudgeSoon(){ if (!_nudgeRaf) _nudgeRaf = requestAnimationFrame(() => { _nudgeRaf = 0; nudgeSync(); }); }
+function nudgeSync(){
+    const beginner = (prog().races || 0) < 3;
+    let loud = false;
+    for (const sel of NUDGE_ORDER){
+        const el = document.querySelector(sel), b = el && el.querySelector(':scope > .nbadge');
+        if (!b) continue;
+        const quiet = beginner || loud;
+        b.classList.toggle('quiet', quiet);
+        if (!quiet) loud = true;
+    }
 }
 // Shop items you have not seen yet (new releases). Everything that exists on the first launch counts as seen.
 function shopItems(){ return [...SKINS, ...HATS, ...FACES, ...TRAILS, ...(COS_BY.costume || [])].filter(i => i.price > 0 || i.premium); }
@@ -4440,7 +4471,8 @@ function refreshShopBadge(){
     const p = prog(), ids = shopItems().map(i => i.id);
     if (!Array.isArray(p.shopSeen)){ p.shopSeen = ids; saveProg(p); }
     const fresh = ids.filter(id => !p.shopSeen.includes(id) && !p.owned.includes(id)).length;
-    setBadge(document.querySelector('.m-nav [data-go="shop"]'), (window.Ads && Ads.fresh()) ? 'FREE' : (window.Gentle && Gentle.simple() ? 0 : fresh));      // a free video waiting says FREE; otherwise the number of new items      // no "new items" noise for brand-new players
+    const ready = !window.Gentle || Gentle.shopReady();                       // no shop or ad notices before your first win (and 3 races)
+    setBadge(document.querySelector('.m-nav [data-go="shop"]'), !ready ? 0 : (window.Ads && Ads.fresh()) ? 'FREE' : (window.Gentle && Gentle.simple() ? 0 : fresh));      // a free video waiting says FREE; otherwise the number of new items      // no "new items" noise for brand-new players
 }
 function markShopSeen(){ const p = prog(); p.shopSeen = shopItems().map(i => i.id); saveProg(p); refreshShopBadge(); }
 function menuTab(tab){

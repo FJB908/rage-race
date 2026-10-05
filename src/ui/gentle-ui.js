@@ -8,15 +8,21 @@
         document.body.classList.toggle('gentle-simple', lvl < 3);
         const t = $('m-title'); if (t) t.textContent = Gentle.title(lvl);
         const pl = $('m-plvl'); if (pl) pl.textContent = 'Level ' + lvl + ' · ' + Gentle.title(lvl);
+        // locked modes: the nearest goal says how many wins are left and fills a thin bar; the rest just show their total
+        const wins = Gentle.winsOf(), needs = Object.values(Gentle.LOCKS).filter(n => n > wins), next = needs.length ? Math.min(...needs) : 0;
         document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => {
-            const need = Gentle.LOCKS[c.dataset.mode] || 0, wins = Gentle.winsOf(), lock = wins < need;
-            c.classList.toggle('lvl-locked', lock);
-            let tag = c.querySelector('.lock-tag');
-            if (lock) { if (!tag) { tag = document.createElement('i'); tag.className = 'lock-tag'; c.appendChild(tag); } tag.textContent = wins + '/' + need + ' WINS'; }
-            else if (tag) tag.remove();
+            const need = Gentle.LOCKS[c.dataset.mode] || 0, lock = wins < need, near = lock && need === next;
+            c.classList.toggle('lvl-locked', lock); c.classList.toggle('lock-near', near);
+            let tag = c.querySelector('.lock-tag'), bar = c.querySelector('.lock-bar');
+            if (lock) {
+                if (!tag) { tag = document.createElement('i'); tag.className = 'lock-tag'; c.appendChild(tag); }
+                tag.textContent = (near ? need - wins : need) + (near && need - wins === 1 ? ' WIN' : ' WINS');      // nearest goal: wins still to get (gold + bar); others: total needed (grey)
+                if (near) { if (!bar) { bar = document.createElement('u'); bar.className = 'lock-bar'; bar.innerHTML = '<s></s>'; c.appendChild(bar); } bar.firstChild.style.width = Math.round(100 * wins / need) + '%'; }
+                else if (bar) bar.remove();
+            } else { if (tag) tag.remove(); if (bar) bar.remove(); }
         });
         // a level-up while you are on the menu: celebrate it once
-        const seen = p.lvlSeen, wins = Gentle.winsOf();
+        const seen = p.lvlSeen;
         if (seen === undefined) { const q = prog(); q.lvlSeen = lvl; q.winsSeen = wins; saveProg(q); return; }
         const idle = !shownBusy && typeof state !== 'undefined' && state === 'menu' && !document.getElementById('lootbox') && !document.getElementById('ob-root');
         if (!idle) return;

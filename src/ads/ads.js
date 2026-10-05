@@ -83,7 +83,7 @@
     // small button on the home screen: watch a video for 500 coins
     A.refreshHome = function () {
         const b = document.getElementById('btn-ad-home'); if (!b) return;
-        const left = A.left('coin'), w = A.wait('coin'); b.hidden = left <= 0;
+        const left = A.left('coin'), w = A.wait('coin'); b.hidden = left <= 0 || (window.Gentle && !Gentle.shopReady());
         b.disabled = w > 0; b.classList.toggle('cool', w > 0);
         const num = b.querySelector('b'); if (num) num.textContent = w > 0 ? mmss(w) : '+' + CFG.coin.amount;
         setBadge(b, 0);                       // the green FREE tag is the notice here; a number would cover the amount
@@ -96,7 +96,7 @@
     A.fresh = () => A.ready() > 0 && (prog().adsSeen || '') !== sig();
     A.markSeen = () => { const p = prog(); if (p.adsSeen !== sig()) { p.adsSeen = sig(); saveProg(p); } A.refreshShop(); };
     A.refreshShop = function () {
-        const n = A.fresh() ? 1 : 0, pill = document.querySelector('.m-pill[data-cat="resources"]');
+        const n = A.fresh() && (!window.Gentle || Gentle.shopReady()) ? 1 : 0, pill = document.querySelector('.m-pill[data-cat="resources"]');
         if (pill) { let f = pill.querySelector(':scope > .pill-free'); if (n && !f) { f = document.createElement('i'); f.className = 'pill-free'; f.textContent = 'FREE'; pill.appendChild(f); } else if (!n && f) f.remove(); }
         if (typeof refreshShopBadge === 'function') refreshShopBadge();
     };

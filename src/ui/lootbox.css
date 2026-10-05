@@ -166,3 +166,12 @@ body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-ches
 .lb.ready .lb-hint { animation-duration:2.4s; } .lb-itempop .glow { animation-duration:3.4s; }
 .lb-shine { animation-duration:6s; } .lb-sparks .sp { animation-duration:5s !important; }
 .loot-big .lb-leak { animation-duration:4s; }
+
+/* race results: the chest is a compact tile, RACE AGAIN stays on screen */
+.loot-view.soft { width:min(78vw,320px); min-height:44px; border-radius:14px; background:color-mix(in srgb,var(--tc,#35e0c8) 14%,transparent); border:2px solid var(--tc,#35e0c8); color:var(--tc,#35e0c8); box-shadow:none; animation:none; }
+.loot-view.soft .lb-view { font-size:15px; line-height:40px; }
+.loot-view.soft:active { transform:scale(.98); box-shadow:none; }
+.res-goal { width:100%; max-width:360px; margin:-12px auto 14px; display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--muted,#9aa3b5); text-align:center; }
+.res-goal b { color:#ffcf3f; }
+.res-goal u { display:block; height:5px; border-radius:99px; background:rgba(255,255,255,.12); overflow:hidden; text-decoration:none; }
+.res-goal s { display:block; height:100%; border-radius:99px; background:#ffcf3f; text-decoration:none; }

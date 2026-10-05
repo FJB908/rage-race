@@ -15,3 +15,9 @@ body.gentle-simple #btn-pass-open, body.gentle-simple #btn-streak-open, body.gen
 .lvup-open { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:14px; } .lvup-open b { width:100%; font-size:10px; letter-spacing:.16em; color:#5eead4; }
 .lvup-open span { padding:6px 12px; border-radius:99px; background:rgba(94,234,212,.14); border:1px solid rgba(94,234,212,.45); font-weight:800; font-size:13px; }
 .lvup-card button { width:100%; padding:15px; border:0; border-radius:16px; background:linear-gradient(#ffe27a,#f5a81c); color:#3a2400; font:900 16px/1 system-ui; letter-spacing:.06em; box-shadow:0 5px 0 #8a5a00; }
+
+/* the nearest unlock: brighter than the rest, with a thin progress bar along the card's bottom */
+.m-card.lvl-locked.lock-near { opacity:.85; filter:saturate(.8); }
+.m-card.lock-near .lock-tag { background:#ffcf3f; border-color:#ffcf3f; color:#1c1500; }
+.m-card .lock-bar { position:absolute; left:14px; right:14px; bottom:8px; height:5px; border-radius:99px; background:rgba(255,255,255,.14); overflow:hidden; text-decoration:none; }
+.m-card .lock-bar s { display:block; height:100%; border-radius:99px; background:#ffcf3f; text-decoration:none; transition:width .5s ease; }

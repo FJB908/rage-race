@@ -14,3 +14,9 @@ New players quit because the game was too hard and the menus too busy. This syst
   a level-up celebration says what just opened.
 - **Measured:** a proxy beginner (aim error x1.9, slow thinking) finished 4 of 30 races with ease 0 and 24 of 30 with ease 1 (won 11 of 30).
 - Arcade and Boom Tag are parked: the code stays (`src/modes/arcade.js`, `tag.js`) but nothing in the menu reaches it. Escape is back.
+
+## Calmer home, clearer locks, quicker rematch
+- **One loud notice at a time** (`nudgeSync` in `game.js`): home badges are ranked (level reward, daily, missions, pass, shop, collection). The first one stays a red badge, the rest become small grey dots until it is dealt with. Players under 3 races only see dots.
+- **Shop and ad nudges wait** (`Gentle.shopReady()`: 3 races and 1 win): no shop badge, no FREE tag and no home video pill before that.
+- **Locks**: the nearest unlock shows "N WINS" in gold with a progress bar on the card, the rest show their total in grey. The results screen adds a line "N more wins to unlock 4 new modes" with a bar.
+- **Results**: RACE AGAIN and MAIN MENU are always available. The winner's chest is an outlined OPEN CHEST tile (a skipped chest stays in the pending queue on the menu). RACE AGAIN uses a short lobby (about 1.3 s instead of 3.1 s).

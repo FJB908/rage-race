@@ -29,5 +29,6 @@
     }
     const winsOf = () => { try { return prog().wins || 0; } catch (e) { return 0; } };
     const unlocked = mode => winsOf() >= (LOCKS[mode] || 0);
-    window.Gentle = { ease, record, LOCKS, OPENS, WIN_OPENS, winsOf, TITLES, lvlOf, title, unlocked, simple: () => lvlOf() < 3 };
+    const shopReady = () => { try { const p = prog(); return (p.races || 0) >= 3 && (p.wins || 0) >= 1; } catch (e) { return true; } };      // shop and ad nudges wait until you have played a bit and won once
+    window.Gentle = { ease, shopReady, record, LOCKS, OPENS, WIN_OPENS, winsOf, TITLES, lvlOf, title, unlocked, simple: () => lvlOf() < 3 };
 })();
