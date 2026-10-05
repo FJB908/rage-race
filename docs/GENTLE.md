@@ -2,10 +2,11 @@
 
 New players quit because the game was too hard and the menus too busy. This system (src/ui/gentle.js, gentle-ui.js, gentle.css) fixes that.
 
-- **ease() 0..1** (`Gentle.ease()`): 1 for your first 3 races, fading to 0.12 over ~50 races, plus 0.22 for every loss in a row (3rd place or worse, max 0.66).
-  Quick play only (never Ranked or party matches). It makes the track easier (platforms up to 60% wider, gaps 14% shorter, fewer crumbling/sliding/icy ledges),
-  the bots clumsier and slower (their aim error scales with `skill`; the old "ease" accidentally made them sharper) and the odd afk bot more likely.
-  The strong roster bot in Quick play only appears from race 12 on and never while you are struggling.
+- **Adaptive difficulty (`Gentle.ease()`, stored as `prog().dda`, 0.04..1.4):** how much help you get in Quick play. It starts at full help, stays there for the first 3 races, and then follows your results:
+  1st place -0.07, 2nd 0, 3rd +0.10, 4th or DNF +0.16 (`Gentle.record(place, finished)`, called from `rewardRace`). It settles where you win about half your races.
+  Help = wider platforms (up to +60% x ease), shorter gaps, fewer crumbling/sliding/icy ledges, clumsier and slower bots (their aim error scales with `skill`), the odd idle bot.
+  Never in Ranked or party matches. The strong roster bot only appears when ease < 0.15 and from race 12.
+  Measured with proxy players (race sims, 28 races each): aim error x1.2 -> 50% wins at ease 0.35; x1.8 -> 50% wins; x2.4 -> 50% wins at ease 1.3; x3.2 -> 25% (beyond help).
 - **Locks (by race WINS, not level):** Levels, Build Race, Escape and Gauntlet open at 3 wins, Ranked at 5. Locked cards are dimmed with a "0/3 WINS" tag and a celebration shows when they open.
   Below level 3 the home hides the pass, missions, daily rewards and boosters (friends and party stay).
 - **Onboarding (src/ui/onboard.js):** right after "NEW PLAYER": a close-up of your character, you type a name, then the tutorial starts by itself.

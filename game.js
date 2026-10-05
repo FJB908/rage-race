@@ -4543,7 +4543,7 @@ function rewardRace(place, finished, lootId){
         q.lootGrants[id] = { id, tier:'common', coins, xp, passPoints, cosmetic:null, noDrop:true }; saveProg(q); store('rr_coins', load('rr_coins', 0) + coins);
     }
     if (!drop) drop = { noDrop:true, coins, xp, passPoints };
-    if (gameMode === 'race' && !window.rankedMatch && !window.partyMatch && finished){ const q = prog(); q.loseStreak = place >= 3 ? Math.min(6, (q.loseStreak || 0) + 1) : 0; saveProg(q); }
+    if (gameMode === 'race' && !window.rankedMatch && !window.partyMatch && !alreadyGranted && window.Gentle) Gentle.record(place, finished);       // adaptive difficulty follows your result
     rewardRace.keyEarned = false;
     if (!alreadyGranted){
         const p = prog(); p.races++; if (finished && place === 1) p.wins++;
