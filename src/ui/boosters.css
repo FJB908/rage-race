@@ -23,3 +23,19 @@
 .bo-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 8px; border-radius: 16px; border: 1.5px solid color-mix(in srgb, var(--bc) 70%, transparent); background: linear-gradient(120deg, color-mix(in srgb, var(--bc) 24%, #141a24), #141a24 72%); box-shadow: 0 0 18px -7px var(--bc); }
 .bo-card .bo-art { width: 38px; height: 38px; flex: none; } .bo-card .bo-art b { right: -7px; bottom: -5px; font-size: 12px; padding: 1px 6px; }
 .bo-txt { display: flex; flex-direction: column; min-width: 0; text-align: left; } .bo-txt b { font: 900 12px/1.1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .08em; color: var(--bc); } .bo-txt small { margin-top: 2px; font-size: 11px; font-weight: 700; color: #d6dbe6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* the multipliers are quiet now: a small round chip in the corner of the PLAY button, tap for details */
+.m-playwrap { position:relative; flex:none; z-index:2; }
+.m-playwrap .m-play { width:100%; }
+#m-boosts { position:absolute; right:14px; top:-15px; z-index:3; display:flex; gap:6px; padding:0; flex-wrap:nowrap; }
+.bo-chip { position:relative; width:32px; height:32px; padding:0; border-radius:50%; border:1.5px solid color-mix(in srgb, var(--bc) 75%, transparent); background:#141a24; display:grid; place-items:center; box-shadow:0 2px 6px rgba(0,0,0,.4); cursor:pointer; }
+.bo-chip svg { width:18px; height:18px; --ic:var(--bc); filter:none; }
+.bo-chip b { position:absolute; right:-6px; bottom:-5px; padding:0 4px; border-radius:8px; background:var(--bc); color:#12161f; font:900 10px/14px "Space Grotesk",system-ui,sans-serif; box-shadow:0 0 0 1.5px #141a24; }
+.bo-chip:active { transform:scale(.92); }
+.bo-tip { position:absolute; right:10px; top:-62px; z-index:4; display:flex; flex-direction:column; gap:1px; max-width:78%; padding:7px 11px; border-radius:12px; background:#161c27; border:1px solid color-mix(in srgb, var(--bc) 60%, transparent); box-shadow:0 6px 18px rgba(0,0,0,.45); text-align:left; animation:boTip .18s ease-out; }
+.bo-tip b { font-size:12px; font-weight:800; letter-spacing:.04em; color:var(--bc); } .bo-tip small { font-size:11px; font-weight:600; color:#c4cbd8; }
+@keyframes boTip { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+/* the chest screen: a tiny tag instead of a banner */
+.lb-boostbadge { top:calc(56px + env(safe-area-inset-top,0px)); left:12px; transform:none; gap:6px; padding:3px 10px 3px 4px; border:1px solid color-mix(in srgb,#35e0c8 55%,transparent); background:rgba(13,16,23,.7); box-shadow:none; animation:none; }
+.lb-boostbadge .bo-art { width:22px; height:22px; } .lb-boostbadge .bo-art b { display:none; }
+.lb-boostbadge span { display:none; } .lb-boostbadge small { display:block; font-size:11px; font-weight:800; color:#35e0c8; letter-spacing:.02em; }

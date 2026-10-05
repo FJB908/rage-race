@@ -272,7 +272,7 @@
             '<div class="lb-pips">' + TIERS.map(() => '<i></i>').join('') + '</div><div class="lb-hint">TAP</div></div>');
         if (window.Boost && drop.pending) {                 // a chest booster that will apply to this chest is shown before you open it
             const a = Boost.active('chest');
-            if (a && Boost.appliesToChest(drop.id)) { const bdg = document.createElement('div'); bdg.className = 'lb-boostbadge'; bdg.innerHTML = Boost.art({ kind: 'chest', mult: a.mult }) + '<span><b>CHEST BOOSTER</b><small>x' + a.mult + ' rewards · ' + a.total + ' left</small></span>'; o.el.appendChild(bdg); }
+            if (a && Boost.appliesToChest(drop.id)) { const bdg = document.createElement('div'); bdg.className = 'lb-boostbadge'; bdg.innerHTML = Boost.art({ kind: 'chest', mult: a.mult }) + '<small>x' + a.mult + ' chest · ' + a.total + ' left</small>'; o.el.appendChild(bdg); }
         }
         const el = o.el, chest = o.$('.lb-chest'), stage = o.$('.lb-stage'), title = o.$('.lb-title'), pips = [...el.querySelectorAll('.lb-pips i')], btn = o.$('.lb-btn'), skipBtn = o.$('.lb-skip');
         let taps = 0, busy = true, opened = false, skipped = false;

@@ -31,26 +31,29 @@
         short(r) { const k = KINDS[r.kind]; return 'x' + r.mult + ' ' + k.name.toLowerCase() + ' · ' + r.n + ' ' + (r.n === 1 ? k.unit : k.plural); },
         // a reward row for showRewardPops
         pop(r) { B.grant(r.kind, r.mult, r.n); return { type:'boost', kind:r.kind, mult:r.mult, n:r.n }; },
+        // A small round chip in the corner of the PLAY button for each active multiplier (coin x2, chest x2). Tap it for the details.
         refreshHome() {
             const el = document.getElementById('m-boosts'); if (!el) return;
             const parts = [];
-            for (const kind of ['coin', 'chest']) {                                 // one clear card per active multiplier: what it is, how big, how many left
+            for (const kind of ['coin', 'chest']) {
                 const a = B.active(kind); if (!a) continue;
-                const k = KINDS[kind], unit = a.total === 1 ? k.unit : k.plural;
-                parts.push('<div class="bo-card" style="--bc:' + k.color + '">' + B.art({ kind, mult:a.mult }) + '<span class="bo-txt"><b>' + (kind === 'coin' ? 'COIN BOOST' : 'CHEST BOOST') + '</b><small>x' + a.mult + ' &middot; ' + a.total + ' ' + unit + ' left</small></span></div>');
+                const k = KINDS[kind];
+                parts.push('<button type="button" class="bo-chip" data-kind="' + kind + '" style="--bc:' + k.color + '" aria-label="' + (kind === 'coin' ? 'Coin' : 'Chest') + ' booster x' + a.mult + '">' + icon(kind === 'coin' ? 'coin' : 'drop') + '<b>' + a.mult + 'x</b></button>');
             }
             el.innerHTML = parts.join(''); el.hidden = !parts.length;
+            if (!parts.length) { const t = document.querySelector('.bo-tip'); if (t) t.remove(); }
+        },
+        tip(kind) {
+            const a = B.active(kind), wrap = document.querySelector('.m-playwrap'); if (!a || !wrap) return;
+            const old = document.querySelector('.bo-tip'); if (old) { const same = old.dataset.kind === kind; old.remove(); if (same) return; }
+            const k = KINDS[kind], unit = a.total === 1 ? k.unit : k.plural, t = document.createElement('div');
+            t.className = 'bo-tip'; t.dataset.kind = kind; t.style.setProperty('--bc', k.color);
+            t.innerHTML = '<b>' + (kind === 'coin' ? 'Coins' : 'Chest rewards') + ' x' + a.mult + '</b><small>' + a.total + ' ' + unit + ' left' + (kind === 'chest' ? ' · for chests from matches you play' : ' · for the coins of a match') + '</small>';
+            wrap.appendChild(t); clearTimeout(B._tt); B._tt = setTimeout(() => t.remove(), 3600);
         },
     };
 
-    // a banner whenever a booster is actually used, so you always see it working
-    function announce(kind, mult, left) {
-        try {
-            const k = KINDS[kind], el = document.createElement('div'); el.className = 'bo-banner'; el.style.setProperty('--bc', k.color);
-            el.innerHTML = B.art({ kind, mult }) + '<span><b>x' + mult + ' ' + k.name + '</b><small>' + (left > 0 ? left + (kind === 'coin' ? (left === 1 ? ' match left' : ' matches left') : (left === 1 ? ' chest left' : ' chests left')) : 'last one used') + '</small></span>';
-            document.body.appendChild(el); setTimeout(() => el.remove(), 2900);
-        } catch (e) {}
-    }
+    function announce() {}                                                  // (the big banner is gone: the chip on the home screen and the amounts say enough)
     function use(kind, n, id) {
         const p = prog(), b = st(p), key = kind + ':' + id;
         const hit = b.used.find(u => u.k === key);
@@ -64,5 +67,10 @@
         try { B.refreshHome(); } catch (er) {}
         return kind === 'coin' ? Math.round(n * m) : m;
     }
+    document.addEventListener('click', e => {
+        const c = e.target.closest && e.target.closest('.bo-chip');
+        if (c) { e.stopPropagation(); B.tip(c.dataset.kind); return; }
+        const t = document.querySelector('.bo-tip'); if (t) t.remove();
+    });
     window.Boost = B;
 })();
