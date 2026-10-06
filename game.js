@@ -4208,6 +4208,7 @@ function randomBotLook(){
 }
 
 const MODE_LABEL = { race:'Quick play', tag:'Boom Tag · Pass the bomb', arcade:'Arcade · Random minigames', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
+const MODE_POSTER = { race:{ n:'Quick play', s:'4 players', c:'#35e0c8' }, build:{ n:'Build Race', s:'Place a trap, then race', c:'#ff8ae6' }, ranked:{ n:'Ranked', s:'Climb the ranks', c:'#b3a9ff' }, gauntlet:{ n:'Gauntlet', s:'32 players', c:'#ffcf3f' }, parkour:{ n:'Levels', s:'Dimensions', c:'#b3a9ff' }, escape:{ n:'Escape', s:'Climb or fall', c:'#ff7a90' }, tag:{ n:'Boom Tag', s:'Pass the bomb', c:'#ff8a46' }, arcade:{ n:'Arcade', s:'Random minigames', c:'#5bb8ff' } };
 const MODE_ICON = { race:'mode-race', tag:'mode-tag', arcade:'mode-arcade', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
 let _freeIds = null;
 function freeItemIds(){
@@ -4677,7 +4678,8 @@ function refreshMenu(){
     document.getElementById('m-plvl').textContent = 'Level ' + L.lvl;
     const inp = document.getElementById('m-name-input');
     if (document.activeElement !== inp) inp.value = p.name;
-    document.getElementById('m-mode').textContent = MODE_LABEL[p.lastMode] || MODE_LABEL.race;
+    { const mk = p.lastMode in MODE_POSTER ? p.lastMode : 'race', mp = MODE_POSTER[mk], row = document.querySelector('#s-start .m-row[data-go="play"]');         // the mode row looks like that mode's poster in the Play tab
+      document.getElementById('m-mode').textContent = mp.n; const sub = document.getElementById('m-mode-sub'); if (sub) sub.textContent = mp.s; if (row) row.style.setProperty('--mc', mp.c); }
     document.getElementById('m-mode-ico').innerHTML = (p.lastMode === 'ranked' && window.Ranked) ? Ranked.emblem(Ranked.state().tier, 30) : icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
     if (window.Ranked) Ranked.refreshHome();
     document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));

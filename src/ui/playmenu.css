@@ -44,3 +44,21 @@
 .m-tab[data-tab="play"] .m-card.sel::after { content: "SELECTED"; position: absolute; top: 14px; right: 14px; bottom: auto; padding: 4px 9px; border-radius: 99px; background: rgba(255,255,255,.14); color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: .1em; }
 .m-tab[data-tab="play"] .m-card.sel .new-tag { display: none; }
 .m-tab[data-tab="play"] .m-card .lock-tag { top: 14px; right: 14px; }
+
+/* the mode row on the home screen: the same poster as in the Play tab (colour wash, the mode icon big and tilted behind the name) */
+#s-start .m-row[data-go="play"] {
+    --mc: #35e0c8; position: relative; overflow: hidden; isolation: isolate; box-sizing: border-box; min-height: 88px; padding: 14px 16px 14px 20px; border: 0 !important; border-radius: 22px;
+    background: linear-gradient(140deg, color-mix(in srgb, var(--mc) 30%, #0e121a) 0%, #10141c 68%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 10px 18px -16px color-mix(in srgb, var(--mc) 80%, transparent);
+    transition: transform .14s;
+}
+#s-start .m-row[data-go="play"]:active { transform: scale(.975); }
+#s-start .m-row[data-go="play"]::before { content: ""; position: absolute; z-index: -2; right: -18%; top: -90%; width: 75%; height: 260%; background: radial-gradient(closest-side, color-mix(in srgb, var(--mc) 38%, transparent), transparent 72%); pointer-events: none; }
+#s-start .m-row[data-go="play"] .m-row-ico { position: absolute; z-index: -1; right: 4px; bottom: -38px; left: auto; top: auto; width: 130px; height: 130px; display: block; border: 0; border-radius: 0; background: none; box-shadow: none; opacity: .24; transform: rotate(-12deg); transform-origin: 60% 60%; pointer-events: none; }
+#s-start .m-row[data-go="play"] .m-row-ico svg, #s-start .m-row[data-go="play"] .m-row-ico .ico, #s-start .m-row[data-go="play"] .m-row-ico .rk-emb { width: 100% !important; height: 100% !important; filter: none !important; }
+#s-start .m-row[data-go="play"] .m-row-l { position: static; min-width: 0; }
+#s-start .m-row[data-go="play"] .m-row-l > span:last-child { position: relative; z-index: 1; }
+#s-start .m-row[data-go="play"] .m-kick { font-size: 10px; letter-spacing: .14em; color: color-mix(in srgb, var(--mc) 65%, #fff); }
+#s-start .m-row[data-go="play"] .m-row-t { font-family: "Bricolage Grotesque", "Arial Rounded MT Bold", system-ui, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -.01em; line-height: 1.05; color: color-mix(in srgb, var(--mc) 14%, #fff); }
+#s-start .m-row[data-go="play"] .m-row-sub { display: block; margin-top: 2px; font-size: 12px; color: rgba(255,255,255,.6); }
+#s-start .m-row[data-go="play"] .m-row-chg { position: relative; z-index: 1; background: rgba(255,255,255,.14); color: #fff; }
