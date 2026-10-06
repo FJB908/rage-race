@@ -2481,8 +2481,9 @@ function draw() {
         if (!p.local && !p._lod && !p._noName){
             const hatLift = (p.look && p.look.hat && p.look.hat !== 'none') ? 12 * (p.r / 12) : 0;
             ctx.globalAlpha=0.65; ctx.fillStyle='#fff'; ctx.font='700 10px Space Grotesk'; ctx.textAlign='center';
-            ctx.fillText(p.name, p.x, tagY - hatLift);
-            if (p.rkColor){ const tw = ctx.measureText(p.name).width / 2 + 7; ctx.fillStyle = p.rkColor; ctx.beginPath(); ctx.moveTo(p.x - tw, tagY - hatLift - 8); ctx.lineTo(p.x - tw + 3.5, tagY - hatLift - 4.5); ctx.lineTo(p.x - tw, tagY - hatLift - 1); ctx.lineTo(p.x - tw - 3.5, tagY - hatLift - 4.5); ctx.closePath(); ctx.fill(); }
+            const hw = ctx.measureText(p.name).width / 2 + 10, nx = Math.max(hw, Math.min(WORLD_W - hw, p.x));          // the name never runs off the side of the track
+            ctx.fillText(p.name, nx, tagY - hatLift);
+            if (p.rkColor){ const tw = ctx.measureText(p.name).width / 2 + 7; ctx.fillStyle = p.rkColor; ctx.beginPath(); ctx.moveTo(nx - tw, tagY - hatLift - 8); ctx.lineTo(nx - tw + 3.5, tagY - hatLift - 4.5); ctx.lineTo(nx - tw, tagY - hatLift - 1); ctx.lineTo(nx - tw - 3.5, tagY - hatLift - 4.5); ctx.closePath(); ctx.fill(); }
             ctx.globalAlpha=1;
         }
     }

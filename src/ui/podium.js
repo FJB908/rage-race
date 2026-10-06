@@ -33,7 +33,7 @@
             const map = { 1: looks[0], 2: looks[1], 3: looks[2], 4: looks[3] };
             st.querySelectorAll('canvas[data-pd]').forEach(cv => {
                 const r = +cv.dataset.rank, d = map[r] || map[4] || {}, delay = { 3: .15, 2: .55, 1: 1.0, 4: 1.3 }[r] || 0;
-                const mood = MOOD[r] || 'lose', a = CharAnim.actor(cv, () => d.look || {}, { mood, delay, cloud: r > 3, confetti: r === 2, color: d.color || undefined, opts: { scale: .205, cy: .62 } });
+                const mood = MOOD[r] || 'lose', a = CharAnim.actor(cv, () => d.look || {}, { mood, delay, cloud: r > 3, confetti: r === 2, color: d.color || undefined, opts: { scale: .205, cy: .62, pad: { t: 84, b: 6, l: 6, r: 6 } } });
                 a.setLook(d.look || {});
             });
         });

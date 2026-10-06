@@ -54,7 +54,7 @@
             else if (e.fx === 'laugh') { const d = Math.exp(-t * .8), a = e.amp || 1; dy = -Math.abs(Math.sin(t * 17)) * 7 * a * d; rot = Math.sin(t * 24) * .13 * a * d; sx *= 1 + Math.abs(Math.sin(t * 17)) * .08 * d; }
             else if (e.fx === 'wobble') { dy = Math.sin(t * 16) * 2.2 * Math.exp(-t * 1.6); }
             else if (e.fx === 'boom') { const k = t < .3 ? 1 + 1.3 * Math.pow(1 - t / .3, 2) : 1; sx = sy = k; dx = Math.sin(t * 90) * 2 * Math.max(0, 1 - t / .5); }
-            const size = 17 * (e.big || 1), x = p.x + dx, y = p.y - p.r - 46 - hatLift - rise + dy;
+            const size = 17 * (e.big || 1), half = size * 0.38 * String(e.text).length * pop + 10, x = Math.max(half, Math.min(WORLD_W - half, p.x + dx)), y = p.y - p.r - 46 - hatLift - rise + dy;      // the text stays inside the track
             ctx.save(); ctx.translate(x, y); ctx.scale(sx, sy); ctx.globalAlpha = Math.max(0, Math.min(1, fade)); ctx.rotate(rot); ctx.transform(1, 0, -0.14, 1, 0, 0);
             ctx.font = 'italic 800 ' + size + 'px ' + FAMILY; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             const tw = ctx.measureText(e.text).width;

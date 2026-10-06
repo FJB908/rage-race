@@ -8,7 +8,8 @@
 
 /* ---- the podium ---- */
 .pd-stand { position: relative; width: 100%; max-width: 380px; margin: 6px auto 4px; }
-.pd-beam { position: absolute; left: 50%; top: -6px; width: 190px; height: 260px; margin-left: -95px; background: radial-gradient(ellipse 50% 70% at 50% 0, rgba(255,214,90,.28), rgba(255,214,90,0) 70%); pointer-events: none; opacity: 0; animation: pdBeam 1s .9s forwards; }
+/* a soft light behind the winner; a round gradient that is fully faded before the box ends, so no edge can show */
+.pd-beam { position: absolute; left: 50%; top: -64px; width: 320px; height: 320px; margin-left: -160px; background: radial-gradient(closest-side, rgba(255,214,90,.30), rgba(255,214,90,.12) 55%, rgba(255,214,90,0)); pointer-events: none; opacity: 0; animation: pdBeam 1s .9s forwards; }
 .pd-stand.n1 .pd-beam, .pd-stand.solo .pd-beam { opacity: 0; }
 .pd-row { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
 .pd-col { position: relative; display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-width: 0; max-width: 128px; opacity: 0; transform: translateY(46px); animation: pdRise .55s cubic-bezier(.2,.9,.25,1.15) forwards; }
@@ -41,6 +42,6 @@
 .pd-stand.solo .pd-who canvas { width: 104px; height: 120px; margin-bottom: -24px; }
 .pd-stand.solo .pd-col.first .pd-step { height: 40px; }
 .pd-stand.solo .pd-crown { width: 24px; height: 24px; margin-left: -12px; top: 12px; }
-.pd-stand.solo .pd-beam { height: 170px; }
+.pd-stand.solo .pd-beam { width: 240px; height: 240px; margin-left: -120px; top: -50px; }
 /* the home character lives on a big canvas so hats, wings, auras and the salto are never cut off; the body keeps its old size and place */
 .pt-slot.me canvas#m-hero { width: calc(var(--pw, 150px) * 2.51); height: calc(var(--pw, 150px) * 2.51); left: calc(var(--pw, 150px) * -.755); top: calc(var(--pw, 150px) * -.755); }

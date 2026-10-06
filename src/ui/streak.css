@@ -5,7 +5,7 @@
 .sk-eyebrow { display:block; font-size:11px; font-weight:800; letter-spacing:.05em; color:#ffb347; }
 .sk-title h1 { margin:2px 0 0; display:flex; align-items:center; gap:8px; font:900 28px/1 "Bricolage Grotesque","Space Grotesk",system-ui,sans-serif; color:#fff; }
 .sk-title h1 .ico { width:30px; height:30px; } .sk-title h1 b { color:#ffcf3f; } .sk-title h1 .sk-lbl { font-size:14px; color:#8b95a7; } .sk-flame { display:inline-flex; } .sk-flame[hidden] { display:none; } .sk-title h1 .sk-flame .ico { width:26px; height:26px; margin:0 -2px 0 -4px; }
-.sk-grid { flex:1; min-height:0; overflow-y:auto; display:grid; grid-template-columns:repeat(5,1fr); gap:8px; align-content:start; padding:4px 2px 8px; scrollbar-width:none; }
+.sk-grid { flex:1; min-height:0; overflow-y:auto; display:grid; grid-template-columns:repeat(5,1fr); gap:8px; align-content:start; padding:24px 16px 22px; scrollbar-width:none; }
 .sk-grid::-webkit-scrollbar { display:none; }
 .sk-tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:space-between; gap:3px; min-height:92px; padding:5px 3px 6px; border-radius:14px; border:1px solid rgba(255,255,255,.1); background:linear-gradient(170deg,#1a2030,#121723); box-shadow:0 4px 0 #0a0d14; }
 .sk-tile small { font-size:10px; font-weight:900; letter-spacing:.1em; color:#8b95a7; }
@@ -19,7 +19,7 @@
 .sk-check { position:absolute; inset:0; display:grid; place-items:center; color:#5df0da; font-size:30px; text-shadow:0 2px 6px rgba(0,0,0,.6); }
 .sk-check .ico { width:30px; height:30px; }
 .sk-tile.today { border-color:#ffcf3f; background:linear-gradient(170deg,rgba(255,207,63,.25),#1a2030 70%); animation:skGlow 1.4s ease-in-out infinite; transform:translateY(-2px); }
-@keyframes skGlow { 50% { box-shadow:0 4px 0 #0a0d14,0 0 24px rgba(255,207,63,.6); } }
+@keyframes skGlow { 50% { box-shadow:0 4px 0 #0a0d14,0 0 14px rgba(255,207,63,.6); } }
 .sk-foot { display:flex; justify-content:center; }
 .sk-claim { width:100%; max-width:380px; min-height:56px; border:0; border-radius:16px; background:#2a3142; color:#8b95a7; font:900 17px/1 "Space Grotesk",system-ui,sans-serif; letter-spacing:.1em; display:flex; align-items:center; justify-content:center; gap:8px; }
 .sk-claim.ready { background:linear-gradient(#ffe27a,#f5a81c); color:#3a2400; box-shadow:0 6px 0 #8a5a00; animation:skPulse 1.4s ease-in-out infinite; }

@@ -128,7 +128,7 @@
 .pz-rar { font-size:8px; padding:2px 7px; }
 .pz-node { width:34px; height:34px; font-size:14px; }
 .pz-art.chest svg { max-height:64px; }
-.pz-track { padding:0 calc(50vw - 54px); }
+.pz-track { padding:24px calc(50vw - 54px); }
 /* lane labels sit at the left edge, outside the scrolling track */
 .pz-shell { position:relative; }
 .pz-lanes { position:absolute; left:0; top:0; width:20px; z-index:6; pointer-events:none; margin:0; }
