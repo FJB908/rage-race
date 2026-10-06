@@ -1,0 +1,30 @@
+/* ---- wishlist goal on the home screen ---- */
+.m-wish { position: relative; z-index: 2; display: flex; align-items: center; gap: 4px; flex: none; }
+.m-wish[hidden] { display: none; }
+.mw-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px 12px 6px 8px; min-height: 54px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: #131822; color: inherit; text-align: left; }
+.mw-main canvas { width: 44px; height: 44px; flex: none; }
+.mw-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mw-tx small { font-size: 9px; font-weight: 800; letter-spacing: .12em; color: #8b95a7; }
+.mw-tx b { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mw-bar { display: block; height: 5px; border-radius: 3px; background: #232a37; overflow: hidden; }
+.mw-bar u { display: block; height: 100%; width: 0; border-radius: 3px; background: #35e0c8; transition: width .5s ease; text-decoration: none; }
+.mw-n { flex: none; font-size: 12px; font-weight: 800; color: #cfd6e4; }
+.mw-n span { display: inline-flex; align-items: center; gap: 4px; } .mw-n .ico { width: 15px; height: 15px; }
+.mw-n em { font-style: normal; color: #ffcf3f; letter-spacing: .08em; }
+.m-wish.ready .mw-main { border-color: rgba(255,207,63,.55); box-shadow: 0 0 18px -6px rgba(255,207,63,.6); }
+.m-wish.ready .mw-bar u { background: #ffcf3f; }
+.mw-x { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 17px; background: transparent; color: #6f7a8f; }
+.mw-x:active { background: rgba(255,255,255,.08); color: #fff; }
+/* the pin on a shop card */
+.m-skin .wish-pin { position: absolute; top: 5px; left: 5px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 14px; background: rgba(13,16,23,.55); opacity: .75; z-index: 2; }
+.m-skin .wish-pin .ico { width: 16px; height: 16px; filter: grayscale(1) brightness(1.5); opacity: .8; }
+.m-skin .wish-pin.on { opacity: 1; background: rgba(255,207,63,.2); }
+.m-skin .wish-pin.on .ico { filter: none; opacity: 1; }
+.m-skin.wish-flash { animation: wishFlash 1.4s ease-out; }
+@keyframes wishFlash { 0% { box-shadow: 0 0 0 3px rgba(255,207,63,.9); } 100% { box-shadow: 0 0 0 3px rgba(255,207,63,0); } }
+/* the first "reminders?" question */
+.nf-sheet { position: fixed; inset: 0; z-index: 950; display: flex; align-items: flex-end; justify-content: center; background: rgba(5,7,11,.6); opacity: 0; transition: opacity .2s; }
+.nf-sheet.in { opacity: 1; }
+.nf-card { width: 100%; max-width: 420px; box-sizing: border-box; padding: 20px 18px calc(18px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; background: #161b24; border: 1px solid rgba(255,255,255,.08); border-bottom: 0; display: flex; flex-direction: column; gap: 10px; transform: translateY(24px); transition: transform .25s; }
+.nf-sheet.in .nf-card { transform: none; }
+.nf-card h3 { margin: 0; font-size: 20px; } .nf-card p { margin: 0 0 6px; color: #aab3c5; font-size: 14px; line-height: 1.4; }

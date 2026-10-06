@@ -50,3 +50,8 @@ Later, voor de Play Store, voeg je in Firebase ook de **SHA-1 van de Play-ondert
 - Privacybeleid (URL), *Data safety*-formulier, content rating, store-teksten en screenshots (minimaal 2).
 - Een Play-ontwikkelaarsaccount ($25 eenmalig). Persoonlijke accounts moeten vaak eerst ~12 testers 14 dagen laten testen.
 - `firestore.rules` opnieuw publiceren en de Cloud Functions online zetten (zie docs/SERVER.md).
+
+## Reminder notifications (local)
+`src/ui/notify.js` uses the Capacitor plugin `@capacitor/local-notifications` (in package.json). After pulling: run `npm install` once, then `npm run sync`.
+The manifest has the `POST_NOTIFICATIONS` permission (Android 13+); the small status-bar icon is `res/drawable/ic_stat_cube.xml`, set in `capacitor.config.json`.
+Rules: opt-in (a sheet after the first win, or the Settings switch), at most one a day, only afternoon/evening, planned when the app goes to the background and cancelled when it opens. Nothing is sent from a server.

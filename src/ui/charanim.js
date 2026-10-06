@@ -295,7 +295,7 @@
     let hero = null;
     function setHero(look) {
         const cv = document.getElementById('m-hero'); if (!cv) return;
-        const W = cv.width, base = 360, opts = { scale: 0.22 * base / W, cy: ((W - base) / 2 + 0.62 * base) / W };
+        const W = cv.width, opts = { scale: 0.22 * 360 / W, cy: (W / 2 + 43) / W, pad: { t: Math.round(W * .19), b: 8, l: 8, r: 8 } };       // a big canvas: the salto and wide cosmetics always have room
         if (!hero || hero.cv !== cv) hero = actor(cv, null, { sound: true, opts });
         hero.setLook(look);
     }

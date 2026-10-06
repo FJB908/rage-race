@@ -2734,6 +2734,7 @@ function syncSettingsUI(){
     document.getElementById('set-music-on').classList.toggle('on', mOn);
     document.getElementById('set-sfx-on').classList.toggle('on', sOn);
     document.getElementById('set-haptics').classList.toggle('on', hapticsOn);
+    if (window.Wish) Wish.syncSettings(); if (window.Notify) Notify.syncSettings();
     document.getElementById('set-music-vol').value = Math.round(SFX.musVol * 100);
     document.getElementById('set-sfx-vol').value = Math.round(SFX.sfxVol * 100);
 }
@@ -4078,22 +4079,45 @@ function drawFaceAcc(c, s, k, id){
 
 // ---- full character (shop, menu, profile previews) ----
 // where the body sits on a canvas: half size s, unit k (= s/12) and the vertical centre. Shared by renderLook and the animated characters (src/ui/charanim.js)
+// The look is always scaled down just enough that nothing (a tall hat, wings, an aura) touches the edge of the canvas: a cosmetic is never cut off.
 function lookMetrics(cv, look, opts){
     const W = cv.width, H = cv.height;
     let s = W * ((opts && opts.scale) || 0.24);
     const cy = H * ((opts && opts.cy) || 0.6);
-    // tall hats (crown, top hat, chef, storm...) must never be cut off by the top of the canvas: shrink the whole look just enough to fit
     if (look.hat && look.hat !== 'none' && !(opts && opts.nofit)) { const need = 3.0 * s, have = cy - 2; if (need > have) s *= have / need; }
+    if (!(opts && opts.nofit)) s = fitLook(W, H, cy, s, look, opts);
     return { W, H, s, k: s / 12, cy };
 }
+const _fitCache = new Map(); let _fitCv = null, _fitCx = null;
+function fitLook(W, H, cy, s, look, opts){
+    const cs = lookCostume(look);
+    if (!cs && (!look.hat || look.hat === 'none') && (!look.face || look.face === 'none')) return s;                // a plain cube can never reach the edge
+    const pad = (opts && opts.pad) || {}, pt = Math.max(2, pad.t || 0), pb = Math.max(2, pad.b || 0), pl = Math.max(2, pad.l || 0), pr = Math.max(2, pad.r || 0);      // keep this much free room per side (the animated hero needs headroom for its salto)
+    const key = W + 'x' + H + '|' + s.toFixed(1) + '|' + cy.toFixed(1) + '|' + look.hat + '|' + look.face + '|' + (cs || '') + '|' + pt + pb + pl + pr;
+    const hit = _fitCache.get(key); if (hit !== undefined) return hit;
+    if (!_fitCv){ _fitCv = document.createElement('canvas'); _fitCx = _fitCv.getContext('2d', { willReadFrequently:true }); }
+    _fitCv.width = W; _fitCv.height = H;
+    const touches = () => {
+        for (const [x, y, w, h] of [[0, 0, W, pt], [0, H - pb, W, pb], [0, 0, pl, H], [W - pr, 0, pr, H]]){
+            const d = _fitCx.getImageData(x, y, w, h).data; for (let i = 3; i < d.length; i += 4) if (d[i] > 24) return true;
+        }
+        return false;
+    };
+    let f = s;
+    for (let i = 0; i < 7; i++){
+        _fitCx.setTransform(1, 0, 0, 1, 0, 0); _fitCx.clearRect(0, 0, W, H);
+        try { paintLook(_fitCx, W, cy, f, look, { color:opts && opts.color }); } catch (e) { break; }
+        if (!touches()) break;
+        f *= 0.88;
+    }
+    _fitCache.set(key, f); return f;
+}
 function lookCostume(look){ return (look.costume && look.costume !== 'none' && window.Costumes && Costumes.has(look.costume)) ? look.costume : null; }
-// opts.part: 'body' = only the body, 'top' = only hat, face item and costume front (the animated characters draw the eyes live in between); opts.expr = an expression for the eyes and mouth
-function renderLook(cv, look, opts){
-    if (!cv || !cv.getContext) return;
-    const c = cv.getContext('2d'); if (!c) return;
-    const M = lookMetrics(cv, look, opts), W = M.W, H = M.H, s = M.s, k = M.k, part = opts && opts.part;
-    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
-    c.translate(W/2, M.cy);
+// draws the character with its body centre at (W/2, cy): body, eyes, face item, hat, costume front
+// opts.part: 'body' = only the body, 'top' = only hat, face item and costume front (the animated characters draw the eyes live in between); opts.expr = an expression for the eyes
+function paintLook(c, W, cy, s, look, opts){
+    const k = s / 12, part = opts && opts.part;
+    c.save(); c.translate(W/2, cy);
     const def = (!look.skin && opts && opts.color) ? { color: opts.color, pat: { k: 'solid', a: opts.color } } : skinById(look.skin), tt = (opts && opts.t != null) ? opts.t : 0.3;
     const cs = lookCostume(look);
     if (part !== 'top'){
@@ -4101,7 +4125,7 @@ function renderLook(cv, look, opts){
         if (!(cs && Costumes.body(c, s, k, cs, tt))){ drawSkinBody(c, s, k, def); if (window.CharFX) CharFX.gloss(c, s, k); }
         rrPath(c, -s, -s, s*2, s*2, 4*k); c.strokeStyle = 'rgba(13,16,23,0.55)'; c.lineWidth = 2*k*0.6; c.stroke();
     }
-    if (part === 'body') return;
+    if (part === 'body'){ c.restore(); return; }
     if (!part){
         c.fillStyle = '#0d1017';
         if (!(cs && Costumes.eyes(c, s, k, cs, tt, 0, 0))){
@@ -4112,6 +4136,14 @@ function renderLook(cv, look, opts){
     drawFaceAcc(c, s, k, look.face);
     drawHatAcc(c, s, k, look.hat, tt);
     if (cs) Costumes.front(c, s, k, cs, tt);
+    c.restore();
+}
+function renderLook(cv, look, opts){
+    if (!cv || !cv.getContext) return;
+    const c = cv.getContext('2d'); if (!c) return;
+    const M = lookMetrics(cv, look, opts);
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, M.W, M.H);
+    paintLook(c, M.W, M.cy, M.s, look, opts);
 }
 // Bots start a bit weaker and reach full strength after about 15 races, so beginners can actually win.
 function newPlayerEase(){ const e = window.Gentle ? Gentle.ease() : 0; return 1 + 1.15 * e; }      // skill scales the bots' aiming error: beginners meet clumsier bots
@@ -4458,6 +4490,7 @@ function renderShop(cat){
                 const preview = cat === 'costume' ? { skin:current.skin, hat:'none', face:'none', trail:'none', costume:it.id } : { skin:cat === 'skin' ? it.id : current.skin, hat:cat === 'hat' ? it.id : current.hat, face:cat === 'face' ? it.id : current.face, trail:cat === 'trail' ? it.id : current.trail, costume:'none' };
                 renderLook(b.querySelector('canvas'), preview, { scale:cat === 'costume' ? 0.21 : 0.27, cy:cat === 'costume' ? 0.64 : 0.66 });
                 { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it, undefined, 1.7); }
+                if (window.Wish) Wish.decorate(b, cat, it, owned);
                 if ((it.premium || it.id === 'crown' || cat === 'costume') && cat !== 'trail') animated.push([b.querySelector('canvas'), preview]);
                 b.addEventListener('click', () => {
                     const q = prog();
@@ -4606,6 +4639,8 @@ function refreshMenu(){
     if (window.LevelRewards) LevelRewards.refreshHome();
     if (window.Ads) Ads.refreshHome();
     if (window.Streak) Streak.refreshHome();
+    if (window.Wish) Wish.refresh();
+    if (window.Notify) Notify.maybeAsk();
     if (window.Gauntlet) Gauntlet.refreshHome();
     refreshShopBadge();
     if (window.GentleUI) GentleUI.refresh(p, L);

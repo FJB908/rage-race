@@ -42,3 +42,5 @@
 .pd-stand.solo .pd-col.first .pd-step { height: 40px; }
 .pd-stand.solo .pd-crown { width: 24px; height: 24px; margin-left: -12px; top: 12px; }
 .pd-stand.solo .pd-beam { height: 170px; }
+/* the home character lives on a big canvas so hats, wings, auras and the salto are never cut off; the body keeps its old size and place */
+.pt-slot.me canvas#m-hero { width: calc(var(--pw, 150px) * 2.51); height: calc(var(--pw, 150px) * 2.51); left: calc(var(--pw, 150px) * -.755); top: calc(var(--pw, 150px) * -.755); }

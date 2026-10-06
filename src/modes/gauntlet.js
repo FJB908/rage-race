@@ -497,7 +497,7 @@
         p._sprAge++;
         if (p._sprAge < 14 + (p.id % 7) * 2 || budget <= 0) return 0;
         p._sprAge = 0;
-        renderLook(p._spr, p.look, { scale:GT_SPRITE.half / GT_SPRITE.w, cy:GT_SPRITE.cy / GT_SPRITE.h });
+        renderLook(p._spr, p.look, { scale:GT_SPRITE.half / GT_SPRITE.w, cy:GT_SPRITE.cy / GT_SPRITE.h, nofit:true });
         return 1;
     }
 

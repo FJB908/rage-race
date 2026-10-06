@@ -15,6 +15,10 @@
       "providers": [
         "google.com"
       ]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_cube",
+      "iconColor": "#35E0C8"
     }
   }
 }

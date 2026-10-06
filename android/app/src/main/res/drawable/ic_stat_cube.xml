@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the little cube with its two eyes: the status bar icon of the reminder notifications (white, Android tints it) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M6,3 L18,3 C19.66,3 21,4.34 21,6 L21,18 C21,19.66 19.66,21 18,21 L6,21 C4.34,21 3,19.66 3,18 L3,6 C3,4.34 4.34,3 6,3 Z M8.5,9 A1.7,1.7 0 1 0 8.5,12.4 A1.7,1.7 0 1 0 8.5,9 Z M15.5,9 A1.7,1.7 0 1 0 15.5,12.4 A1.7,1.7 0 1 0 15.5,9 Z" />
+</vector>
