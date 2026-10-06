@@ -1,37 +1,49 @@
-.lr-shell { width: 100%; height: 100%; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top) + 14px) 0 0; box-sizing: border-box; background: #0d1017; }
-.lr-top { display: flex; align-items: center; gap: 12px; padding: 0 16px 10px; }
-.lr-title small { display: block; font-size: 11px; letter-spacing:.05em; color: #8b95a7; font-weight: 800; } .lr-title h1 { margin: 2px 0 0; font-size: 24px; }
-.lr-hero { display: flex; align-items: center; gap: 14px; margin: 4px 16px 12px; padding: 14px; border-radius: 20px; background: #161b24; border: 1px solid rgba(255,255,255,.08); }
-.lr-ring { --pct: 0; position: relative; width: 74px; height: 74px; flex: none; border-radius: 50%; background: conic-gradient(var(--accent) calc(var(--pct) * 1%), rgba(255,255,255,.1) 0); display: grid; place-items: center; }
-.lr-ring::before { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: #161b24; }
-.lr-ring span { position: relative; font-size: 30px; font-weight: 900; }
-.lr-herotxt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; } .lr-herotxt b { font-size: 12px; letter-spacing: .1em; color: #8b95a7; }
-.lr-bar { height: 8px; border-radius: 5px; background: rgba(255,255,255,.1); overflow: hidden; } .lr-bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 5px; transition: width .4s; }
-.lr-herotxt small { font-size: 12px; }
-.lr-all { flex: none; border: 0; border-radius: 12px; padding: 11px 12px; background: var(--accent); color: #06201b; font: inherit; font-weight: 900; font-size: 12px; } .lr-all b { margin-left: 4px; }
-.lr-list { flex: 1; overflow-y: auto; padding: 20px 22px calc(env(safe-area-inset-bottom) + 28px); position: relative; -webkit-overflow-scrolling: touch; }
-.lr-row { position: relative; display: flex; align-items: center; gap: 12px; padding: 5px 0; }
-.lr-row::before { content: ''; position: absolute; left: 19px; top: 0; bottom: 0; width: 3px; background: rgba(255,255,255,.1); }
-.lr-row.claimed::before { background: var(--accent); }
-.lr-node { position: relative; z-index: 1; flex: none; width: 41px; height: 41px; border-radius: 50%; display: grid; place-items: center; background: #1d2330; border: 2px solid rgba(255,255,255,.14); font-weight: 900; font-size: 15px; color: #8b95a7; }
-.lr-node svg { width: 18px; height: 18px; }
-.lr-row.ready .lr-node { background: var(--rc); border-color: #fff; color: #12161f; box-shadow: 0 0 14px var(--rc); }
-.lr-row.claimed .lr-node { background: var(--accent); border-color: var(--accent); color: #06201b; }
+/* LEVEL REWARDS and TROPHY ROAD share this look: a calm list on a dark page, one thin timeline, and a few "posters" for the milestones. */
+.lvr-screen { justify-content: flex-start; align-items: stretch; padding: 0; overflow: hidden; text-align: left; background: #0b0e14; }
+.lr-shell { width: 100%; height: 100%; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top) + 14px) 0 0; box-sizing: border-box; background: #0b0e14; }
+.lr-top { display: flex; align-items: center; gap: 12px; padding: 0 16px 14px; }
+/* the level badge: a plain hexagon with the number in it */
+.lr-ring { position: relative; flex: none; width: 50px; height: 56px; display: grid; place-items: center; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: linear-gradient(160deg, #5cf0da, #1f8f86); }
+.lr-ring::before { content: ""; position: absolute; inset: 3px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: linear-gradient(160deg, #123b3a, #0c1c20); }
+.lr-ring span { position: relative; font: 800 22px/1 "Bricolage Grotesque", system-ui, sans-serif; color: #fff; }
+.lr-herotxt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.lr-herotxt b { font-size: 11px; letter-spacing: .14em; color: #8b95a7; }
+.lr-bar { height: 5px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; } .lr-bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width .4s; }
+.lr-herotxt small { font-size: 11.5px; font-weight: 700; color: #8b95a7; }
+.lr-all { flex: none; border: 0; border-radius: 10px; padding: 9px 12px; background: var(--accent); color: #06201b; font: inherit; font-weight: 900; font-size: 12px; }
+.lr-list { flex: 1; overflow-y: auto; padding: 4px 20px calc(env(safe-area-inset-bottom) + 28px); position: relative; -webkit-overflow-scrolling: touch; }
+.lr-gh { display: flex; align-items: center; gap: 10px; margin: 20px 0 8px; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #6f7a8f; }
+.lr-gh::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.08); }
+.lr-gh b { font-weight: 800; }
+/* a row: a node on the timeline, the reward, and what you can do with it */
+.lr-row { position: relative; display: flex; align-items: center; gap: 12px; padding: 2px 0; }
+.lr-row::before { content: ''; position: absolute; left: 17px; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.08); }
+.lr-row.claimed::before { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+.lr-node { position: relative; z-index: 1; flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #121722; border: 1.5px solid rgba(255,255,255,.14); font-weight: 800; font-size: 12px; color: #aab3c5; }
+.lr-node svg { width: 15px; height: 15px; }
+.lr-row.ready .lr-node { background: var(--rc); border-color: transparent; color: #12161f; }
+.lr-row.claimed .lr-node { background: var(--accent); border-color: transparent; color: #06201b; }
 .lr-row.next .lr-node { border-color: var(--accent); color: #fff; }
-.lr-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; background: #161b24; border: 1px solid rgba(255,255,255,.07); border-left: 4px solid var(--rc); }
-.lr-row.locked .lr-card { opacity: .62; } .lr-row.ready .lr-card { border-color: var(--rc); box-shadow: 0 0 16px color-mix(in srgb, var(--rc) 30%, transparent); }
-.lr-row.mile .lr-card { background: linear-gradient(100deg, color-mix(in srgb, var(--rc) 14%, #161b24), #161b24 60%); }
-.lr-art { flex: none; width: 52px; height: 52px; display: grid; place-items: center; } .lr-art svg, .lr-art canvas { width: 100%; height: 100%; } .lr-art .bo-art svg { width: 100%; }
-.lr-crate { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; } .lr-art .lr-crate svg { display: block; width: 52px; height: 52px; }
-.lr-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; } .lr-name b { font-size: 16px; } .lr-name small { font-size: 12px; color: #8b95a7; }
-.lr-claim { flex: none; border: 0; border-radius: 11px; padding: 10px 14px; background: var(--rc); color: #12161f; font: inherit; font-weight: 900; font-size: 12px; }
-.lr-state { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: #8b95a7; display: inline-flex; align-items: center; gap: 4px; } .lr-state svg { width: 12px; height: 12px; }
-
-.lvr-screen { justify-content: flex-start; align-items: stretch; padding: 0; overflow: hidden; text-align: left; background: #0d1017; }
-.lr-name { text-align: left; }
-.m-lvl .nbadge { top: -15px; right: -15px; min-width: 18px; height: 18px; font-size: 11px; padding: 0 4px; }
-
+.lr-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.055); }
+.lr-art { flex: none; width: 38px; height: 38px; display: grid; place-items: center; } .lr-art > svg, .lr-art > canvas { width: 100%; height: 100%; } .lr-art > .lr-crate { width: 38px; height: 38px; overflow: hidden; } .lr-art .bo-art { width: 36px; height: 36px; }
 .lr-art canvas { object-fit: contain; }
-.lr-name b { font-size: 15px; line-height: 1.15; }
-.lr-card { min-height: 64px; }
-
+.lr-crate { display: flex; align-items: center; justify-content: center; } .lr-art .lr-crate svg { display: block; width: 100%; height: 100%; }
+.lr-row.mile .lr-art > .lr-crate { width: 100%; height: 100%; overflow: visible; }
+.lr-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; text-align: left; } .lr-name b { font-size: 14.5px; line-height: 1.15; } .lr-name small { font-size: 11.5px; color: #8b95a7; }
+.lr-name .lr-kick { display: none; font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: .14em; color: color-mix(in srgb, var(--rc) 70%, #fff); }
+.lr-claim { flex: none; border: 0; border-radius: 99px; padding: 8px 15px; background: var(--rc); color: #12161f; font: inherit; font-weight: 900; font-size: 11.5px; letter-spacing: .04em; }
+.lr-state { flex: none; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; color: #6f7a8f; display: inline-flex; align-items: center; gap: 4px; } .lr-state svg { width: 12px; height: 12px; }
+.lr-row.locked:not(.mile) .lr-card { opacity: .6; } .lr-row.claimed .lr-card { opacity: .5; }
+/* a poster: colour wash, the reward big and faint, tilted, behind the text */
+.lr-row.mile .lr-card { position: relative; overflow: hidden; isolation: isolate; min-height: 96px; margin: 8px 0; padding: 16px 16px 16px 18px; border: 0; border-radius: 20px; align-items: flex-end;
+    background: linear-gradient(140deg, color-mix(in srgb, var(--rc) 30%, #0e121a) 0%, #10141c 68%); box-shadow: inset 0 1px 0 rgba(255,255,255,.1); }
+.lr-row.mile .lr-card::before { content: ""; position: absolute; z-index: -2; right: -20%; top: -80%; width: 80%; height: 240%; background: radial-gradient(closest-side, color-mix(in srgb, var(--rc) 38%, transparent), transparent 72%); pointer-events: none; }
+.lr-row.mile .lr-art { position: absolute; z-index: -1; right: -6px; bottom: -22px; width: 124px; height: 124px; opacity: .3; transform: rotate(-12deg); pointer-events: none; }
+.lr-row.mile .lr-art .bo-art { width: 100%; height: 100%; } .lr-row.mile .lr-art .bo-art b { display: none; }
+.lr-row.mile .lr-name { position: relative; gap: 3px; } .lr-row.mile .lr-name .lr-kick { display: block; }
+.lr-row.mile .lr-name b { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+.lr-row.mile .lr-name small { color: rgba(255,255,255,.6); }
+.lr-row.mile .lr-claim, .lr-row.mile .lr-state { position: relative; align-self: flex-end; }
+.lr-row.mile.ready .lr-card { box-shadow: inset 0 0 0 1.5px var(--rc), 0 10px 18px -14px var(--rc); }
+.lr-row.mile.claimed .lr-card { opacity: .55; }
+.m-lvl .nbadge { top: -15px; right: -15px; min-width: 18px; height: 18px; font-size: 11px; padding: 0 4px; }

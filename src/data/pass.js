@@ -43,6 +43,10 @@ const _B = (kind, mult, n) => ({ t:'boost', kind, mult, n });
 Object.entries({ 1:_B('coin', 2, 2), 4:_B('xp', 2, 2), 7:_B('coin', 2, 4), 10:_B('xp', 2, 3), 13:_B('coin', 3, 3), 16:_B('xp', 3, 2), 22:_B('coin', 5, 2) }).forEach(([i, r]) => { PASS_TIERS[+i] = r; });
 Object.entries({ 6:_B('coin', 2, 8), 13:_B('xp', 3, 5), 19:_B('coin', 5, 3), 26:_B('xp', 5, 3) }).forEach(([i, r]) => { RAGE_TIERS[+i] = r; });
 
+// The FREE lane is meant to be quiet: only four cosmetics on the whole lane (headphones, aurora trail, crown, monsoon skin) and about 40% of the tiers are empty.
+// (Every other cosmetic that used to be here is now a few coins, or nothing.)
+[[8, 'none'], [9, 150], [14, 'none'], [17, 250], [34, 700], [39, 'none'], [44, 'none']].forEach(([i, v]) => { PASS_TIERS[i] = v === 'none' ? { t:'none' } : { t:'coins', n:v }; });
+[1, 3, 6, 10, 13, 15, 18, 20, 22, 26, 28, 31, 33, 35, 38, 40, 41, 43, 46, 48].forEach(i => { PASS_TIERS[i] = { t:'none' }; });
 // Rewards grow with the tier: coins scale up the further you get (capped at x4).
 PASS_TIERS.forEach((t, i) => { if (t.t === 'coins') t.n = Math.round(t.n * Math.min(4, 1 + i * i / 300) / 10) * 10; });
 RAGE_TIERS.forEach((t, i) => { if (t.t === 'coins') t.n = Math.round(t.n * Math.min(4, 1 + i * i / 300) / 50) * 50; });

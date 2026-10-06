@@ -25,15 +25,6 @@
 .tr-ah { display: flex; align-items: baseline; gap: 8px; margin: 18px 0 2px; padding: 0 0 6px; border-bottom: 1px solid rgba(255,255,255,.1); }
 .tr-ah b { font-size: 15px; } .tr-ah span { font-size: 12px; color: #8b95a7; } .tr-ah em { margin-left: auto; font-style: normal; font-size: 12px; font-weight: 800; color: #8b95a7; }
 .tr-ah.far { opacity: .55; } .tr-ah.here b { color: var(--ac); }
-.tr-list .lr-row { padding: 2px 0; }
-.tr-list .lr-card { min-height: 0; padding: 6px 0; background: none; border: 0; border-left: 0; box-shadow: none; gap: 10px; }
-.tr-list .lr-row.ready .lr-card, .tr-list .lr-row.mile .lr-card { background: none; box-shadow: none; border: 0; }
-.tr-list .lr-art { width: 38px; height: 38px; } .tr-list .lr-crate, .tr-list .lr-art .lr-crate svg { width: 38px; height: 38px; }
-.tr-list .lr-name b { font-size: 14px; } .tr-list .lr-name small { font-size: 11px; }
-.tr-node { width: 40px; height: 40px; font-size: 11px; } .tr-node span { font-size: 11px; }
-.tr-list .lr-row.ready .lr-node { box-shadow: none; }
-.tr-list .lr-claim { padding: 8px 12px; border-radius: 9px; }
-.lr-row.claimed .tr-node svg { width: 16px; height: 16px; }
 /* trophies after a race, in the result line */
 .tr-res { display: inline-flex; align-items: center; gap: 4px; font-weight: 900; vertical-align: middle; } .tr-res .ico { width: 20px; height: 20px; } .tr-res.up { color: #7cf29c; } .tr-res.down { color: #ff6b81; }
-.tr-list .lr-art { overflow: hidden; } .tr-list .lr-art .bo-art { transform: scale(.82); transform-origin: center; }
+.tr-node span { font-size: 10px; letter-spacing: -.02em; }

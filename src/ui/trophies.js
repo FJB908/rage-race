@@ -129,7 +129,7 @@
             row.dataset.m = m.id; row.style.setProperty('--rc', color(m.r));
             row.innerHTML = '<div class="lr-node tr-node">' + (claimed ? icon('check') : '<span>' + num(m.at) + '</span>') + '</div>' +
                 '<div class="lr-card"><div class="lr-art">' + art(m.r, m.id) + '</div><div class="lr-name">' + name(m.r) + '</div>' +
-                (ready ? '<button type="button" class="lr-claim">CLAIM</button>' : claimed ? '<span class="lr-state">CLAIMED</span>' : '<span class="lr-state lock">' + icon('lock') + ' ' + num(m.at) + '</span>') + '</div>';
+                (ready ? '<button type="button" class="lr-claim">CLAIM</button>' : claimed ? '<span class="lr-state">CLAIMED</span>' : '<span class="lr-state lock">' + icon('lock') + '</span>') + '</div>';
             if (ready) row.querySelector('.lr-claim').onclick = () => claim([m.id]);
             list.appendChild(row);
             const cv = row.querySelector('canvas');

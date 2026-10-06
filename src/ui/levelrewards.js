@@ -30,35 +30,36 @@
     el.id = 's-lvr'; el.className = 'screen lvr-screen'; el.style.cssText = 'display:none;opacity:0';
     el.innerHTML =
         '<section class="lr-shell"><header class="lr-top"><button class="pass-back" type="button" id="lr-back" aria-label="Back">' + icon('chev-l') + '</button>' +
-        '<div class="lr-title"><small>LEVEL REWARDS</small><h1>Level progress</h1></div></header>' +
-        '<div class="lr-hero"><div class="lr-ring" id="lr-ring"><span id="lr-lvl">1</span></div><div class="lr-herotxt"><b id="lr-next">NEXT LEVEL</b><div class="lr-bar"><i id="lr-fill"></i></div><small id="lr-xp"></small></div>' +
-        '<button type="button" class="lr-all" id="lr-all" hidden>CLAIM ALL</button></div>' +
+        '<div class="lr-ring" id="lr-ring"><span id="lr-lvl">1</span></div>' +
+        '<div class="lr-herotxt"><b id="lr-next">NEXT LEVEL</b><div class="lr-bar"><i id="lr-fill"></i></div><small id="lr-xp"></small></div>' +
+        '<button type="button" class="lr-all" id="lr-all" hidden>CLAIM ALL</button></header>' +
         '<div class="lr-list" id="lr-list"></div></section>';
     document.body.appendChild(el);
     S.lvr = el;
     const list = el.querySelector('#lr-list');
 
+    // Milestones (every 5th level and every cosmetic) are posters: a colour wash with the reward big, tilted and faint behind it. Everything else is a quiet line.
     function render() {
         const p = prog(), L = lvOf(), cl = claimable();
         el.querySelector('#lr-lvl').textContent = L.lvl;
-        el.querySelector('#lr-ring').style.setProperty('--pct', (100 * L.into / L.need).toFixed(1));
         el.querySelector('#lr-fill').style.width = (100 * L.into / L.need).toFixed(1) + '%';
-        el.querySelector('#lr-next').textContent = L.lvl >= LEVEL_MAX ? 'MAX LEVEL' : 'LEVEL ' + (L.lvl + 1) + ' IN';
-        el.querySelector('#lr-xp').innerHTML = L.lvl >= LEVEL_MAX ? '' : R('xp', (L.need - L.into) + ' to go');
-        const all = el.querySelector('#lr-all'); all.hidden = !cl.length; all.innerHTML = 'CLAIM ALL <b>' + cl.length + '</b>';
+        el.querySelector('#lr-next').textContent = L.lvl >= LEVEL_MAX ? 'MAX LEVEL' : 'LEVEL ' + (L.lvl + 1);
+        el.querySelector('#lr-xp').textContent = L.lvl >= LEVEL_MAX ? '' : (L.need - L.into) + ' XP to go';
+        const all = el.querySelector('#lr-all'); all.hidden = !cl.length; all.textContent = 'CLAIM ALL (' + cl.length + ')';
         list.innerHTML = '';
         for (let l = 2; l <= LEVEL_MAX; l++) {
-            const r = LEVEL_REWARDS[l], claimed = p.lvClaimed.includes(l), ready = !claimed && l <= L.lvl, cur = l === L.lvl + 1;
+            if (l === 2 || l % 10 === 1) { const g = document.createElement('div'); g.className = 'lr-gh'; g.innerHTML = '<b>Levels ' + l + ' - ' + Math.min(LEVEL_MAX, l === 2 ? 10 : l + 9) + '</b>'; list.appendChild(g); }
+            const r = LEVEL_REWARDS[l], claimed = p.lvClaimed.includes(l), ready = !claimed && l <= L.lvl, cur = l === L.lvl + 1, poster = l % 5 === 0 || r.t === 'item';
             const row = document.createElement('div');
-            row.className = 'lr-row' + (claimed ? ' claimed' : ready ? ' ready' : ' locked') + (cur ? ' next' : '') + (r.t === 'item' || (r.t === 'drop' && r.tier === 'legendary') ? ' mile' : '');
+            row.className = 'lr-row' + (claimed ? ' claimed' : ready ? ' ready' : ' locked') + (cur ? ' next' : '') + (poster ? ' mile' : '');
             row.dataset.l = l; row.style.setProperty('--rc', color(r));
-            row.innerHTML = '<div class="lr-node">' + (claimed ? icon('check') : l) + '</div>' +
-                '<div class="lr-card"><div class="lr-art">' + art(r, l) + '</div><div class="lr-name">' + name(r) + '</div>' +
-                (ready ? '<button type="button" class="lr-claim">CLAIM</button>' : claimed ? '<span class="lr-state">CLAIMED</span>' : '<span class="lr-state lock">' + icon('lock') + ' LV ' + l + '</span>') + '</div>';
+            row.innerHTML = '<div class="lr-node">' + (claimed ? icon('check') : '<span>' + l + '</span>') + '</div>' +
+                '<div class="lr-card"><div class="lr-art">' + art(r, l) + '</div><div class="lr-name">' + (poster ? '<em class="lr-kick">LEVEL ' + l + '</em>' : '') + name(r) + '</div>' +
+                (ready ? '<button type="button" class="lr-claim">CLAIM</button>' : claimed ? '<span class="lr-state">CLAIMED</span>' : '<span class="lr-state lock">' + (poster ? icon('lock') : '') + '</span>') + '</div>';
             if (ready) row.querySelector('.lr-claim').onclick = () => claim([l]);
             list.appendChild(row);
             const cv = row.querySelector('canvas');
-            if (cv) { const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [r.cat]:r.id }); if (r.cat === 'trail') { cv.width = 200; cv.height = 100; try { drawTrailPreview(cv, itemOf(r)); } catch (e) {} } else try { renderLook(cv, look, { scale:.36, cy:.56 }); } catch (e) {} }
+            if (cv) { const look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [r.cat]:r.id }); if (r.cat === 'trail') { cv.width = 200; cv.height = 100; try { drawTrailPreview(cv, itemOf(r), undefined, 1.5); } catch (e) {} } else { try { renderLook(cv, look, { scale:.26, cy:.6 }); } catch (e) {} } }
         }
     }
     function scrollToCurrent() {
