@@ -1,6 +1,6 @@
 // TROPHY ROAD: the visible progress of a player, like the trophies in Clash Royale and Brawl Stars.
 //   - A trophy count under your character on the home screen: it goes up when you place well and down when you do badly (with floors so it never feels unfair).
-//   - Arenas: the count moves you through 10 arenas (Rookie Yard ... Crown Summit). An arena is a safe floor: once you are in it, you cannot drop below its start.
+//   - Arenas: the count moves you through 10 arenas (Playground ... Summit). An arena is a safe floor: once you are in it, you cannot drop below its start.
 //   - The Trophy Road: a list of milestones on the way, every one with a reward (coins, gems, chests, boosters, cosmetics, a gem chest).
 // Trophies come from every placing mode: Quick play, Build Race, Boom Tag, Arcade, Escape, Ranked and the Gauntlet. Levels and the Summit have their own stars.
 // Loaded AFTER game.js and levelrewards.js. Profile fields: tr (trophies), trTop (highest arena index reached), trClaimed (milestones taken), trStreak (wins in a row).
@@ -9,10 +9,10 @@
     const $ = id => document.getElementById(id);
     const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' };
     const ARENAS = [
-        { n:'Rookie Yard',   at:0,    c:'#35e0c8' }, { n:'Neon Alley',    at:150,  c:'#ff5ad1' }, { n:'Sky Docks',     at:400,  c:'#5bb8ff' },
-        { n:'Frost Peak',    at:800,  c:'#9fe8ff' }, { n:'Lava Works',    at:1300, c:'#ff7a3d' }, { n:'Cyber Core',    at:1900, c:'#7cf29c' },
-        { n:'Void Station',  at:2600, c:'#a77bff' }, { n:'Crystal Spire', at:3500, c:'#ff8ae6' }, { n:'Storm Throne',  at:4600, c:'#ffe14a' },
-        { n:'Crown Summit',  at:6000, c:'#ffcf3f' },
+        { n:'Playground', at:0,    c:'#35e0c8' }, { n:'Parking Lot', at:150,  c:'#5bb8ff' }, { n:'Rooftop',  at:400,  c:'#ff9a5b' },
+        { n:'Harbour',    at:800,  c:'#4fd3ff' }, { n:'Factory',     at:1300, c:'#ffb21f' }, { n:'Subway',   at:1900, c:'#7cf29c' },
+        { n:'Mountain',   at:2600, c:'#b3a9ff' }, { n:'Space Station', at:3500, c:'#ff8ae6' }, { n:'Volcano', at:4600, c:'#ff6b4a' },
+        { n:'Summit',     at:6000, c:'#ffcf3f' },
     ];
     const SPAN_LAST = 2000;
     const num = n => Math.round(n).toLocaleString('en-US');
@@ -51,7 +51,7 @@
     }
     function build() {
         if (ROAD) return ROAD; ROAD = [];
-        const BIG = [null, ['skin', 'rare'], ['hat', 'rare'], ['trail', 'epic'], ['face', 'epic'], ['skin', 'epic'], ['hat', 'mythic'], ['trail', 'mythic'], ['face', 'legendary'], ['gemchest']];
+        const BIG = [null, ['chest', 'rare'], ['skin', 'rare'], ['chest', 'epic'], ['gem', 40], ['trail', 'epic'], ['chest', 'mythic'], ['hat', 'mythic'], ['chest', 'legendary'], ['gemchest']];      // only four cosmetics on the whole road; the other arena starts are chests and gems
         ARENAS.forEach((A, i) => {
             const next = ARENAS[i + 1] ? ARENAS[i + 1].at : A.at + SPAN_LAST, span = next - A.at;
             const coins = Math.round(100 * (1 + i * 0.9) / 50) * 50, tier = i < 2 ? 'common' : i < 4 ? 'rare' : i < 7 ? 'epic' : 'mythic';
@@ -64,7 +64,7 @@
             for (const s of steps) {
                 let r = s.r;
                 if (s.big) {
-                    const b = BIG[i]; r = b[0] === 'gemchest' ? { t: 'gemchest' } : null;
+                    const b = BIG[i]; r = b[0] === 'gemchest' ? { t: 'gemchest' } : b[0] === 'chest' ? { t: 'drop', tier: b[1] } : b[0] === 'gem' ? { t: 'gem', n: b[1] } : null;
                     if (!r) { const it = itemPick(b[0], b[1], i); r = it ? { t: 'item', cat: b[0], id: it.id } : { t: 'drop', tier: 'epic' }; }
                 }
                 ROAD.push({ at: s.at, arena: i, big: !!s.big, r });
@@ -99,10 +99,9 @@
     el.id = 's-trophy'; el.className = 'screen lvr-screen'; el.style.cssText = 'display:none;opacity:0';
     el.innerHTML =
         '<section class="lr-shell"><header class="lr-top"><button class="pass-back" type="button" id="tr-back" aria-label="Back">' + icon('chev-l') + '</button>' +
-        '<div class="lr-title"><small>TROPHY ROAD</small><h1>Your trophies</h1></div></header>' +
-        '<div class="lr-hero tr-hero"><div class="tr-cup">' + icon('trophy') + '</div><div class="lr-herotxt"><b id="tr-num">0</b><div class="tr-arena" id="tr-arena"></div><div class="lr-bar"><i id="tr-fill"></i></div><small id="tr-next"></small></div>' +
-        '<button type="button" class="lr-all" id="tr-all" hidden>CLAIM ALL</button></div>' +
-        '<p class="tr-how" id="tr-how"></p><div class="lr-list" id="tr-list"></div></section>';
+        '<div class="tr-head"><span class="tr-cup">' + icon('trophy') + '</span><b id="tr-num">0</b></div><button type="button" class="tr-all" id="tr-all" hidden>CLAIM ALL</button></header>' +
+        '<div class="tr-prog"><i class="tr-pbar"><u id="tr-fill"></u></i><div class="tr-plab"><span id="tr-arena"></span><span id="tr-next"></span></div></div>' +
+        '<div class="lr-list tr-list" id="tr-list"></div></section>';
     document.body.appendChild(el); S.trophy = el;
     const list = el.querySelector('#tr-list');
 
@@ -110,19 +109,18 @@
         const p = prog(), tr = p.tr || 0, ai = arenaOf(tr), A = ARENAS[ai], nxtA = ARENAS[ai + 1], done = p.trClaimed || [], nm = nextMilestone(), cl = claimable();
         el.style.setProperty('--ac', A.c);
         el.querySelector('#tr-num').textContent = num(tr);
-        el.querySelector('#tr-arena').innerHTML = '<i style="background:' + A.c + '"></i>Arena ' + (ai + 1) + ' &middot; ' + A.n;
+        el.querySelector('#tr-arena').textContent = A.n + ' · Arena ' + (ai + 1);
         const from = A.at, to = nxtA ? nxtA.at : from + SPAN_LAST;
         el.querySelector('#tr-fill').style.width = Math.min(100, 100 * (tr - from) / (to - from)).toFixed(1) + '%';
-        el.querySelector('#tr-next').textContent = nxtA ? num(nxtA.at - tr) + ' trophies to ' + nxtA.n : 'The top arena: keep climbing';
-        const all = el.querySelector('#tr-all'); all.hidden = !cl.length; all.innerHTML = 'CLAIM ALL <b>' + cl.length + '</b>';
-        el.querySelector('#tr-how').textContent = 'Win races to gain trophies, lose them when you place 3rd or 4th. You can never drop below the start of your arena.';
+        el.querySelector('#tr-next').textContent = nxtA ? num(nxtA.at) : '';
+        const all = el.querySelector('#tr-all'); all.hidden = !cl.length; all.textContent = 'CLAIM ALL (' + cl.length + ')';
         list.innerHTML = '';
         let lastArena = -1;
         for (const m of build()) {
             if (m.arena !== lastArena) {
                 lastArena = m.arena; const a = ARENAS[m.arena], here = m.arena === ai, reached = tr >= a.at;
                 const h = document.createElement('div'); h.className = 'tr-ah' + (here ? ' here' : '') + (reached ? '' : ' far'); h.style.setProperty('--ac', a.c);
-                h.innerHTML = '<span>ARENA ' + (m.arena + 1) + '</span><b>' + a.n + '</b><em>' + num(a.at) + '</em>'; list.appendChild(h);
+                h.innerHTML = '<b>' + a.n + '</b><span>Arena ' + (m.arena + 1) + '</span><em>' + num(a.at) + '</em>'; list.appendChild(h);
             }
             const claimed = done.includes(m.id), ready = !claimed && m.at <= tr, cur = nm && nm.id === m.id;
             const row = document.createElement('div');
@@ -168,20 +166,20 @@
     /* ------------------------------------------------------------ chip on the home screen ---- */
     // under the character: the trophy count (counts up or down after a match), the arena and the way to the next reward
     const chip = document.createElement('button'); chip.type = 'button'; chip.id = 'm-trophy'; chip.className = 'm-trophy';
-    chip.innerHTML = '<span class="tc-cup">' + icon('trophy') + '</span><span class="tc-mid"><b class="tc-n">0</b><span class="tc-ar"></span><i class="tc-bar"><u></u></i></span><span class="tc-next"></span><span class="tc-d"></span>';
-    const row = $('pt-row'); if (row) row.insertAdjacentElement('afterend', chip);
+    chip.innerHTML = '<span class="tc-top"><span class="tc-cup">' + icon('trophy') + '<em class="tc-badge" hidden></em></span><b class="tc-n">0</b><span class="tc-d"></span></span><i class="tc-bar"><u></u></i><span class="tc-ar"></span>';
+    const row = $('pt-row'); if (row) row.insertAdjacentElement('beforebegin', chip);          // above the character
     chip.addEventListener('click', e => { e.stopPropagation(); if (window.SFX) SFX.play('count'); open(); });
     let shown = null, anim = 0;
     function shownGet() { try { const v = localStorage.getItem('rr_tr_shown'); return v === null ? null : +v; } catch (e) { return null; } }
     function shownSet(v) { try { localStorage.setItem('rr_tr_shown', String(v)); } catch (e) {} }
     function paintChip(v) {
-        const p = prog(), tr = v, ai = arenaOf(tr), A = ARENAS[ai], nxtA = ARENAS[ai + 1], nm = nextMilestone(), cl = claimable().length;
-        chip.style.setProperty('--ac', A.c); chip.classList.toggle('ready', cl > 0);
+        const tr = v, ai = arenaOf(tr), A = ARENAS[ai], nxtA = ARENAS[ai + 1], cl = claimable().length;
+        chip.style.setProperty('--ac', A.c);
         chip.querySelector('.tc-n').textContent = num(tr);
-        chip.querySelector('.tc-ar').textContent = 'Arena ' + (ai + 1) + ' · ' + A.n;
+        chip.querySelector('.tc-ar').textContent = A.n + ' · Arena ' + (ai + 1);
         const from = A.at, to = nxtA ? nxtA.at : from + SPAN_LAST;
-        chip.querySelector('.tc-bar u').style.width = Math.max(2, Math.min(100, 100 * (tr - from) / (to - from))).toFixed(1) + '%';
-        chip.querySelector('.tc-next').innerHTML = cl ? '<em>' + cl + '</em>' : nm ? '<small>' + num(nm.at) + '</small>' + (nm.r.t === 'coin' ? icon('coin') : nm.r.t === 'gem' ? icon('gem') : nm.r.t === 'drop' ? icon('drop-' + nm.r.tier) : icon('star')) : '';
+        chip.querySelector('.tc-bar u').style.width = Math.max(3, Math.min(100, 100 * (tr - from) / (to - from))).toFixed(1) + '%';
+        const bd = chip.querySelector('.tc-badge'); bd.hidden = !cl; bd.textContent = cl;
         chip.setAttribute('aria-label', 'Trophies ' + num(tr) + ', ' + A.n + (cl ? ', ' + cl + ' rewards to claim' : ''));
     }
     function visible() { return chip.getClientRects().length > 0 && $('s-start') && $('s-start').style.display !== 'none'; }
