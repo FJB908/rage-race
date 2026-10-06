@@ -60,15 +60,13 @@
           '<path d="M32 27 V21 C32 17.5 37.5 16.5 37.5 11.5 C37.5 6.5 31.5 5.5 28.8 9.3" fill="none" stroke="#eef2f9" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>' +
           '<path d="M32 27 L8.5 45.5 C5.5 48 7 52.5 11 52.5 H53 C57 52.5 58.5 48 55.5 45.5 Z" fill="rgba(53,224,200,.22)" stroke="#35e0c8" stroke-width="3.6" stroke-linejoin="round"/>' +
         '</symbol>' +
-        '<linearGradient id="gtrp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a0"/><stop offset=".5" stop-color="#ffcf3f"/><stop offset="1" stop-color="#e08a10"/></linearGradient>' +
+        '<linearGradient id="gtrp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27d"/><stop offset="1" stop-color="#f0a21a"/></linearGradient>' +
         '<symbol id="ico-trophy" viewBox="0 0 64 64">' +
-          '<path d="M16 12 H8 C8 26 12 32 21 34" fill="none" stroke="#7a4a05" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M48 12 H56 C56 26 52 32 43 34" fill="none" stroke="#7a4a05" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>' +
-          '<path d="M16 12 H8 C8 26 12 32 21 34" fill="none" stroke="url(#gtrp)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M48 12 H56 C56 26 52 32 43 34" fill="none" stroke="url(#gtrp)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>' +
-          '<path d="M16 6 H48 V24 C48 34 41 41 32 41 C23 41 16 34 16 24 Z" fill="url(#gtrp)" stroke="#7a4a05" stroke-width="3" stroke-linejoin="round"/>' +
-          '<path d="M21 10 H27 V24 C27 30 25 33 22 33 C19 30 19 24 19 20 Z" fill="#fff" opacity=".4"/>' +
-          '<path d="M32 15 l2.6 5.3 5.8.8 -4.2 4.1 1 5.8 -5.2 -2.7 -5.2 2.7 1 -5.8 -4.2 -4.1 5.8 -.8 z" fill="#fff6c8" stroke="#b56f08" stroke-width="1.2" stroke-linejoin="round"/>' +
-          '<rect x="28" y="41" width="8" height="8" fill="url(#gtrp)" stroke="#7a4a05" stroke-width="2.6"/>' +
-          '<rect x="19" y="49" width="26" height="9" rx="3" fill="url(#gtrp)" stroke="#7a4a05" stroke-width="3"/>' +
+          '<path d="M16 14 H9 C9 25 13 30.5 22 31.5 M48 14 H55 C55 25 51 30.5 42 31.5" fill="none" stroke="#e39a17" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+          '<path d="M15 7 H49 V24 C49 33.6 41.6 40.5 32 40.5 C22.4 40.5 15 33.6 15 24 Z" fill="url(#gtrp)"/>' +
+          '<path d="M20 11 H25.5 V24 C25.5 29 23.8 32.4 21.4 33.6 C19.8 31 20 27 20 24 Z" fill="#fff" opacity=".38"/>' +
+          '<rect x="28.2" y="40" width="7.6" height="9" fill="#e39a17"/>' +
+          '<rect x="19" y="49" width="26" height="8" rx="2.6" fill="url(#gtrp)"/>' +
         '</symbol>' +
         '<symbol id="ico-video" viewBox="0 0 64 64">' +
           '<rect x="6" y="14" width="52" height="38" rx="10" fill="#1b2130" stroke="#0a0d14" stroke-width="3"/>' +

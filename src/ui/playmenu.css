@@ -1,0 +1,46 @@
+/* PLAY tab: every mode is a poster. A deep colour wash, the mode's icon huge, tilted and faint behind the text, the name big in the corner. No icon tiles, no outlines. */
+.m-tab[data-tab="play"] { gap: 12px; }
+.m-tab[data-tab="play"] .m-pair { gap: 12px; }
+.m-tab[data-tab="play"] .m-card {
+    position: relative; overflow: hidden; isolation: isolate; box-sizing: border-box;
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start !important; gap: 4px !important;
+    min-height: 118px; padding: 18px 20px !important; border: 0 !important; border-radius: 24px; text-align: left;
+    background: linear-gradient(140deg, color-mix(in srgb, var(--mc) 30%, #0e121a) 0%, #10141c 68%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 16px 28px -20px color-mix(in srgb, var(--mc) 80%, transparent);
+    transition: transform .14s, box-shadow .2s;
+}
+.m-tab[data-tab="play"] .m-card:active { transform: scale(.975); }
+/* a soft pool of the mode colour in the top right corner */
+.m-tab[data-tab="play"] .m-card::before { content: ""; position: absolute; z-index: -2; right: -22%; top: -70%; width: 85%; height: 220%; background: radial-gradient(closest-side, color-mix(in srgb, var(--mc) 38%, transparent), transparent 72%); pointer-events: none; }
+/* the icon, big and low in opacity, a little crooked */
+.m-tab[data-tab="play"] .m-card .mc-ico {
+    position: absolute !important; z-index: -1; right: -14px; bottom: -30px; left: auto; top: auto; width: 156px !important; height: 156px !important; margin: 0; padding: 0;
+    display: block !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible !important;
+    opacity: .24; transform: rotate(-13deg); transform-origin: 60% 60%; pointer-events: none;
+}
+.m-tab[data-tab="play"] .m-card .mc-ico svg, .m-tab[data-tab="play"] .m-card .mc-ico .ico, .m-tab[data-tab="play"] .m-card .mc-ico .rk-emb { width: 100% !important; height: 100% !important; filter: none !important; }
+.m-tab[data-tab="play"] .m-card .mc-copy { position: relative; z-index: 1; width: 100%; flex: none !important; gap: 3px; }
+.m-tab[data-tab="play"] .m-card b { font-family: "Bricolage Grotesque", "Arial Rounded MT Bold", system-ui, sans-serif; font-size: 23px; font-weight: 800; letter-spacing: -.01em; color: color-mix(in srgb, var(--mc) 14%, #fff) !important; line-height: 1.05; }
+.m-tab[data-tab="play"] .m-card .mc-copy > span { font-size: 12.5px; color: rgba(255,255,255,.62); }
+.m-tab[data-tab="play"] .m-card .mc-copy > small { font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: color-mix(in srgb, var(--mc) 65%, #fff); min-height: 0; }
+.m-tab[data-tab="play"] .m-card .mc-copy > small:empty { display: none; }
+/* different sizes and tilts, so it reads as a layout and not as a list */
+.m-tab[data-tab="play"] .m-card.big { min-height: 172px; }
+.m-tab[data-tab="play"] .m-card.big b { font-size: 36px; }
+.m-tab[data-tab="play"] .m-card.big .mc-ico { width: 250px !important; height: 250px !important; right: -34px; bottom: -58px; opacity: .3; transform: rotate(-11deg); }
+.m-tab[data-tab="play"] .m-card.wide { min-height: 108px; }
+.m-tab[data-tab="play"] .m-card.wide b { font-size: 27px; }
+.m-tab[data-tab="play"] .m-card.wide .mc-ico { width: 190px !important; height: 190px !important; right: -16px; bottom: -52px; transform: rotate(10deg); }
+.m-tab[data-tab="play"] .m-card.sm { min-height: 156px; }
+.m-tab[data-tab="play"] .m-card.sm .mc-ico { width: 124px !important; height: 124px !important; right: -22px; bottom: -38px; }
+#btn-ranked .mc-ico { transform: rotate(-15deg) !important; } #btn-gauntlet .mc-ico { transform: rotate(12deg) !important; right: -26px !important; }
+#btn-parkour .mc-ico { transform: rotate(-9deg) !important; } #btn-escape .mc-ico { transform: rotate(14deg) !important; }
+#btn-parkour, #btn-escape { min-height: 128px !important; }
+/* the little tags */
+.m-tab[data-tab="play"] .m-card em { position: absolute !important; top: 14px; right: 14px; margin: 0 !important; z-index: 2; font-style: normal; }
+.m-tab[data-tab="play"] .m-card .new-tag { padding: 4px 9px; border-radius: 99px; font-size: 9.5px; font-weight: 900; letter-spacing: .1em; background: var(--mc); color: #14101a; }
+/* the one you picked */
+.m-tab[data-tab="play"] .m-card.sel { background: linear-gradient(140deg, color-mix(in srgb, var(--mc) 42%, #0e121a) 0%, #10141c 72%); box-shadow: inset 0 0 0 1.5px var(--mc), 0 18px 30px -18px var(--mc); }
+.m-tab[data-tab="play"] .m-card.sel::after { content: "SELECTED"; position: absolute; top: 14px; right: 14px; bottom: auto; padding: 4px 9px; border-radius: 99px; background: rgba(255,255,255,.14); color: #fff; font-size: 9.5px; font-weight: 800; letter-spacing: .1em; }
+.m-tab[data-tab="play"] .m-card.sel .new-tag { display: none; }
+.m-tab[data-tab="play"] .m-card .lock-tag { top: 14px; right: 14px; }

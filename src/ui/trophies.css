@@ -2,21 +2,21 @@
 .m-trophy { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 5px; align-self: center; padding: 2px 10px; border: 0; background: none; color: inherit; -webkit-tap-highlight-color: transparent; transition: transform .12s; }
 .m-trophy:active { transform: scale(.95); }
 .tc-top { position: relative; display: flex; align-items: center; gap: 8px; }
-.tc-cup { position: relative; flex: none; width: 34px; height: 34px; filter: drop-shadow(0 2px 5px rgba(255,190,40,.4)); } .tc-cup .ico { width: 100%; height: 100%; }
-.tc-n { font: 900 28px/1 "Bricolage Grotesque", system-ui, sans-serif; font-variant-numeric: tabular-nums; text-shadow: 0 2px 6px rgba(0,0,0,.45); }
+.tc-cup { position: relative; flex: none; width: 26px; height: 26px; filter: none; } .tc-cup .ico { width: 100%; height: 100%; }
+.tc-n { font: 800 21px/1 "Bricolage Grotesque", system-ui, sans-serif; font-variant-numeric: tabular-nums; text-shadow: 0 2px 6px rgba(0,0,0,.45); }
 .tc-badge { position: absolute; top: -5px; right: -7px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #ff4d6a; color: #fff; font: 900 10px/16px system-ui; text-align: center; font-style: normal; box-sizing: border-box; }
 .tc-badge[hidden] { display: none; }
-.tc-bar { display: block; width: 150px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.13); overflow: hidden; }
+.tc-bar { display: block; width: 120px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.13); overflow: hidden; }
 .tc-bar u { display: block; height: 100%; border-radius: 3px; background: var(--ac, #35e0c8); text-decoration: none; transition: width .3s; }
-.tc-ar { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: #8b95a7; }
+.tc-ar { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; color: #8b95a7; }
 .tc-d { position: absolute; left: 100%; top: 2px; margin-left: 8px; font: 900 18px/1 system-ui; opacity: 0; pointer-events: none; white-space: nowrap; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
 .tc-d.up { color: #7cf29c; } .tc-d.down { color: #ff6b81; }
 .tc-d.go { animation: tcPop 1.5s ease-out; }
 @keyframes tcPop { 0% { opacity: 0; transform: translateY(8px) scale(.7); } 15% { opacity: 1; transform: translateY(0) scale(1.15); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
 /* ---- the road screen: plain, one trophy and one number on top, a thin bar, then a quiet list ---- */
 .tr-head { flex: 1; display: flex; align-items: center; gap: 10px; }
-.tr-cup { flex: none; width: 42px; height: 42px; filter: drop-shadow(0 2px 6px rgba(255,190,40,.4)); } .tr-cup .ico { width: 100%; height: 100%; }
-.tr-head b { font: 900 34px/1 "Bricolage Grotesque", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.tr-cup { flex: none; width: 30px; height: 30px; filter: none; } .tr-cup .ico { width: 100%; height: 100%; }
+.tr-head b { font: 800 26px/1 "Bricolage Grotesque", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 .tr-all { flex: none; border: 0; border-radius: 10px; padding: 9px 12px; background: var(--accent); color: #06201b; font: inherit; font-weight: 900; font-size: 12px; }
 .tr-prog { padding: 2px 18px 6px; }
 .tr-pbar { display: block; height: 6px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; } .tr-pbar u { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--ac, #35e0c8); text-decoration: none; transition: width .4s; }
