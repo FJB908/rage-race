@@ -2,7 +2,7 @@
 //   - A trophy count under your character on the home screen: it goes up when you place well and down when you do badly (with floors so it never feels unfair).
 //   - Arenas: the count moves you through 10 arenas (Playground ... Summit). An arena is a safe floor: once you are in it, you cannot drop below its start.
 //   - The Trophy Road: a list of milestones on the way, every one with a reward (coins, gems, chests, boosters, cosmetics, a gem chest).
-// Trophies come from every placing mode: Quick play, Build Race, Boom Tag, Arcade, Escape, Ranked and the Gauntlet. Levels and the Summit have their own stars.
+// Trophies come from every placing mode: Quick play, Build Race, Boom Tag, Arcade, Escape and the Gauntlet (they replace the old Ranked mode, and they set how strong your opponents are). Levels and the Summit have their own stars.
 // Loaded AFTER game.js and levelrewards.js. Profile fields: tr (trophies), trTop (highest arena index reached), trClaimed (milestones taken), trStreak (wins in a row).
 (function () {
     'use strict';
@@ -40,6 +40,21 @@
         lastResult = { delta: p.tr - before, tr: p.tr, newArena: arenaOf(p.tr) > arenaOf(before) };
         return lastResult;
     }
+    // DIFFICULTY FOLLOWS TROPHIES. The roster bots (src/modes/roster.js) have a rating; this maps your trophies onto that rating, so every placing mode
+    // (Quick play, Build Race, Boom Tag, Arcade, Escape, Gauntlet, parties) pits you against bots of about your level, and higher up the bots get better:
+    //   0 trophies ~ 1050 (a clumsy bot), 800 ~ 1260, 1900 ~ 1450, 2600 ~ 1530, 4600 ~ 1660, 6000 ~ 1700 (the best players in the game).
+    const mmr = tr => { tr = tr === undefined ? (prog().tr || 0) : tr; return Math.round(1050 + 650 * (1 - Math.exp(-tr / 2200)) / (1 - Math.exp(-6000 / 2200))); };
+    // the rating used to pick opponents right now: your trophy rating, made kinder while the game is still helping you (beginners, or after a few losses in a row)
+    const matchMmr = () => { const e = window.Gentle ? Gentle.ease() : 0; return Math.max(850, mmr() - 220 * e); };
+    // The old Ranked mode is gone: whoever had a rank starts with the matching trophies (once)
+    (function migrate() {
+        const p = prog(); if (p.trMig) return; p.trMig = 1;
+        const rk = p.rk || {}; if ((rk.placed || 0) >= 5 && rk.rp > 0) { p.tr = Math.max(p.tr || 0, Math.min(4200, Math.round(rk.rp * 2.2))); p.trTop = Math.max(p.trTop || 0, arenaOf(p.tr)); }
+        if (p.lastMode === 'ranked') p.lastMode = 'race';
+        saveProg(p);
+    })();
+    // how wide the pool of possible opponents is: wide at the start (now and then a better or worse bot), tight at the top (everybody is good there)
+    const spread = () => Math.round(150 - 60 * Math.min(1, (prog().tr || 0) / 6000));
     const last = () => { const r = lastResult; lastResult = null; return r; };           // the result of the match that just ended (read once)
 
     /* ------------------------------------------------------------------- the road ---- */
@@ -200,6 +215,6 @@
     function open() { render(); showScreen('trophy'); setTimeout(scrollToCurrent, 90); }
     setInterval(() => { if (!document.hidden) refresh(); }, 1200);
 
-    window.Trophies = { record, last, worth, claimable, refresh, open, arenaOf, ARENAS, road: build, nextMilestone };
+    window.Trophies = { record, last, worth, mmr, matchMmr, spread, claimable, refresh, open, arenaOf, ARENAS, road: build, nextMilestone };
     refresh();
 })();

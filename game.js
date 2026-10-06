@@ -1467,7 +1467,6 @@ function handleFinish(p) {
     burst(p.x, p.y, p.color, 30, 260);
     if (window.Finishers) Finishers.play(p);                           // your equipped finisher (and the bots' own)
     if (p.local){ SFX.sting(finishedCount === 1 ? 'win' : 'place'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
-    if (window.rankedMatch){ if (p.local) Ranked.onLocalFinish(finishedCount); return; }   // Ranked ends the moment YOU cross the line: nobody after you can pass you
     checkEnd();
     maybePromptBotsDone();
 }
@@ -2705,7 +2704,6 @@ function quitToMenu() {
     state = 'menu'; dragging = false;
     hud.style.display = 'none';
     if (gameMode === 'parkour') pkWriteSave();          // leaving mid-climb keeps your spot
-    if (window.rankedMatch) Ranked.forfeit(true);
     if (gameMode === 'gauntlet') gtLeave(true);
     gameMode = 'race'; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level', 'mode-gauntlet'); lv = null;
     refreshStartMeta();
@@ -2807,7 +2805,6 @@ document.getElementById('set-reset').addEventListener('click', () => {
 document.getElementById('btn-pause').addEventListener('click', () => {
     if (gameMode === 'gauntlet'){ gtPauseMenu(); return; }
     if (isArena()){ arenaMod().pauseMenu(); return; }
-    if (window.rankedMatch){ Ranked.pauseMenu(); return; }
     const btns = [
         ['Resume', resumeRace],
         ['Settings', () => openSettings('pause'), true],
@@ -2935,6 +2932,9 @@ function startMatchmaking(quick) {
     // All three names come from the same pool, in the same style, whether or not that
     // slot happens to be the human-profile one — the naming must never be the tell.
     matchBotNames = [...BOT_NAMES].sort(()=>Math.random()-0.5).slice(0,3);
+    if (window.BotRoster && !window.buildMatch){                           // your opponents are roster bots of about YOUR level: the more trophies you have, the better they are
+        window.matchBots = BotRoster.pick(3, { mmr:(window.Trophies ? Trophies.matchMmr() : 1100), spread:(window.Trophies ? Trophies.spread() : 150) }); matchBotNames = window.matchBots.map(b => b.name); matchHumanSlot = 0;
+    }
     const reveal = [true,false,false,false];
     buildLobby(reveal);
     showScreen('lobby');
@@ -2950,12 +2950,7 @@ function startGame() {
     showScreen(''); // hide all overlays
     if (window.buildMatch && window.Build) return Build.begin();                 // Build Race makes its own course
     generateLevel(matchSeed); initPlayers(); botsDonePrompted = false;
-    if (window.matchBots && window.BotRoster) BotRoster.applyTo(players.slice(1), window.matchBots);   // Ranked: roster opponents with their own skill
-    // Quick match: now and then one bot is genuinely good (a roster bot rated like a top player), so wins are earned. Not for beginners.
-    else if (!window.rankedMatch && !window.partyMatch && window.BotRoster && prog().races >= 12 && Gentle.ease() < 0.15 && Math.random() < 0.22) {
-        const slot = 1 + Math.floor(Math.random() * 3), rb = BotRoster.pick(1, { mmr: 1450 + Math.random() * 250, spread: 50 })[0];
-        if (rb) BotRoster.applyTo([players[slot]], [Object.assign({}, rb, { name: players[slot].name, look: players[slot].look })], { color: false });
-    }
+    if (window.matchBots && window.BotRoster) BotRoster.applyTo(players.slice(1), window.matchBots, { color:true });   // roster opponents with their own skill (set by your trophies)
     beginRound();
 }
 // Bots do not all react to GO at the same instant: a few are quick off the line, most take their time (a human aims during the countdown and fires at once).
@@ -3121,7 +3116,7 @@ function startEscape(){
     matchHumanSlot = 0;
     matchBotNames = [];
     initPlayers();
-    if (window.BotRoster) BotRoster.applyTo(players.slice(1), BotRoster.pick(3, { mmr:Math.max(1200, prog().rk.mmr + 100), spread:260 }));   // named roster bots, some of them good
+    if (window.BotRoster) BotRoster.applyTo(players.slice(1), BotRoster.pick(3, { mmr:(window.Trophies ? Trophies.matchMmr() : 1100) + 100, spread:240 }));   // named roster bots, some of them good
     for (const p of players) p.escape = escRunnerState();
     players[0].x = pw/2;
     beginRound();
@@ -4210,8 +4205,8 @@ function randomBotLook(){
 }
 
 const MODE_LABEL = { race:'Quick play', tag:'Boom Tag · Pass the bomb', arcade:'Arcade · Random minigames', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
-const MODE_POSTER = { race:{ n:'Quick play', s:'4 players', c:'#35e0c8' }, build:{ n:'Build Race', s:'Place a trap, then race', c:'#ff8ae6' }, ranked:{ n:'Ranked', s:'Climb the ranks', c:'#b3a9ff' }, gauntlet:{ n:'Gauntlet', s:'32 players', c:'#ffcf3f' }, parkour:{ n:'Levels', s:'Dimensions', c:'#b3a9ff' }, escape:{ n:'Escape', s:'Climb or fall', c:'#ff7a90' }, tag:{ n:'Boom Tag', s:'Pass the bomb', c:'#ff8a46' }, arcade:{ n:'Arcade', s:'Random minigames', c:'#5bb8ff' } };
-const MODE_ICON = { race:'mode-race', tag:'mode-tag', arcade:'mode-arcade', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', ranked:'mode-ranked', build:'mode-build' };
+const MODE_POSTER = { race:{ n:'Quick play', s:'4 players', c:'#35e0c8' }, build:{ n:'Build Race', s:'Place a trap, then race', c:'#ff8ae6' }, gauntlet:{ n:'Gauntlet', s:'32 players', c:'#ffcf3f' }, parkour:{ n:'Levels', s:'Dimensions', c:'#b3a9ff' }, escape:{ n:'Escape', s:'Climb or fall', c:'#ff7a90' }, tag:{ n:'Boom Tag', s:'Pass the bomb', c:'#ff8a46' }, arcade:{ n:'Arcade', s:'Random minigames', c:'#5bb8ff' } };
+const MODE_ICON = { race:'mode-race', tag:'mode-tag', arcade:'mode-arcade', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', build:'mode-build' };
 let _freeIds = null;
 function freeItemIds(){
     if (!_freeIds) _freeIds = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(i => i.price === 0 && !i.premium && !i.exclusive && !i.priceLock).map(i => i.id);
@@ -4255,7 +4250,7 @@ function prog(){
     if (!d.skin || !SKINS.some(s => s.id === d.skin)) d.skin = 'classic';
     if (!d.hat || !HATS.some(h => h.id === d.hat)) d.hat = 'none';
     if (!d.face || !FACES.some(f => f.id === d.face)) d.face = 'none';
-    if (!['race', 'escape', 'parkour', 'gauntlet', 'ranked', 'build'].includes(d.lastMode)) d.lastMode = 'race';      // (Arcade and Boom Tag are parked)
+    if (!['race', 'escape', 'parkour', 'gauntlet', 'build'].includes(d.lastMode)) d.lastMode = 'race';      // (Arcade and Boom Tag are parked)
     return d;
 }
 // Every match id that ever paid out is remembered so nothing is granted twice. Ids are never reused (they hold the time), so only the recent ones matter:
@@ -4658,7 +4653,7 @@ function renderProfile(p, L, stars){
     if (window.LevelRewards) setBadge(document.getElementById('pf-lv-n'), LevelRewards.claimable().length);
     // rank chip
     const rkEl = document.getElementById('pf-rank');
-    if (rkEl && window.Ranked){ const s = Ranked.state(); rkEl.innerHTML = s.placed ? Ranked.emblem(s.tier, 22) + '<b>' + s.rank.label + '</b><small>' + s.rk.rp + ' RP</small>' : '<small>Unranked</small>'; }
+    if (rkEl && window.Trophies){ const tr = p.tr || 0, A = Trophies.ARENAS[Trophies.arenaOf(tr)]; rkEl.innerHTML = icon('trophy') + '<b>' + tr.toLocaleString('en-US') + '</b><small>' + A.n + '</small>'; }
     // records
     const bestT = load('rr_pk_best_time', 0), bestM = load('rr_pk_best', 0), esc = load('rr_esc_best_score', 0), passTier = Math.min(PASS_TIERS.length, passTiersDone(p.passPointsEarned || 0));
     const rows = [
@@ -4684,8 +4679,7 @@ function refreshMenu(){
     { const mk = p.lastMode in MODE_POSTER ? p.lastMode : 'race', mp = MODE_POSTER[mk], row = document.querySelector('#s-start .m-row[data-go="play"]');         // the mode row looks like that mode's poster in the Play tab
       const wrap = document.getElementById('m-modewrap'); if (wrap) wrap.style.setProperty('--mc', mp.c);
       document.getElementById('m-mode').textContent = mp.n; const sub = document.getElementById('m-mode-sub'); if (sub) sub.textContent = mp.s; if (row) row.style.setProperty('--mc', mp.c); }
-    document.getElementById('m-mode-ico').innerHTML = (p.lastMode === 'ranked' && window.Ranked) ? Ranked.emblem(Ranked.state().tier, 30) : icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
-    if (window.Ranked) Ranked.refreshHome();
+    document.getElementById('m-mode-ico').innerHTML = icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
     document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));
     renderPassHome(p);
     if (window.Boost) Boost.refreshHome();
@@ -4767,7 +4761,6 @@ function playSelected(){
     if (m === 'escape') startEscape();
     else if (m === 'parkour') openLevels();
     else if (m === 'gauntlet') Gauntlet.open();
-    else if (m === 'ranked') Ranked.open();
     else if (m === 'build') Build.open();
     else startMatchmaking();
 }

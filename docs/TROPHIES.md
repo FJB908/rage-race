@@ -12,3 +12,10 @@ A visible progress number, like the trophies in Clash Royale and Brawl Stars. Co
 ## Rewards after a match and the win meter
 - Only a win (1st place) pays coins, XP and pass points, in the form of a chest. 2nd to 4th get trophies and nothing else (the result screen shows no reward line).
 - Win meter (`src/ui/winmeter.js`): ten pieces on top of the mode card on the home screen. Every win fills one piece. Rewards: 2 wins a common chest, 4 a rare chest, 6 a x2 XP booster, 8 an epic chest, 10 a legendary chest, then it starts again. Tap the bar to collect.
+
+## Opponents get better as you climb (replaces Ranked)
+Ranked is gone. Your trophies set the strength of the bots in every placing mode:
+- `Trophies.mmr()` maps trophies to the roster rating: 0 trophies ~ 1050 (clumsy bots), 800 ~ 1260, 1900 ~ 1450, 2600 ~ 1530, 4600 ~ 1660, 6000 ~ 1700 (the best level in the game).
+- `Trophies.matchMmr()` is the same rating, made kinder while the game is still helping you (beginners and after a few losses: `Gentle.ease()`, up to -220).
+- Quick play and Build Race pick 3 roster bots of that rating when the match is made (so the lobby shows the same names that race). Boom Tag, Arcade, Escape (+100) and the Gauntlet (+120, wide pool) use it too; parties use `Trophies.mmr()` for their bot fill.
+- Existing Ranked players got trophies once: `min(4200, RP x 2.2)`.

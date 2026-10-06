@@ -333,7 +333,7 @@
         showScreen(''); WORLD_W = 356; resize();
         buildArena(G.arena);
         matchHumanSlot = 0; matchBotNames = []; initPlayers();
-        if (window.BotRoster) BotRoster.applyTo(players.slice(1), BotRoster.pick(3, { mmr:Math.max(1100, prog().rk.mmr), spread:240 }));
+        if (window.BotRoster) BotRoster.applyTo(players.slice(1), BotRoster.pick(3, { mmr:(window.Trophies ? Trophies.matchMmr() : 1100), spread:180 }));
         const party = (window.Party && Party.active && Party.active()) ? Party.standIns() : [];
         party.forEach((m, k) => { const b = players[k + 1]; if (b) { b.name = m.name; b.look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, m.look || {}); b.color = skinById(b.look.skin).color; } });
         for (const p of players) { p.bigBoss = false; p.noAI = true; p.out = false; p.stunT = 0; p.thinkT = rnd(0.5, 1.1); p.gone = false; p._off = false; p.finished = false; p.bomb = false; p.place = 0; p.line = ''; p._lastVy = undefined; p._lastPt = undefined; }

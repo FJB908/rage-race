@@ -26,7 +26,6 @@
         { id: 'tag1',    fam: 'tag',   ev: 'tagplay', kind: 'add', target: 1,   text: 'Play Boom Tag',             coins: 200, pass: 30, ok: () => false },
         { id: 'tagwin',  fam: 'tag',   ev: 'tagwin',  kind: 'add', target: 1,   text: 'Win a Boom Tag match',      coins: 320, pass: 45, ok: () => false },
         { id: 'tagpass', fam: 'tag',   ev: 'tagpass', kind: 'add', target: 8,   text: 'Pass the bomb 8 times',     coins: 240, pass: 35, ok: () => false },
-        { id: 'rk1',     fam: 'rk',    ev: 'ranked',  kind: 'add', target: 1,   text: 'Play a Ranked match',       coins: 250, pass: 35 },
         { id: 'gt1',     fam: 'gt',    ev: 'gtrun',   kind: 'add', target: 1,   text: 'Play the Gauntlet',         coins: 300, pass: 40, ok: gtOk },
     ];
     const WEEKLY = [

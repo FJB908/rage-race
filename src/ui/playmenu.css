@@ -33,7 +33,7 @@
 .m-tab[data-tab="play"] .m-card.wide .mc-ico { width: 190px !important; height: 190px !important; right: -16px; bottom: -52px; transform: rotate(10deg); }
 .m-tab[data-tab="play"] .m-card.sm { min-height: 156px; }
 .m-tab[data-tab="play"] .m-card.sm .mc-ico { width: 124px !important; height: 124px !important; right: -22px; bottom: -38px; }
-#btn-ranked .mc-ico { transform: rotate(-15deg) !important; } #btn-gauntlet .mc-ico { transform: rotate(12deg) !important; right: -26px !important; }
+#btn-gauntlet .mc-ico { transform: rotate(12deg) !important; right: -26px !important; }
 #btn-parkour .mc-ico { transform: rotate(-9deg) !important; } #btn-escape .mc-ico { transform: rotate(14deg) !important; }
 #btn-parkour, #btn-escape { min-height: 128px !important; }
 /* the little tags */

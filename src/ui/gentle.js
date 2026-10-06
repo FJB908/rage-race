@@ -7,9 +7,9 @@
 (function () {
     'use strict';
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const LOCKS = { parkour:3, build:3, escape:3, gauntlet:3, ranked:5 };            // mode -> race WINS needed (Quick play, Build Race etc. all count)
+    const LOCKS = { parkour:3, build:3, escape:3, gauntlet:3 };            // mode -> race WINS needed (Quick play, Build Race etc. all count)
     const OPENS = { 3: ['Daily rewards', 'Missions', 'Rage pass'] };                  // level -> what it opens (shown on level-up)
-    const WIN_OPENS = { 3: ['Levels', 'Build Race', 'Escape', 'Gauntlet'], 5: ['Ranked'] };      // wins -> modes that open
+    const WIN_OPENS = { 3: ['Levels', 'Build Race', 'Escape', 'Gauntlet'] };      // wins -> modes that open
     const TITLES = [[1, 'Rookie'], [2, 'Hopper'], [3, 'Bouncer'], [5, 'Climber'], [8, 'Daredevil'], [12, 'Sky Runner'], [16, 'Stunt Pro'], [20, 'Rage Racer'], [26, 'Legend'], [35, 'Mythic']];
     const lvlOf = () => { try { return levelInfo(prog().xp).lvl; } catch (e) { return 1; } };
     const title = lvl => { let t = TITLES[0][1]; for (const [l, n] of TITLES) if (lvl >= l) t = n; return t; };
@@ -19,7 +19,7 @@
     const DDA_STEP = { 1:-0.07, 2:0, 3:0.10, 4:0.16, 5:0.16 };       // place (5 = did not finish) -> change
     function ease() {
         let p; try { p = prog(); } catch (e) { return 0; }
-        if (window.rankedMatch || window.partyMatch) return 0;                       // fair matches stay fair
+        if (window.partyMatch) return 0;                                             // fair matches stay fair
         const dda = p.dda === undefined ? 1 : clamp(p.dda, 0.04, 1.4);
         return (p.races || 0) < 3 ? Math.max(dda, 0.9) : dda;
     }

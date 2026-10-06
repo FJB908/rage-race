@@ -670,6 +670,7 @@
         B.round = 1; B.scores = [0, 0, 0, 0]; B.pieces = []; B.fx = []; B.stuck = [null, null, null, null]; B.lootId = newLootId('race');
         makeCourse(matchSeed);
         initPlayers();
+        if (window.BotRoster && window.Trophies) BotRoster.applyTo(players.slice(1), BotRoster.pick(3, { mmr:Trophies.matchMmr(), spread:Trophies.spread() }), { color:true });      // rivals of your trophy level
         B.roster = players.map((p, i) => ({ name: p.name, look: p.look, finisher: p.look && p.look.finisher, skill: p.skill, pers: i === 0 ? 'you' : ['trapper', 'helper', 'chaos', 'trapper'][Math.floor(Math.random() * 4)], ctrl: i === 0 ? 'local' : (api.remote.includes(i) ? 'remote' : 'bot') }));
         buildPhase();
     }

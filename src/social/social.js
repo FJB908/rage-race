@@ -30,8 +30,8 @@
     function myLook() { const l = myLook_(); return { skin:l.skin, hat:l.hat, face:l.face, trail:l.trail, costume:l.costume || 'none' }; }
     const myLook_ = () => window.myLook ? window.myLook() : prog();
     function publicProfile() {
-        const p = prog(), L = levelInfo(p.xp), rk = (window.Ranked && Ranked.state) ? Ranked.state() : null;
-        return { name:String(p.name || 'Player').slice(0, 16), code:S.code, look:myLook(), lvl:L.lvl, rk:rk && rk.placed ? rk.rank.label : '', tier:rk && rk.placed ? rk.rank.tier : -1 };
+        const p = prog(), L = levelInfo(p.xp), tr = p.tr || 0;
+        return { name:String(p.name || 'Player').slice(0, 16), code:S.code, look:myLook(), lvl:L.lvl, tr, rk:'', tier:-1 };
     }
     async function publish(force) {
         if (!S.api) return;
@@ -150,7 +150,7 @@
         const p = S.party; if (!p || p.host !== S.uid) return;
         const rt = await loadRt().catch(() => null);
         const startAt = rt ? Date.now() + rt.offset + 5000 : 0;                 // shared start moment on the Realtime Database clock
-        const fill = rt && window.BotRoster ? BotRoster.pick(Math.max(0, 4 - S.members.length), { mmr:Math.max(1000, prog().rk.mmr), spread:160 }) : [];   // the bots everyone sees
+        const fill = rt && window.BotRoster ? BotRoster.pick(Math.max(0, 4 - S.members.length), { mmr:(window.Trophies ? Trophies.mmr() : 1100), spread:160 }) : [];   // the bots everyone sees
         try { await fs().updateDoc(dref('parties', p.code), { status:'racing', seed:(Math.random() * 4294967296) >>> 0, token:Date.now(), startAt, live:!!rt, fill: JSON.parse(JSON.stringify(fill)) }); } catch (e) { say('Could not start'); }
     }
 
@@ -283,7 +283,7 @@
         S.boardDone = false;
         window.partyMatch = { code:S.party.code, token:d.token, seed:d.seed, n:S.members.length, live:!!(d.live && RT), noRewards:S.members.length >= PARTY_MAX };      // 4 lobby members and no other players: no rewards
         window.rankedMatch = false; window.RACE_BAND = 0;
-        window.matchBots = window.partyMatch.live ? null : (window.BotRoster ? BotRoster.pick(3, { mmr:Math.max(1000, prog().rk.mmr), spread:160 }) : null);
+        window.matchBots = window.partyMatch.live ? null : (window.BotRoster ? BotRoster.pick(3, { mmr:(window.Trophies ? Trophies.mmr() : 1100), spread:160 }) : null);
         matchSeed = d.seed; matchLootId = newLootId('party'); matchBotNames = window.matchBots ? window.matchBots.map(b => b.name) : matchBotNames; matchHumanSlot = 0;
         const live = window.partyMatch.live, wait = live ? d.startAt - (Date.now() + RT.offset) - 2400 : 0;   // the game's countdown takes 2.4 s to GO
         const go = () => {

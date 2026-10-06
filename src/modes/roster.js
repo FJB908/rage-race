@@ -1,5 +1,5 @@
 // BOT ROSTER: a believable "player base" of named bots with a rating (MMR), a look and a play style.
-// Used by Ranked (opponents near your level), the Gauntlet (its 31 rivals) and Escape (its 3 rivals), so strong
+// Used by every placing mode (opponents near your trophy level, see Trophies.matchMmr), the Gauntlet (its 31 rivals) and Escape (its 3 rivals), so strong
 // players you meet in one mode are the same people you meet in the others. Loaded AFTER game.js.
 //
 // The bot's skill is NOT one number: it controls aim noise, thinking speed, the wait after landing, and how often it
@@ -154,8 +154,7 @@
             p.name = b.name; p.look = Object.assign({}, b.look); p.finisherId = finisherFor(b);
             if (opts.color) p.color = skinById(b.look.skin).color;
             p.skill = pr.skill; p.baseSkill = pr.skill; p.thinkScale = pr.thinkScale; p.waitScale = pr.waitScale; p.mistake = pr.mistake;
-            p.botType = pr.botType; p.afk = false; p.botId = b.id; p.botMmr = b.mmr; p.rkTier = rankOf(mmrToRp(b.mmr)).tier;
-            p.rkColor = TIERS[p.rkTier].c1;
+            p.botType = pr.botType; p.afk = false; p.botId = b.id; p.botMmr = b.mmr; p.rkColor = null;
         });
     }
 

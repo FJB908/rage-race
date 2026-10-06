@@ -1,3 +1,5 @@
+> **Removed.** The Ranked mode is gone: trophies (see TROPHIES.md) replaced it. Whoever had a rank got matching trophies once. The bot roster described below still exists (`src/modes/roster.js`) and now picks opponents by your trophies. The text below is kept for the calibration notes.
+
 # Ranked
 
 A seasonal ladder on the 4-player Race. Code: `src/modes/roster.js` (bots, ranks), `src/modes/ranked.js` + `ranked.css` (screens, maths).
