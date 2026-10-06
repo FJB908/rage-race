@@ -861,12 +861,12 @@ function updateQuakes(dt){
 /* ---- ROCKET: autopilot to a safe platform ~6 rows up, soft landing ---- */
 // ROCKET: an instant upward boost stacked on top of your current velocity —
 // not an autopilot. You keep steering; side walls, bounce, and gravity all still apply.
-const ROCKET_KICK = 1650;
+const ROCKET_KICK = 2350;
 function startRocket(p){
-    p.vy = p.vy < 0 ? Math.min(p.vy, -ROCKET_KICK) : p.vy - ROCKET_KICK;   // already flying up: you reach the rocket's speed, you do not add to it
+    p.vy = Math.min(p.vy, -ROCKET_KICK);          // always the full rocket speed, whether you stand, fall or are already flying up (it never adds on top of a jump)
     capUpwardVelocity(p);                          // ...but a boosted jump + rocket can't stack past the ceiling
     p.mode = 'air'; p.plat = null; p.squash = 1.5;
-    p.rocketFx = 0.6;                              // flame trail duration, purely visual
+    p.rocketFx = 0.9;                              // flame trail + the time you cannot be knocked off course
     if (p.local) camShake = Math.max(camShake, 7);
     ring(p.x, p.y + p.r, ITEMS.rocket.color, 55, true);
     burst(p.x, p.y + p.r, ITEMS.rocket.color, 16, 220);

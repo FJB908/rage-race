@@ -13,3 +13,6 @@ Party races: the 10 Hz samples carry `cn` (cannon state, 3 = in flight), `ca` (a
 Bots: they fire the cannon at the best reachable platform (scan of the angle range) and use the extra jump to rescue a miss.
 
 The Magnet was built and tried and then removed again. Item odds: shield is no longer the favourite of whoever is in front, and the same item rarely comes twice in a row.
+
+## Rocket (updated)
+The rocket now always launches you at its full speed (2350, up from 1650), whether you stand, fall or are already rising. It does not add on top of a jump. Climb is about 1100 px (about twice as high as before; a falling player used to get only ~110 px). You cannot be knocked off course for the first half second.
