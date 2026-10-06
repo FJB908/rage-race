@@ -118,7 +118,7 @@ function showScreen(name) {
     if (typeof SFX !== 'undefined' && SFX.music){
         if (name === 'start') SFX.music.set('menu'); else if (name === 'levels') SFX.music.set('levels');
     }
-    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings','streak','lvr','missions','collection'].forEach(k => {
+    ['start','lobby','results','pause','over','pk','summit','levels','lvdone','pass','settings','streak','lvr','trophy','missions','collection'].forEach(k => {
         const el = S[k]; if (!el) return;
         if (k === name) {
             el.style.display = 'flex';
@@ -2051,6 +2051,8 @@ function showResults() {
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
     if (!(localP && localP.finished)) SFX.sting('lose');                  // a finished player already heard the fanfare; the results music follows it
     sub.innerHTML = (msgs[you-1] || "") + (rw.noRewards ? '  ·  Friendly match, no rewards' : rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
+    { const tl = window.Trophies && Trophies.last();
+      if (tl && tl.delta) sub.innerHTML += `  ·  <span class="tr-res ${tl.delta > 0 ? 'up' : 'down'}">${icon('trophy')}${tl.delta > 0 ? '+' : ''}${tl.delta}</span>`; }
     { const me = sorted.find(p => p.local);                      // how close it was
       if (me && me.finished){
         let line = '';
@@ -2510,7 +2512,7 @@ function draw() {
 
 
 // The arrow over YOUR player in the one-screen modes and the Gauntlet: always above hats, crowns and bombs, never covering them
-const TALL_HAT = { tophat:20, wizard:24, chef:16, crown:16, party:20, propeller:14, antenna:20, 'c-unicorn':18, 'c-mohawk':16, 'p-storm':22, 'p-phoenix':22, 'p-planet':20, 'p-starhalo':20, 'p-magma':18, 'c-cake':20, 'c-pizza':14, 'c-icecream':18, bunny:16, 'c-cone':16, 'c-jester':14, 'c-bulb':16, 'c-tiara':12, 'c-dino':14 };
+const TALL_HAT = { voidhorns:32, tophat:20, wizard:24, chef:16, crown:16, party:20, propeller:14, antenna:20, 'c-unicorn':18, 'c-mohawk':16, 'p-storm':22, 'p-phoenix':22, 'p-planet':20, 'p-starhalo':20, 'p-magma':18, 'c-cake':20, 'c-pizza':14, 'c-icecream':18, bunny:16, 'c-cone':16, 'c-jester':14, 'c-bulb':16, 'c-tiara':12, 'c-dino':14 };
 function drawYouArrow(c, p, extra){
     if (!p || p.finished || p.out || p.gone) return;
     const t = performance.now() / 1000, hat = p.look && p.look.hat && p.look.hat !== 'none' ? (TALL_HAT[p.look.hat] || 12) : 0;
@@ -2743,6 +2745,7 @@ function openSettings(from){ settingsReturn = from || 'start'; syncSettingsUI();
 document.getElementById('btn-settings').addEventListener('click', () => openSettings('start'));
 document.getElementById('set-close').addEventListener('click', () => showScreen(settingsReturn));
 document.getElementById('btn-gems').addEventListener('click', () => { menuTab('shop'); renderShop('resources'); SFX.play('count'); });
+document.getElementById('btn-coins').addEventListener('click', () => { menuTab('shop'); renderShop('resources'); SFX.play('count'); });      // the + next to the coins opens the vault (coin deals live there)
 document.getElementById('set-haptics').addEventListener('click', () => {
     hapticsOn = !hapticsOn; try { localStorage.setItem('rr_haptics', hapticsOn ? '1' : '0'); } catch(e){}
     document.getElementById('set-haptics').classList.toggle('on', hapticsOn); if (hapticsOn) haptic(30);
@@ -3991,8 +3994,46 @@ function drawHatAcc(c, s, k, id, t){
         c.fillStyle='#5fc78b';c.beginPath();c.ellipse(-5*k,top+1*k,2.6*k,1.2*k,-.35,0,7);c.ellipse(4*k,top+1*k,2.6*k,1.2*k,.35,0,7);c.fill();
     }
     if (id === 'voidhorns'){
-        for(const sx of [-1,1]){const g=c.createLinearGradient(0,top-14*k,0,top+2*k);g.addColorStop(0,'#d9c4ff');g.addColorStop(.5,'#795bd4');g.addColorStop(1,'#29213f');c.fillStyle=g;c.beginPath();c.moveTo(sx*4*k,top+2*k);c.quadraticCurveTo(sx*11*k,top-2*k,sx*10*k,top-14*k);c.quadraticCurveTo(sx*8*k,top-8*k,sx*6*k,top-8*k);c.quadraticCurveTo(sx*7*k,top-2*k,sx*4*k,top+2*k);c.fill();outline(c,k,.9);}
-        c.fillStyle='#ff75d1';c.beginPath();c.arc(0,top-1*k,1.7*k,0,7);c.fill();
+        // DARK ANTLERS: huge branching antlers of black crystal with a violet-to-white gradient, glowing pink veins, burning tip orbs, void embers rising off them and a shard crest around a pulsing void gem
+        const T = t || 0, pul = 0.5 + 0.5 * Math.sin(T * 3.2);
+        const aura = c.createRadialGradient(0, top - 12*k, 2*k, 0, top - 12*k, 22*k); aura.addColorStop(0, 'rgba(150,80,255,' + (0.30 + 0.12 * pul) + ')'); aura.addColorStop(1, 'rgba(150,80,255,0)');
+        c.fillStyle = aura; c.beginPath(); c.arc(0, top - 12*k, 22*k, 0, 7); c.fill();
+        const beam = [[3.2, 1.5], [10.5, -2, 10.8, -11], [11.4, -18, 9, -22], [10.4, -25, 13.2, -28]];
+        const tines = [
+            [[10.5, -8.5], [15.5, -9.2, 16.8, -14], [17.6, -17, 17.2, -20.5]],
+            [[10.9, -14], [7.4, -15.2, 6, -20], [5, -22.5, 4.6, -27]],
+            [[9.6, -20.6], [14, -21.5, 15.4, -26], [15.9, -28, 15.6, -30.5]],
+            [[5.6, -0.5], [4.2, -3, 3.4, -8], [3.1, -10, 3.4, -11.5]],
+        ];
+        const path = (sx, pts) => { c.beginPath(); c.moveTo(sx * pts[0][0] * k, top + pts[0][1] * k); for (let i = 1; i < pts.length; i++) { const p = pts[i]; if (p.length === 4) c.quadraticCurveTo(sx * p[0] * k, top + p[1] * k, sx * p[2] * k, top + p[3] * k); } };
+        const tipsAt = [];
+        c.lineCap = 'round'; c.lineJoin = 'round';
+        for (const sx of [-1, 1]) {
+            const shapes = [beam, ...tines];
+            const grad = c.createLinearGradient(0, top + 2*k, 0, top - 30*k); grad.addColorStop(0, '#1d0d3a'); grad.addColorStop(0.3, '#5a34c8'); grad.addColorStop(0.7, '#a77bff'); grad.addColorStop(1, '#f4ebff');
+            for (const sh of shapes) { path(sx, sh); c.strokeStyle = '#08030f'; c.lineWidth = (sh === beam ? 5.0 : 3.5) * k; c.stroke(); }           // dark outline
+            for (const sh of shapes) { path(sx, sh); c.strokeStyle = grad; c.lineWidth = (sh === beam ? 3.6 : 2.2) * k; c.stroke(); }                // crystal body
+            c.save(); c.shadowBlur = 7 * k; c.shadowColor = '#ff4fd0';
+            for (const sh of shapes) { path(sx, sh); c.strokeStyle = 'rgba(255,120,220,' + (0.45 + 0.4 * pul) + ')'; c.lineWidth = 0.7 * k; c.stroke(); }       // glowing veins
+            c.restore();
+            for (const sh of shapes) { path(sx, sh); c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 0.35 * k; c.save(); c.translate(-sx * 0.6 * k, 0); c.stroke(); c.restore(); }   // crystal edge light
+            for (const sh of [beam, tines[0], tines[1], tines[2]]) { const e = sh[sh.length - 1]; tipsAt.push([sx * e[2] * k, top + e[3] * k]); }
+        }
+        for (let i = 0; i < tipsAt.length; i++) {                                                     // burning orbs on every tip
+            const [x, y] = tipsAt[i], q = 0.5 + 0.5 * Math.sin(T * 4 + i * 1.7), r = (1.1 + 0.5 * q) * k;
+            const og = c.createRadialGradient(x, y, 0, x, y, r * 3); og.addColorStop(0, 'rgba(255,255,255,0.95)'); og.addColorStop(0.25, 'rgba(255,130,225,0.85)'); og.addColorStop(1, 'rgba(160,70,255,0)');
+            c.fillStyle = og; c.beginPath(); c.arc(x, y, r * 3, 0, 7); c.fill();
+        }
+        for (const sx of [-1, 1]) for (let i = 0; i < 6; i++) {                                       // embers of void drifting up from the antlers
+            const u = (T * 0.32 + i / 6 + (sx > 0 ? 0.13 : 0)) % 1, x = sx * (7 + Math.sin(u * 7 + i * 2) * 4 + u * 3) * k, y = top - (3 + u * 30) * k, a = Math.sin(Math.PI * u);
+            c.globalAlpha = 0.85 * a; c.fillStyle = i % 2 ? '#e6c8ff' : '#ff8fe0'; c.beginPath(); c.arc(x, y, (0.45 + 0.4 * (1 - u)) * k, 0, 7); c.fill();
+        }
+        c.globalAlpha = 1;
+        c.fillStyle = '#0d0618'; c.strokeStyle = '#7a45d8'; c.lineWidth = 0.6 * k;                    // a crest of shards around the gem
+        for (let i = -3; i <= 3; i++) { const h = (4.4 - Math.abs(i) * 0.7) * k, x = i * 1.9 * k; c.beginPath(); c.moveTo(x - 1.1 * k, top + 1.2 * k); c.lineTo(x, top + 1.2 * k - h); c.lineTo(x + 1.1 * k, top + 1.2 * k); c.closePath(); c.fill(); c.stroke(); }
+        const gg = c.createRadialGradient(0, top - 1 * k, 0, 0, top - 1 * k, 4 * k); gg.addColorStop(0, 'rgba(255,255,255,' + (0.8 + 0.2 * pul) + ')'); gg.addColorStop(0.3, '#ff75d1'); gg.addColorStop(1, 'rgba(120,40,220,0)');
+        c.fillStyle = gg; c.beginPath(); c.arc(0, top - 1 * k, 4 * k, 0, 7); c.fill();
+        c.fillStyle = '#1a0830'; c.beginPath(); c.ellipse(0, top - 1 * k, 0.7 * k, 1.5 * k, 0, 0, 7); c.fill();
     }
     c.restore();
 }
@@ -4183,6 +4224,10 @@ function prog(){
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
     if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
     if (!Array.isArray(d.lvClaimed)) d.lvClaimed = [];
+    if (typeof d.tr !== 'number') d.tr = 0;
+    if (typeof d.trTop !== 'number') d.trTop = 0;
+    if (typeof d.trStreak !== 'number') d.trStreak = 0;
+    if (!Array.isArray(d.trClaimed)) d.trClaimed = [];
     if (!Array.isArray(d.rageClaimed)) d.rageClaimed = [];
     d.rage = !!d.rage;
     if (!Array.isArray(d.emotes)) d.emotes = ['gg', 'gl', 'wp', 'oops'];
@@ -4396,6 +4441,7 @@ function escGameOver(p){
     refreshMenu();
     const standings = [...players].sort((a,b) => b.escape.diedAt - a.escape.diedAt);
     const place = standings.indexOf(lp) + 1;
+    if (window.Trophies) Trophies.record('escape', place);
     const meters = Math.max(0, Math.floor((START_Y - localRun.bestY) / ESC_METERS));
     const prevBest = load('rr_esc_best_score', 0);
     const isBest = localRun.score >= prevBest && localRun.score > 0;
@@ -4491,7 +4537,7 @@ function renderShop(cat){
                 renderLook(b.querySelector('canvas'), preview, { scale:cat === 'costume' ? 0.21 : 0.27, cy:cat === 'costume' ? 0.64 : 0.66 });
                 { const tp = b.querySelector('canvas.tr-pv'); if (tp) drawTrailPreview(tp, it, undefined, 1.7); }
                 if (window.Wish) Wish.decorate(b, cat, it, owned);
-                if ((it.premium || it.id === 'crown' || cat === 'costume') && cat !== 'trail') animated.push([b.querySelector('canvas'), preview]);
+                if ((it.premium || it.id === 'crown' || it.id === 'voidhorns' || cat === 'costume') && cat !== 'trail') animated.push([b.querySelector('canvas'), preview]);
                 b.addEventListener('click', () => {
                     const q = prog();
                     const slot = cat;
@@ -4640,6 +4686,7 @@ function refreshMenu(){
     if (window.Ads) Ads.refreshHome();
     if (window.Streak) Streak.refreshHome();
     if (window.Wish) Wish.refresh();
+    if (window.Trophies) Trophies.refresh();
     if (window.Notify) Notify.maybeAsk();
     if (window.Gauntlet) Gauntlet.refreshHome();
     refreshShopBadge();
@@ -4683,7 +4730,9 @@ function rewardRace(place, finished, lootId){
     if (gameMode === 'race' && !window.rankedMatch && !window.partyMatch && !alreadyGranted && window.Gentle) Gentle.record(place, finished);       // adaptive difficulty follows your result
     rewardRace.keyEarned = false;
     if (!alreadyGranted){
-        const p = prog(); p.races++; if (finished && place === 1) p.wins++;
+        const p = prog(); p.races++; if (finished && place === 1) p.wins++; saveProg(p);
+        if (window.Trophies) Trophies.record(gameMode, place);          // every placing mode pays trophies (the callers above already skip friendly matches and double pays)
+        { const p2 = prog(); p.tr = p2.tr; p.trTop = p2.trTop; p.trStreak = p2.trStreak; }
         if (window.Missions && gameMode === 'race' && !window.rankedMatch) Missions.race(place, finished);
         else p.gt.streak = 0;
         saveProg(p);

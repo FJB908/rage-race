@@ -34,6 +34,8 @@
             (window.GemCrate ? '<div class="od-card"><h3>GEM CHEST (100 GEMS)</h3>' + rows([['legendary', 'Legendary cosmetic', '12%'], ['mythic', 'Mythic cosmetic', '20%'], ['epic', 'Epic cosmetic', '40%'], ['rare', 'Rare cosmetic', '28%'], ['', 'A second cosmetic as well', '12%']]) + '<p class="od-note">A gem chest always holds one cosmetic you do not own yet, plus coins, XP, gems and boosters.</p></div>' : '') +
             '<button class="btn od-x" type="button">Close</button>';
         document.body.appendChild(root);
+        const x = document.createElement('button'); x.type = 'button'; x.className = 'od-close'; x.setAttribute('aria-label', 'Close'); x.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+        root.appendChild(x); x.onclick = () => root.remove();
         root.querySelector('.od-x').onclick = () => root.remove();
     }
     window.Odds = { show };

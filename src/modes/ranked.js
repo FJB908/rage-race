@@ -372,6 +372,7 @@
         const coins = window.Boost ? Boost.coins(PLACE_REWARD.coins[place - 1], id) : PLACE_REWARD.coins[place - 1], xp = window.Boost ? Boost.xp(PLACE_REWARD.xp[place - 1], id) : PLACE_REWARD.xp[place - 1], pass = PLACE_REWARD.pass[place - 1];
         let drop = null;
         if (!p0.lootGrants[id] && !p0.pendingDrops[id]) {
+            if (window.Trophies) Trophies.record('ranked', place);
             const day = today(); const q = prog(); if (q.rk.dropDay !== day) { q.rk.dropDay = day; q.rk.dropN = 0; }
             const canDrop = place === 1 && q.rk.dropN < DAILY_DROPS;
             if (canDrop) { q.rk.dropN++; q.races++; saveProg(q); drop = awardLootDrop(id, { coins, xp, passPoints:pass }, { tier:'rare' }); }

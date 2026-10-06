@@ -110,8 +110,12 @@
                     const a = hash(seed * 7 + j) * TAU, L = s * (1.0 + hash(seed * 3 + j) * 0.9); let x = Math.cos(a) * s * 1.05, y = Math.sin(a) * s * 1.05; const pts = [[x, y]];
                     for (let q = 1; q <= 6; q++) { const f = q / 6, nx = Math.cos(a) * (s * 1.05 + L * f) + (hash(seed * 11 + j * 5 + q) - 0.5) * 3.2 * k, ny = Math.sin(a) * (s * 1.05 + L * f) + (hash(seed * 13 + j * 7 + q) - 0.5) * 3.2 * k; pts.push([nx, ny]); }
                     c.lineJoin = 'round'; c.lineCap = 'round';
-                    for (const [w, col, sb] of [[3.2, 'rgba(60,190,255,0.55)', 10], [1.1, '#ffffff', 0]]) { c.lineWidth = w * k; c.strokeStyle = col; c.shadowBlur = sb * k; c.shadowColor = '#4fd3ff'; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); }
-                    c.shadowBlur = 0;
+                    // every bolt fades out towards its tip (segment by segment) instead of ending in a hard edge
+                    for (const [w, col, sb] of [[3.2, 'rgba(60,190,255,0.55)', 10], [1.1, '#ffffff', 0]]) {
+                        c.lineWidth = w * k; c.strokeStyle = col; c.shadowBlur = sb * k; c.shadowColor = '#4fd3ff';
+                        for (let q = 1; q < pts.length; q++) { c.globalAlpha = Math.pow(Math.max(0, 1 - (q - 0.5) / 6.2), 1.5); c.beginPath(); c.moveTo(pts[q - 1][0], pts[q - 1][1]); c.lineTo(pts[q][0], pts[q][1]); c.stroke(); }
+                    }
+                    c.globalAlpha = 1; c.shadowBlur = 0;
                 }
             },
             body(c, s, k, t) {
@@ -269,11 +273,6 @@
                 const top = -s;
                 for (const sx of [-1, 1]) { c.fillStyle = '#efe3c0'; c.beginPath(); c.moveTo(sx * 4 * k, top + 1 * k); c.quadraticCurveTo(sx * 9 * k, top - 2 * k, sx * 8 * k, top - 9 * k); c.quadraticCurveTo(sx * 6 * k, top - 3 * k, sx * 1.8 * k, top - 0.5 * k); c.closePath(); c.fill(); outline(c, k, 0.8); }
                 c.fillStyle = '#d9304a'; for (let i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(i * 2.6 * k - 1.3 * k, top + 0.5 * k); c.lineTo(i * 2.6 * k, top - (i === 0 ? 5 : 3.4) * k); c.lineTo(i * 2.6 * k + 1.3 * k, top + 0.5 * k); c.closePath(); c.fill(); }
-                const ph = (t % 3.2); if (ph < 0.8) {                                           // a small breath of fire now and then
-                    const f = ph / 0.8, L = s * (0.8 + f * 1.4);
-                    const g = c.createLinearGradient(s * 0.7, 0, s * 0.7 + L, 0); g.addColorStop(0, 'rgba(255,230,120,0.95)'); g.addColorStop(0.5, 'rgba(255,120,30,0.8)'); g.addColorStop(1, 'rgba(255,60,20,0)');
-                    c.fillStyle = g; c.beginPath(); c.moveTo(s * 0.7, 3 * k); c.quadraticCurveTo(s * 0.7 + L * 0.5, -3 * k * (1 + f), s * 0.7 + L, -1 * k); c.quadraticCurveTo(s * 0.7 + L * 0.6, 5 * k * (1 + f), s * 0.7, 5.5 * k); c.closePath(); c.fill();
-                }
             },
         },
         /* ------------------------------------------------------------------------------ RAINBOW PHOENIX */

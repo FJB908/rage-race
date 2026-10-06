@@ -1,0 +1,29 @@
+/* ---- the trophy count under the character on the home screen ---- */
+.m-trophy { position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; align-self: center; max-width: 100%; min-height: 54px; padding: 6px 14px 6px 8px; border: 1px solid color-mix(in srgb, var(--ac, #35e0c8) 45%, transparent); border-radius: 16px; background: linear-gradient(100deg, color-mix(in srgb, var(--ac, #35e0c8) 16%, #121722), #121722 75%); color: inherit; text-align: left; -webkit-tap-highlight-color: transparent; transition: transform .12s; }
+.m-trophy:active { transform: scale(.97); }
+.tc-cup { flex: none; width: 40px; height: 40px; filter: drop-shadow(0 2px 6px rgba(255,190,40,.45)); } .tc-cup .ico { width: 100%; height: 100%; }
+.tc-mid { display: flex; flex-direction: column; gap: 3px; min-width: 120px; }
+.tc-n { font: 900 22px/1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.tc-ar { font-size: 10.5px; font-weight: 800; letter-spacing: .05em; color: color-mix(in srgb, var(--ac, #35e0c8) 70%, #fff); white-space: nowrap; }
+.tc-bar { display: block; height: 4px; border-radius: 2px; background: rgba(255,255,255,.12); overflow: hidden; }
+.tc-bar u { display: block; height: 100%; border-radius: 2px; background: var(--ac, #35e0c8); text-decoration: none; transition: width .3s; }
+.tc-next { flex: none; display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 34px; } .tc-next .ico { width: 24px; height: 24px; } .tc-next small { font-size: 9.5px; font-weight: 800; color: #8b95a7; }
+.tc-next em { font-style: normal; display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: #ff4d6a; color: #fff; font-weight: 900; font-size: 12px; }
+.m-trophy.ready { box-shadow: 0 0 20px -6px #ffcf3f; border-color: rgba(255,207,63,.6); }
+.tc-d { position: absolute; right: 12px; top: -6px; font: 900 18px/1 system-ui; opacity: 0; pointer-events: none; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
+.tc-d.up { color: #7cf29c; } .tc-d.down { color: #ff6b81; }
+.tc-d.go { animation: tcPop 1.5s ease-out; }
+@keyframes tcPop { 0% { opacity: 0; transform: translateY(8px) scale(.7); } 15% { opacity: 1; transform: translateY(0) scale(1.15); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-16px); } }
+/* ---- the road screen (shares the level-reward layout) ---- */
+.tr-hero { align-items: center; }
+.tr-cup { flex: none; width: 66px; height: 66px; filter: drop-shadow(0 3px 10px rgba(255,190,40,.5)); } .tr-cup .ico { width: 100%; height: 100%; }
+.tr-hero #tr-num { font: 900 34px/1 "Bricolage Grotesque", system-ui, sans-serif; color: #fff; letter-spacing: 0; }
+.tr-arena { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; letter-spacing: .05em; color: #cfd6e4; } .tr-arena i { width: 9px; height: 9px; border-radius: 50%; display: block; }
+.tr-hero .lr-bar i { background: var(--ac, #35e0c8); }
+.tr-how { margin: 0 16px 6px; font-size: 11.5px; color: #8b95a7; line-height: 1.4; }
+.tr-ah { position: relative; display: flex; align-items: baseline; gap: 10px; margin: 14px 0 6px; padding: 8px 12px; border-radius: 12px; background: linear-gradient(100deg, color-mix(in srgb, var(--ac) 28%, #161b24), #161b24 80%); border: 1px solid color-mix(in srgb, var(--ac) 50%, transparent); }
+.tr-ah span { font-size: 10px; font-weight: 900; letter-spacing: .14em; color: var(--ac); } .tr-ah b { font-size: 16px; } .tr-ah em { margin-left: auto; font-style: normal; font-size: 12px; font-weight: 800; color: #8b95a7; }
+.tr-ah.far { opacity: .6; } .tr-ah.here { box-shadow: 0 0 22px -8px var(--ac); }
+.tr-node { width: 46px; height: 46px; font-size: 11px; } .tr-node span { font-size: 11px; }
+.lr-row.claimed .tr-node svg { width: 18px; height: 18px; }
+.tr-res { display: inline-flex; align-items: center; gap: 4px; font-weight: 900; vertical-align: middle; } .tr-res .ico { width: 20px; height: 20px; } .tr-res.up { color: #7cf29c; } .tr-res.down { color: #ff6b81; }

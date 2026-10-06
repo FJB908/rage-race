@@ -8,3 +8,5 @@
 .od-row b { margin-left:auto; font-variant-numeric:tabular-nums; } .od-row i { width:10px; height:10px; border-radius:50%; background:var(--c); flex:none; }
 .od-note { margin:8px 0 0; font-size:12px; color:#8b95a7; line-height:1.4; }
 #odds-root button.od-x { width:100%; max-width:400px; margin-top:4px; }
+#odds-root .od-close { position:fixed; top:calc(10px + env(safe-area-inset-top,0px)); left:10px; width:44px; height:44px; display:grid; place-items:center; border:0; border-radius:22px; background:rgba(13,16,23,.82); color:#e8ecf5; z-index:2; }
+#odds-root .od-close:active { background:rgba(255,255,255,.14); }
