@@ -5,8 +5,8 @@
 (function () {
     'use strict';
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
-    const DJ_TIME = 7, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
-    const BOMB_R = 174, BOMB_LIFE = 6, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds until it explodes, stun length, immunity after a stun
+    const DJ_TIME = 5, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
+    const BOMB_R = 174, BOMB_LIFE = 3.5, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds until it explodes, stun length, immunity after a stun
     const clouds = [], bombs = [];
     const sc = a => Math.max(-CANNON_ANG, Math.min(CANNON_ANG, a));
     const angOf = (dx, dy) => Math.atan2(dx, -dy);                      // 0 = straight up, negative = left

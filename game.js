@@ -846,7 +846,9 @@ function updateQuakes(dt){
             pl.quakeWarn -= dt;
             if (pl.quakeWarn <= 0){
                 pl.quakeWarn = 0;
-                if (players.some(o => o.plat === pl && o.mode === 'idle')) continue;          // somebody stands on it: it stays
+                for (const o of players) if (o.plat === pl && o.mode === 'idle' && !o.remote){          // whoever still stands on it falls with it (the warning was the moment to jump away)
+                    o.mode = 'air'; o.plat = null; o.vx *= 0.5; o.vy = Math.max(o.vy, 0) + 140; burst(o.x, o.y + o.r, ITEMS.quake.color, 12, 180); if (o.local) camShake = Math.max(camShake, 8);
+                }
                 pl.quakeDown = QUAKE_DOWN; pl.active = false; pl.respawn = 0;
                 burst(pl.x, pl.y, ITEMS.quake.color, 18, 200);
             }
@@ -2050,7 +2052,7 @@ function showResults() {
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
     if (!(localP && localP.finished)) SFX.sting('lose');                  // a finished player already heard the fanfare; the results music follows it
-    sub.innerHTML = (msgs[you-1] || "") + (rw.noRewards ? '  ·  Friendly match, no rewards' : rw.noDrop ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
+    sub.innerHTML = (msgs[you-1] || "") + (rw.noRewards ? '  ·  Friendly match, no rewards' : rw.noDrop && (rw.coins || rw.xp || rw.passPoints) ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
     { const tl = window.Trophies && Trophies.last();
       if (tl && tl.delta) sub.innerHTML += `  ·  <span class="tr-res ${tl.delta > 0 ? 'up' : 'down'}">${icon('trophy')}${tl.delta > 0 ? '+' : ''}${tl.delta}</span>`; }
     { const me = sorted.find(p => p.local);                      // how close it was
@@ -4226,6 +4228,7 @@ function prog(){
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
     if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
     if (!Array.isArray(d.lvClaimed)) d.lvClaimed = [];
+    if (!d.wm || typeof d.wm.n !== 'number' || !Array.isArray(d.wm.got)) d.wm = { n: 0, got: [] };
     if (typeof d.tr !== 'number') d.tr = 0;
     if (typeof d.trTop !== 'number') d.trTop = 0;
     if (typeof d.trStreak !== 'number') d.trStreak = 0;
@@ -4679,6 +4682,7 @@ function refreshMenu(){
     const inp = document.getElementById('m-name-input');
     if (document.activeElement !== inp) inp.value = p.name;
     { const mk = p.lastMode in MODE_POSTER ? p.lastMode : 'race', mp = MODE_POSTER[mk], row = document.querySelector('#s-start .m-row[data-go="play"]');         // the mode row looks like that mode's poster in the Play tab
+      const wrap = document.getElementById('m-modewrap'); if (wrap) wrap.style.setProperty('--mc', mp.c);
       document.getElementById('m-mode').textContent = mp.n; const sub = document.getElementById('m-mode-sub'); if (sub) sub.textContent = mp.s; if (row) row.style.setProperty('--mc', mp.c); }
     document.getElementById('m-mode-ico').innerHTML = (p.lastMode === 'ranked' && window.Ranked) ? Ranked.emblem(Ranked.state().tier, 30) : icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
     if (window.Ranked) Ranked.refreshHome();
@@ -4690,6 +4694,7 @@ function refreshMenu(){
     if (window.Streak) Streak.refreshHome();
     if (window.Wish) Wish.refresh();
     if (window.Trophies) Trophies.refresh();
+    if (window.WinMeter) WinMeter.render();
     if (window.Notify) Notify.maybeAsk();
     if (window.Gauntlet) Gauntlet.refreshHome();
     refreshShopBadge();
@@ -4716,11 +4721,12 @@ function refreshMenu(){
 function rewardRace(place, finished, lootId){
     if (window.partyMatch && partyMatch.noRewards) return { noDrop:true, noRewards:true, coins:0, xp:0, passPoints:0 };     // a match with only lobby members pays nothing (no farming with friends)
     const id = lootId || newLootId('race');
-    const coins0 = finished ? [60, 40, 25, 15][place-1] || 10 : 10;
+    const win = place === 1 && finished;                                        // only the winner is paid (with a chest); everybody else gets trophies and nothing else
+    const coins0 = win ? 60 : 0;
     const coins = window.Boost ? Boost.coins(coins0, id) : coins0;       // coin booster
-    const xp0   = finished ? [60, 45, 35, 25][place-1] || 15 : 15;
+    const xp0   = win ? 60 : 0;
     const xp    = window.Boost ? Boost.xp(xp0, id) : xp0;                         // XP booster
-    const passPoints = finished ? [50, 40, 32, 25][place-1] || 20 : 15;
+    const passPoints = win ? 50 : 0;
     const pp = prog(), alreadyGranted = !!(pp.lootGrants[id] || pp.pendingDrops[id]);
     // Only the winner earns a chest; everyone else gets the base rewards straight away.
     let drop = null;
@@ -4735,7 +4741,7 @@ function rewardRace(place, finished, lootId){
     if (!alreadyGranted){
         const p = prog(); p.races++; if (finished && place === 1) p.wins++; saveProg(p);
         if (window.Trophies) Trophies.record(gameMode, place);          // every placing mode pays trophies (the callers above already skip friendly matches and double pays)
-        { const p2 = prog(); p.tr = p2.tr; p.trTop = p2.trTop; p.trStreak = p2.trStreak; }
+        { const p2 = prog(); p.tr = p2.tr; p.trTop = p2.trTop; p.trStreak = p2.trStreak; p.wm = p2.wm; }
         if (window.Missions && gameMode === 'race' && !window.rankedMatch) Missions.race(place, finished);
         else p.gt.streak = 0;
         saveProg(p);

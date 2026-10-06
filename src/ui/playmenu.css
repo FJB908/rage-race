@@ -62,3 +62,20 @@
 #s-start .m-row[data-go="play"] .m-row-t { font-family: "Bricolage Grotesque", "Arial Rounded MT Bold", system-ui, sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -.01em; line-height: 1.05; color: color-mix(in srgb, var(--mc) 14%, #fff); }
 #s-start .m-row[data-go="play"] .m-row-sub { display: block; margin-top: 2px; font-size: 12px; color: rgba(255,255,255,.6); }
 #s-start .m-row[data-go="play"] .m-row-chg { position: relative; z-index: 1; background: rgba(255,255,255,.14); color: #fff; }
+
+/* the win meter: ten pieces along the top of the mode card, a reward on every second one */
+.m-modewrap { position: relative; z-index: 2; --mc: #35e0c8; }
+#s-start .m-modewrap .m-row[data-go="play"] { padding-top: 46px; min-height: 116px; width: 100%; box-sizing: border-box; }
+.wm { position: absolute; z-index: 3; left: 20px; right: 20px; top: 28px; display: flex; gap: 4px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.wm-s { position: relative; flex: 1; height: 7px; }
+.wm-s i { position: absolute; inset: 0; border-radius: 4px; background: rgba(255,255,255,.14); display: block; transition: background .3s; }
+.wm-s.on i { background: var(--mc); box-shadow: 0 0 8px -2px var(--mc); }
+.wm-s.new i { animation: wmNew .7s ease-out; }
+@keyframes wmNew { 0% { transform: scaleY(2.4); filter: brightness(2); } 100% { transform: none; filter: none; } }
+.wm-s b { position: absolute; left: 50%; bottom: 10px; width: 17px; height: 17px; margin-left: -8.5px; display: grid; place-items: center; opacity: .55; filter: grayscale(.6); transition: opacity .3s, filter .3s; }
+.wm-s b .ico, .wm-s b svg { width: 100%; height: 100%; }
+.wm-s.rw.on b { opacity: 1; filter: none; }
+.wm-s.can b { animation: wmBob 1s ease-in-out infinite; filter: drop-shadow(0 0 5px var(--rc)); }
+.wm-s.got b { opacity: .3; filter: grayscale(1); }
+@keyframes wmBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.wm.ready::after { content: ""; position: absolute; right: -6px; top: -14px; width: 8px; height: 8px; border-radius: 50%; background: #ff4d6a; box-shadow: 0 0 0 2px #10141c; }

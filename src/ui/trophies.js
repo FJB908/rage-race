@@ -36,6 +36,7 @@
         const before = p.tr; p.tr = Math.max(0, p.tr + d);
         p.trTop = Math.max(p.trTop, arenaOf(p.tr));
         saveProg(p);
+        if (place === 1 && window.WinMeter) WinMeter.add();                                  // every win fills a piece of the win meter on the home screen
         lastResult = { delta: p.tr - before, tr: p.tr, newArena: arenaOf(p.tr) > arenaOf(before) };
         return lastResult;
     }

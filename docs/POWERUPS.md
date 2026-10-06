@@ -16,3 +16,7 @@ The Magnet was built and tried and then removed again. Item odds: shield is no l
 
 ## Rocket (updated)
 The rocket now always launches you at its full speed (2350, up from 1650), whether you stand, fall or are already rising. It does not add on top of a jump. Climb is about 1100 px (about twice as high as before; a falling player used to get only ~110 px). You cannot be knocked off course for the first half second.
+
+## Changes (latest)
+- Double jump lasts 5 s (was 7). The stun bomb explodes after 3.5 s (was 6).
+- Earthquake: a player still standing on a warned platform now falls with it (it no longer stays up).

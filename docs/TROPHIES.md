@@ -8,3 +8,7 @@ A visible progress number, like the trophies in Clash Royale and Brawl Stars. Co
 - **Road.** 40 milestones (a quick one at 15, then four per arena: start, 1/4, 1/2, 3/4). Arena starts give a cosmetic (rare to legendary) and the last one a gem chest; the rest rotate coins, chests, XP boosters and gems.
 - **Home screen.** A chip under the character: count (rolls up or down after a match with a +/- pop), arena name, bar to the next arena, the next reward and a red number when rewards are waiting. Tap = the road.
 - Profile fields: `tr`, `trTop`, `trStreak`, `trClaimed`. `rr_tr_shown` (localStorage) is the number the chip last showed, so it can roll to the new value.
+
+## Rewards after a match and the win meter
+- Only a win (1st place) pays coins, XP and pass points, in the form of a chest. 2nd to 4th get trophies and nothing else (the result screen shows no reward line).
+- Win meter (`src/ui/winmeter.js`): ten pieces on top of the mode card on the home screen. Every win fills one piece. Rewards: 2 wins a common chest, 4 a rare chest, 6 a x2 XP booster, 8 an epic chest, 10 a legendary chest, then it starts again. Tap the bar to collect.

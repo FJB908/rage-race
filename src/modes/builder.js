@@ -654,7 +654,7 @@
             pod +
             '<div class="bd-rows sm">' + order.map((i, k) => '<div class="bd-rr' + (i === 0 ? ' me' : '') + '" style="--pc:' + PCOL[i] + '"><span class="bd-pl' + (k === 0 ? ' g' : '') + '">' + (k + 1) + '</span><div class="bd-who"><b>' + (i === 0 ? 'YOU' : B.roster[i].name) + '</b></div><div class="bd-tot"><strong>' + B.scores[i] + '</strong><i>pts</i></div></div>').join('') + '</div>' +
             '<div class="loot-drop" id="bd-loot"></div>' +
-            '<div class="bd-rw">' + (rw.noDrop ? R('coin', rw.coins, { plus: true }) + R('xp', rw.xp, { plus: true }) + R('pass', rw.passPoints, { plus: true }) : '') + '</div>' +
+            '<div class="bd-rw">' + (rw.noDrop && (rw.coins || rw.xp || rw.passPoints) ? R('coin', rw.coins, { plus: true }) + R('xp', rw.xp, { plus: true }) + R('pass', rw.passPoints, { plus: true }) : '') + '</div>' +
             '<button class="btn bd-next" id="bd-again" type="button">PLAY AGAIN</button><button class="btn ghost" id="bd-menu" type="button" style="margin-top:10px">MAIN MENU</button>';
         if (window.Podium) setTimeout(() => Podium.start(panel), 60);
         if (!rw.noDrop) renderLootDrop('bd-loot', rw);

@@ -481,7 +481,7 @@
         const standings = players.slice().sort((a, b) => (a.place || 9) - (b.place || 9));
         const title = pl === 1 ? 'LAST ONE STANDING' : pl === 2 ? 'SO CLOSE' : pl === 3 ? 'BLOWN UP' : 'FIRST TO BLOW';
         const rw = R_.rw || {};
-        const chips = rw.noDrop ? (R('coin', rw.coins, { plus:true }) + R('xp', rw.xp, { plus:true }) + R('pass', rw.passPoints, { plus:true })) : '';
+        const chips = rw.noDrop && (rw.coins || rw.xp || rw.passPoints) ? (R('coin', rw.coins, { plus:true }) + R('xp', rw.xp, { plus:true }) + R('pass', rw.passPoints, { plus:true })) : '';
         const best = lsNum('rr_tag_best');
         $('tg-result').innerHTML = '<div class="tg-rc"><div class="tg-rtop' + (pl === 1 ? ' win' : '') + '"><small>BOOM TAG</small><h1>' + title + '</h1><p>' + (tg.passes ? 'You passed the bomb ' + tg.passes + (tg.passes === 1 ? ' time' : ' times') : 'You never passed the bomb') + '</p></div>' + podTg(standings, pl, p => p.place === 1 ? 'Survived' : 'Round ' + (p.round || '')) +
             '<div class="tg-rows">' + standings.map(p => '<div class="tg-row' + (p.local ? ' me' : '') + '"><b>' + (p.place || '') + '</b><i style="background:' + p.color + '"></i><span>' + (p.local ? 'YOU' : escH(p.name)) + '</span><em>' + (p.place === 1 ? 'Survived' : 'Round ' + (p.round || '')) + '</em></div>').join('') + '</div>' +
