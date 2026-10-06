@@ -4513,6 +4513,7 @@ function renderShop(cat){
     const current = prog();
     grid.hidden = cat === 'resources'; resources.hidden = cat !== 'resources';
     document.querySelectorAll('.m-pill[data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === cat));
+    grid.classList.toggle('trails', cat === 'trail');                 // set before the early returns below: finishers/emotes must not inherit the trails look
     if (cat === 'resources'){ renderResourceShop(); return; }
     if (cat === 'emote'){ if (window.Emotes) Emotes.renderShop(grid); return; }
     if (cat === 'finisher'){ if (window.Finishers) Finishers.renderShop(grid); return; }
