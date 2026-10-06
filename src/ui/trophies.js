@@ -67,7 +67,7 @@
     }
     function build() {
         if (ROAD) return ROAD; ROAD = [];
-        const BIG = [null, ['chest', 'rare'], ['skin', 'rare'], ['chest', 'epic'], ['gem', 40], ['trail', 'epic'], ['chest', 'mythic'], ['hat', 'mythic'], ['chest', 'legendary'], ['gemchest']];      // only four cosmetics on the whole road; the other arena starts are chests and gems
+        const BIG = [null, ['chest', 'rare'], ['hat', 'rare'], ['chest', 'epic'], ['gem', 40], ['trail', 'epic'], ['chest', 'mythic'], ['hat', 'mythic'], ['chest', 'legendary'], ['gemchest']];      // only four cosmetics on the whole road (no skins); the other arena starts are chests and gems
         ARENAS.forEach((A, i) => {
             const next = ARENAS[i + 1] ? ARENAS[i + 1].at : A.at + SPAN_LAST, span = next - A.at;
             const coins = Math.round(100 * (1 + i * 0.9) / 50) * 50, tier = i < 2 ? 'common' : i < 4 ? 'rare' : i < 7 ? 'epic' : 'mythic';

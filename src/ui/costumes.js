@@ -330,6 +330,7 @@
         { id: 'dragon',  name: 'Dragon',         premium: true, gemPrice: 2000, price: 0, rarity: 'legendary' },
         { id: 'phoenix', name: 'Rainbow Phoenix', premium: true, gemPrice: 2800, price: 0, rarity: 'legendary' },
     ];
+    COSTUMES.forEach(c => { if (c.price > 0 && !c.premium) c.price = Math.round(c.price * 1.5 / 1000) * 1000; });
     const BY = Object.fromEntries(COSTUMES.map(c => [c.id, c]));
     const has = id => !!(id && id !== 'none' && DEFS[id]);
     const run = (part, c, s, k, id, t, a, b) => { const d = DEFS[id]; if (!d || !d[part]) return false; c.save(); try { const r = d[part](c, s, k, t || 0, a, b); c.restore(); return r !== false; } catch (e) { c.restore(); return false; } };

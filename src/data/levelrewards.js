@@ -3,7 +3,7 @@
 const LEVEL_MAX = 50;
 const LEVEL_REWARDS = (function () {
     const BOOST = { 3:['coin', 2, 2], 4:['coin', 2, 3], 6:['xp', 2, 2], 8:['xp', 2, 2], 9:['coin', 2, 4], 12:['coin', 2, 5], 13:['xp', 2, 3], 16:['xp', 2, 3], 18:['coin', 3, 3], 22:['coin', 3, 3], 24:['xp', 3, 2], 27:['coin', 2, 6], 28:['xp', 3, 2], 32:['xp', 2, 4], 34:['coin', 2, 8], 37:['coin', 3, 4], 38:['xp', 2, 5], 42:['xp', 3, 3], 44:['coin', 3, 5], 46:['coin', 5, 3], 48:['xp', 3, 3], 49:['xp', 5, 2] };
-    const ITEM = { 10:['skin', 'ocean'], 20:['hat', 'cowboy'], 30:['trail', 'comet'], 40:['face', 'visor'] };
+    const ITEM = { 10:['hat', 'beanie'], 20:['hat', 'cowboy'], 30:['trail', 'comet'], 40:['face', 'visor'] };
     const GEM = { 15:10, 25:15, 35:20, 45:25 };
     const out = {};
     for (let L = 2; L <= LEVEL_MAX; L++) {

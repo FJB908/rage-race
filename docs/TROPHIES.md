@@ -11,7 +11,7 @@ A visible progress number, like the trophies in Clash Royale and Brawl Stars. Co
 
 ## Rewards after a match and the win meter
 - Only a win (1st place) pays coins, XP and pass points, in the form of a chest. 2nd to 4th get trophies and nothing else (the result screen shows no reward line).
-- Win meter (`src/ui/winmeter.js`): ten pieces on top of the mode card on the home screen. Every win fills one piece. Rewards: 2 wins a common chest, 4 a rare chest, 6 a x2 XP booster, 8 an epic chest, 10 a legendary chest, then it starts again. Tap the bar to collect.
+- Win meter (`src/ui/winmeter.js`): ten pieces on top of the mode card on the home screen. Every win fills one piece. Rewards: 2 wins a common chest, 4 a rare chest, 6 a x2 XP booster, 8 an epic chest, 10 a legendary chest, then it starts again. 
 
 ## Opponents get better as you climb (replaces Ranked)
 Ranked is gone. Your trophies set the strength of the bots in every placing mode:

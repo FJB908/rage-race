@@ -301,6 +301,7 @@
               for (let i = 0; i < 36; i++) s.at(250 + i * 50, () => { const a = R_(0, TAU), r = R_(30, 100); s.add({ x: p.x + Math.cos(a) * r, y: p.y - 86 + Math.sin(a) * r * .7, size: R_(3, 6), max: R_(.5, .9), shape: 'star', col: '#fff4c2', spin: 4, shrink: 1 }); });
           } },
     ];
+    FINISHERS.forEach(f => { if (f.price > 0 && !f.premium) f.price = Math.round(f.price * 1.8 / 50) * 50; });          // finishers cost a good deal more too: coin items are meant to take real play time
     const BY = Object.fromEntries(FINISHERS.map(f => [f.id, f]));
 
     /* =========================================================================== in the race ==== */

@@ -3610,12 +3610,15 @@ for (const arr of [SKINS, HATS, FACES, TRAILS]) for (const it of arr) if (MYTHIC
 // Prices follow rarity, not the order items were written in: items inside a rarity are ranked by their listed
 // price and spread across that rarity's range. Epic and legendary are deliberately a very long grind.
 // Set priceLock:true on an item (designer: "Lock exact price") to keep its own price.
-const PRICE_RANGES = { common:[250, 700], rare:[1800, 4200], epic:[7000, 14000], mythic:[18000, 30000], legendary:[35000, 70000] };
+const PRICE_RANGES = { common:[400, 1100], rare:[2900, 6700], epic:[11000, 22000], mythic:[28000, 47000], legendary:[56000, 110000] };      // hats, faces and trails
+// Skins are the big status item and cost far more: the cheapest one is 3,500 coins. With about 60 coins a win, nobody gets a skin by accident.
+const SKIN_PRICE_RANGES = { common:[3500, 6000], rare:[9000, 16000], epic:[24000, 40000], mythic:[55000, 85000], legendary:[100000, 160000] };
 for (const arr of [SKINS, HATS, FACES, TRAILS]){
-    for (const r of Object.keys(PRICE_RANGES)){
+    const ranges = arr === SKINS ? SKIN_PRICE_RANGES : PRICE_RANGES;
+    for (const r of Object.keys(ranges)){
         const items = arr.filter(i => i.rarity === r && i.price > 0 && !i.priceLock).sort((a, b) => a.price - b.price || a.name.localeCompare(b.name));
         items.forEach((it, k) => {
-            const t = items.length > 1 ? k / (items.length - 1) : 0, raw = PRICE_RANGES[r][0] + (PRICE_RANGES[r][1] - PRICE_RANGES[r][0]) * t;
+            const t = items.length > 1 ? k / (items.length - 1) : 0, raw = ranges[r][0] + (ranges[r][1] - ranges[r][0]) * t;
             const step = raw < 2000 ? 50 : raw < 10000 ? 250 : 1000; it.price = Math.round(raw / step) * step;
         });
     }
@@ -4735,7 +4738,7 @@ function rewardRace(place, finished, lootId){
     if (!alreadyGranted){
         const p = prog(); p.races++; if (finished && place === 1) p.wins++; saveProg(p);
         if (window.Trophies) Trophies.record(gameMode, place);          // every placing mode pays trophies (the callers above already skip friendly matches and double pays)
-        { const p2 = prog(); p.tr = p2.tr; p.trTop = p2.trTop; p.trStreak = p2.trStreak; p.wm = p2.wm; }
+        Object.assign(p, prog());                                         // Trophies / WinMeter saved their own fields: pick them up so the save below keeps them
         if (window.Missions && gameMode === 'race' && !window.rankedMatch) Missions.race(place, finished);
         else p.gt.streak = 0;
         saveProg(p);
