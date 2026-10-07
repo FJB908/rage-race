@@ -10,8 +10,9 @@ A visible progress number, like the trophies in Clash Royale and Brawl Stars. Co
 - Profile fields: `tr`, `trTop`, `trStreak`, `trClaimed`. `rr_tr_shown` (localStorage) is the number the chip last showed, so it can roll to the new value.
 
 ## Rewards after a match and the win meter
-- Only a win (1st place) pays coins, XP and pass points, in the form of a chest. 2nd to 4th get trophies and nothing else (the result screen shows no reward line).
-- Win meter (`src/ui/winmeter.js`): ten pieces on top of the mode card on the home screen. Every win fills one piece. Rewards: 2 wins a common chest, 4 a rare chest, 6 a x2 XP booster, 8 an epic chest, 10 a legendary chest, then it starts again. 
+- A win (1st place) pays coins, XP and pass points in the form of a chest. 2nd place earns 30 XP and 20 pass points, 3rd 15 XP and 10 pass points; 4th gets trophies only.
+- Win meter (`src/ui/winmeter.js`): ten pieces on top of the mode card on the home screen. Every win fills one piece. Rewards are given automatically (chests open on their own on the home screen, no red dot, no tapping): 2 wins a common chest, 4 a rare chest, 6 a x2 XP booster, 8 an epic chest, 10 a legendary chest. The meter starts empty every day (device date) and stays full once complete, so it is a daily goal.
+- Chests never hold skins (skins are shop only, from 3,500 coins). Duplicate cosmetics from the pass, levels, streak or trophy road refund 15% of the shop price.
 
 ## Opponents get better as you climb (replaces Ranked)
 Ranked is gone. Your trophies set the strength of the bots in every placing mode:
