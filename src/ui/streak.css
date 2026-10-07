@@ -15,10 +15,6 @@
 .sk-tile b.a-drop, .sk-tile b.a-item { font-size:8.5px; letter-spacing:.06em; }
 .sk-tile.mile { border-color:rgba(255,207,63,.55); background:linear-gradient(170deg,rgba(255,207,63,.14),#121723 70%); box-shadow:0 4px 0 #0a0d14,0 0 14px rgba(255,207,63,.15); }
 .sk-tile.prem { border-color:rgba(255,138,230,.75); background:linear-gradient(170deg,rgba(255,138,230,.22),#121723 70%); box-shadow:0 4px 0 #0a0d14,0 0 20px rgba(255,138,230,.35); }
-.sk-tile.claimed { opacity:.5; }
-.sk-check { position:absolute; inset:0; display:grid; place-items:center; color:#5df0da; font-size:30px; text-shadow:0 2px 6px rgba(0,0,0,.6); }
-.sk-check .ico { width:30px; height:30px; }
-.sk-tile.today { border-color:#ffcf3f; background:linear-gradient(170deg,rgba(255,207,63,.25),#1a2030 70%); animation:skGlow 1.4s ease-in-out infinite; transform:translateY(-2px); }
 @keyframes skGlow { 50% { box-shadow:0 4px 0 #0a0d14,0 0 14px rgba(255,207,63,.6); } }
 .sk-foot { display:flex; justify-content:center; }
 .sk-claim { width:100%; max-width:380px; min-height:56px; border:0; border-radius:16px; background:#2a3142; color:#8b95a7; font:900 17px/1 "Space Grotesk",system-ui,sans-serif; letter-spacing:.1em; display:flex; align-items:center; justify-content:center; gap:8px; }
@@ -39,3 +35,17 @@
 .sk-save { display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 8px; padding: 11px 14px; border: 1px solid rgba(255,138,230,.35); border-radius: 14px; background: rgba(255,138,230,.07); color: #fff; font: inherit; font-weight: 700; font-size: 14px; }
 .sk-save[hidden] { display: none; } .sk-save .ico-flame { width: 22px; height: 22px; } .sk-save span { flex: 1; text-align: left; } .sk-save b { display: inline-flex; align-items: center; gap: 4px; color: #ff8ae6; } .sk-save b .ico { width: 16px; height: 16px; }
 .sk-save.arm { border-color: #ff8ae6; background: rgba(255,138,230,.16); }
+
+/* three clear states: collected (green), today (gold, glowing), coming up (grey; milestones keep their colour) */
+.sk-legend { display:flex; justify-content:center; gap:16px; font-size:11px; font-weight:800; letter-spacing:.04em; color:#8b95a7; }
+.sk-legend span::before { content:""; display:inline-block; width:10px; height:10px; margin-right:6px; border-radius:3px; vertical-align:-1px; border:2px solid; }
+.sk-legend .lg-done::before { border-color:#35e0c8; background:rgba(53,224,200,.35); } .sk-legend .lg-now::before { border-color:#ffcf3f; background:rgba(255,207,63,.45); } .sk-legend .lg-next::before { border-color:#4a5366; background:#1a2030; }
+.sk-tile.claimed, .sk-tile.claimed.mile, .sk-tile.claimed.prem { border:2px solid #2fbfa8; background:linear-gradient(170deg,rgba(53,224,200,.16),#0f1a1c 75%); box-shadow:0 3px 0 #0a0d14; }
+.sk-tile.claimed small { color:#35e0c8; } .sk-tile.claimed .sk-art { opacity:.5; filter:saturate(.5); } .sk-tile.claimed b { opacity:.6; }
+.sk-check { position:absolute; top:-7px; right:-6px; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; background:#35e0c8; color:#06201c; box-shadow:0 2px 0 #0a0d14; }
+.sk-check .ico { width:14px; height:14px; }
+.sk-tile.today { border:2px solid #ffcf3f; background:linear-gradient(170deg,rgba(255,207,63,.3),#1a2030 75%); animation:skGlow 1.4s ease-in-out infinite; transform:translateY(-2px); }
+.sk-tile.today small { color:#ffcf3f; }
+.sk-tile:not(.claimed):not(.today):not(.mile):not(.prem) { border-color:#2a3142; }
+.sk-tile b.a-boost { font-size:9px; letter-spacing:0; white-space:nowrap; }
+.sk-tile.mile:not(.claimed):not(.today) { border-color:rgba(179,169,255,.6); background:linear-gradient(170deg,rgba(179,169,255,.16),#121723 70%); box-shadow:0 4px 0 #0a0d14,0 0 14px rgba(179,169,255,.18); }

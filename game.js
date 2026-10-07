@@ -4226,7 +4226,7 @@ function prog(){
     if (!Number.isFinite(d.cosmeticPity)) d.cosmeticPity = 0;
     if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
     if (!Array.isArray(d.lvClaimed)) d.lvClaimed = [];
-    if (!d.wm || typeof d.wm.n !== 'number' || !Array.isArray(d.wm.got)) d.wm = { n: 0, got: [] };
+    if (!d.wm || typeof d.wm.n !== 'number' || !Array.isArray(d.wm.got)) d.wm = { n: 0, got: [], day: '' };
     if (typeof d.tr !== 'number') d.tr = 0;
     if (typeof d.trTop !== 'number') d.trTop = 0;
     if (typeof d.trStreak !== 'number') d.trStreak = 0;
@@ -4276,6 +4276,8 @@ function skinColor(){ return skinById(prog().skin).color; }
 function addXp(n){ const p = prog(); p.xp += Math.max(0, Math.round(n)); saveProg(p); }
 function gemCount(){ return load('rr_gems', 0); }
 function addGems(n){ store('rr_gems', gemCount() + Math.max(0, Math.round(n))); }
+// What a cosmetic you already own pays back: a share of its shop price (flat per rarity for gem items).
+function dupeRefund(it){ if (it.price > 0) return Math.max(100, Math.round(it.price * 0.15 / 50) * 50); return { common:100, rare:400, epic:1200, mythic:2000, legendary:3000 }[it.rarity] || 100; }
 function addCoins(n){ store('rr_coins', load('rr_coins', 0) + Math.max(0, Math.round(n))); }
 function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Math.random().toString(36).slice(2, 9); }
 // ---------- Supply drops ----------
@@ -4284,7 +4286,8 @@ function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Ma
 const DROP_TIERS = ['common', 'rare', 'epic', 'mythic', 'legendary'];
 const DROP_COIN_MULT = { common:1, rare:1.75, epic:3, mythic:5.5, legendary:9 };
 const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, mythic:2.4, legendary:3.2 };
-const DROP_COSMETIC_CHANCE = { common:0.022, rare:0.06, epic:0.14, mythic:0.34, legendary:0.6 };
+const DROP_COSMETIC_CHANCE = { common:0.015, rare:0.04, epic:0.10, mythic:0.24, legendary:0.45 };      // skins are never in chests (shop only), so free play stays slow
+const COSMETIC_PITY = 40;
 const DROP_RARITY_WEIGHTS = {
     common:    { common:60, rare:28, epic:9,  mythic:2.4, legendary:0.6 },
     rare:      { common:36, rare:40, epic:18, mythic:4.5, legendary:1.5 },
@@ -4335,8 +4338,8 @@ function resolveDrop(id, tier){
         if (prem.length){ drop.cosmetic = prem[Math.floor(Math.random() * prem.length)]; p.owned.push(drop.cosmetic.id); }
     }
     if (drop.gems) addGems(drop.gems);
-    const available = [...SKINS, ...HATS, ...FACES, ...TRAILS].filter(item => item.price > 0 && !p.owned.includes(item.id));
-    if (!drop.cosmetic && available.length && (p.cosmeticPity >= 32 || Math.random() < DROP_COSMETIC_CHANCE[tier])){
+    const available = [...HATS, ...FACES, ...TRAILS].filter(item => item.price > 0 && !p.owned.includes(item.id));      // no skins: those are bought
+    if (!drop.cosmetic && available.length && (p.cosmeticPity >= COSMETIC_PITY || Math.random() < DROP_COSMETIC_CHANCE[tier])){
         drop.cosmetic = pickCosmetic(available, tier);
         p.owned.push(drop.cosmetic.id);
         p.cosmeticPity = 0;
@@ -4722,9 +4725,9 @@ function rewardRace(place, finished, lootId){
     const win = place === 1 && finished;                                        // only the winner is paid (with a chest); everybody else gets trophies and nothing else
     const coins0 = win ? 60 : 0;
     const coins = window.Boost ? Boost.coins(coins0, id) : coins0;       // coin booster
-    const xp0   = win ? 60 : 0;
+    const xp0   = win ? 60 : finished && place === 2 ? 30 : finished && place === 3 ? 15 : 0;          // 2nd and 3rd still earn some XP
     const xp    = window.Boost ? Boost.xp(xp0, id) : xp0;                         // XP booster
-    const passPoints = win ? 50 : 0;
+    const passPoints = win ? 50 : finished && place === 2 ? 20 : finished && place === 3 ? 10 : 0;
     const pp = prog(), alreadyGranted = !!(pp.lootGrants[id] || pp.pendingDrops[id]);
     // Only the winner earns a chest; everyone else gets the base rewards straight away.
     let drop = null;

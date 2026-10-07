@@ -30,7 +30,7 @@
                 ['', 'A cosmetic you do not own yet', pct(DROP_COSMETIC_CHANCE[t])], ['', 'A finisher (if no cosmetic)', pct(fin[t])],
                 ['', 'Gems (' + (t === 'legendary' ? '5-20' : t === 'mythic' ? '5-10' : '5') + ')', gem[t] ? pct(gem[t]) : 'never'],
             ].concat(['common', 'rare', 'epic', 'mythic', 'legendary'].map(r => [r, 'If a cosmetic drops: ' + NAME[r], pct(W[t][r] / sum(t))]))) + (t === 'legendary' ? '<p class="od-note">Legendary chests also give a coin booster (x2 for 3 matches) and have a 0.4% chance of a premium (gem) cosmetic.</p>' : '') + '</div>').join('') +
-            '<div class="od-card"><h3>BAD LUCK PROTECTION</h3><p class="od-note" style="margin:0">After 32 chests in a row without a cosmetic, the next chest is guaranteed to hold one.</p></div>' +
+            '<div class="od-card"><h3>BAD LUCK PROTECTION</h3><p class="od-note" style="margin:0">Skins never come out of chests; they are only for sale in the shop. After 40 chests in a row without a cosmetic, the next chest is guaranteed to hold one (a hat, face or trail).</p></div>' +
             (window.GemCrate ? '<div class="od-card"><h3>GEM CHEST (100 GEMS)</h3>' + rows([['legendary', 'Legendary cosmetic', '12%'], ['mythic', 'Mythic cosmetic', '20%'], ['epic', 'Epic cosmetic', '40%'], ['rare', 'Rare cosmetic', '28%'], ['', 'A second cosmetic as well', '12%']]) + '<p class="od-note">A gem chest always holds one cosmetic you do not own yet, plus coins, XP, gems and boosters.</p></div>' : '') +
             '<button class="btn od-x" type="button">Close</button>';
         document.body.appendChild(root);

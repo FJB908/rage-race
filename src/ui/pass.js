@@ -206,7 +206,7 @@
             await showFinisherReward(f);
         } else {
             const cos = itemOf(t), q = prog(), dup = q.owned.includes(cos.id);
-            if (dup) { const back = t.t === 'prem' ? 0 : ({ common:100, rare:400, epic:1200, mythic:2000, legendary:3000 }[cos.rarity] || 100); if (back) { addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:cos.rarity }); } else { addGems(100); await showRewardPops([{ type:'gem', n:100 }]); } }
+            if (dup) { const back = t.t === 'prem' ? 0 : dupeRefund(cos); if (back) { addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:cos.rarity }); } else { addGems(100); await showRewardPops([{ type:'gem', n:100 }]); } }
             else { q.owned.push(cos.id); saveProg(q); await showRewardPops([{ type:'item', item:cos }], { tier:cos.rarity }); }
         }
     }

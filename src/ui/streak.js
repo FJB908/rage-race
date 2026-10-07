@@ -39,24 +39,24 @@
     // ---- screen ----
     const el = document.createElement('div');
     el.id = 's-streak'; el.className = 'screen streak-screen'; el.style.cssText = 'display:none;opacity:0';
-    el.innerHTML = '<section class="sk-shell"><header class="sk-top"><button class="pass-back" type="button" id="sk-back" aria-label="Back to home">' + icon('chev-l') + '</button><div class="sk-title"><span class="sk-eyebrow">DAILY REWARDS</span><h1>' + icon('calendar') + '<b id="sk-days">0</b><span id="sk-flame" class="sk-flame" hidden>' + icon('flame') + '</span><span class="sk-lbl">day streak</span></h1></div></header><div class="sk-grid" id="sk-grid"></div><footer class="sk-foot"><button class="sk-save" id="sk-save" type="button" hidden></button><button class="sk-claim" id="sk-claim" type="button"></button></footer></section>';
+    el.innerHTML = '<section class="sk-shell"><header class="sk-top"><button class="pass-back" type="button" id="sk-back" aria-label="Back to home">' + icon('chev-l') + '</button><div class="sk-title"><span class="sk-eyebrow">DAILY REWARDS</span><h1>' + icon('calendar') + '<b id="sk-days">0</b><span class="sk-lbl">day streak</span></h1></div></header><div class="sk-legend"><span class="lg-done">Collected</span><span class="lg-now">Today</span><span class="lg-next">Coming up</span></div><div class="sk-grid" id="sk-grid"></div><footer class="sk-foot"><button class="sk-save" id="sk-save" type="button" hidden></button><button class="sk-claim" id="sk-claim" type="button"></button></footer></section>';
     document.body.appendChild(el);
     S.streak = el;
     const grid = el.querySelector('#sk-grid'), claimBtn = el.querySelector('#sk-claim');
 
     function render() {
-        const st = state(); el.querySelector('#sk-days').textContent = st.streak; el.querySelector('#sk-flame').hidden = st.streak < 1;
+        const st = state(); el.querySelector('#sk-days').textContent = st.streak;
         grid.innerHTML = '';
         STREAK_REWARDS.forEach((r, i) => {
             const day = i + 1, claimed = day <= st.shown, isToday = st.canClaim && day === st.nextDay, milestone = r.t === 'prem' || r.t === 'gemchest' || r.t === 'item' || (r.t === 'drop' && r.tier === 'legendary');
             const tile = document.createElement('div');
             tile.className = 'sk-tile' + (claimed ? ' claimed' : '') + (isToday ? ' today' : '') + (milestone ? ' mile' : '') + (r.t === 'prem' ? ' prem' : '') + (r.t === 'gemchest' ? ' gemchest' : '');
-            tile.innerHTML = '<small>' + day + '</small><div class="sk-art">' + art(r, i) + '</div>' + amount(r) + (claimed ? '<span class="sk-check">' + icon('check') + '</span>' : '');
+            tile.innerHTML = '<small>' + (isToday ? 'TODAY' : day) + '</small><div class="sk-art">' + art(r, i) + '</div>' + amount(r) + (claimed ? '<span class="sk-check">' + icon('check') + '</span>' : '');
             grid.appendChild(tile);
             const cv = tile.querySelector('canvas');
             if (cv) { const it = itemOf(r), look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [r.cat]:r.id }); try { renderLook(cv, look, { scale:.24, cy:.6 }); } catch (e) {} }
         });
-        const sv = el.querySelector('#sk-save'); sv.hidden = !st.canSave; sv.dataset.armed = ''; sv.innerHTML = icon('flame') + '<span>Save your ' + st.lost + ' day streak</span><b>' + icon('gem') + ' ' + SAVE_GEMS + '</b>';
+        const sv = el.querySelector('#sk-save'); sv.hidden = !st.canSave; sv.dataset.armed = ''; sv.innerHTML = icon('calendar') + '<span>Save your ' + st.lost + ' day streak</span><b>' + icon('gem') + ' ' + SAVE_GEMS + '</b>';
         claimBtn.disabled = !st.canClaim;
         claimBtn.innerHTML = st.canClaim ? 'CLAIM DAY ' + st.nextDay : '<span>' + icon('check') + '</span> COME BACK TOMORROW';
         claimBtn.classList.toggle('ready', st.canClaim);
@@ -74,7 +74,7 @@
         else if (r.t === 'drop') { const drop = awardLootDrop(newLootId('streak'), { coins:80, xp:60, passPoints:0 }, { tier:r.tier }); await new Promise(res => openLootbox(drop, { title:'DAILY CHEST', onDone:res })); }
         else {
             const it = itemOf(r);
-            if (p.owned.includes(it.id)) { const back = { common:100, rare:400, epic:1200, mythic:2000, legendary:3000 }[it.rarity] || 100; addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:it.rarity }); }
+            if (p.owned.includes(it.id)) { const back = dupeRefund(it); addCoins(back); await showRewardPops([{ type:'coin', n:back }], { tier:it.rarity }); }
             else { p.owned.push(it.id); saveProg(p); await showRewardPops([{ type:'item', item:it }], { tier:it.rarity }); }
         }
     }
@@ -104,7 +104,7 @@
         open() { render(); showScreen('streak'); setTimeout(scrollToToday, 80); },
         refreshHome() {
             const st = state(), b = document.getElementById('btn-streak-open'); if (!b) return;
-            b.classList.toggle('has-fire', st.streak > 0); b.title = st.streak > 0 ? st.streak + ' day streak' : 'Daily rewards';
+            b.title = st.streak > 0 ? st.streak + ' day streak' : 'Daily rewards';
             b.querySelector('.ms-dot').hidden = true;
             setBadge(b, st.canClaim ? '!' : 0);
             b.classList.toggle('ready', st.canClaim);

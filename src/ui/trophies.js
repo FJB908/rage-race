@@ -166,7 +166,7 @@
         else if (r.t === 'gemchest') { if (window.GemCrate) await GemCrate.give(); }
         else {
             const it = itemOf(r), q = prog();
-            if (q.owned.includes(it.id)) { const back = { common: 100, rare: 400, epic: 1200, mythic: 2000, legendary: 3000 }[it.rarity] || 100; addCoins(back); await showRewardPops([{ type: 'coin', n: back }], { tier: it.rarity }); }
+            if (q.owned.includes(it.id)) { const back = dupeRefund(it); addCoins(back); await showRewardPops([{ type: 'coin', n: back }], { tier: it.rarity }); }
             else { q.owned.push(it.id); saveProg(q); await showRewardPops([{ type: 'item', item: it }], { tier: it.rarity }); }
         }
     }
