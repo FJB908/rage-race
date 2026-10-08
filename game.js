@@ -5410,6 +5410,7 @@ function openLevels(gotoDim){
     if (window.Tutorial) Tutorial.stop();
     if (gotoDim !== undefined) curDim = gotoDim;
     if (!dimUnlocked(curDim)) curDim = 0;              // safety: never land on a locked dimension
+    if (window.LevelPath){ LevelPath.open(); return; }       // the level path (src/ui/levelpath.js); the grid below stays as a fallback
     const dim = DIMENSIONS[curDim];
     const d = lvLoad(), grid = document.getElementById('lv-grid');
     grid.innerHTML = '';

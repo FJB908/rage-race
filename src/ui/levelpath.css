@@ -1,0 +1,60 @@
+/* THE LEVEL PATH: one road that climbs. Round stones with the level number, three gold stars in an arc over a finished one, the chest of the level beside it, your own cube on the next level. */
+#s-levels.lvp { justify-content: flex-start; align-items: stretch; padding: 0; overflow: hidden; text-align: left; background: #090b12; }
+#s-levels.lvp > :not(.lvp-shell) { display: none !important; }
+.lvp-shell { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; background: #090b12; }
+.lvp-top { position: relative; z-index: 6; display: flex; align-items: center; gap: 12px; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 12px; background: linear-gradient(to bottom, #090b12 55%, rgba(9,11,18,0)); }
+.lvp-top h1 { flex: 1; margin: 0; font: 800 22px/1 "Bricolage Grotesque", system-ui, sans-serif; }
+.lvp-tower-btn { width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgba(124,107,255,.16); color: #b3a9ff; display: grid; place-items: center; -webkit-tap-highlight-color: transparent; } .lvp-tower-btn svg { width: 22px; height: 22px; } .lvp-tower-btn:active { background: rgba(124,107,255,.34); }
+.lvp-stars { display: flex; align-items: center; gap: 6px; color: #ffcf3f; } .lvp-stars .ico { width: 22px; height: 22px; filter: drop-shadow(0 0 8px rgba(255,207,63,.55)); } .lvp-stars b { font: 800 18px/1 "Bricolage Grotesque", system-ui, sans-serif; color: #fff; font-variant-numeric: tabular-nums; }
+.lvp-scroll { position: relative; z-index: 1; flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-top: -12px; }
+.lvp-scroll::-webkit-scrollbar { display: none; }
+.lvp-world { position: relative; margin: 0 auto; overflow: hidden; }
+.lvp-bg { position: absolute; left: 0; width: 100%; z-index: 0; display: block; }
+.lvp-road { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; }
+.lvp-road path { fill: none; stroke-linecap: round; }
+.rd-b { stroke: rgba(255,255,255,.07); stroke-width: 22; } .rd-d { stroke: rgba(255,255,255,.2); stroke-width: 3; stroke-dasharray: 1 11; }
+.rd-l { stroke-width: 12; opacity: .9; filter: drop-shadow(0 0 7px rgba(255,255,255,.35)); }
+/* where a dimension starts */
+.lvp-gate { position: absolute; left: 22px; right: 22px; z-index: 2; display: flex; align-items: baseline; gap: 10px; pointer-events: none; }
+.lvp-gate small { font: 800 11px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .26em; color: var(--gc); }
+.lvp-gate b { font: 900 46px/1 "Bricolage Grotesque", system-ui, sans-serif; color: #fff; text-shadow: 0 0 26px var(--gc), 0 3px 12px rgba(0,0,0,.6); }
+.lvp-gate::after { content: ""; position: absolute; left: 0; right: 0; bottom: -12px; height: 2px; background: linear-gradient(90deg, var(--gc), transparent 80%); opacity: .55; }
+.lvp-need { margin-left: auto; align-self: center; display: flex; align-items: center; gap: 5px; font: 800 15px/1 "Space Grotesk", system-ui, sans-serif; color: #e6ebf5; font-variant-numeric: tabular-nums; } .lvp-need i { font-style: normal; } .lvp-need .ico { width: 17px; height: 17px; filter: none; } .lvp-need .ico-star { color: #ffcf3f; }
+.lvp-gate.lock b { opacity: .55; }
+/* a stone */
+.lvp-node { position: absolute; z-index: 3; width: 78px; height: 78px; margin: 0; padding: 0; border: 0; background: none; transform: translate(-50%, -50%); -webkit-tap-highlight-color: transparent; cursor: pointer; font: inherit; color: inherit; }
+.lvp-face { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 34% 26%, color-mix(in srgb, var(--c) 62%, #fff) 0, var(--c) 58%); box-shadow: 0 8px 0 var(--c2), 0 16px 22px -8px rgba(0,0,0,.65), inset 0 -5px 0 rgba(0,0,0,.14), inset 0 3px 0 rgba(255,255,255,.28); transition: transform .08s, box-shadow .08s; }
+.lvp-face b { font: 900 30px/1 "Bricolage Grotesque", system-ui, sans-serif; color: #151833; text-shadow: 0 1.5px 0 rgba(255,255,255,.32); }
+.lvp-node:active .lvp-face { transform: translateY(6px); box-shadow: 0 2px 0 var(--c2), 0 6px 12px -6px rgba(0,0,0,.6), inset 0 -5px 0 rgba(0,0,0,.14), inset 0 3px 0 rgba(255,255,255,.28); }
+.lvp-node.lock .lvp-face { --c: #2a3042; --c2: #181c29; background: radial-gradient(circle at 34% 26%, #353c52, #2a3042 62%); box-shadow: 0 8px 0 #181c29, 0 14px 20px -8px rgba(0,0,0,.6), inset 0 3px 0 rgba(255,255,255,.07); }
+.lvp-node.lock .ico { width: 26px; height: 26px; color: #5d6683; filter: none; }
+.lvp-node.skipped .lvp-face { filter: saturate(.35) brightness(.8); }
+.lvp-node.cur { width: 92px; height: 92px; }
+.lvp-node.cur .lvp-face b { font-size: 36px; }
+.lvp-node.cur .lvp-face::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 3px solid var(--c); opacity: 0; animation: lvpRing 2s ease-out infinite; }
+@keyframes lvpRing { 0% { transform: scale(.82); opacity: .8; } 100% { transform: scale(1.28); opacity: 0; } }
+.lvp-name { position: absolute; left: 50%; top: calc(100% + 18px); transform: translateX(-50%); white-space: nowrap; font: 800 14px/1 "Bricolage Grotesque", system-ui, sans-serif; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.8); letter-spacing: .02em; }
+/* the three stars over a finished stone */
+.lvp-st { position: absolute; left: 50%; top: -14px; width: 0; height: 0; pointer-events: none; }
+.lvp-st i { position: absolute; left: -11px; top: 0; width: 22px; height: 22px; color: rgba(255,255,255,.16); display: block; }
+.lvp-st i .ico { width: 22px; height: 22px; display: block; filter: none; }
+.lvp-st i:nth-child(1) { transform: translate(-31px, 7px) rotate(-18deg); } .lvp-st i:nth-child(2) { transform: translate(0, -5px); } .lvp-st i:nth-child(3) { transform: translate(31px, 7px) rotate(18deg); }
+.lvp-st i.on { color: #ffcf3f; filter: drop-shadow(0 0 7px rgba(255,207,63,.7)); }
+.lvp-st i.pop { animation: lvpPop .6s .9s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes lvpPop { 0% { transform: scale(0) rotate(-40deg); } 100% { } }
+/* the chest of a level */
+.lvp-chest { position: absolute; z-index: 3; width: 36px; height: 36px; transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 0 9px color-mix(in srgb, var(--ic) 70%, transparent)); animation: lvpBob 3.2s ease-in-out infinite; }
+.lvp-chest .ico { width: 36px; height: 36px; display: block; filter: none; }
+.lvp-chest.lock { opacity: .45; animation: none; } .lvp-chest.earned { opacity: .3; filter: grayscale(.75); animation: none; }
+@keyframes lvpBob { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-50%, calc(-50% - 4px)); } }
+/* you */
+.lvp-me { position: absolute; z-index: 5; width: 70px; height: 70px; margin: -66px 0 0 -35px; pointer-events: none; }
+.lvp-me canvas { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 8px rgba(0,0,0,.55)); animation: lvpMe 2s ease-in-out infinite; }
+@keyframes lvpMe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+/* the tower, at the very top */
+.lvp-tower { position: absolute; left: 50%; transform: translateX(-50%); z-index: 2; width: min(300px, 90%); padding: 0; border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; color: inherit; font: inherit; -webkit-tap-highlight-color: transparent; }
+.lvp-tower svg { width: 100%; height: auto; max-height: 270px; flex: 1; min-height: 0; }
+.lvp-tower span { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-bottom: 14px; }
+.lvp-tower b { font: 900 22px/1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .06em; color: #fff; text-shadow: 0 0 22px #8d7bff, 0 3px 10px rgba(0,0,0,.6); }
+.lvp-tower small { font: 700 12.5px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .06em; color: #b3a9ff; }
+.lvp-tower:active { transform: translateX(-50%) scale(.98); }
