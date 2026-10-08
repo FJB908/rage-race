@@ -166,7 +166,12 @@ const SFX = (() => {
             I.pluck(mtof(n), { t: 0.3, v: 0.16, verb: 0.18 });
             voice({ f: mtof(n - 12), f2: mtof(n), glide: 0.07, t: 0.09, v: 0.07, a: 0.004 });
             noise({ type: 'bandpass', f: 700, f2: 2400, q: 0.5, t: 0.09, v: 0.035, a: 0.01 }); },
-        land() { voice({ f: 150, f2: 62, t: 0.1, v: 0.26, a: 0.003 }); noise({ type: 'lowpass', f: 900, t: 0.045, v: 0.08, a: 0.002 }); I.pluck(mtof(48), { t: 0.18, v: 0.05 }); },
+        // a landing has a weight: 0 a light step, 1 a normal landing, 2 a heavy one (a deeper thud and a bit of room)
+        land(w = 1) { const k = Math.min(2, Math.max(0, w | 0)), f = [185, 150, 118][k], f2 = [88, 62, 44][k], v = [0.17, 0.26, 0.33][k];
+            voice({ f, f2, t: 0.06 + k * 0.035, v, a: 0.003 }); noise({ type: 'lowpass', f: [1300, 900, 620][k], t: 0.03 + k * 0.02, v: [0.05, 0.08, 0.11][k], a: 0.002 });
+            I.pluck(mtof([53, 48, 43][k]), { t: 0.12 + k * 0.08, v: [0.035, 0.05, 0.06][k], verb: k === 2 ? 0.12 : 0 }); },
+        // a perfect landing, dead centre: a small bright bell that climbs the pentatonic scale with the streak (0..4)
+        perfect(i = 0) { const n = pent(72, Math.min(4, i | 0) + 1); I.vibe(mtof(n), { t: 0.75, v: 0.075, verb: 0.35 }); I.pluck(mtof(n + 12), { at: 0.035, t: 0.22, v: 0.035, verb: 0.25 }); },
         bump() { const n = performance.now(); if (n - lastBump < 120) return; lastBump = n;
             voice({ f: 210, f2: 120, t: 0.1, v: 0.14, a: 0.003 }); noise({ type: 'lowpass', f: 700, t: 0.06, v: 0.09 }); },
         bounce() { [0, 0.13].forEach((d, i) => voice({ f: 240 + i * 90, f2: 640 + i * 260, glide: 0.1, t: 0.12, v: 0.14, at: d, vib: 24, vibRate: 20, a: 0.004, verb: 0.15 })); I.pluck(mtof(72), { at: 0.05, t: 0.3, v: 0.07 }); },
@@ -249,7 +254,7 @@ const SFX = (() => {
             voice({ f: 66, f2: 40, t: 0.7, v: 0.22, at: 0.65 }); voice({ f: 66, f2: 40, t: 1.2, v: 0.22, at: 2.2 }); bell(mtof(96), { at: 2.3, t: 1.8, v: 0.07 }); },
         shatter() { for (let i = 0; i < 4; i++) I.pluck(mtof(pent(84, i + Math.floor(Math.random() * 3))), { at: i * 0.035, t: 0.25, v: 0.045, verb: 0.35 }); },
     };
-    const COOLDOWN = { spring: 90, cloud: 80, coin: 45, land: 70, pickup: 90, item: 70, combo: 120, shatter: 150, chain: 200, block: 200, jump: 40, tap: 60, knock: 30 };
+    const COOLDOWN = { perfect: 60, spring: 90, cloud: 80, coin: 45, land: 70, pickup: 90, item: 70, combo: 120, shatter: 150, chain: 200, block: 200, jump: 40, tap: 60, knock: 30 };
     const CRITICAL = new Set(['bombset', 'zap', 'cannon', 'cannonfire', 'cloud', 'win', 'gtwin', 'qualify', 'elim', 'lead', 'jump', 'land', 'finish', 'go', 'count', 'fail', 'boost', 'stumble', 'open', 'knock', 'boom', 'tick']);
     const lastPlay = {};
 
@@ -445,10 +450,10 @@ const SFX = (() => {
         s.start(0, it[0], it[1]); return true;
     }
     const clamp01 = k => Math.max(0, Math.min(1, +k || 0));
-    const QUANT = { jump: k => Math.round(clamp01(k === undefined ? 0.6 : k) * 5), knock: n => Math.min(6, Math.max(0, n | 0)), tick: k => Math.round(clamp01(k) * 7), star: i => (i | 0) % 3, chirp: i => (i | 0) % 3, shatter: () => Math.floor(Math.random() * 3) };
+    const QUANT = { land: n => Math.min(2, Math.max(0, n === undefined ? 1 : n | 0)), perfect: n => Math.min(4, Math.max(0, n | 0)), jump: k => Math.round(clamp01(k === undefined ? 0.6 : k) * 5), knock: n => Math.min(6, Math.max(0, n | 0)), tick: k => Math.round(clamp01(k) * 7), star: i => (i | 0) % 3, chirp: i => (i | 0) % 3, shatter: () => Math.floor(Math.random() * 3) };
     const bankKey = (name, arg) => QUANT[name] ? name + ':' + QUANT[name](arg) : name;
     // the build tool renders one sound (or every variant of it) to a buffer; this is the only place that synthesises in bulk
-    const BAKE = { jump: [0, 1, 2, 3, 4, 5].map(r => r / 5), knock: [0, 1, 2, 3, 4, 5, 6], tick: [0, 1, 2, 3, 4, 5, 6, 7].map(r => r / 7), star: [0, 1, 2], shatter: [0, 1, 2], chirp: [0, 1, 2] };
+    const BAKE = { land: [0, 1, 2], perfect: [0, 1, 2, 3, 4], jump: [0, 1, 2, 3, 4, 5].map(r => r / 5), knock: [0, 1, 2, 3, 4, 5, 6], tick: [0, 1, 2, 3, 4, 5, 6, 7].map(r => r / 7), star: [0, 1, 2], shatter: [0, 1, 2], chirp: [0, 1, 2] };
     function bakeSfx(name, arg, sr, secs) {
         const oc = new OfflineAudioContext(1, Math.round(sr * secs), sr);
         const sb = oc.createGain(); sb.gain.value = 1; sb.connect(oc.destination);

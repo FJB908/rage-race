@@ -84,6 +84,9 @@ let hintTimer = 4;
 
 /* input */
 let dragging = false, sx=0, sy=0, cx=0, cy=0;
+// FEEL: small things that make a landing weigh something. camKick: the view dips a few pixels on a landing and settles back; slowT/slowK: a short slow-motion
+// at a photo finish; dipping: ledges that are giving way a little under somebody (visual only); maxTicked: the "full power" tick fires once per pull.
+let camKick = 0, slowT = 0, slowK = 1, photoDone = false, maxTicked = false; const dipping = [];
 // Free camera: once you've finished (or been knocked out) you can drag the screen to look over the rest of the course.
 let freeCam = false, panDrag = null;
 function canFreeCam(){
@@ -1461,9 +1464,17 @@ function updateBot(p, dt) {
 }
 
 /* ---------- Collision (swept, no tunneling) ---------- */
+const PERFECT_MODES = new Set(['race', 'level', 'parkour']);
 function landOn(p, pl) {
-    const impact = Math.abs(p.vy);
-    if (p.local){ SFX.play('land'); haptic(impact > 1100 ? [12, 16, 10] : 7); if (impact > 1000) camShake = Math.max(camShake, Math.min(6, impact / 450)); }
+    const impact = Math.abs(p.vy), wt = impact > 1250 ? 2 : impact > 600 ? 1 : 0;      // a light step, a normal landing, a heavy one
+    if (p.local){
+        SFX.play('land', wt); haptic(impact > 1100 ? [12, 16, 10] : impact > 600 ? 7 : 4);
+        camKick = Math.max(camKick, Math.min(5, impact / 300));                         // the view dips a little and settles (no random shaking for a normal landing)
+        if (impact > 1500) camShake = Math.max(camShake, Math.min(4, (impact - 1200) / 350));
+    }
+    if (impact > 250 && pl.type !== 'finish'){                                          // the ledge gives a little under the weight (drawn only)
+        pl.dip = Math.min(4.5, impact / 330); pl.dipV = 0; if (!pl._dipOn){ pl._dipOn = true; dipping.push(pl); }
+    }
     // dust puff where the feet hit the platform; harder landings throw more
     burst(p.x, pl.y - pl.h / 2, '#c9d1e3', 3 + Math.min(8, Math.round(impact / 260)), 70 + Math.min(120, impact / 12));
     if (impact > 1300) ring(p.x, pl.y - pl.h / 2, '#c9d1e3', 34 + Math.min(30, impact / 60), true);
@@ -1473,6 +1484,23 @@ function landOn(p, pl) {
     p.vy = 0; p.mode='idle'; p.plat=pl; p.squash = Math.max(0.55, 0.78 - impact / 9000);
     p.lastLedgeY = p.y; p.lastLedgeX = pl.x;                 // where the Safety Net brings you back to
     if (p.local && window.Tips && gameMode === 'race') Tips.ledge(pl);
+    landFeel(p, pl);
+}
+// What a landing feels like. Dead centre (the middle quarter of the ledge) is a PERFECT landing: a small gold ring, a few sparks, a bell that climbs with the streak and a crisper
+// squash. Three in a row and you glow gold. Only the sensation: it changes nothing in the physics. A landing right on the edge makes the cube wobble a little.
+function landFeel(p, pl){
+    const off = Math.abs(p.x - pl.x), half = pl.w / 2;
+    if (p.local){
+        if (PERFECT_MODES.has(gameMode) && pl !== platforms[0] && !pl.ground && pl.type !== 'safety' && pl.type !== 'finish' && pl.w < PLAY_W() * 0.7 && off <= Math.max(9, pl.w * 0.12)){
+            p.flow = (p.flow || 0) + 1; const i = Math.min(4, p.flow - 1), fy = pl.y - pl.h / 2;
+            SFX.play('perfect', i); haptic([5, 26, 9]);
+            ring(p.x, fy, '#ffcf3f', 24 + i * 4, true); burst(p.x, fy - 3, '#ffe27a', 4 + i, 80 + i * 12);
+            p.squash = Math.max(p.squash, 0.84);                                       // crisp instead of mushy
+            return;
+        }
+        p.flow = 0;                                                                     // any other landing ends the streak
+    }
+    if (off > half - 4 && pl.w > 30){ p.wob = (p.x > pl.x ? 1 : -1) * 0.2; p.wobV = 0; }      // balanced on the very edge
 }
 
 function handleFinish(p) {
@@ -1981,8 +2009,34 @@ function update(dt) {
     if (camShake > 0.1) camShake *= Math.pow(0.001, dt); else camShake = 0;
     if (spectating) updateSpectate();
 
-    // squash relax
-    for (const p of players) p.squash += (1 - p.squash) * Math.min(1, 12*dt);
+    // squash: a spring (a landing squashes, springs back a touch past normal, then settles). While you pull back to jump the body sinks: the wind-up before the launch
+    for (const p of players){
+        let tgt = 1;
+        if (p.local && dragging && p.mode === 'idle' && !p.finished && state === 'playing'){
+            const pull = Math.min(1, Math.hypot(sx - cx, sy - cy) / MAX_DRAG);
+            if (pull > 0.1) tgt = 1 - 0.16 * pull;
+            if (pull >= 1 && !maxTicked){ maxTicked = true; haptic(6); SFX.play('tick', 1); }       // full power: one small tick
+            else if (pull < 0.85) maxTicked = false;
+        }
+        const v = (p.sqV || 0) + (520 * (tgt - p.squash) - 26 * (p.sqV || 0)) * dt;
+        p.sqV = v; p.squash += v * dt;
+        if (p.squash < 0.5){ p.squash = 0.5; p.sqV = 0; } else if (p.squash > 1.7){ p.squash = 1.7; p.sqV = 0; }
+        if (p.wob){ p.wobV = (p.wobV || 0) + (-260 * p.wob - 11 * (p.wobV || 0)) * dt; p.wob += p.wobV * dt; if (Math.abs(p.wob) < 0.004 && Math.abs(p.wobV) < 0.05){ p.wob = 0; p.wobV = 0; } }
+        if (p.mode === 'air') p.wob = 0;
+    }
+    if (!dragging) maxTicked = false;
+    for (let i = dipping.length - 1; i >= 0; i--){                          // ledges giving way under a landing, then springing back
+        const pl = dipping[i]; pl.dipV += (-520 * pl.dip - 24 * pl.dipV) * dt; pl.dip += pl.dipV * dt;
+        if (Math.abs(pl.dip) < 0.04 && Math.abs(pl.dipV) < 0.4){ pl.dip = 0; pl.dipV = 0; pl._dipOn = false; dipping.splice(i, 1); }
+    }
+    if (camKick > 0.05) camKick *= Math.exp(-13 * dt); else camKick = 0;
+    // PHOTO FINISH: when you and somebody else are about to cross the line together, the last moment runs in slow motion for half a second (once per race, never in a party)
+    if (gameMode === 'race' && !photoDone && state === 'playing' && finishPlatform && !window.partyMatch && !players[0].finished){
+        const fy = finishPlatform.y, lp = players[0];
+        if (lp.y - fy < 380 && lp.y > fy){
+            for (const o of players) if (o !== lp && !o.finished && o.y > fy - 40 && o.y - fy < 380 && Math.abs(o.y - lp.y) < 170){ photoDone = true; slowT = 0.55; slowK = 0.42; break; }
+        }
+    }
 
     // DEELTJES RECYCLEN (Hier is de code aangepast)
     let pIdx = 0;
@@ -2161,7 +2215,7 @@ function draw() {
     const cs = state === 'countdown' ? 0 : camShake;       // update() does not run during the countdown, so a shake left over from the last race would never fade: no shake until GO
     const shakeX = (Math.random()-0.5)*cs;
     const shakeY = (Math.random()-0.5)*cs;
-    ctx.translate(VIEW_OX + shakeX, shakeY);
+    ctx.translate(VIEW_OX + shakeX, shakeY + camKick);
     ctx.scale(VIEW_K, VIEW_K);
     ctx.translate(0, -cameraY);
 
@@ -2243,7 +2297,7 @@ function draw() {
             const amt = 2 + k*5;
             shakeX = (Math.random()-0.5)*amt; shakeY = (Math.random()-0.5)*amt*0.5;
         }
-        ctx.save(); ctx.translate(pl.x + shakeX, pl.y + shakeY);
+        ctx.save(); ctx.translate(pl.x + shakeX, pl.y + shakeY + (pl.dip || 0));
         if (!pl.active) {
             ctx.globalAlpha = Math.max(0, 0.25*(1-pl.respawn/2.5));
             ctx.fillStyle=PLAT.fragile; roundRect(-pl.w/2,-pl.h/2,pl.w,pl.h,4); ctx.fill();
@@ -2413,7 +2467,7 @@ function draw() {
             shakeX = (Math.random()-0.5)*amt; shakeY = (Math.random()-0.5)*amt*0.6;
         }
         if (window.PU) PU.drawUnder(ctx, p, nowT);                  // the spring of a Super Bounce, the ready-cloud of a Double Jump
-        ctx.save(); ctx.translate(p.x+shakeX,p.y+shakeY);
+        ctx.save(); ctx.translate(p.x+shakeX,p.y+shakeY + (p.mode === 'idle' && p.plat && p.plat.dip ? p.plat.dip : 0));      // standing on a ledge that gives: you go with it
         let alpha = p.local ? 1 : 0.8;
         if (p.giantT > 0 && p.giantT < 1.6 && Math.floor(nowT*12) % 2 === 0) alpha *= 0.45;   // about to shrink
         ctx.globalAlpha = alpha;
@@ -2425,6 +2479,7 @@ function draw() {
             const ang=Math.atan2(p.vy,p.vx);
             ctx.rotate(ang); ctx.scale(st,1/st); ctx.rotate(-ang);
         } else {
+            if (p.wob) ctx.rotate(p.wob);                    // a wobble after landing on the very edge
             ctx.scale(1/p.squash, p.squash);
         }
 
@@ -2434,7 +2489,7 @@ function draw() {
         else if (p.shieldT > 0){ ctx.shadowBlur=16+4*Math.sin(nowT*6); ctx.shadowColor=ITEMS.shield.color; }
         else if (p.windT > 0){ ctx.shadowBlur=14+8*Math.abs(Math.sin(nowT*8)); ctx.shadowColor=ITEMS.wind.color; }
         else if (p.bounceT > 0){ ctx.shadowBlur=18+6*Math.sin(nowT*10); ctx.shadowColor=ITEMS.bounce.color; }
-        else if (p.local){ ctx.shadowBlur=16; ctx.shadowColor=p.color; }
+        else if (p.local){ const fl = p.flow || 0; ctx.shadowBlur = 16 + Math.min(8, fl * 2); ctx.shadowColor = fl >= 3 ? '#ffd45e' : p.color; }      // a streak of perfect landings: the glow turns gold
         else { ctx.shadowBlur=0; }   // idle bots: no glow
 
         // SQUARE body
@@ -2648,6 +2703,7 @@ function loop(t){
     if (dt>0.25) dt=0.25;            // tab switch / long hitch: don't try to catch up more than this
     for (const hz of SNAP_HZ){ const iv = 1/hz; if (Math.abs(dt - iv) < iv*0.06){ dt = iv; break; } }
     if (hitStop > 0){ hitStop -= dt; simAcc += dt * 0.2; }
+    else if (slowT > 0){ slowT -= dt; simAcc += dt * slowK; }
     else simAcc += dt;
     { const hide = state === 'menu'; if (canvas._hidden !== hide){ canvas._hidden = hide; canvas.style.visibility = hide ? 'hidden' : 'visible'; } }      // the menu covers the whole screen: no need to composite the world canvas behind it
     let steps = 0;
@@ -2986,7 +3042,7 @@ function staggerBotStarts(){
     }
 }
 function beginRound() {
-    lastPlace = 0; camShake = 0;
+    lastPlace = 0; camShake = 0; camKick = 0; slowT = 0; photoDone = false; maxTicked = false; dipping.length = 0;
     hud.style.display='block';
     if (typeof SFX !== 'undefined' && SFX.music) SFX.music.set(SFX.trackFor(true));
     dragging = false;
