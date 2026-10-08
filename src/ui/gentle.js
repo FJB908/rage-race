@@ -7,14 +7,14 @@
 (function () {
     'use strict';
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const LOCKS = { parkour:3, build:3, escape:3, gauntlet:3 };            // mode -> race WINS needed (Quick play, Build Race etc. all count)
+    const LOCKS = { parkour:3, build:3, escape:3, gauntlet:3 };            // mode -> race WINS needed (Arena Race, Build Race etc. all count)
     const OPENS = { 3: ['Daily rewards', 'Missions', 'Rage pass'] };                  // level -> what it opens (shown on level-up)
     const WIN_OPENS = { 3: ['Levels', 'Build Race', 'Escape', 'Gauntlet'] };      // wins -> modes that open
     const TITLES = [[1, 'Rookie'], [2, 'Hopper'], [3, 'Bouncer'], [5, 'Climber'], [8, 'Daredevil'], [12, 'Sky Runner'], [16, 'Stunt Pro'], [20, 'Rage Racer'], [26, 'Legend'], [35, 'Mythic']];
     const lvlOf = () => { try { return levelInfo(prog().xp).lvl; } catch (e) { return 1; } };
     const title = lvl => { let t = TITLES[0][1]; for (const [l, n] of TITLES) if (lvl >= l) t = n; return t; };
     // ADAPTIVE DIFFICULTY: `dda` (0..1) is how much help you get, and it follows your results so the bots end up just beatable:
-    // wins make the next race a bit harder, 3rd/4th place make it clearly kinder. It settles where you win about half your Quick plays.
+    // wins make the next race a bit harder, 3rd/4th place make it clearly kinder. It settles where you win about half your Arena Races.
     // Your first 3 races are always at full help.
     const DDA_STEP = { 1:-0.07, 2:0, 3:0.10, 4:0.16, 5:0.16 };       // place (5 = did not finish) -> change
     function ease() {

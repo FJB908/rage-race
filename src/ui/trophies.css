@@ -1,30 +1,25 @@
-/* ---- trophy count above the character: just a trophy, a number and a thin bar. No window. ---- */
-.m-trophy { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 5px; align-self: center; padding: 2px 10px; border: 0; background: none; color: inherit; -webkit-tap-highlight-color: transparent; transition: transform .12s; }
-.m-trophy:active { transform: scale(.95); }
-.tc-top { position: relative; display: flex; align-items: center; gap: 8px; }
-.tc-cup { position: relative; flex: none; width: 26px; height: 26px; filter: none; } .tc-cup .ico { width: 100%; height: 100%; }
-.tc-n { font: 800 21px/1 "Bricolage Grotesque", system-ui, sans-serif; font-variant-numeric: tabular-nums; text-shadow: 0 2px 6px rgba(0,0,0,.45); }
-.tc-badge { position: absolute; top: -5px; right: -7px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #ff4d6a; color: #fff; font: 900 10px/16px system-ui; text-align: center; font-style: normal; box-sizing: border-box; }
+/* ---- the arena banner above the character: a picture of your arena, its name, the trophy count and how far you are in it ---- */
+.m-trophy { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; align-self: center; width: min(344px, 94%); box-sizing: border-box; padding: 9px 14px 9px 9px; border: 1px solid color-mix(in srgb, var(--ac, #35e0c8) 42%, transparent); border-radius: 18px; background: linear-gradient(120deg, color-mix(in srgb, var(--ac, #35e0c8) 20%, #0f141d), #0f141d 78%); color: inherit; text-align: left; box-shadow: 0 10px 24px -12px rgba(0,0,0,.8); -webkit-tap-highlight-color: transparent; transition: transform .12s; }
+.m-trophy:active { transform: scale(.97); }
+.ab-thumb { flex: none; width: 60px; height: 60px; border-radius: 13px; background: #10141c; box-shadow: 0 0 0 1.5px rgba(255,255,255,.15); }
+.ab-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ab-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ab-kick { font: 800 10.5px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .16em; color: var(--ac, #35e0c8); }
+.ab-cup { position: relative; display: flex; align-items: center; gap: 5px; }
+.tc-cup { position: relative; flex: none; width: 19px; height: 19px; filter: none; } .tc-cup .ico { width: 100%; height: 100%; }
+.tc-n { font: 800 16px/1 "Bricolage Grotesque", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.tc-badge { position: absolute; top: -8px; left: -9px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 8px; background: #ff4d6a; color: #fff; font: 900 9.5px/15px system-ui; text-align: center; font-style: normal; box-sizing: border-box; }
 .tc-badge[hidden] { display: none; }
-.tc-bar { display: block; width: 120px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.13); overflow: hidden; }
+.ab-name { font: 900 22px/1.05 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ab-prog { display: flex; align-items: center; gap: 9px; margin-top: 2px; }
+.tc-bar { flex: 1; display: block; min-width: 0; height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; }
 .tc-bar u { display: block; height: 100%; border-radius: 3px; background: var(--ac, #35e0c8); text-decoration: none; transition: width .3s; }
-.tc-ar { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; color: #8b95a7; }
-.tc-d { position: absolute; left: 100%; top: 2px; margin-left: 8px; font: 900 18px/1 system-ui; opacity: 0; pointer-events: none; white-space: nowrap; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
+.ab-next { flex: none; font-size: 10.5px; font-weight: 700; color: #9aa4b6; white-space: nowrap; }
+.tc-d { position: absolute; right: 100%; top: 0; margin-right: 8px; font: 900 16px/1 system-ui; opacity: 0; pointer-events: none; white-space: nowrap; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
 .tc-d.up { color: #7cf29c; } .tc-d.down { color: #ff6b81; }
 .tc-d.go { animation: tcPop 1.5s ease-out; }
 @keyframes tcPop { 0% { opacity: 0; transform: translateY(8px) scale(.7); } 15% { opacity: 1; transform: translateY(0) scale(1.15); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
-/* ---- the road screen: plain, one trophy and one number on top, a thin bar, then a quiet list ---- */
-.tr-head { flex: 1; display: flex; align-items: center; gap: 10px; }
-.tr-cup { flex: none; width: 30px; height: 30px; filter: none; } .tr-cup .ico { width: 100%; height: 100%; }
-.tr-head b { font: 800 26px/1 "Bricolage Grotesque", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
-.tr-all { flex: none; border: 0; border-radius: 10px; padding: 9px 12px; background: var(--accent); color: #06201b; font: inherit; font-weight: 900; font-size: 12px; }
-.tr-prog { padding: 2px 18px 6px; }
-.tr-pbar { display: block; height: 6px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; } .tr-pbar u { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--ac, #35e0c8); text-decoration: none; transition: width .4s; }
-.tr-plab { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; font-weight: 700; color: #8b95a7; }
-.tr-list { padding-top: 0; }
-.tr-ah { display: flex; align-items: baseline; gap: 8px; margin: 18px 0 2px; padding: 0 0 6px; border-bottom: 1px solid rgba(255,255,255,.1); }
-.tr-ah b { font-size: 15px; } .tr-ah span { font-size: 12px; color: #8b95a7; } .tr-ah em { margin-left: auto; font-style: normal; font-size: 12px; font-weight: 800; color: #8b95a7; }
-.tr-ah.far { opacity: .55; } .tr-ah.here b { color: var(--ac); }
+/* a faint painted copy of your arena behind the character (inside the stage, under everything) */
+#m-arena-bg { position: absolute; left: 50%; top: 0; transform: translateX(-50%); z-index: -1; pointer-events: none; opacity: .55; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 24%, #000 66%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 24%, #000 66%, transparent 100%); }
 /* trophies after a race, in the result line */
 .tr-res { display: inline-flex; align-items: center; gap: 4px; font-weight: 900; vertical-align: middle; } .tr-res .ico { width: 20px; height: 20px; } .tr-res.up { color: #7cf29c; } .tr-res.down { color: #ff6b81; }
-.tr-node span { font-size: 10px; letter-spacing: -.02em; }

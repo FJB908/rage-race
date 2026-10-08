@@ -2,7 +2,7 @@
 //   - A trophy count under your character on the home screen: it goes up when you place well and down when you do badly (with floors so it never feels unfair).
 //   - Arenas: the count moves you through 10 arenas (Playground ... Summit). An arena is a safe floor: once you are in it, you cannot drop below its start.
 //   - The Trophy Road: a list of milestones on the way, every one with a reward (coins, gems, chests, boosters, cosmetics, a gem chest).
-// Trophies come from every placing mode: Quick play, Build Race, Boom Tag, Arcade, Escape and the Gauntlet (they replace the old Ranked mode, and they set how strong your opponents are). Levels and the Summit have their own stars.
+// Trophies come from every placing mode: Arena Race, Build Race, Boom Tag, Arcade, Escape and the Gauntlet (they replace the old Ranked mode, and they set how strong your opponents are). Levels and the Summit have their own stars.
 // Loaded AFTER game.js and levelrewards.js. Profile fields: tr (trophies), trTop (highest arena index reached), trClaimed (milestones taken), trStreak (wins in a row).
 (function () {
     'use strict';
@@ -41,7 +41,7 @@
         return lastResult;
     }
     // DIFFICULTY FOLLOWS TROPHIES. The roster bots (src/modes/roster.js) have a rating; this maps your trophies onto that rating, so every placing mode
-    // (Quick play, Build Race, Boom Tag, Arcade, Escape, Gauntlet, parties) pits you against bots of about your level, and higher up the bots get better:
+    // (Arena Race, Build Race, Boom Tag, Arcade, Escape, Gauntlet, parties) pits you against bots of about your level, and higher up the bots get better:
     //   0 trophies ~ 1050 (a clumsy bot), 800 ~ 1260, 1900 ~ 1450, 2600 ~ 1530, 4600 ~ 1660, 6000 ~ 1700 (the best players in the game).
     const mmr = tr => { tr = tr === undefined ? (prog().tr || 0) : tr; return Math.round(1050 + 650 * (1 - Math.exp(-tr / 2200)) / (1 - Math.exp(-6000 / 2200))); };
     // the rating used to pick opponents right now: your trophy rating, made kinder while the game is still helping you (beginners, or after a few losses in a row)
@@ -110,51 +110,6 @@
         const it = itemOf(r); return '<b style="color:' + RARITY[it.rarity].color + '">' + it.name + '</b><small>' + RARITY[it.rarity].label + ' ' + ({ skin: 'skin', hat: 'headwear', face: 'face', trail: 'trail' }[r.cat]) + '</small>';
     }
 
-    /* ---------------------------------------------------------------- the road screen ---- */
-    const el = document.createElement('div');
-    el.id = 's-trophy'; el.className = 'screen lvr-screen'; el.style.cssText = 'display:none;opacity:0';
-    el.innerHTML =
-        '<section class="lr-shell"><header class="lr-top"><button class="pass-back" type="button" id="tr-back" aria-label="Back">' + icon('chev-l') + '</button>' +
-        '<div class="tr-head"><span class="tr-cup">' + icon('trophy') + '</span><b id="tr-num">0</b></div><button type="button" class="tr-all" id="tr-all" hidden>CLAIM ALL</button></header>' +
-        '<div class="tr-prog"><i class="tr-pbar"><u id="tr-fill"></u></i><div class="tr-plab"><span id="tr-arena"></span><span id="tr-next"></span></div></div>' +
-        '<div class="lr-list tr-list" id="tr-list"></div></section>';
-    document.body.appendChild(el); S.trophy = el;
-    const list = el.querySelector('#tr-list');
-
-    function render() {
-        const p = prog(), tr = p.tr || 0, ai = arenaOf(tr), A = ARENAS[ai], nxtA = ARENAS[ai + 1], done = p.trClaimed || [], nm = nextMilestone(), cl = claimable();
-        el.style.setProperty('--ac', A.c);
-        el.querySelector('#tr-num').textContent = num(tr);
-        el.querySelector('#tr-arena').textContent = A.n + ' · Arena ' + (ai + 1);
-        const from = A.at, to = nxtA ? nxtA.at : from + SPAN_LAST;
-        el.querySelector('#tr-fill').style.width = Math.min(100, 100 * (tr - from) / (to - from)).toFixed(1) + '%';
-        el.querySelector('#tr-next').textContent = nxtA ? num(nxtA.at) : '';
-        const all = el.querySelector('#tr-all'); all.hidden = !cl.length; all.textContent = 'CLAIM ALL (' + cl.length + ')';
-        list.innerHTML = '';
-        let lastArena = -1;
-        for (const m of build()) {
-            if (m.arena !== lastArena) {
-                lastArena = m.arena; const a = ARENAS[m.arena], here = m.arena === ai, reached = tr >= a.at;
-                const h = document.createElement('div'); h.className = 'tr-ah' + (here ? ' here' : '') + (reached ? '' : ' far'); h.style.setProperty('--ac', a.c);
-                h.innerHTML = '<b>' + a.n + '</b><span>Arena ' + (m.arena + 1) + '</span><em>' + num(a.at) + '</em>'; list.appendChild(h);
-            }
-            const claimed = done.includes(m.id), ready = !claimed && m.at <= tr, cur = nm && nm.id === m.id;
-            const row = document.createElement('div');
-            row.className = 'lr-row' + (claimed ? ' claimed' : ready ? ' ready' : ' locked') + (cur ? ' next' : '') + (m.big ? ' mile' : '');
-            row.dataset.m = m.id; row.style.setProperty('--rc', color(m.r));
-            row.innerHTML = '<div class="lr-node tr-node">' + (claimed ? icon('check') : '<span>' + num(m.at) + '</span>') + '</div>' +
-                '<div class="lr-card"><div class="lr-art">' + art(m.r, m.id) + '</div><div class="lr-name">' + name(m.r) + '</div>' +
-                (ready ? '<button type="button" class="lr-claim">CLAIM</button>' : claimed ? '<span class="lr-state">CLAIMED</span>' : '<span class="lr-state lock">' + icon('lock') + '</span>') + '</div>';
-            if (ready) row.querySelector('.lr-claim').onclick = () => claim([m.id]);
-            list.appendChild(row);
-            const cv = row.querySelector('canvas');
-            if (cv) { const look = Object.assign({ skin: 'classic', hat: 'none', face: 'none', trail: 'none' }, { [m.r.cat]: m.r.id }); if (m.r.cat === 'trail') { cv.width = 200; cv.height = 100; try { drawTrailPreview(cv, itemOf(m.r), undefined, 1.5); } catch (e) {} } else { try { renderLook(cv, look, { scale: .26, cy: .6 }); } catch (e) {} } }
-        }
-    }
-    function scrollToCurrent() {
-        const t = list.querySelector('.ready') || list.querySelector('.next') || list.lastElementChild;
-        if (t) list.scrollTop = Math.max(0, t.offsetTop - list.clientHeight / 3);
-    }
     async function grant(id) {
         const m = build()[id], r = m.r, p = prog();
         if ((p.trClaimed || []).includes(id)) return;
@@ -173,30 +128,49 @@
     let busy = false;
     async function claim(ids) {
         if (busy) return; busy = true;
-        try { for (const id of ids) { await grant(id); refreshMenu(); render(); } }
-        finally { busy = false; refreshMenu(); render(); }
+        try { for (const id of ids) { await grant(id); refreshMenu(); if (window.Arenas) Arenas.render(); } }
+        finally { busy = false; refreshMenu(); if (window.Arenas) Arenas.render(); }
     }
-    el.querySelector('#tr-all').onclick = () => claim(claimable().map(m => m.id));
-    el.querySelector('#tr-back').onclick = () => showScreen('start');
 
-    /* ------------------------------------------------------------ chip on the home screen ---- */
-    // under the character: the trophy count (counts up or down after a match), the arena and the way to the next reward
+
+    /* ------------------------------------------------------------ arena banner on the home screen ---- */
+    // above the character: a small picture of your arena, "ARENA 4 / HARBOUR", the trophy count (it counts up or down after a match) and a bar that shows
+    // how far you are in this arena, with what is left to the next one. A painted copy of the arena also sits faintly behind the character.
     const chip = document.createElement('button'); chip.type = 'button'; chip.id = 'm-trophy'; chip.className = 'm-trophy';
-    chip.innerHTML = '<span class="tc-top"><span class="tc-cup">' + icon('trophy') + '<em class="tc-badge" hidden></em></span><b class="tc-n">0</b><span class="tc-d"></span></span><i class="tc-bar"><u></u></i><span class="tc-ar"></span>';
+    chip.innerHTML = '<canvas class="ab-thumb" width="120" height="120"></canvas><span class="ab-copy"><span class="ab-top"><span class="ab-kick"></span><span class="ab-cup"><span class="tc-cup">' + icon('trophy') + '<em class="tc-badge" hidden></em></span><b class="tc-n">0</b><span class="tc-d"></span></span></span><b class="ab-name"></b><span class="ab-prog"><i class="tc-bar"><u></u></i><span class="ab-next"></span></span></span>';
     const row = $('pt-row'); if (row) row.insertAdjacentElement('beforebegin', chip);          // above the character
     chip.addEventListener('click', e => { e.stopPropagation(); if (window.SFX) SFX.play('count'); open(); });
-    let shown = null, anim = 0;
+    const stage = document.querySelector('.m-stage'), bg = document.createElement('canvas'); bg.id = 'm-arena-bg'; bg.setAttribute('aria-hidden', 'true');
+    if (stage) stage.insertBefore(bg, stage.firstChild);
+    let bgKey = '', thumbAi = -1, shown = null, anim = 0;
+    function paintBg(ai) {                                                       // the faint arena behind the character (repainted when the arena or the size changes)
+        if (!stage || !window.ArenaTheme) return;
+        const w = stage.clientWidth, h = stage.clientHeight; if (w < 40 || h < 40) return;
+        const dpr = Math.min(2, window.devicePixelRatio || 1), key = ai + '|' + w + 'x' + h + '|' + dpr; if (key === bgKey) return; bgKey = key;
+        bg.width = Math.round(w * dpr); bg.height = Math.round(h * dpr); bg.style.width = w + 'px'; bg.style.height = h + 'px';
+        try {
+            ArenaTheme.paintScene(bg, ai, w, h, { prog: .2, props: 1 });
+            const c = bg.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.globalCompositeOperation = 'destination-in';             // soft left and right edges (the top and bottom fade in CSS)
+            const g = c.createLinearGradient(0, 0, w, 0); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.16, 'rgba(0,0,0,1)'); g.addColorStop(.84, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+            c.fillStyle = g; c.fillRect(0, 0, w, h); c.globalCompositeOperation = 'source-over'; c.setTransform(1, 0, 0, 1, 0, 0);
+        } catch (e) {}
+    }
+    if (stage && window.ResizeObserver) new ResizeObserver(() => { bgKey = ''; paintBg(arenaOf(prog().tr || 0)); }).observe(stage);
     function shownGet() { try { const v = localStorage.getItem('rr_tr_shown'); return v === null ? null : +v; } catch (e) { return null; } }
     function shownSet(v) { try { localStorage.setItem('rr_tr_shown', String(v)); } catch (e) {} }
     function paintChip(v) {
         const tr = v, ai = arenaOf(tr), A = ARENAS[ai], nxtA = ARENAS[ai + 1], cl = claimable().length;
         chip.style.setProperty('--ac', A.c);
         chip.querySelector('.tc-n').textContent = num(tr);
-        chip.querySelector('.tc-ar').textContent = A.n + ' · Arena ' + (ai + 1);
+        chip.querySelector('.ab-kick').textContent = 'ARENA ' + (ai + 1);
+        chip.querySelector('.ab-name').textContent = A.n;
         const from = A.at, to = nxtA ? nxtA.at : from + SPAN_LAST;
         chip.querySelector('.tc-bar u').style.width = Math.max(3, Math.min(100, 100 * (tr - from) / (to - from))).toFixed(1) + '%';
+        chip.querySelector('.ab-next').textContent = nxtA ? num(nxtA.at - tr) + ' to ' + nxtA.n : 'Top arena';
         const bd = chip.querySelector('.tc-badge'); bd.hidden = !cl; bd.textContent = cl;
-        chip.setAttribute('aria-label', 'Trophies ' + num(tr) + ', ' + A.n + (cl ? ', ' + cl + ' rewards to claim' : ''));
+        if (thumbAi !== ai && window.ArenaTheme) { thumbAi = ai; try { ArenaTheme.paintScene(chip.querySelector('.ab-thumb'), ai, 60, 60, { props: .6, ground: true }); } catch (e) {} }
+        paintBg(ai);
+        chip.setAttribute('aria-label', 'Arena ' + (ai + 1) + ', ' + A.n + ', ' + num(tr) + ' trophies' + (nxtA ? ', ' + num(nxtA.at - tr) + ' to ' + nxtA.n : '') + (cl ? ', ' + cl + ' rewards to claim' : ''));
     }
     function visible() { return chip.getClientRects().length > 0 && $('s-start') && $('s-start').style.display !== 'none'; }
     function refresh() {
@@ -212,9 +186,9 @@
         }
         shown = tr; shownSet(tr); paintChip(tr);
     }
-    function open() { render(); showScreen('trophy'); setTimeout(scrollToCurrent, 90); }
+    function open() { if (window.Arenas) Arenas.open(); }
     setInterval(() => { if (!document.hidden) refresh(); }, 1200);
 
-    window.Trophies = { record, last, worth, mmr, matchMmr, spread, claimable, refresh, open, arenaOf, ARENAS, road: build, nextMilestone };
+    window.Trophies = { record, last, worth, mmr, matchMmr, spread, claimable, refresh, open, arenaOf, ARENAS, SPAN_LAST, road: build, nextMilestone, claim, art, name, color, itemOf };
     refresh();
 })();

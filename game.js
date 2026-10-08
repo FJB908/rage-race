@@ -572,7 +572,7 @@ function rollItem(p){
         bomb:   bombW,
         ufo:    ufoW,
     };
-    if (window.ArenaTheme && gameMode === 'race') ArenaTheme.bias(w);                 // an arena makes some power-ups a bit more common
+    if (window.ArenaTheme && gameMode === 'race') ArenaTheme.shape(w, f, others);       // the arena's power-up pool (some arrive, some leave) and a few shifted odds
     if (p.lastItem && w[p.lastItem] > 0) w[p.lastItem] *= 0.2;      // seldom the same item twice in a row: it spreads out
     let sum = 0; for (const k in w) sum += w[k];
     let r = Math.random()*sum;
@@ -2134,7 +2134,7 @@ function draw() {
     ctx.fillRect(0,0,CW,CH);
     _menuPainted = state==='menu';
     if (state==='menu') return;
-    if (gameMode === 'race' && window.ArenaTheme && ArenaTheme.on()) ArenaTheme.drawSky(ctx, SCREEN_PW(), CH, cameraY);          // the arena's sky, far props and air (Quick play, Build Race)
+    if (gameMode === 'race' && window.ArenaTheme && ArenaTheme.on()) ArenaTheme.drawSky(ctx, SCREEN_PW(), CH, cameraY);          // the arena's sky, far props and air (Arena Race, Build Race)
     else if (gameMode === 'parkour') drawParkourSky();
     else if (gameMode === 'level') drawLevelSky();
     else if (gameMode === 'gauntlet') gtDrawSky();
@@ -3105,7 +3105,7 @@ function escGenRow(){
 
 function startEscape(){
     gameMode = 'escape';
-    if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Quick play and Build Race only
+    if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Arena Race and Build Race only
     document.body.classList.remove('mode-parkour', 'mode-level'); pk = null; lv = null;
     document.body.classList.add('mode-escape');
     showScreen('');
@@ -4211,8 +4211,8 @@ function randomBotLook(){
     };
 }
 
-const MODE_LABEL = { race:'Quick play', tag:'Boom Tag · Pass the bomb', arcade:'Arcade · Random minigames', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
-const MODE_POSTER = { race:{ n:'Quick play', s:'4 players', c:'#35e0c8' }, build:{ n:'Build Race', s:'Place a trap, then race', c:'#ff8ae6' }, gauntlet:{ n:'Gauntlet', s:'32 players', c:'#ffcf3f' }, parkour:{ n:'Levels', s:'Dimensions', c:'#b3a9ff' }, escape:{ n:'Escape', s:'Climb or fall', c:'#ff7a90' }, tag:{ n:'Boom Tag', s:'Pass the bomb', c:'#ff8a46' }, arcade:{ n:'Arcade', s:'Random minigames', c:'#5bb8ff' } };
+const MODE_LABEL = { race:'Arena Race', tag:'Boom Tag · Pass the bomb', arcade:'Arcade · Random minigames', escape:'Escape · Survival', parkour:'Levels · Dimensions', gauntlet:'Gauntlet · 32 players', ranked:'Ranked · Season race', build:'Build Race · 4 rounds' };
+const MODE_POSTER = { race:{ n:'Arena Race', s:'4 players', c:'#35e0c8' }, build:{ n:'Build Race', s:'Place a trap, then race', c:'#ff8ae6' }, gauntlet:{ n:'Gauntlet', s:'32 players', c:'#ffcf3f' }, parkour:{ n:'Levels', s:'Dimensions', c:'#b3a9ff' }, escape:{ n:'Escape', s:'Climb or fall', c:'#ff7a90' }, tag:{ n:'Boom Tag', s:'Pass the bomb', c:'#ff8a46' }, arcade:{ n:'Arcade', s:'Random minigames', c:'#5bb8ff' } };
 const MODE_ICON = { race:'mode-race', tag:'mode-tag', arcade:'mode-arcade', escape:'mode-escape', parkour:'mode-levels', gauntlet:'crown', build:'mode-build' };
 let _freeIds = null;
 function freeItemIds(){
@@ -4946,7 +4946,7 @@ function openParkour(){
 }
 function pkStart(save){
     gameMode = 'parkour';
-    if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Quick play and Build Race only
+    if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Arena Race and Build Race only
     document.body.classList.remove('mode-escape', 'mode-level'); lv = null;
     document.body.classList.add('mode-parkour');
     esc = null;
@@ -5361,7 +5361,7 @@ function openLevels(gotoDim){
 /* ---- playing a level ---- */
 function lvStart(i){
     gameMode = 'level';
-    if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Quick play and Build Race only
+    if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Arena Race and Build Race only
     document.body.classList.remove('mode-escape', 'mode-parkour');
     document.body.classList.add('mode-level');
     esc = null; pk = null;

@@ -2,7 +2,7 @@
 
 New players quit because the game was too hard and the menus too busy. This system (src/ui/gentle.js, gentle-ui.js, gentle.css) fixes that.
 
-- **Adaptive difficulty (`Gentle.ease()`, stored as `prog().dda`, 0.04..1.4):** how much help you get in Quick play. It starts at full help, stays there for the first 3 races, and then follows your results:
+- **Adaptive difficulty (`Gentle.ease()`, stored as `prog().dda`, 0.04..1.4):** how much help you get in Arena Race. It starts at full help, stays there for the first 3 races, and then follows your results:
   1st place -0.07, 2nd 0, 3rd +0.10, 4th or DNF +0.16 (`Gentle.record(place, finished)`, called from `rewardRace`). It settles where you win about half your races.
   Help = wider platforms (up to +30%, max 185 px), shorter gaps, fewer crumbling/sliding/icy ledges, clumsier and slower bots (their aim error scales with `skill`), the odd idle bot.
   Never in Ranked or party matches. The strong roster bot only appears when ease < 0.15 and from race 12.

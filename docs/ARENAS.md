@@ -1,6 +1,33 @@
 # Arena themes
 
-**Built (step 1 of the order below):** `src/modes/arenatheme.js` gives every arena its own sky (gradient that shifts while you climb), far-away props (parallax at a quarter of the camera speed), drifting air (dust, snow, rain, ash, sparks, stars), a colour for the normal platforms and a name banner at the start of the race. It also renames and recolours the Stun Bomb and the Earthquake per arena (for example Lava Bomb / Eruption in the Volcano, Snowball / Avalanche on the Mountain) and gives each arena a small bias in which power-ups are more common (Space Station: more Double jumps, Harbour: more Super Bounce, Volcano: more Rockets and Earthquakes). Quick play and Build Race use the arena your trophies put you in; a party match always uses the Playground. It is a look only: the signature rules below are still ideas.
+**Built:** `src/modes/arenatheme.js` (look + power-up pool), `src/ui/arenas.js` (the Arenas screen) and the arena banner on the home screen (`src/ui/trophies.js`).
+
+- **Look** (Arena Race and Build Race; a party match always uses the Playground): a sky that shifts while you climb, a big sun or moon, two layers of far-away scenery that move slowly (parallax), mist between the layers, drifting specks and a soft vignette. The colours of the scenery are close to the sky, so it is clearly a background and never looks like something to stand on. Every piece of scenery is painted once into a small cached picture; a frame only does a few `drawImage` calls. The normal platforms get a colour that fits the arena; the special platforms (ice, moving, fragile, boost, safety) keep their meaning colours.
+- **Home screen**: the banner above the character shows a picture of your arena, `ARENA 4 / Harbour`, the trophy count (it rolls up or down after a match) and a bar with what is left to the next arena. A faint painted copy of your arena sits behind the character.
+- **Arenas screen** (tap the banner): one arena per page (swipe or arrows, or tap one of the ten nodes). Big picture, name, progress or lock, the power-ups that arrive and leave, and the four trophy rewards of that arena (claim one or all).
+- **Name**: the main mode is now called **Arena Race** (it used to be Quick play).
+
+## Power-ups per arena (Arena Race and Build Race)
+The pool is cumulative: an arena has everything the arenas before it added, minus what has left. The Gust (`wind`) was out of the game and comes back from the Rooftop on. Parties keep the classic set (everything except the Gust). The Gauntlet, Boom Tag, Arcade and Escape are not touched.
+
+| # | Arena | New | Leaves | In play |
+|---|---|---|---|---|
+| 1 | Playground | Super Bounce, Rocket, Giant, Shield (the starter set) | - | 4 |
+| 2 | Parking Lot | Double Jump | - | 5 |
+| 3 | Rooftop | Gust | - | 6 |
+| 4 | Harbour | Stun Bomb | - | 7 |
+| 5 | Factory | Chain | - | 8 |
+| 6 | Subway | Earthquake | - | 9 |
+| 7 | Mountain | UFO | - | 10 |
+| 8 | Space Station | Cannon | - | 11 (everything) |
+| 9 | Volcano | - | Super Bounce | 10 |
+| 10 | Summit | - | Giant | 9 |
+
+Why this order: the four easy ones teach the game; the Double Jump is the first skill item; the Gust and Stun Bomb are the first attacks; the Chain and Earthquake only matter against a leader, so they need a field that is competitive; the UFO and Cannon are the big comeback tools and come last. At the top the helpers that make jumping forgiving (Super Bounce, Giant) leave, so the best players have to read their own jumps.
+
+Each arena also renames and recolours the **Stun Bomb** and the **Earthquake** (Parking Lot: Car Alarm / Pothole, Rooftop: Firework / Roof Cave-In, Harbour: Depth Charge / Tidal Wave, Factory: Steam Blast / Piston Slam, Subway: Short Circuit / Train Rumble, Mountain: Snowball / Avalanche, Space Station: Ion Burst / Meteor, Volcano: Lava Bomb / Eruption, Summit: Thunder / Lightning Strike) and makes one or two power-ups a bit more common (Parking Lot: Stun Bomb x1.3, Rooftop: Double Jump x1.4, Harbour: Super Bounce x1.4, Factory: Chain x1.4, Subway: Shield x1.3 and Stun Bomb x1.15, Mountain: Giant x1.4, Space Station: Double Jump x1.6 and Super Bounce x1.2, Volcano: Rocket x1.5 and Earthquake x1.3, Summit: Cannon x1.5 and Earthquake x1.2). The names and odds are plain data at the top of `arenatheme.js`.
+
+Not built yet: the signature rules below (oil, gusts, thin ice, ...), music per arena, the unlock reveal and the themed cosmetics.
 
 Everything below is the original idea list.
 

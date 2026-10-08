@@ -1,6 +1,6 @@
 // PARTY on the home screen: your friends stand next to you (up to 4), a plus invites more, the leader starts the match.
 // The data and the network live in src/social/social.js (Firestore + Realtime Database); this file is only the home UI and the PLAY rules.
-// Quick play: the leader starts a synced race for everyone. Gauntlet: the leader plays and the members join as stand-ins until Gauntlet runs on a game server.
+// Arena Race: the leader starts a synced race for everyone. Gauntlet: the leader plays and the members join as stand-ins until Gauntlet runs on a game server.
 // A race with ONLY lobby members (4 of 4) pays no rewards. See docs/PARTY.md.
 (function () {
     'use strict';
@@ -19,14 +19,14 @@
         return [me].concat(list.map(m => Object.assign({ host:s.party && s.party.host === m.uid }, m))).slice(0, MAX);
     }
     const inParty = () => members().length > 1;
-    // the mode the party plays: the leader's choice (Quick play or Gauntlet), stored on the party so everyone sees it
+    // the mode the party plays: the leader's choice (Arena Race or Gauntlet), stored on the party so everyone sees it
     const myMode = () => { const m = prog().lastMode; return m === 'gauntlet' ? 'gauntlet' : m === 'arcade' ? 'arcade' : (!m || m === 'race') ? 'race' : 'other'; };
     const mode = () => { const s = S(); return (s.party && s.party.host !== s.uid && s.party.mode) ? s.party.mode : myMode(); };
     function setMode(m) {
         if (!isHost()) { toast('Only the party leader picks the mode'); return; }
         const q = prog(); q.lastMode = m; saveProg(q); refreshMenu(); render(); syncMode();
     }
-    const LABEL = { race:'Quick play', arcade:'Arcade · Random minigames', gauntlet:'Gauntlet · 32 players' };
+    const LABEL = { race:'Arena Race', arcade:'Arcade · Random minigames', gauntlet:'Gauntlet · 32 players' };
     const modeLabel = () => LABEL[mode()] || 'Pick a mode';
     // same idea as the Mode row on the home screen: the leader goes to the Play tab to pick, everyone else just sees it
     function pickMode() { if (!isHost()) { toast('Only the party leader picks the mode'); return; } if (typeof menuTab === 'function') menuTab('play'); }
@@ -125,7 +125,7 @@
         if (mode === 'gauntlet') { window.gauntletParty = members().slice(1); return false; }
         if (mode === 'arcade') return false;                  // the minigames take your party as their players (Party.standIns)
         if (mode === 'race' || !mode) { Social.startParty(); return true; }
-        toast('Parties play Quick play, Arcade and Gauntlet'); return true;
+        toast('Parties play Arena Race, Arcade and Gauntlet'); return true;
     }
     window.Party = { members, mode, setMode, modeLabel, pickMode, intercept, render, active:inParty, standIns:() => (inParty() ? members().slice(1) : []) };
     render(); syncMode();

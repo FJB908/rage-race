@@ -1,6 +1,6 @@
 # Trophy Road
 
-A visible progress number, like the trophies in Clash Royale and Brawl Stars. Code: `src/ui/trophies.js` (+ `trophies.css`), hooks in `rewardRace` (Quick play, Build Race, Boom Tag, Arcade), Escape, Ranked and the Gauntlet.
+A visible progress number, like the trophies in Clash Royale and Brawl Stars. Code: `src/ui/trophies.js` (+ `trophies.css`), hooks in `rewardRace` (Arena Race, Build Race, Boom Tag, Arcade), Escape, Ranked and the Gauntlet.
 
 - **Points per result.** Four-player modes: 1st +30, 2nd +12, 3rd -8, 4th -20. A win streak adds +5 per extra win in a row (max +15). Gauntlet (32 players): 1st +45, top 3 +28, top 8 +14, top 16 +2, else -12.
 - **Never unfair.** No losses below 40 trophies. The start of the highest arena you reached is a floor you cannot drop below.
@@ -18,5 +18,8 @@ A visible progress number, like the trophies in Clash Royale and Brawl Stars. Co
 Ranked is gone. Your trophies set the strength of the bots in every placing mode:
 - `Trophies.mmr()` maps trophies to the roster rating: 0 trophies ~ 1050 (clumsy bots), 800 ~ 1260, 1900 ~ 1450, 2600 ~ 1530, 4600 ~ 1660, 6000 ~ 1700 (the best level in the game).
 - `Trophies.matchMmr()` is the same rating, made kinder while the game is still helping you (beginners and after a few losses: `Gentle.ease()`, up to -220).
-- Quick play and Build Race pick 3 roster bots of that rating when the match is made (so the lobby shows the same names that race). Boom Tag, Arcade, Escape (+100) and the Gauntlet (+120, wide pool) use it too; parties use `Trophies.mmr()` for their bot fill.
+- Arena Race and Build Race pick 3 roster bots of that rating when the match is made (so the lobby shows the same names that race). Boom Tag, Arcade, Escape (+100) and the Gauntlet (+120, wide pool) use it too; parties use `Trophies.mmr()` for their bot fill.
 - Existing Ranked players got trophies once: `min(4200, RP x 2.2)`.
+
+## Screens (updated)
+The long Trophy Road list is replaced by the Arenas screen (`src/ui/arenas.js`, see ARENAS.md): one arena per page with its four rewards. The home screen shows an arena banner (picture, name, trophies, progress to the next arena).

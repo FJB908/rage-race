@@ -329,7 +329,7 @@
         const T = Tag.ui; T.ensureRoot(); T.hideResult(); $('tg-root').classList.remove('over', 'tipping'); lastId = id;
         G = GAMES[id];
         gameMode = 'arcade'; esc = null; pk = null; lv = null; ufos = []; window.rankedMatch = false; window.partyMatch = null;
-        if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Quick play and Build Race only
+        if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Arena Race and Build Race only
         document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level', 'mode-gauntlet'); document.body.classList.add('mode-tag');
         showScreen(''); WORLD_W = 356; resize();
         buildArena(G.arena);
