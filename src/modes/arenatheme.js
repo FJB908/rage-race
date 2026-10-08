@@ -238,6 +238,17 @@
         c.globalAlpha = 1;
     }
     // drifting specks (dust, snow, rain, ash, sparks, stars): `list` is a set of {x, y, s, v} in 0..1, moved here a little every call
+    // now and then a balloon floats up from the bottom of the screen to the top (home world and race background), swaying a little; at most two at a time
+    let floaters = [], nextB = 4;
+    function balloons(c, i, W, H, dt) {
+        nextB -= dt; if (nextB <= 0 && floaters.length < 2) { floaters.push({ x: .1 + Math.random() * .8, y: 1.12, v: Math.random() > .5 ? 1 : 0, ph: Math.random() * 6, sp: .035 + Math.random() * .025, k: .5 + Math.random() * .25 }); nextB = 7 + Math.random() * 9; }
+        for (let q = floaters.length - 1; q >= 0; q--) {
+            const b = floaters[q]; b.y -= b.sp * dt; if (b.y < -.25) { floaters.splice(q, 1); continue; }
+            const sp = sprite(i, 'balloon', 'mid', b.v), x = W * b.x + Math.sin(b.y * 9 + b.ph) * 12;
+            put(c, sp, x, H * b.y + sp.oy * b.k, b.k, .9, 0);
+        }
+        c.globalAlpha = 1;
+    }
     function specks(c, th, list, W, H, now, dt) {
         const kind = th.air[0], col = th.air[1], dens = th.air[2]; c.fillStyle = col; c.strokeStyle = col;
         for (let i = 0; i < list.length; i++) {
@@ -269,7 +280,7 @@
         mistFill(c, W, H, cur, H * 0.2, H, br ? 0.14 : 0.3);
         drawLayer(c, mid, 'mid', W, H, base, climbed, 0.2, br ? 0.95 : 0.62, 0.92, now, cur);
         mistFill(c, W, H, cur, H * 0.5, H, br ? 0.1 : 0.26);
-        specks(c, cur, air, W, H, now, dt);
+        specks(c, cur, air, W, H, now, dt); balloons(c, idx, W, H, Math.min(dt, .1));
         c.globalAlpha = 1;
         if (idx === 9) {                                                   // Summit: a cosmetic lightning flash now and then (it never touches the platforms)
             flashAt -= dt; if (flashAt <= 0) { flash = 1; flashAt = 4 + Math.random() * 7; }
@@ -404,7 +415,7 @@
         c.setTransform(1, 0, 0, 1, 0, 0);
     }
     const airMake = (i, n) => { const r = rng(77 + i * 5); return Array.from({ length: n || 30 }, () => ({ x: r(), y: r(), s: .5 + r(), v: .4 + r() * .8 })); };
-    const airStep = (c, i, list, w, h, now, dt) => specks(c, T[i], list, w, h, now, dt);
+    const airStep = (c, i, list, w, h, now, dt) => { specks(c, T[i], list, w, h, now, dt); balloons(c, i, w, h, Math.min(dt, .1)); };
 
     /* ------------------------------------------------------------------------------ power-ups ---- */
     // called by the item roll: removes what the arena does not have, switches the Gust on where it exists, and shifts a few odds
