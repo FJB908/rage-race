@@ -10,6 +10,7 @@
     const $ = id => document.getElementById(id);
     const TC = { common: '#35e0c8', rare: '#5b8def', epic: '#b3a9ff', mythic: '#ff4d7d', legendary: '#ffcf3f' };
     const ROW = 132, GATE0 = 150, GATE1 = 196, TOWER = 330, TOP_PAD = 24, BOT_PAD = 236, SWING = 0.27;
+    const AV_W = 96, AV_H = 144, AV_PX = 192, AV_OPTS = { scale: .24, cy: .72, pad: { t: 24, b: 6, l: 14, r: 14 } }, FEET = -3;          // the cube's canvas (css size, 192 px wide for a sharp picture, tall enough for any hat) and where its feet stand on the stone (px under the stone's centre)
     const THEME = [{ lo: '#090b12', hi: '#1d1745', glow: '#7c6bff', dust: '#cfc8ff' }, { lo: '#070c14', hi: '#0f2c52', glow: '#5ec8ff', dust: '#d8f1ff' }];
 
     const startEl = $('s-start'), bodyEl = $('m-body'), stage = startEl && startEl.querySelector('.m-stage');
@@ -23,7 +24,7 @@
         '<div class="lvp-stars">' + icon('star') + '<b id="lvp-total">0</b></div></div><div class="lvp-world" id="lvp-world"></div>';
     stage.appendChild(host);
     const world = $('lvp-world');
-    let L = null, lastKey = '', prev = null;                                  // L: the layout on screen; prev: what the road looked like last time (to hop and pop what changed)
+    let L = null, lastKey = '', prev = null, meActor = null;                                  // L: the layout on screen; prev: what the road looked like last time (to hop and pop what changed)
 
     const rng = s => () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
     const hexRgb = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
@@ -66,7 +67,7 @@
         for (let k = 0; k < n.length - 1; k++) {
             const a = n[k], b = n[k + 1], my = (a.y + b.y) / 2, d = 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + 'C' + a.x.toFixed(1) + ' ' + my.toFixed(1) + ' ' + b.x.toFixed(1) + ' ' + my.toFixed(1) + ' ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1);
             base += '<path d="' + d + '" class="rd-b"/><path d="' + d + '" class="rd-d"/>';
-            if (a.reached && b.open) { defs += '<linearGradient id="rg' + k + '" gradientUnits="userSpaceOnUse" x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '"><stop offset="0" stop-color="' + a.L.color + '"/><stop offset="1" stop-color="' + b.L.color + '"/></linearGradient>'; lit += '<path d="' + d + '" class="rd-l" stroke="url(#rg' + k + ')"/>'; }
+            if (a.reached && b.open) { defs += '<linearGradient id="rg' + k + '" gradientUnits="userSpaceOnUse" x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '"><stop offset="0" stop-color="' + a.L.color + '"/><stop offset="1" stop-color="' + b.L.color + '"/></linearGradient>'; lit += '<path d="' + d + '" class="rd-l" stroke="url(#rg' + k + ')"/><path d="' + d + '" class="rd-ld"/>'; }
         }
         return '<svg class="lvp-road" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><defs>' + defs + '</defs>' + base + lit + '</svg>';
     }
@@ -88,6 +89,11 @@
     }
     function snapshot() {                                                      // everything that changes how the road looks
         return dims().map(o => { const d = dimLoad(o.dm); return o.di + ':' + (dimUnlocked(o.di) ? 1 : 0) + ':' + d.stars.join('') + ':' + (d.skipped || []).map(v => v ? 1 : 0).join(''); }).join('|') + '|' + curDim + '|' + widthNow();
+    }
+    // the canvas is placed so that the FEET of the cube (they move with a hat or a costume that makes it smaller) stand exactly on the island
+    function placeAvatar(cv, look) {
+        const M = lookMetrics(cv, look, AV_OPTS), k = AV_W / AV_PX;
+        cv.style.width = AV_W + 'px'; cv.style.height = AV_H + 'px'; cv.style.left = -AV_W / 2 + 'px'; cv.style.top = -((M.cy + M.s) * k).toFixed(1) + 'px';
     }
     function render() {
         const W = widthNow(), Ly = layout(W);
@@ -116,24 +122,30 @@
         });
         Ly.nodes.forEach(nd => {                                               // the stones
             const c = nd.L.color, cls = 'lvp-node' + (nd.cur ? ' cur' : nd.reached ? ' done' : nd.open ? ' open' : ' lock') + (nd.skipped ? ' skipped' : '');
-            const tc = TC[lvDropTier(nd.di, nd.i)], earned = nd.stars >= 3, side = nd.x < W / 2 ? 1 : -1;
+            const tc = TC[lvDropTier(nd.di, nd.i)], earned = nd.stars >= 3, side = nd.x < W / 2 ? 1 : -1, ix = nd.di * 10 + nd.i, fd = (4.2 + (ix % 5) * .37).toFixed(2), fp = (-(ix * 0.83) % 5).toFixed(2);
+            nd.fd = fd; nd.fp = fp; const below = Ly.nodes[Ly.nodes.indexOf(nd) - 1];            // the road leaves downwards: the name stands on the other side of it
             const stars = nd.reached && !nd.skipped ? '<span class="lvp-st">' + [0, 1, 2].map(k => '<i class="' + (k < nd.stars ? 'on' : '') + (prev && prev[nd.di] && (prev[nd.di][nd.i] || 0) <= k && k < nd.stars ? ' pop' : '') + '">' + icon('star') + '</i>').join('') + '</span>' : '';
-            html.push('<button type="button" class="' + cls + '" data-di="' + nd.di + '" data-i="' + nd.i + '" style="left:' + nd.x.toFixed(1) + 'px;top:' + nd.y.toFixed(1) + 'px;--c:' + c + ';--c2:' + shade(c, .55) + '" aria-label="Level ' + (nd.i + 1) + '">' +
-                '<span class="lvp-face">' + (nd.open ? '<b>' + (nd.i + 1) + '</b>' : icon('lock')) + '</span>' + stars + (nd.cur ? '<span class="lvp-name">' + nd.L.name + '</span>' : '') + '</button>');
-            html.push('<span class="lvp-chest' + (earned ? ' earned' : '') + (nd.open ? '' : ' lock') + '" style="left:' + (nd.x + side * 70).toFixed(1) + 'px;top:' + (nd.y - 2).toFixed(1) + 'px;--ic:' + tc + '">' + icon('drop-' + lvDropTier(nd.di, nd.i)) + '</span>');
+            html.push('<button type="button" class="' + cls + '" data-di="' + nd.di + '" data-i="' + nd.i + '" style="left:' + nd.x.toFixed(1) + 'px;top:' + nd.y.toFixed(1) + 'px;--c:' + c + ';--c2:' + shade(c, .55) + ';--fd:' + fd + 's;--fp:' + fp + 's" aria-label="Level ' + (nd.i + 1) + '">' +
+                '<span class="lvp-face">' + (nd.open ? '<b>' + (nd.i + 1) + '</b>' : icon('lock')) + '</span>' + stars + (nd.cur ? '<span class="lvp-name ' + (below && below.x < nd.x ? 'r' : 'l') + '">' + nd.L.name + '</span>' : '') + '</button>');
+            html.push('<span class="lvp-chest' + (earned ? ' earned' : '') + (nd.open ? '' : ' lock') + '" style="left:' + (nd.x + side * (nd.cur ? 96 : 76)).toFixed(1) + 'px;top:' + (nd.y - 2).toFixed(1) + 'px;--ic:' + tc + '">' + icon('drop-' + lvDropTier(nd.di, nd.i)) + '</span>');
         });
-        html.push('<div class="lvp-me" id="lvp-me" style="left:' + focus.x.toFixed(1) + 'px;top:' + (focus.y - 36).toFixed(1) + 'px"><canvas width="140" height="140"></canvas></div>');       // you
+        zones.forEach((z, n) => { const rr = rng(500 + n * 31), th = THEME[Math.min(n, THEME.length - 1)];          // a few motes of light drifting up in every dimension
+            for (let q = 0; q < 9; q++) html.push('<i class="lvp-mote" style="left:' + (rr() * W).toFixed(0) + 'px;top:' + (z.zone.top + 60 + rr() * (z.zone.h - 160)).toFixed(0) + 'px;--md:' + (9 + rr() * 8).toFixed(1) + 's;--mp:' + (-rr() * 12).toFixed(1) + 's;background:' + th.dust + '"></i>'); });
+        html.push('<div class="lvp-me" id="lvp-me" style="left:' + focus.x.toFixed(1) + 'px;top:' + (focus.y + FEET).toFixed(1) + 'px;--fd:' + focus.fd + 's;--fp:' + focus.fp + 's"><div class="lvp-me-in"><canvas width="' + AV_PX + '" height="' + AV_PX * 1.5 + '"></canvas></div></div>');       // you
         const tw = Ly.items.find(q => q.kind === 'tower'), save = typeof pkLoadSave === 'function' ? pkLoadSave() : null, bt = load('rr_pk_best_time', 0), bm = load('rr_pk_best', 0);       // the tower
         const meta = save ? 'Saved ' + (save.m || 0) + ' m' : bt ? 'Best ' + pkFmtTime(bt) : bm ? 'Best ' + bm + ' m' : '1000 m';
         html.push('<button type="button" class="lvp-tower" id="lvp-tw" style="top:' + tw.top + 'px;height:' + tw.h + 'px">' + towerSVG(true) + '<span><b>THE TOWER</b><small>' + meta + '</small></span></button>');
 
         world.style.width = Ly.W + 'px'; world.style.height = Ly.H + 'px'; world.innerHTML = html.join('');
         world.querySelectorAll('canvas.lvp-bg').forEach(cv => { const n = +cv.dataset.zone, z = zones[n].zone; paintZone(cv, Ly.W, z.h, THEME[Math.min(n, THEME.length - 1)], Ly.nodes.filter(q => q.zoneN === n), 90 + n * 17, n > 0 ? THEME[Math.min(n - 1, THEME.length - 1)] : null); });
-        try { renderLook($('lvp-me').querySelector('canvas'), myLook(), { scale: .36, cy: .6 }); } catch (e) {}
+        try {                                                                                       // your cube: the real animated character (it breathes, blinks and looks around), its feet on the island
+            const cv = $('lvp-me').querySelector('canvas'), look = myLook(); placeAvatar(cv, look);
+            meActor = window.CharAnim ? CharAnim.actor(cv, () => myLook(), { sound: true, opts: AV_OPTS }) : null; if (meActor) meActor.setLook(look); else renderLook(cv, look, AV_OPTS);
+        } catch (e) {}
         world.querySelectorAll('.lvp-node').forEach(b => b.addEventListener('click', () => {
             const di = +b.dataset.di, i = +b.dataset.i;
             if (b.classList.contains('lock')) { if (window.SFX) SFX.play('error'); b.animate([{ transform: 'translate(-50%,-50%)' }, { transform: 'translate(calc(-50% - 6px),-50%)' }, { transform: 'translate(calc(-50% + 6px),-50%)' }, { transform: 'translate(-50%,-50%)' }], { duration: 260 }); return; }
-            if (window.SFX) SFX.play('tap'); curDim = di; lvStart(i);
+            if (window.SFX) SFX.play('tap'); curDim = di; startSoon(i, b.classList.contains('cur'));
         }));
         const twb = $('lvp-tw'); if (twb) twb.addEventListener('click', () => { if (window.SFX) SFX.play('tap'); openParkour(); });
         Ly.focus = focus; Ly.zones = zones; return Ly;
@@ -144,7 +156,7 @@
         const was = Ly.nodes.find(q => q.di === f.di && q.i === prev.cur); if (!was || was === f) return;
         const ox = was.x - f.x, oy = was.y - f.y;
         me.animate([{ transform: 'translate(' + ox + 'px,' + oy + 'px)' }, { transform: 'translate(' + ox * .5 + 'px,' + (oy * .5 - 80) + 'px)', offset: .5 }, { transform: 'translate(0,0)' }], { duration: 950, delay: 450, easing: 'cubic-bezier(.4,0,.3,1)', fill: 'backwards' });
-        setTimeout(() => { if (window.SFX) SFX.play('jump', .7); }, 450); setTimeout(() => { if (window.SFX) SFX.play('land', 1); }, 1380);
+        setTimeout(() => { if (window.SFX) SFX.play('jump', .7); }, 450); setTimeout(() => { if (window.SFX) SFX.play('land', 1); if (meActor) meActor.react(3, true); }, 1380);
     }
     // scroll the home tab so that the level you are on sits in the middle of what is visible (between the pass row and the dock)
     function focusScroll() {
@@ -159,6 +171,7 @@
         const sp = startEl.querySelector('.m-split'); host.style.setProperty('--split-h', (sp && sp.offsetHeight ? sp.offsetHeight : 0) + 'px');          // the star counter and the tower button hang just under the pass row (when there is one)
         const key = snapshot(), changed = key !== lastKey || !L;
         if (changed) { L = render(); lastKey = key; }
+        else if (meActor) { try { const cv = $('lvp-me').querySelector('canvas'), look = myLook(); meActor.setLook(look); placeAvatar(cv, look); } catch (e) {} }          // you may have changed your look in the shop
         requestAnimationFrame(() => {
             focusScroll(); if (changed) hop(L);
             prev = { cur: L.focus.cur ? L.focus.i : undefined, curDim: L.focus.di }; L.nodes.forEach(nd => { (prev[nd.di] = prev[nd.di] || [])[nd.i] = nd.stars; });
@@ -169,7 +182,13 @@
         for (const o of dims()) { if (!dimUnlocked(o.di)) continue; const i = currentOf(o.di); if (i >= 0) return { di: o.di, i }; }
         return null;
     }
-    function play() { const c = current(); if (c) { curDim = c.di; lvStart(c.i); } else openParkour(); }
+    // a short moment of joy before the level begins: your cube hops (only when you start the level it stands on)
+    let starting = false;
+    function startSoon(i, hopFirst) {
+        if (starting) return;
+        if (hopFirst && meActor) { starting = true; meActor.react(4, true); setTimeout(() => { starting = false; lvStart(i); }, 320); } else lvStart(i);
+    }
+    function play() { const c = current(); if (c) { curDim = c.di; startSoon(c.i, true); } else openParkour(); }
     function goHome() {                                                        // "open the levels" = go to the home tab with the Levels mode selected
         const p = prog(); if (p.lastMode !== 'parkour') { p.lastMode = 'parkour'; saveProg(p); }
         refreshStartMeta(); showScreen('start');
