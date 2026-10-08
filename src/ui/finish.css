@@ -1,0 +1,77 @@
+/* ============ THE FINISH MOMENT (you are through, the others still race): no window, just big letters on the race ============ */
+#fin-moment { position: absolute; inset: 0; z-index: 6; pointer-events: none; display: none; }
+body.fin-moment #fin-moment { display: block; }
+body.fin-moment #pos-pill, body.fin-moment #finish-menu, body.fin-moment .hint-bubble, body.fin-moment #hint { display: none !important; }       /* the big place replaces the little one; the bottom actions replace the old button */
+#fin-moment::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 52%; background: linear-gradient(to bottom, rgba(6,9,16,.66), rgba(6,9,16,.34) 55%, transparent); opacity: 0; transition: opacity .5s ease; }
+#fin-moment::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 36%; background: linear-gradient(to top, rgba(6,9,16,.68), transparent); opacity: 0; transition: opacity .5s ease; }
+#fin-moment.on::before, #fin-moment.on::after { opacity: 1; }
+.fm-head { position: absolute; left: 0; right: 0; top: calc(58px + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.fm-place, .res-place { align-self: center; margin: 0; }
+.fm-place b, .fm-place i, .res-place b, .res-place i { background: linear-gradient(180deg, var(--a) 0%, var(--b) 48%, var(--c) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: italic; }
+.fm-place b { font-size: clamp(84px, 27vw, 124px); letter-spacing: -.04em; padding-right: 3px; } .fm-place i { font-size: clamp(34px, 10.5vw, 48px); margin-top: 10px; letter-spacing: -.01em; }
+#fin-moment.on .fm-place { animation: fmPop .62s cubic-bezier(.2, 1.5, .35, 1) both; }
+@keyframes fmPop { 0% { transform: skewX(-8deg) scale(.3); opacity: 0; } 55% { opacity: 1; } 100% { transform: skewX(-8deg) scale(1); opacity: 1; } }
+.fm-time { font: 800 19px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .06em; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.6); font-variant-numeric: tabular-nums; opacity: 0; }
+#fin-moment.on .fm-time { animation: fmFade .4s .3s both; }
+@keyframes fmFade { to { opacity: .92; } }
+.fm-list { position: absolute; left: 50%; transform: translateX(-50%); top: calc(58px + env(safe-area-inset-top, 0px) + clamp(150px, 42vw, 196px)); margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; width: min(300px, 80vw); }
+.fm-row { display: grid; grid-template-columns: 40px 12px minmax(0, 1fr) auto; align-items: center; column-gap: 9px; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.65); }
+.fm-row.new { animation: fmRow .5s cubic-bezier(.2, 1.2, .3, 1) both; }
+@keyframes fmRow { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
+.fm-n { font: 900 12px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .08em; color: #c4cad6; text-align: left; } .fm-row.p1 .fm-n { color: #ffcf3f; } .fm-row.p2 .fm-n { color: #dfe6f3; } .fm-row.p3 .fm-n { color: #ffab66; }
+.fm-pip { width: 10px; height: 10px; border-radius: 3px; box-shadow: 0 0 0 1.5px rgba(0,0,0,.35); }
+.fm-row b { font: 800 16px/1.1 "Bricolage Grotesque", system-ui, sans-serif; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-row em { font: 800 14px/1 "Space Grotesk", system-ui, sans-serif; font-style: normal; font-variant-numeric: tabular-nums; } .fm-row em.up { color: #8af0b0; } .fm-row em.dn { color: #ff8da1; }
+.fm-actions { position: absolute; left: 0; right: 0; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; align-items: center; gap: 12px; opacity: 0; }
+#fin-moment.on .fm-actions { animation: fmFade .45s .7s both; }
+.fm-actions button { pointer-events: auto; -webkit-tap-highlight-color: transparent; font: 900 16px/1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .1em; border: 0; border-radius: 16px; height: 52px; padding: 0 26px; cursor: pointer; }
+.fm-go { background: #35e0c8; color: #06231e; box-shadow: 0 5px 0 #1c9c89, 0 0 24px -6px #35e0c8; } .fm-go:active { transform: translateY(3px); box-shadow: 0 2px 0 #1c9c89; }
+.fm-again { background: transparent; color: #eaf0fb; text-shadow: 0 2px 8px rgba(0,0,0,.6); padding: 0 14px !important; }
+.fm-again:active { opacity: .6; }
+.fm-ff { position: absolute; left: 0; right: 0; bottom: calc(108px + env(safe-area-inset-bottom, 0px)); display: none; align-items: center; justify-content: center; gap: 8px; color: #fff; font: 900 12px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .2em; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.fm-ff svg { width: 22px; height: 22px; animation: fmFF .8s ease-in-out infinite; }
+@keyframes fmFF { 0%, 100% { transform: translateX(-3px); opacity: .6; } 50% { transform: translateX(4px); opacity: 1; } }
+#fin-moment.ff .fm-actions { display: none; } #fin-moment.ff .fm-ff { display: flex; }
+/* the watch bar (follow the others): quiet while you wait */
+body.fin-moment #spectate-bar { background: transparent; border: 0; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); }
+body.fin-moment #spectate-bar button { background: rgba(255,255,255,.12); }
+body.fin-moment #spectate-name { text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+
+/* ============ THE RESULTS (Arena Race): the arena behind you, your place as the headline, then only what is new ============ */
+#s-results { justify-content: flex-start; overflow-y: auto; overflow-x: hidden; padding-top: calc(30px + env(safe-area-inset-top, 0px)); padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
+#s-results > * { position: relative; z-index: 1; }
+#s-results > #res-bg { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
+.res-head { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 4px; }
+.res-place b { font-size: clamp(80px, 25vw, 116px); letter-spacing: -.04em; padding-right: 3px; } .res-place i { font-size: clamp(32px, 10vw, 44px); margin-top: 9px; letter-spacing: -.01em; }
+.res-place { animation: resPop .7s cubic-bezier(.2, 1.5, .35, 1) both; }
+@keyframes resPop { 0% { transform: skewX(-8deg) scale(.4); opacity: 0; } 60% { opacity: 1; } 100% { transform: skewX(-8deg) scale(1); opacity: 1; } }
+#s-results #result-sub { margin: 0 !important; min-height: 0; font: 800 15px/1.2 "Space Grotesk", system-ui, sans-serif; letter-spacing: .03em; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
+#s-results #result-sub:empty { display: none; }
+#s-results #result-sub .near { margin: 0; }
+.res-gain { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 2px 0 12px; min-height: 0; }
+.res-gain:empty { display: none; }
+.res-gain.go > * { animation: rgIn .55s 1.35s cubic-bezier(.2, 1.1, .3, 1) both; } .res-gain.go > *:nth-child(2) { animation-delay: 1.5s; } .res-gain.go > *:nth-child(3) { animation-delay: 1.65s; }
+@keyframes rgIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.rg-tr { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 8px; row-gap: 6px; max-width: 280px; }
+.rg-tr > .ico { width: 30px; height: 30px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+.rg-tr b { font: 900 36px/1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: -.01em; font-variant-numeric: tabular-nums; text-shadow: 0 3px 12px rgba(0,0,0,.6); } .rg-tr.up b { color: #8af0b0; } .rg-tr.down b { color: #ff8da1; }
+.rg-bar { flex: 0 0 100%; width: 100%; max-width: 210px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.16); overflow: hidden; margin: 0 auto; }
+.rg-bar i { display: block; height: 100%; width: 100%; background: var(--ac, #35e0c8); border-radius: 3px; transform-origin: left; transform: scaleX(var(--f1)); }
+.res-gain.go .rg-bar i { animation: rgFill 1s 1.6s cubic-bezier(.3, .8, .3, 1) both; }
+@keyframes rgFill { from { transform: scaleX(var(--f0)); } to { transform: scaleX(var(--f1)); } }
+.rg-tr small { flex: 0 0 100%; font: 700 12px/1 "Space Grotesk", system-ui, sans-serif; color: #c4cad6; letter-spacing: .03em; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+.rg-new { display: flex; flex-direction: column; align-items: center; gap: 3px; } .rg-new small { font: 900 10.5px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .22em; color: var(--ac); } .rg-new b { font: 900 28px/1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .02em; color: #fff; text-shadow: 0 0 22px var(--ac), 0 3px 10px rgba(0,0,0,.6); }
+.rg-chips { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 18px; font-size: 20px; text-shadow: 0 2px 10px rgba(0,0,0,.7); } .rg-chips .rwd + .rwd { margin-left: 0; } .rg-chips .rwd .ico { width: 24px; height: 24px; }
+.rg-note { margin: 0; font: 700 13px/1.2 "Space Grotesk", system-ui, sans-serif; color: #c4cad6; }
+/* the chest: the chest itself, bobbing, a tap opens it */
+#loot-race .loot-big { width: 120px; margin: 0 auto; } #loot-race .loot-big .lb-tap { font-size: 12px; letter-spacing: .14em; }
+#s-results .res-goal { margin: 0 auto 12px; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+#s-results .btn { position: relative; z-index: 1; }
+#btn-results-menu { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #d6dcea !important; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+#s-results #race-podium { width: 100%; }
+#loot-race .loot-view.art { width: 124px; min-height: 0; padding: 0; border-radius: 0; background: none; box-shadow: none; animation: none; }
+#loot-race .loot-view.art:active { transform: scale(.96); box-shadow: none; }
+#s-results .res-goal u { display: none; }        /* one bar on this screen is enough (the road to the next arena); the unlock goal stays as one line */
+/* the arena behind the results is dimmed so every number stays readable, also on a bright sky */
+#s-results::after { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(7,9,14,.30), rgba(7,9,14,.58) 38%, rgba(7,9,14,.84) 70%, rgba(7,9,14,.94)); }
+#s-results.light::after { background: linear-gradient(to bottom, rgba(7,9,14,.50), rgba(7,9,14,.68) 38%, rgba(7,9,14,.87) 70%, rgba(7,9,14,.94)); }

@@ -1508,15 +1508,18 @@ function handleFinish(p) {
     if (gameMode === 'level'){ lvComplete(p); return; }
     if (gameMode === 'gauntlet'){ gtFinish(p); return; }
     p.finished = true;
-    p.finishTime = (Date.now()-matchStart)/1000;
+    p.finishTime = (Date.now()-matchStart)/1000 + ffExtra;
     finishedCount++;
     if (p.local && window.partyMatch && window.Social){ Social.onPartyFinish(p.finishTime, finishedCount); if (window.Missions) Missions.race(finishedCount, true); }
     burst(p.x, p.y, p.color, 30, 260);
     if (window.Finishers) Finishers.play(p);                           // your equipped finisher (and the bots' own)
-    if (p.local){ SFX.sting(finishedCount === 1 ? 'win' : 'place'); showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
+    if (p.local){ SFX.sting(finishedCount === 1 ? 'win' : 'place'); if (!finishMoment()) showFinishMenu(true); haptic([30, 40, 30, 40, 80]); camShake = Math.max(camShake, 7); for (const c of ['#ffcf3f', '#ffffff', '#35e0c8', '#ff5470']) burst(p.x, p.y, c, 14, 340); ring(p.x, p.y, '#ffcf3f', 110); }
+    if (!p.local && finishMoment()) FinishMoment.add();                                        // somebody else is through: they slide in under your place
     checkEnd();
     maybePromptBotsDone();
 }
+// The finish moment (src/ui/finish.js) is for Arena Race only: Build Race, the Gauntlet and the rest end their own way.
+function finishMoment(){ return !!(window.FinishMoment && gameMode === 'race' && !window.buildMatch); }
 
 const SUPPORT_K = 0.3;      // how far the centre may hang past a platform edge (fraction of the radius) and still be standing on it
 function stepPlayer(p, dt) {
@@ -2094,7 +2097,8 @@ function checkEnd() {
     if (window.buildMatch && window.Build) return Build.checkEnd();
     if (finishedCount >= 4) {
         state = 'finished';
-        setTimeout(showResults, 1100);
+        const quick = ffOn; ffOn = false;                                      // a fast-forward ends the moment the last one is in
+        setTimeout(showResults, quick ? 350 : 1100);
     }
 }
 // "2 more wins to unlock 4 new modes" with a bar, under the board (only while something is still locked)
@@ -2120,19 +2124,20 @@ function showResults() {
     });
     const you = sorted.findIndex(p=>p.local)+1;
     const sub = document.getElementById('result-sub');
-    const msgs = ["Unbeatable.","Silver, so close.","Bronze, solid.","Fourth. Rage!"];
     const localP = players.find(p => p.local);
     const rw = rewardRace(you, !!(localP && localP.finished), matchLootId);
     if (!(localP && localP.finished)) SFX.sting('lose');                  // a finished player already heard the fanfare; the results music follows it
-    sub.innerHTML = (msgs[you-1] || "") + (rw.noRewards ? '  ·  Friendly match, no rewards' : rw.noDrop && (rw.coins || rw.xp || rw.passPoints) ? `  ·  ${R('coin', rw.coins, {plus:true})}${R('xp', rw.xp, {plus:true})}${R('pass', rw.passPoints, {plus:true})}` : '') + (rewardRace.keyEarned ? `  ·  ${R('key', 1, {plus:true})}` : '');
-    { const tl = window.Trophies && Trophies.last();
-      if (tl && tl.delta) sub.innerHTML += `  ·  <span class="tr-res ${tl.delta > 0 ? 'up' : 'down'}">${icon('trophy')}${tl.delta > 0 ? '+' : ''}${tl.delta}</span>`; }
+    if (window.FinishMoment){                                             // the arena behind you, your place as the headline, then only what is new
+        FinishMoment.hide(); FinishMoment.backdrop(); FinishMoment.headline(you);
+        FinishMoment.gains(rw, window.Trophies && Trophies.last());
+    }
+    sub.innerHTML = '';
     { const me = sorted.find(p => p.local);                      // how close it was
       if (me && me.finished){
         let line = '';
         if (you > 1 && sorted[0].finished) line = (me.finishTime - sorted[0].finishTime).toFixed(2) + ' s behind 1st';
         else if (you === 1 && sorted[1] && sorted[1].finished) line = 'Won by ' + (sorted[1].finishTime - me.finishTime).toFixed(2) + ' s';
-        if (line) sub.innerHTML += '<span class="near">' + line + '</span>';
+        if (line) sub.innerHTML = '<span class="near">' + line + '</span>';
       } }
     sub.style.color = you===1 ? 'var(--gold)' : 'var(--muted)';
 
@@ -2153,7 +2158,7 @@ function showResults() {
         pe.innerHTML = Podium.html(en, you > 3 ? { extra:en[you-1], extraRank:you } : {}); board.style.display = 'none';
         pe._pending = true;
       } }
-    if (rw.noDrop) document.getElementById('loot-race').innerHTML = ''; else renderLootDrop('loot-race', rw, { soft:true });      // the chest is a choice here, not a gate
+    if (rw.noDrop) document.getElementById('loot-race').innerHTML = ''; else renderLootDrop('loot-race', rw, { soft:true, art:true });      // the chest is a choice here, not a gate
     renderResultGoal();
     const _pe = document.getElementById('race-podium'); if (_pe && _pe._pending){ _pe._pending = false; setTimeout(() => Podium.start(_pe), 60); }
     showScreen('results');
@@ -2687,6 +2692,15 @@ function applyInterp(a){
     };
 }
 
+// FAST FORWARD: you are through and press RESULTS while others are still racing. The rest of the race is simply played faster (as many steps per frame as fit in about 9 ms), so the results are
+// the real ones and always complete. Finish times follow the simulation clock (ffExtra), not the wall clock. At most 75 simulated seconds, then the results show as they are.
+let ffOn = false, ffExtra = 0, ffSteps = 0;
+function startFastForward(){ ffOn = true; ffExtra = 0; ffSteps = 0; botsDonePrompted = true; }
+function fastForwardFrame(){
+    const t0 = performance.now();                                                // as many steps as fit in about 9 ms (at least 7, at most 40), so a slow phone still shows a smooth picture
+    for (let k = 0; k < 40 && ffOn && state === 'playing'; k++){ ffExtra += SIM_DT; ffSteps++; snapshotPrev(); update(SIM_DT); if (k >= 6 && performance.now() - t0 > 9) break; }
+    if (ffOn && state === 'playing' && ffSteps > 60 * 75){ ffOn = false; giveUpToResults(); }
+}
 let qSlow = 0, qFast = 0;
 function adaptQuality(rawDt){
     if (state !== 'playing' || Date.now() - matchStart < 2500) return;      // never retune quality during the countdown or the first seconds (that flicker looked like the screen trembling)
@@ -2708,6 +2722,7 @@ function loop(t){
     { const hide = state === 'menu'; if (canvas._hidden !== hide){ canvas._hidden = hide; canvas.style.visibility = hide ? 'hidden' : 'visible'; } }      // the menu covers the whole screen: no need to composite the world canvas behind it
     let steps = 0;
     while (simAcc >= SIM_DT - 1e-6 && steps < 10) { snapshotPrev(); update(SIM_DT); simAcc -= SIM_DT; steps++; }
+    if (ffOn && state === 'playing') fastForwardFrame();
     if (simAcc < 0) simAcc = 0;
     if (steps === 10) simAcc %= SIM_DT;   // only throw away whole steps we truly can't afford
 
@@ -2974,6 +2989,10 @@ function maybePromptBotsDone() {
     if (window.buildMatch || botsDonePrompted || !players[0].finished) return;   // only makes sense once YOU'RE already done
     if (players.slice(1).every(b => b.finished)) return;    // everyone's in — the race is just ending normally
     botsDonePrompted = true;
+    if (finishMoment()){                                                          // no window: the finish moment (big place, the others sliding in, RESULTS / AGAIN) and the camera follows the leader
+        setTimeout(() => { if (state === 'playing' && players[0].finished && !players.every(q => q.finished)){ FinishMoment.show(); startSpectate(); } }, 420);
+        return;
+    }
     const place = [...players].sort((a,b)=>{
         if (a.finished && b.finished) return a.finishTime-b.finishTime;
         return a.finished ? -1 : b.finished ? 1 : a.y - b.y;
@@ -3042,7 +3061,7 @@ function staggerBotStarts(){
     }
 }
 function beginRound() {
-    lastPlace = 0; camShake = 0; camKick = 0; slowT = 0; photoDone = false; maxTicked = false; dipping.length = 0;
+    lastPlace = 0; camShake = 0; camKick = 0; slowT = 0; photoDone = false; maxTicked = false; dipping.length = 0; ffOn = false; ffExtra = 0; ffSteps = 0; if (window.FinishMoment) FinishMoment.hide();
     hud.style.display='block';
     if (typeof SFX !== 'undefined' && SFX.music) SFX.music.set(SFX.trackFor(true));
     dragging = false;
@@ -4476,7 +4495,10 @@ function renderLootDrop(containerId, drop, opts){
     if (!soft) document.body.classList.add('await-chest'); else document.body.classList.remove('await-chest');
     clearInterval(renderLootDrop._wd);
     renderLootDrop._wd = setInterval(() => { if (!panel.isConnected || !panel.querySelector('.loot-view')) { document.body.classList.remove('await-chest'); clearInterval(renderLootDrop._wd); } }, 800);
-    panel.innerHTML = `<button class="loot-big loot-view tier-${tier}${soft ? ' soft' : ''}" type="button" aria-label="${soft ? 'Open chest' : 'View results'}"><span class="lb-view">${soft ? 'OPEN CHEST' : 'VIEW RESULTS'}</span></button>`;
+    const art = !!(opts && opts.art && window.LB_CHEST);                       // the chest itself (bobbing, a tap opens it) instead of a button
+    panel.innerHTML = art
+        ? `<button class="loot-big loot-view art tier-${tier}" type="button" aria-label="Open chest"><span class="lb-crate">${LB_CHEST('rc' + Math.floor(Math.random() * 1e6), tier)}</span><span class="lb-tap">TAP TO OPEN</span></button>`
+        : `<button class="loot-big loot-view tier-${tier}${soft ? ' soft' : ''}" type="button" aria-label="${soft ? 'Open chest' : 'View results'}"><span class="lb-view">${soft ? 'OPEN CHEST' : 'VIEW RESULTS'}</span></button>`;
     panel.querySelector('.loot-view').addEventListener('click', event => {
         const button = event.currentTarget;
         if (button.disabled) return;

@@ -11,3 +11,10 @@ Everything here is the *sensation*; none of it changes the physics, the bots or 
 - **Photo finish**: when you and another player are both within about 380 px of the line and within 170 px of each other, the last moment runs at 42% speed for half a second (once per race, never in a party).
 
 The three landing sounds and the five bells are baked into `src/audio/bank` (`node tools/bake-audio.js sfx`).
+
+# The finish (Arena Race): `src/ui/finish.js`, `finish.css`
+
+- **Finish moment** (you are through, the others still race). No window and no question: your place in big letters in the same style as the place in the corner (which hides meanwhile), your time, and everybody who finishes after you slides in under it (`2ND  Mila  +0.84`, minus when they were faster than you). The camera follows whoever is closest to the line (the watch arrows stay). Two actions: **RESULTS** and **AGAIN** (your rewards are paid first).
+- **RESULTS fast-forwards the rest of the race** (as many simulation steps per frame as fit in about 9 ms, at most 75 simulated seconds) with a small "FAST FORWARD" label. The finish times follow the simulation clock, so the results are always complete and real: no "DNF" rows, and the result is the same as when you wait. In a live party it cannot be sped up and the results show as they stand.
+- **Results**: the arena you raced in is painted behind it (dimmed so numbers stay readable on a bright sky), your place is the headline (gold, silver, bronze, red), then the margin ("Won by 0.84 s"), the victory stand, and only what is new: the trophies with the road to the next arena (and the arena name when you reach a new one), the rewards that are not in the chest (zeroes are left out), a plain line for the unlock goal, and the chest itself (a tap opens it). RACE AGAIN is the one button; MAIN MENU is plain text.
+- Not used for Build Race, the Gauntlet, Escape or Boom Tag: they end in their own way.
