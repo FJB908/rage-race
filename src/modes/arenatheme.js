@@ -17,7 +17,7 @@
     const T = [
         { name: 'Playground', tag: 'Learn the jump', c: '#35e0c8', bright: true, light: true, sky: [['#2f94f4', '#c4ecff'], ['#2380e2', '#98d6ff']], orb: { x: .78, y: .16, r: 48, c: '#fff4b8' },
           far: '#a8dbff', mid: '#8ecbff', lit: '#ffffff', acc: '#ffd23f', cloud: '#ffffff', mist: '#eaf7ff', ground: '#7fd18a',
-          kinds: { far: ['cloud', 'rainbow', 'cloud'], mid: ['balloon', 'kite', 'windmill', 'cloud'] },
+          kinds: { far: ['cloud', 'cloud'], mid: ['balloon', 'kite', 'windmill', 'cloud'] },
           plat: '#4ade80', air: ['dust', '#ffffff', 0.5], grid: 'rgba(255,255,255,0.10)', items: {}, bias: {} },
         { name: 'Parking Lot', tag: 'Painted lines, flickering lamps', c: '#5bb8ff', sky: [['#151925', '#39405a'], ['#0e111a', '#262c40']], orb: null,
           far: '#2e3549', mid: '#292f43', lit: '#ffe6a8', acc: '#ffd400', mist: '#4d5676', ground: '#232838',
@@ -267,6 +267,20 @@
         }
         c.globalAlpha = 1;
     }
+    // A RAINBOW is wide: one big arch over the whole width of the screen, its ends running off both sides (never a short piece that stops in mid air). It is painted once
+    // per screen size into its own picture; in a race it shows up now and then and fades in and out, on the home screen of the Playground it just hangs there.
+    let rbC = null, rbKey = '';
+    function rainbowPic(W, H, cyK, RK) {
+        const key = W + 'x' + H + '|' + cyK + '|' + RK; if (rbC && rbKey === key) return rbC; rbKey = key;
+        rbC = document.createElement('canvas'); rbC.width = Math.ceil(W / 2); rbC.height = Math.ceil(H / 2); const x = rbC.getContext('2d'); x.scale(.5, .5);
+        const cols = ['#ff5d5d', '#ff9e4a', '#ffe45e', '#6fe08a', '#4fb6ff', '#6b78ff', '#b06bff'], R = W * RK, bw = R * .045, cx = W / 2, cy = H * cyK;
+        x.lineWidth = bw + 1; x.lineCap = 'butt';
+        cols.forEach((col, k) => { x.strokeStyle = col; x.beginPath(); x.arc(cx, cy, R - k * bw, Math.PI, 0); x.stroke(); });
+        x.globalCompositeOperation = 'destination-in';                                                    // the two edges of the band fade softly, like real light
+        x.fillStyle = rg(x, cx, cy, R - 7 * bw - 2, R + bw, [[0, 'rgba(0,0,0,0)'], [.12, 'rgba(0,0,0,.85)'], [.5, '#000'], [.88, 'rgba(0,0,0,.85)'], [1, 'rgba(0,0,0,0)']]); x.fillRect(0, 0, W, H);
+        return rbC;
+    }
+    function drawRainbow(c, W, H, a) { if (a > .01) { c.globalAlpha = a; c.drawImage(rainbowPic(W, H, .86, .82), 0, 0, W, H); c.globalAlpha = 1; } }
     function drawSky(c, W, H, camY) {
         if (!cur) return;
         const now = performance.now() / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0); lastT = now;
@@ -274,6 +288,7 @@
         c.save();
         skyFill(c, W, H, cur, prog_); orbDraw(c, W, H, cur);
         const climbed = (START_Y - VH * 0.62) - camY, base = H * 0.99;
+        if (cur.bright) { const ph = ((performance.now() / 1000) + 22) % 70, a = ph < 18 ? Math.sin(ph / 18 * Math.PI) : 0; drawRainbow(c, W, H, Math.min(1, a * 1.4) * .5); }       // every 70 s a rainbow stays for 18 s
         const br = !!cur.bright;                                                          // a bright arena (the Playground): light sky, fuller colours, less haze, a warm sun glow, a very light vignette
         if (br && cur.orb) { const ox = cur.orb.x * W, oy = cur.orb.y * H; c.fillStyle = rg(c, ox, oy, 10, H * .9, [[0, 'rgba(255,248,210,.55)'], [.35, 'rgba(255,248,210,.16)'], [1, 'rgba(255,248,210,0)']]); c.fillRect(0, 0, W, H); }
         drawLayer(c, far, 'far', W, H, base, climbed, 0.09, br ? 0.62 : 0.5, 1.2, now, cur);
@@ -339,7 +354,7 @@
     ];
     // the home screen is calmer than the race: only a few big shapes (a lone volcano, one storm cloud with its lightning, ...)
     const CALM = {                                                                 // xs: where the far pieces stand (0..1 across), so nothing piles up behind the sun, the title or the island
-        0: { kinds: { far: ['rainbow'], mid: [] }, nFar: 1, nMid: 0, xs: [.3], farScale: 1.3 },
+        0: { kinds: { far: ['cloud'], mid: [] }, nFar: 1, nMid: 0, xs: [.22], farScale: 1.1 },
         1: { kinds: { far: ['pillar', 'psign'], mid: [] }, nFar: 2, nMid: 0, xs: [.12, .88] },
         2: { kinds: { far: ['skyline'], mid: [] }, nFar: 1, nMid: 0, xs: [.5], farScale: 1.2 },
         3: { kinds: { far: ['ship'], mid: [] }, nFar: 1, nMid: 0, xs: [.2] },
@@ -387,6 +402,7 @@
     function paintWorld(cv, i, w, h) {
         paintScene(cv, i, w, h, Object.assign({ prog: .2, props: 1.7, alpha: 1.15, mist: .9, horizon: .62, ground: false, scale: .62, orbDy: .17 }, CALM[i] || {}));
         const c = cv.getContext('2d'), dpr = cv.width / w; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (i === 0) { c.globalAlpha = .75; c.drawImage(rainbowPic(w, h * .9, .86, .84), 0, h * .08, w, h * .9); c.globalAlpha = 1; }
         if (i === 8) bigVolcano(c, w, h);
         if (i === 9) {                                                                  // Summit: one dark storm cloud, and the lightning really comes out of it
             const keep = idx; idx = i;
