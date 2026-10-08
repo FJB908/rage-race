@@ -553,7 +553,7 @@
     // props: [kind, x (-1 left .. 1 right), scale, hover (1 = floats above the island)]
     const ISLE = [
         { top: '#6fd37f', edge: '#d3f9bd', under: ['#94643f', '#35241a'], deco: 'grass', hang: 'rock',     props: [['windmill', .78, .6], ['cloud', .5, .28, 1]] },
-        { top: '#3b4254', edge: '#7a84a2', under: ['#4d5468', '#1a1e2a'], deco: 'lines', hang: 'rock',     props: [['lamp', -.8, .62], ['car', .72, .5], ['cone', -.42, .6]] },
+        { top: '#3b4254', edge: '#7a84a2', under: ['#4d5468', '#1a1e2a'], deco: 'lines', hang: 'rock',     props: [['lamp', -.8, .46], ['car', .72, .5], ['cone', -.42, .6]] },
         { top: '#b9615f', edge: '#f0a58c', under: ['#80405a', '#2d1727'], deco: 'tiles', hang: 'rock',     props: [['antenna', .82, .6], ['tank', -.76, .62], ['birds', .1, .5, 1]] },
         { top: '#9b6c43', edge: '#d9a56b', under: ['#493626', '#171210'], deco: 'planks', hang: 'posts',   props: [['lighthouse', .8, .44], ['containers', -.74, .5]] },
         { top: '#7a8398', edge: '#cdd5e6', under: ['#4a3b2d', '#17110c'], deco: 'rivets', hang: 'pipes',   props: [['chimney', .8, .42], ['gear', -.78, .4]] },
