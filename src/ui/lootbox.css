@@ -23,7 +23,6 @@
 
 .lb-stage { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:14px; transition:transform .6s cubic-bezier(.5,0,.2,1), opacity .5s ease; }
 .lb-stage.away { transform:translateY(-14vh) scale(.55); opacity:0; pointer-events:none; }
-.lb-title { font-weight:900; letter-spacing:.2em; font-size:13px; color:var(--c); text-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent); }
 .lb-chest { width:min(66vw,300px); cursor:pointer; will-change:transform;
   transform:translateY(-110vh); -webkit-tap-highlight-color:transparent; }
 .lb.in .lb-chest { animation:lbDrop .8s cubic-bezier(.3,1.5,.5,1) .15s forwards; }
@@ -64,8 +63,6 @@
 .lb-ring { position:absolute; left:50%; top:46%; width:40%; aspect-ratio:1; margin:-20% 0 0 -20%; border-radius:50%; border:4px solid var(--c); opacity:0; pointer-events:none; }
 .lb-ring.go { animation:lbRing .6s ease-out; }
 @keyframes lbRing { 0% { transform:scale(.4); opacity:.95; } 100% { transform:scale(3.2); opacity:0; } }
-.lb-title.pop { animation:lbTitlePop .5s cubic-bezier(.2,1.6,.4,1); }
-@keyframes lbTitlePop { 0% { transform:scale(.6); } 100% { transform:scale(1); } }
 .lb-pips { display:flex; gap:10px; margin-top:4px; opacity:0; transition:opacity .3s; }
 .lb.ready .lb-pips { opacity:1; }
 .lb-pips i { width:14px; height:14px; transform:rotate(45deg); border-radius:3px; background:#232a3b; border:2px solid #0d1017; transition:all .3s; }

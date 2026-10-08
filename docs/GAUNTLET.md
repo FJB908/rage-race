@@ -68,3 +68,8 @@ Headless balance sim: run `Gauntlet.debug.start()` with `fast`/`auto`, then loop
 Measured with 30-40 autoplay runs (an average player): roughly 105-115 s of play per run (stage 1 ~76 s, stage 2 ~60 s, stage 3 ~30 s), the local autoplayer qualified stage 1 about 40-45% of the time with the old random bots.
 With roster rivals (36 runs, fresh account): stage 1 qualified 33%, stage 2 42% of those, stage 3 won 0 of 5; about 140 s per run.
 Frame cost (headless Chromium, no GPU): 60 fps flat with all 32 visible; with a 4x CPU slowdown about 27 fps even with every bot wearing premium cosmetics (a normal 4-player race holds 60 fps in the same test). The Gauntlet starts one adaptive-quality step down.
+
+## The crowd on the home screen
+- While the Gauntlet is the selected mode (`#s-start.gauntlet-mode`), `src/ui/crowd.js` + `crowd.css` put a grandstand behind your player with 32 little characters (one for every runner). Their looks come from `randomBotLook()` (skins, hats, faces, now and then a costume).
+- They hop with a squash, wave their arms, some hold a pennant, the stadium wave runs through the stands every 8-12 s (with confetti), cameras flash, and a light runs along the hoarding. Everybody pops in when the mode is picked; a new crowd each time.
+- Cost: the stands and the hoarding are painted once, the people canvas is redrawn about 25 times a second with 32 small sprite stamps (no rotated images: that is the slow path of a canvas). It only runs while the home tab is visible, and switches to a lite mode (no flashes or confetti, 16 fps) when drawing takes more than 7 ms. `Crowd.pause(true)` freezes it for tests.

@@ -137,3 +137,6 @@ Planned and still not built: Glider, Grapple, Mirror, Snowball, Swap, Lightning.
 
 ## How the next power-up is chosen (spread)
 The odds come from your place in the race, the trophy pool and the per-arena boosts. On top of that the **last three power-ups you got count against you**: the newest one is rolled at 12% of its normal odds, the one before at 35%, the one before that at 60% (`rollItem`, `p.itemHist`). So you cycle through the pool instead of seeing the same few. Measured with the Playground pool: the same power-up twice in a row 2 to 6% of the time (it was 12%), and 3.3 to 3.7 different ones in every four.
+
+## A shield wins every bump
+While your shield is up nobody without a shield can move you: not by running into you, not when you stand still and get hit, not in the air (`resolveBumps` in game.js). The other player gives way completely (a standing player is shoved aside, an airborne one is pushed out of the overlap). Two shields, or none, meet as before. Landing on the head of a standing player with a shield still just bounces you off.

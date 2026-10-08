@@ -4,7 +4,6 @@
 // drop = pending drop {id, pending:true, tier, base} (resolved with resolveDrop when it opens) or an already resolved drop.
 (function () {
     const TIERS = ['common', 'rare', 'epic', 'mythic', 'legendary'];
-    const TIER_NAME = { common:'CHEST', rare:'RARE CHEST', epic:'EPIC CHEST', mythic:'MYTHIC CHEST', legendary:'LEGENDARY CHEST' };
     const TIER_COLOR = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' };
     // Tap odds: the level-up chance shrinks with every tap, the open chance grows, so a drop always opens within a handful of taps.
     const UP0 = 0.45, UP_DECAY = 0.58, UP_TIER = [1, 0.8, 0.26, 0.1], OPEN0 = 0.16, OPEN_STEP = 0.12;
@@ -314,16 +313,16 @@
         let tier = TIERS.includes(drop.tier) ? drop.tier : 'common';
         const pending = !!drop.pending;
         const o = makeOverlay(tier,
-            '<div class="lb-stage"><div class="lb-title"></div><div class="lb-chest">' + (opts.variant === 'gem' ? buildGemChest('og') : buildChest('o', tier)) + '<div class="lb-ring"></div></div>' +
+            '<div class="lb-stage"><div class="lb-chest">' + (opts.variant === 'gem' ? buildGemChest('og') : buildChest('o', tier)) + '<div class="lb-ring"></div></div>' +
             '<div class="lb-pips">' + TIERS.map(() => '<i></i>').join('') + '</div><div class="lb-hint">TAP</div></div>');
-        const el = o.el, chest = o.$('.lb-chest'), stage = o.$('.lb-stage'), title = o.$('.lb-title'), pips = [...el.querySelectorAll('.lb-pips i')], btn = o.$('.lb-btn'), skipBtn = o.$('.lb-skip');
+        const el = o.el, chest = o.$('.lb-chest'), stage = o.$('.lb-stage'), pips = [...el.querySelectorAll('.lb-pips i')], btn = o.$('.lb-btn'), skipBtn = o.$('.lb-skip');
         let taps = 0, busy = true, opened = false, skipped = false;
         const chestPos = () => { const r = chest.getBoundingClientRect(); return { x:r.left + r.width / 2, y:r.top + r.height * .42 }; };
         const upChance = n => tier === 'legendary' ? 0 : UP0 * UP_TIER[TIERS.indexOf(tier)] * Math.pow(UP_DECAY, n);
         const paint = () => {
             TIERS.forEach(t => el.classList.remove('tier-' + t)); el.classList.add('tier-' + tier);
             if (opts.variant !== 'gem' && chest.dataset.tier !== tier) { chest.dataset.tier = tier; const old = chest.querySelector('svg'); if (old) old.outerHTML = buildChest('o', tier); }   // rarer crate = more detail
-            title.textContent = opts.variant === 'gem' ? 'GEM CHEST' : TIER_NAME[tier]; if (opts.variant === 'gem') el.classList.add('variant-gem');
+            if (opts.variant === 'gem') el.classList.add('variant-gem');
             pips.forEach((p, i) => { p.className = i <= TIERS.indexOf(tier) ? 'on' : ''; p.style.setProperty('--pc', TIER_COLOR[TIERS[i]]); });
         };
         paint();
@@ -375,7 +374,6 @@
                 o.flash(); o.shake(); buzz([30, 30, 50]); sfx('tierup');
                 const ring = o.$('.lb-ring'); ring.classList.remove('go'); void ring.offsetWidth; ring.classList.add('go');
                 const q = chestPos(); o.emit(60, { x:q.x, y:q.y, speed:520, size:9, colors:[TIER_COLOR[tier], '#fff'], g:300 });
-                title.classList.remove('pop'); void title.offsetWidth; title.classList.add('pop');
                 if (!openNow) { await wait(420); busy = false; return; }
             }
             if (openNow) { await open(); return; }

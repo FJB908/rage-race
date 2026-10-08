@@ -1856,6 +1856,8 @@ function drawUfoCraft(){
 //    through the platform: the lander is deflected sideways and slides off.
 //  - A GIANT dominates: it is never moved by ordinary players, and anyone it hits is thrown away with a hop. A giant is
 //    only pushed back by another giant or by a shield.
+//  - A SHIELD dominates too: a shielded player is never moved by someone without a shield (running or standing into them, from any side).
+//    The other one gives way completely. Two shields (or none) meet as usual.
 let bumpTick = 0;
 function resolveBumps() {
     bumpTick++;
@@ -1871,11 +1873,18 @@ function resolveBumps() {
             if (p1.giantT > 0 || p2.giantT > 0) { giantHit(p1, p2, dx); continue; }
             const dist = Math.sqrt(distSq), overlap = rs - dist;
             const idle1 = p1.mode === 'idle', idle2 = p2.mode === 'idle';
+            const dom1 = p1.shieldT > 0 && !(p2.shieldT > 0), dom2 = p2.shieldT > 0 && !(p1.shieldT > 0);      // a shield wins every bump
             if (idle1 && idle2) {                         // two standing players: nudge apart sideways only
-                const s = dx !== 0 ? Math.sign(dx) : (Math.random() < 0.5 ? -1 : 1), push = Math.min(overlap, rs - Math.abs(dx)) * 0.5;
-                p1.x -= s * push; p2.x += s * push; p1.vx -= s * 0.5; p2.vx += s * 0.5;
+                const s = dx !== 0 ? Math.sign(dx) : (Math.random() < 0.5 ? -1 : 1), push = Math.min(overlap, rs - Math.abs(dx)), a1 = dom1 ? 0 : dom2 ? 1 : 0.5, a2 = 1 - a1;
+                p1.x -= s * push * a1; p2.x += s * push * a2; p1.vx -= s * a1; p2.vx += s * a2;
             } else if (idle1 !== idle2) {                 // one stands, one is in the air: only the flyer gives way
                 const S = idle1 ? p1 : p2, F = idle1 ? p2 : p1;
+                if (F.shieldT > 0 && !(S.shieldT > 0) && !(F.vy > 150 && F.y < S.y - 4 && Math.abs(F.x - S.x) < rs * 0.8 && S.plat && !S.plat.ground)) {      // a shielded flyer runs into someone standing: the one standing is shoved aside, the shield does not budge
+                    const side = F.x !== S.x ? Math.sign(F.x - S.x) : (Math.random() < 0.5 ? -1 : 1);
+                    const need = Math.sqrt(Math.max(0, rs * rs - (F.y - S.y) * (F.y - S.y))) + 0.5;
+                    S.x = F.x - side * Math.max(need, Math.abs(F.x - S.x)); S.vx -= side * 120;
+                    continue;
+                }
                 // STOMP: landing on someone's head knocks them down through the platform they stand on
                 if (F.vy > 150 && F.y < S.y - 4 && Math.abs(F.x - S.x) < rs * 0.8 && S.plat && !S.plat.ground && !(S._stompTick && bumpTick - S._stompTick < 30)) {
                     if (shieldBlocks(S)) { F.vy = -260; F.vx += (F.x >= S.x ? 1 : -1) * 120; continue; }
@@ -1894,7 +1903,9 @@ function resolveBumps() {
                 F.vx += side * 80;
                 if (F.vy > 0) F.vy *= 0.5;                // soften the fall onto the person below
             } else {                                      // both airborne: classic mass-weighted shove
-                const m1 = massOf(p1), m2 = massOf(p2), w1 = m2 / (m1 + m2), w2 = m1 / (m1 + m2);
+                const m1 = massOf(p1), m2 = massOf(p2);
+                let w1 = m2 / (m1 + m2), w2 = m1 / (m1 + m2);
+                if (dom1) { w1 = 0; w2 = 1; } else if (dom2) { w1 = 1; w2 = 0; }                     // the shielded one is not moved at all
                 const nx = dx / dist, ny = dy / dist;
                 p1.x -= nx * overlap * w1; p1.y -= ny * overlap * w1;
                 p2.x += nx * overlap * w2; p2.y += ny * overlap * w2;
@@ -4798,7 +4809,7 @@ function refreshMenu(){
     { const mk = p.lastMode in MODE_POSTER ? p.lastMode : 'race', mp = MODE_POSTER[mk], row = document.querySelector('#s-start .m-row[data-go="play"]');         // the mode row looks like that mode's poster in the Play tab
       const wrap = document.getElementById('m-modewrap'); if (wrap) wrap.style.setProperty('--mc', mp.c);
       document.getElementById('m-mode').textContent = mp.n; const sub = document.getElementById('m-mode-sub'); if (sub) sub.textContent = mp.s; if (row) row.style.setProperty('--mc', mp.c);
-      root.style.setProperty('--mode-c', mp.c); root.classList.toggle('arena-mode', mk === 'race' && !(window.Party && Party.active())); root.classList.toggle('levels-mode', mk === 'parkour'); }      // the arena world and title are for Arena Race only; Levels shows the path
+      root.style.setProperty('--mode-c', mp.c); root.classList.toggle('arena-mode', mk === 'race' && !(window.Party && Party.active())); root.classList.toggle('levels-mode', mk === 'parkour'); root.classList.toggle('gauntlet-mode', mk === 'gauntlet'); if (window.Crowd) Crowd.sync(); }      // the arena world and title are for Arena Race only; Levels shows the path
     document.getElementById('m-mode-ico').innerHTML = icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
     document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));
     renderPassHome(p);

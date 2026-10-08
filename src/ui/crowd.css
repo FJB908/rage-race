@@ -1,0 +1,4 @@
+/* The Gauntlet crowd (crowd.js): a grandstand behind your player, only in the Gauntlet mode. The top fades into the sky inside the canvases (no CSS mask: a mask over a moving canvas is re-painted every frame). */
+.m-crowd { position: absolute; left: 50%; width: 100vw; height: 250px; margin-left: -50vw; z-index: 0; pointer-events: none; display: none; }
+.m-crowd canvas { position: absolute; left: 0; top: 0; }
+#s-start.gauntlet-mode .m-crowd { display: block; }
