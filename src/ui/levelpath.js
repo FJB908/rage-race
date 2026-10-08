@@ -1,46 +1,52 @@
-// THE LEVEL PATH: the Levels screen as one road that climbs, like the path in Duolingo (but going up, like the game).
+// THE LEVEL PATH, in the home menu: when the Levels mode is the selected mode, the home tab IS the path. One road that climbs, like the path in Duolingo (but going up, like the game).
 //   Level 1 stands at the bottom, every level is a round stone on a winding road, your own cube stands on the level you play next (it hops up when you have passed one).
 //   Done levels show their stars (three gold ones in an arc), the chest you win with 3 stars stands next to its level, locked levels are dark. Dimension II starts behind a gate
 //   that opens at 28 stars. At the very top stands the Tower. No cards, no frames: the numbers sit on the stones, the names only on the level you play next.
-// Data comes from game.js: DIMENSIONS, dimLoad, lvUnlocked, dimUnlocked, lvDropTier, lvStart, openParkour. Loaded AFTER game.js; openLevels() hands over to LevelPath.open().
+// The whole home tab scrolls (touch, wheel and, with a mouse, dragging anywhere); the Rage pass row stays on top and the mode row with PLAY stays at the bottom. PLAY starts the level you are on.
+// Data comes from game.js: DIMENSIONS, dimLoad, lvUnlocked, dimUnlocked, lvDropTier, lvStart, openParkour. Loaded AFTER game.js. game.js calls: openLevels() -> LevelPath.goHome(),
+// showScreen('start') / menuTab('home') -> LevelPath.onShow(), playSelected() -> LevelPath.play().
 (function () {
     'use strict';
-    const $ = id => document.getElementById(id), num = n => Math.round(n).toLocaleString('en-US');
+    const $ = id => document.getElementById(id);
     const TC = { common: '#35e0c8', rare: '#5b8def', epic: '#b3a9ff', mythic: '#ff4d7d', legendary: '#ffcf3f' };
-    const ROW = 132, GATE0 = 150, GATE1 = 196, TOWER = 330, TOP_PAD = 24, BOT_PAD = 70, SWING = 0.27;
+    const ROW = 132, GATE0 = 150, GATE1 = 196, TOWER = 330, TOP_PAD = 24, BOT_PAD = 236, SWING = 0.27;
     const THEME = [{ lo: '#090b12', hi: '#1d1745', glow: '#7c6bff', dust: '#cfc8ff' }, { lo: '#070c14', hi: '#0f2c52', glow: '#5ec8ff', dust: '#d8f1ff' }];
 
-    const root = $('s-levels'); if (!root) return;
-    root.classList.add('lvp');
-    const shell = document.createElement('section'); shell.className = 'lvp-shell';
-    shell.innerHTML = '<header class="lvp-top"><button class="pass-back" type="button" id="lvp-back" aria-label="Back">' + icon('chev-l') + '</button><h1>Levels</h1>' +
-        '<button class="lvp-tower-btn" type="button" id="lvp-tower" aria-label="The Tower">' + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21V9l-2-2V3h3v2h2V3h2v2h2V3h3v4l-2 2v12z" fill="currentColor"/></svg>' + '</button>' +
-        '<div class="lvp-stars">' + icon('star') + '<b id="lvp-total">0</b></div></header><div class="lvp-scroll" id="lvp-scroll"><div class="lvp-world" id="lvp-world"></div></div>';
-    root.appendChild(shell);
-    const scroll = $('lvp-scroll'), world = $('lvp-world');
-    let prev = null;                                                          // what the road looked like last time (to hop and pop what changed)
+    const startEl = $('s-start'), bodyEl = $('m-body'), stage = startEl && startEl.querySelector('.m-stage');
+    if (!startEl || !bodyEl || !stage) return;
+    // the dock: the wishlist goal, the mode row and PLAY. In the Levels mode it sticks to the bottom while the path scrolls under it (everywhere else it is invisible markup: display: contents)
+    { const wish = $('m-wish'), mode = $('m-modewrap'), play = startEl.querySelector('.m-playwrap');
+      if (wish && mode && play && wish.parentNode === mode.parentNode) { const dock = document.createElement('div'); dock.className = 'm-dock'; wish.parentNode.insertBefore(dock, wish); dock.append(wish, mode, play); } }
+    const dockEl = startEl.querySelector('.m-dock');
+    const host = document.createElement('div'); host.className = 'mlv'; host.id = 'm-lvpath';
+    host.innerHTML = '<div class="mlv-hud"><button class="mlv-tower" type="button" id="lvp-tower" aria-label="The Tower"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21V9l-2-2V3h3v2h2V3h2v2h2V3h3v4l-2 2v12z" fill="currentColor"/></svg></button>' +
+        '<div class="lvp-stars">' + icon('star') + '<b id="lvp-total">0</b></div></div><div class="lvp-world" id="lvp-world"></div>';
+    stage.appendChild(host);
+    const world = $('lvp-world');
+    let L = null, lastKey = '', prev = null;                                  // L: the layout on screen; prev: what the road looked like last time (to hop and pop what changed)
 
     const rng = s => () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
     const hexRgb = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
     const shade = (h, k) => { const c = hexRgb(h); return 'rgb(' + c.map(v => Math.round(v * k)).join(',') + ')'; };
     const dims = () => DIMENSIONS.map((dm, di) => ({ dm, di })).filter(o => !o.dm.hidden);
+    const isLevels = () => startEl.classList.contains('levels-mode');
+    const widthNow = () => Math.min(host.clientWidth || window.innerWidth || 400, 460);
 
     /* ------------------------------------------------------------------- the layout (all numbers, nothing measured) ---- */
     function layout(W) {
-        const ds = dims(), items = [];                                         // bottom up: gate, ten levels, gate, ten levels, tower
+        const ds = dims(), items = [], pos = [];                              // bottom up: gate, ten levels, gate, ten levels, tower
         let y = BOT_PAD, k = 0;                                                 // y: distance from the bottom of the world
-        const pos = [];
         ds.forEach((o, n) => {
-            const gh = n === 0 ? GATE0 : GATE1; const gate = { kind: 'gate', di: o.di, n, from: y, h: gh }; items.push(gate); y += gh;
-            o.dm.levels.forEach((L, i) => {
+            const gh = n === 0 ? GATE0 : GATE1; items.push({ kind: 'gate', di: o.di, n, from: y, h: gh }); y += gh;
+            o.dm.levels.forEach((Lv, i) => {
                 const cy = y + ROW / 2, dx = Math.sin(k * 1.05 + 0.5) * W * SWING; k++;
-                const nd = { kind: 'node', di: o.di, i, L, x: W / 2 + dx, yb: cy, zoneN: n }; items.push(nd); pos.push(nd); y += ROW;
+                const nd = { kind: 'node', di: o.di, i, L: Lv, x: W / 2 + dx, yb: cy, zoneN: n }; items.push(nd); pos.push(nd); y += ROW;
             });
         });
         const tower = { kind: 'tower', from: y, h: TOWER }; items.push(tower); y += TOWER;
         const H = y + TOP_PAD;
         items.forEach(it => { if (it.kind === 'node') it.y = H - it.yb; else it.top = H - it.from - it.h; });
-        return { W, H, items, nodes: pos, ds };
+        return { W, H, items, nodes: pos };
     }
 
     /* ------------------------------------------------------------------------ painting ---- */
@@ -55,8 +61,8 @@
         for (let q = 0; q < 16; q++) { const lw = 46 + r() * 70, side = r() < .5 ? -1 : 1, x = side < 0 ? r() * (w * .22) : w - lw - r() * (w * .22); c.globalAlpha = .035 + r() * .05; c.beginPath(); c.roundRect ? c.roundRect(x, r() * h, lw, 9, 4.5) : c.rect(x, r() * h, lw, 9); c.fill(); }
         c.globalAlpha = 1;
     }
-    function roadSVG(L) {                                                      // the road between the stones: a faint ribbon, lit up to the level you have reached
-        const n = L.nodes, W = L.W, H = L.H; let defs = '', base = '', lit = '';
+    function roadSVG(Ly) {                                                     // the road between the stones: a faint ribbon, lit up to the level you have reached
+        const n = Ly.nodes, W = Ly.W, H = Ly.H; let defs = '', base = '', lit = '';
         for (let k = 0; k < n.length - 1; k++) {
             const a = n[k], b = n[k + 1], my = (a.y + b.y) / 2, d = 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + 'C' + a.x.toFixed(1) + ' ' + my.toFixed(1) + ' ' + b.x.toFixed(1) + ' ' + my.toFixed(1) + ' ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1);
             base += '<path d="' + d + '" class="rd-b"/><path d="' + d + '" class="rd-d"/>';
@@ -80,35 +86,35 @@
     function currentOf(di) {                                                   // the level you play next: the first open one without stars (and not skipped)
         const dm = DIMENSIONS[di], d = dimLoad(dm); for (let i = 0; i < dm.levels.length; i++) if (lvUnlocked(d, i) && !d.stars[i] && !(d.skipped && d.skipped[i])) return i; return -1;
     }
+    function snapshot() {                                                      // everything that changes how the road looks
+        return dims().map(o => { const d = dimLoad(o.dm); return o.di + ':' + (dimUnlocked(o.di) ? 1 : 0) + ':' + d.stars.join('') + ':' + (d.skipped || []).map(v => v ? 1 : 0).join(''); }).join('|') + '|' + curDim + '|' + widthNow();
+    }
     function render() {
-        const W = Math.min(window.innerWidth || 400, 460), L = layout(W), total = dimTotalStars();
-        $('lvp-total').textContent = total;
-        const state = {}; let focus = null;                                    // focus: the node the scroll centres on
-        const html = [];
+        const W = widthNow(), Ly = layout(W);
+        $('lvp-total').textContent = dimTotalStars();
+        let focus = null; const html = [];
         const zones = dims().map(o => ({ o, saves: dimLoad(o.dm), open: dimUnlocked(o.di) }));
-        L.nodes.forEach(nd => {
+        Ly.nodes.forEach(nd => {
             const z = zones[nd.zoneN], d = z.saves; nd.stars = d.stars[nd.i] || 0; nd.skipped = !!(d.skipped && d.skipped[nd.i]);
             nd.open = z.open && lvUnlocked(d, nd.i); nd.cur = nd.open && !nd.stars && !nd.skipped && currentOf(nd.di) === nd.i; nd.reached = nd.open && (nd.stars > 0 || nd.skipped);
-            if (nd.cur && nd.di === curDim) focus = nd; (state[nd.di] = state[nd.di] || [])[nd.i] = nd.stars;
+            if (nd.cur && nd.di === curDim) focus = nd;
         });
-        if (!focus) focus = L.nodes.find(n => n.cur) || [...L.nodes].reverse().find(n => n.open && n.di === curDim) || L.nodes[0];
+        if (!focus) focus = Ly.nodes.find(n => n.cur) || [...Ly.nodes].reverse().find(n => n.open && n.di === curDim) || Ly.nodes[0];
         // painted backgrounds, one picture per dimension (the road, the stones and the text sit on top)
         zones.forEach((z, n) => {
-            const gate = L.items.find(q => q.kind === 'gate' && q.n === n), up = L.items.find(q => q.kind === 'gate' && q.n === n + 1);        // a zone runs from the top of its own level 10 (below the next gate) down to the bottom of its gate
-            const top = up ? up.top + up.h : 0, bot = n === 0 ? L.H : gate.top + gate.h, h = bot - top;
+            const gate = Ly.items.find(q => q.kind === 'gate' && q.n === n), up = Ly.items.find(q => q.kind === 'gate' && q.n === n + 1);        // a zone runs from the top of its own level 10 (below the next gate) down to the bottom of its gate
+            const top = up ? up.top + up.h : 0, bot = n === 0 ? Ly.H : gate.top + gate.h, h = bot - top;
             z.zone = { top, h, n };
             html.push('<canvas class="lvp-bg" data-zone="' + n + '" style="top:' + top + 'px;height:' + h + 'px"></canvas>');
-            L.nodes.filter(q => q.zoneN === n).forEach(q => { q.zy = q.y - top; });
+            Ly.nodes.filter(q => q.zoneN === n).forEach(q => { q.zy = q.y - top; });
         });
-        html.push(roadSVG(L));
-        // the gates
-        L.items.filter(q => q.kind === 'gate').forEach(g => {
+        html.push(roadSVG(Ly));
+        Ly.items.filter(q => q.kind === 'gate').forEach(g => {                 // the gates
             const z = zones[g.n], lock = !z.open, th = THEME[Math.min(g.n, THEME.length - 1)];
             html.push('<div class="lvp-gate' + (lock ? ' lock' : '') + '" style="top:' + (g.top + 28) + 'px;--gc:' + th.glow + '"><small>DIMENSION</small><b>' + (g.n === 0 ? 'I' : g.n === 1 ? 'II' : g.n + 1) + '</b>' +
                 (lock ? '<span class="lvp-need">' + icon('lock') + '<i>' + z.o.dm.unlockStars + '</i>' + icon('star') + '</span>' : '') + '</div>');
         });
-        // the stones
-        L.nodes.forEach((nd, idx) => {
+        Ly.nodes.forEach(nd => {                                               // the stones
             const c = nd.L.color, cls = 'lvp-node' + (nd.cur ? ' cur' : nd.reached ? ' done' : nd.open ? ' open' : ' lock') + (nd.skipped ? ' skipped' : '');
             const tc = TC[lvDropTier(nd.di, nd.i)], earned = nd.stars >= 3, side = nd.x < W / 2 ? 1 : -1;
             const stars = nd.reached && !nd.skipped ? '<span class="lvp-st">' + [0, 1, 2].map(k => '<i class="' + (k < nd.stars ? 'on' : '') + (prev && prev[nd.di] && (prev[nd.di][nd.i] || 0) <= k && k < nd.stars ? ' pop' : '') + '">' + icon('star') + '</i>').join('') + '</span>' : '';
@@ -116,41 +122,70 @@
                 '<span class="lvp-face">' + (nd.open ? '<b>' + (nd.i + 1) + '</b>' : icon('lock')) + '</span>' + stars + (nd.cur ? '<span class="lvp-name">' + nd.L.name + '</span>' : '') + '</button>');
             html.push('<span class="lvp-chest' + (earned ? ' earned' : '') + (nd.open ? '' : ' lock') + '" style="left:' + (nd.x + side * 70).toFixed(1) + 'px;top:' + (nd.y - 2).toFixed(1) + 'px;--ic:' + tc + '">' + icon('drop-' + lvDropTier(nd.di, nd.i)) + '</span>');
         });
-        // you
-        html.push('<div class="lvp-me" id="lvp-me" style="left:' + focus.x.toFixed(1) + 'px;top:' + (focus.y - 36).toFixed(1) + 'px"><canvas width="140" height="140"></canvas></div>');
-        // the tower
-        const tw = L.items.find(q => q.kind === 'tower'), save = typeof pkLoadSave === 'function' ? pkLoadSave() : null, bt = load('rr_pk_best_time', 0), bm = load('rr_pk_best', 0);
+        html.push('<div class="lvp-me" id="lvp-me" style="left:' + focus.x.toFixed(1) + 'px;top:' + (focus.y - 36).toFixed(1) + 'px"><canvas width="140" height="140"></canvas></div>');       // you
+        const tw = Ly.items.find(q => q.kind === 'tower'), save = typeof pkLoadSave === 'function' ? pkLoadSave() : null, bt = load('rr_pk_best_time', 0), bm = load('rr_pk_best', 0);       // the tower
         const meta = save ? 'Saved ' + (save.m || 0) + ' m' : bt ? 'Best ' + pkFmtTime(bt) : bm ? 'Best ' + bm + ' m' : '1000 m';
         html.push('<button type="button" class="lvp-tower" id="lvp-tw" style="top:' + tw.top + 'px;height:' + tw.h + 'px">' + towerSVG(true) + '<span><b>THE TOWER</b><small>' + meta + '</small></span></button>');
 
-        world.style.width = L.W + 'px'; world.style.height = L.H + 'px'; world.innerHTML = html.join('');
-        world.querySelectorAll('canvas.lvp-bg').forEach(cv => { const n = +cv.dataset.zone, z = zones[n].zone; paintZone(cv, L.W, z.h, THEME[Math.min(n, THEME.length - 1)], L.nodes.filter(q => q.zoneN === n), 90 + n * 17, n > 0 ? THEME[Math.min(n - 1, THEME.length - 1)] : null); });
+        world.style.width = Ly.W + 'px'; world.style.height = Ly.H + 'px'; world.innerHTML = html.join('');
+        world.querySelectorAll('canvas.lvp-bg').forEach(cv => { const n = +cv.dataset.zone, z = zones[n].zone; paintZone(cv, Ly.W, z.h, THEME[Math.min(n, THEME.length - 1)], Ly.nodes.filter(q => q.zoneN === n), 90 + n * 17, n > 0 ? THEME[Math.min(n - 1, THEME.length - 1)] : null); });
         try { renderLook($('lvp-me').querySelector('canvas'), myLook(), { scale: .36, cy: .6 }); } catch (e) {}
         world.querySelectorAll('.lvp-node').forEach(b => b.addEventListener('click', () => {
             const di = +b.dataset.di, i = +b.dataset.i;
             if (b.classList.contains('lock')) { if (window.SFX) SFX.play('error'); b.animate([{ transform: 'translate(-50%,-50%)' }, { transform: 'translate(calc(-50% - 6px),-50%)' }, { transform: 'translate(calc(-50% + 6px),-50%)' }, { transform: 'translate(-50%,-50%)' }], { duration: 260 }); return; }
             if (window.SFX) SFX.play('tap'); curDim = di; lvStart(i);
         }));
-        $('lvp-tw').addEventListener('click', () => { if (window.SFX) SFX.play('tap'); openParkour(); });
-        L.focus = focus; L.zones = zones; return L;
+        const twb = $('lvp-tw'); if (twb) twb.addEventListener('click', () => { if (window.SFX) SFX.play('tap'); openParkour(); });
+        Ly.focus = focus; Ly.zones = zones; return Ly;
     }
     // the hop: when you have passed a level since last time, your cube starts on the old stone and jumps up to the new one
-    function hop(L) {
-        const me = $('lvp-me'), f = L.focus; if (!me || !f || !prev || prev.cur === undefined || prev.curDim !== f.di) return;
-        const was = L.nodes.find(q => q.di === f.di && q.i === prev.cur); if (!was || was === f) return;
+    function hop(Ly) {
+        const me = $('lvp-me'), f = Ly.focus; if (!me || !f || !prev || prev.cur === undefined || prev.curDim !== f.di) return;
+        const was = Ly.nodes.find(q => q.di === f.di && q.i === prev.cur); if (!was || was === f) return;
         const ox = was.x - f.x, oy = was.y - f.y;
         me.animate([{ transform: 'translate(' + ox + 'px,' + oy + 'px)' }, { transform: 'translate(' + ox * .5 + 'px,' + (oy * .5 - 80) + 'px)', offset: .5 }, { transform: 'translate(0,0)' }], { duration: 950, delay: 450, easing: 'cubic-bezier(.4,0,.3,1)', fill: 'backwards' });
         setTimeout(() => { if (window.SFX) SFX.play('jump', .7); }, 450); setTimeout(() => { if (window.SFX) SFX.play('land', 1); }, 1380);
     }
-    function open() {
-        const L = render(); showScreen('levels');
-        setTimeout(() => {                                                      // measured now that the screen is visible
-            const f = L.focus; scroll.scrollTop = Math.max(0, f.y - scroll.clientHeight * .6);
-            hop(L);
-            prev = { cur: f.cur ? f.i : undefined, curDim: f.di }; L.nodes.forEach(nd => { (prev[nd.di] = prev[nd.di] || [])[nd.i] = nd.stars; });
-        }, 60);
+    // scroll the home tab so that the level you are on sits in the middle of what is visible (between the pass row and the dock)
+    function focusScroll() {
+        const f = L && L.focus; if (!f || !bodyEl.clientHeight) return;
+        const br = bodyEl.getBoundingClientRect(), wr = world.getBoundingClientRect(), worldTop = wr.top - br.top + bodyEl.scrollTop;
+        const dockH = dockEl ? dockEl.offsetHeight : 190, top = 70, usable = Math.max(120, bodyEl.clientHeight - dockH - top);
+        bodyEl.scrollTop = Math.max(0, worldTop + f.y - top - usable * .5);
     }
-    $('lvp-back').addEventListener('click', () => { refreshStartMeta(); showScreen('start'); });
+    // the home tab came on screen (or the mode changed): draw the road if something changed, then walk to where you are
+    function onShow() {
+        if (!isLevels()) return;
+        const sp = startEl.querySelector('.m-split'); host.style.setProperty('--split-h', (sp && sp.offsetHeight ? sp.offsetHeight : 0) + 'px');          // the star counter and the tower button hang just under the pass row (when there is one)
+        const key = snapshot(), changed = key !== lastKey || !L;
+        if (changed) { L = render(); lastKey = key; }
+        requestAnimationFrame(() => {
+            focusScroll(); if (changed) hop(L);
+            prev = { cur: L.focus.cur ? L.focus.i : undefined, curDim: L.focus.di }; L.nodes.forEach(nd => { (prev[nd.di] = prev[nd.di] || [])[nd.i] = nd.stars; });
+        });
+    }
+    // the level you play next (null when everything is done: PLAY then opens the Tower)
+    function current() {
+        for (const o of dims()) { if (!dimUnlocked(o.di)) continue; const i = currentOf(o.di); if (i >= 0) return { di: o.di, i }; }
+        return null;
+    }
+    function play() { const c = current(); if (c) { curDim = c.di; lvStart(c.i); } else openParkour(); }
+    function goHome() {                                                        // "open the levels" = go to the home tab with the Levels mode selected
+        const p = prog(); if (p.lastMode !== 'parkour') { p.lastMode = 'parkour'; saveProg(p); }
+        refreshStartMeta(); showScreen('start');
+    }
+
+    /* -------------------------------------------------- scrolling: touch and wheel are native, a mouse can drag anywhere ---- */
+    let drag = null, moved = false;
+    bodyEl.addEventListener('pointerdown', e => { if (!isLevels() || e.pointerType === 'touch' || e.button !== 0) return; drag = { y: e.clientY, top: bodyEl.scrollTop }; moved = false; }, true);
+    window.addEventListener('pointermove', e => { if (!drag) return; const dy = e.clientY - drag.y; if (!moved && Math.abs(dy) > 6) { moved = true; bodyEl.classList.add('dragging'); } if (moved) bodyEl.scrollTop = drag.top - dy; });
+    const endDrag = () => {
+        if (drag && moved) { const stop = ev => { ev.stopPropagation(); ev.preventDefault(); }; bodyEl.addEventListener('click', stop, { capture: true, once: true }); setTimeout(() => bodyEl.removeEventListener('click', stop, true), 60); }
+        drag = null; moved = false; bodyEl.classList.remove('dragging');
+    };
+    window.addEventListener('pointerup', endDrag); window.addEventListener('pointercancel', endDrag);
     $('lvp-tower').addEventListener('click', () => { if (window.SFX) SFX.play('tap'); openParkour(); });
-    window.LevelPath = { open, render };
+    window.addEventListener('resize', () => { if (isLevels() && snapshot() !== lastKey) onShow(); });
+
+    window.LevelPath = { onShow, goHome, play, current, render: onShow };
 })();

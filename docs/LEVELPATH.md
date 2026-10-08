@@ -1,12 +1,12 @@
 # The level path (`src/ui/levelpath.js`, `levelpath.css`)
 
-The Levels screen is one road that climbs, like the path in Duolingo but going up like the game: Level 1 at the bottom, the Tower at the very top.
+**It lives in the home menu.** Pick Levels in the Play tab (or come back from a level) and the home tab itself becomes the path: one road that climbs, like the path in Duolingo but going up like the game. Level 1 is at the bottom, the Tower at the very top. The top bar and the bottom tabs stay, the Rage pass row sticks to the top (when you have it), the mode row with **PLAY** sticks to the bottom, and the whole tab scrolls underneath: a finger anywhere, the wheel, and with a mouse you can drag anywhere (a drag never starts a level). PLAY starts the level you are on; tapping any open stone starts that level.
 
 - **Stones**: every level is a round stone in the colour of the level, with its number on it. A finished level has its stars (three gold ones in an arc over the stone, the missing ones dark). A locked level is a dark stone with a lock. The name of a level is only written under the level you play next.
 - **You**: your own cube stands on the level you play next (the first open level without stars) and a ring pulses around that stone. When you come back after passing a level the cube hops from the old stone to the new one and the new stars pop in.
 - **Chests**: the chest you win with 3 stars stands beside its level in the colour of its rarity (dim while the level is locked, faded once you have earned it).
 - **The road** between the stones is a faint ribbon with a dotted line; the part you have walked is lit in the colours of the levels.
-- **Dimensions**: Dimension I at the bottom, Dimension II above it behind a gate that shows the stars it needs (28) until it opens. Each dimension has its own painted sky (a dark violet one and an icy blue one) with faint far-away ledges and drifting dust. The Tower stands on top of both; the small tower button in the header goes straight to it. The star counter in the header is the total, which is what opens Dimension II.
-- Tapping a stone starts the level (a locked stone shakes). No windows, no boxes.
+- **Dimensions**: Dimension I at the bottom, Dimension II above it behind a gate that shows the stars it needs (28) until it opens. Each dimension has its own painted sky (a dark violet one and an icy blue one) with faint far-away ledges and drifting dust. The Tower stands on top of both; the small tower button next to the star counter goes straight to it. The star counter is the total, which is what opens Dimension II.
+- No windows, no boxes. The old full-screen Levels screen is not used any more: `openLevels()` in `game.js` hands over to `LevelPath.goHome()` (select the Levels mode, go to the home tab); the old grid is still in `openLevels` as a fallback and is never reached while the module is loaded.
 
-`openLevels()` in `game.js` hands over to `LevelPath.open()`; the old grid is still in `openLevels` as a fallback and is never reached while the module is loaded.
+Hooks in `game.js`: `showScreen('start')` and `menuTab('home')` call `LevelPath.onShow()` (draws the road when something changed and scrolls to your level), `playSelected()` calls `LevelPath.play()`, `refreshMenu()` sets the classes `arena-mode` / `levels-mode` on `#s-start`.

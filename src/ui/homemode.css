@@ -1,0 +1,7 @@
+/* THE HOME SCREEN PER MODE. The arena (its sky, sun and far scenery, the drifting air, the floating island and the title with the trophies) belongs to Arena Race only.
+   Every other mode gets a calm home: the colour of the mode glows behind your player, who stands on a small ledge. The Levels mode shows the level path instead (levelpath.css). */
+#s-start:not(.arena-mode) > #m-world, #s-start:not(.arena-mode) > #m-air { opacity: 0 !important; }
+#s-start:not(.arena-mode) .m-trophy, #s-start:not(.arena-mode) .m-isle-art, #s-start:not(.arena-mode) .m-arenatest { display: none !important; }
+#s-start.menu:not(.arena-mode) { background: radial-gradient(80% 44% at 50% 38%, color-mix(in srgb, var(--mode-c, #35e0c8) 20%, transparent), transparent 74%), var(--bg); }
+#s-start:not(.arena-mode):not(.levels-mode) .m-isle::after { content: ""; position: absolute; left: 50%; bottom: 20px; width: 210px; height: 20px; transform: translateX(-50%); z-index: 0; border-radius: 10px;
+    background: linear-gradient(color-mix(in srgb, var(--mode-c, #35e0c8) 78%, #fff), var(--mode-c, #35e0c8)); box-shadow: 0 7px 0 color-mix(in srgb, var(--mode-c, #35e0c8) 42%, #000), 0 20px 30px -8px var(--mode-c, #35e0c8); }

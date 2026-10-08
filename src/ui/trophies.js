@@ -201,7 +201,7 @@
     let airT = 0;
     function airLoop(now) {
         requestAnimationFrame(airLoop);
-        if (document.hidden || now - airT < 42 || !window.ArenaTheme || airAi < 0) return;
+        if (document.hidden || now - airT < 42 || !window.ArenaTheme || airAi < 0 || (startEl && !startEl.classList.contains('arena-mode'))) return;          // the drifting air belongs to Arena Race only
         const dt = Math.min(.1, (now - airT) / 1000); airT = now;
         if (!startEl || startEl.style.display === 'none' || !document.querySelector('.m-tab[data-tab="home"].on')) return;
         const dpr = airCv.width / (parseFloat(airCv.style.width) || 1), c = airCv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);

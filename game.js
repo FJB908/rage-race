@@ -116,6 +116,7 @@ const hintEl = document.getElementById('hint');
 
 let screenTransition = 0;
 function showScreen(name) {
+    if (name === 'start' && window.LevelPath) setTimeout(LevelPath.onShow, 70);
     { const fm = document.getElementById('finish-menu'); if (fm) fm.style.display = 'none'; }   // only shown right after you finish
     const transition = ++screenTransition;
     if (typeof SFX !== 'undefined' && SFX.music){
@@ -4736,6 +4737,7 @@ function menuTab(tab){
     document.querySelectorAll('.m-tab').forEach(el => el.classList.toggle('on', el.dataset.tab === tab));
     document.querySelectorAll('.m-nav [data-go]').forEach(el => el.classList.toggle('on', el.dataset.go === tab));
     document.getElementById('m-body').scrollTop = 0;
+    if (tab === 'home' && window.LevelPath) setTimeout(LevelPath.onShow, 30);         // Levels mode: draw the road and walk to the level you are on
 }
 function setLastMode(mode){
     const p = prog(); p.lastMode = mode; saveProg(p); refreshMenu();
@@ -4787,7 +4789,8 @@ function refreshMenu(){
     if (document.activeElement !== inp) inp.value = p.name;
     { const mk = p.lastMode in MODE_POSTER ? p.lastMode : 'race', mp = MODE_POSTER[mk], row = document.querySelector('#s-start .m-row[data-go="play"]');         // the mode row looks like that mode's poster in the Play tab
       const wrap = document.getElementById('m-modewrap'); if (wrap) wrap.style.setProperty('--mc', mp.c);
-      document.getElementById('m-mode').textContent = mp.n; const sub = document.getElementById('m-mode-sub'); if (sub) sub.textContent = mp.s; if (row) row.style.setProperty('--mc', mp.c); }
+      document.getElementById('m-mode').textContent = mp.n; const sub = document.getElementById('m-mode-sub'); if (sub) sub.textContent = mp.s; if (row) row.style.setProperty('--mc', mp.c);
+      root.style.setProperty('--mode-c', mp.c); root.classList.toggle('arena-mode', mk === 'race'); root.classList.toggle('levels-mode', mk === 'parkour'); }      // the arena world and title are for Arena Race only; Levels shows the path
     document.getElementById('m-mode-ico').innerHTML = icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
     document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));
     renderPassHome(p);
@@ -4869,7 +4872,7 @@ function playSelected(){
     window.gauntletParty = null;
     if (window.Party && Party.intercept(m)) return;                    // in a party the leader starts for everyone
     if (m === 'escape') startEscape();
-    else if (m === 'parkour') openLevels();
+    else if (m === 'parkour') { if (window.LevelPath) LevelPath.play(); else openLevels(); }       // PLAY starts the level you are on (the path is right there on the home screen)
     else if (m === 'gauntlet') Gauntlet.open();
     else if (m === 'build') Build.open();
     else startMatchmaking();
@@ -5410,7 +5413,7 @@ function openLevels(gotoDim){
     if (window.Tutorial) Tutorial.stop();
     if (gotoDim !== undefined) curDim = gotoDim;
     if (!dimUnlocked(curDim)) curDim = 0;              // safety: never land on a locked dimension
-    if (window.LevelPath){ LevelPath.open(); return; }       // the level path (src/ui/levelpath.js); the grid below stays as a fallback
+    if (window.LevelPath){ LevelPath.goHome(); return; }      // the level path lives in the home menu (src/ui/levelpath.js); the grid below stays as a fallback
     const dim = DIMENSIONS[curDim];
     const d = lvLoad(), grid = document.getElementById('lv-grid');
     grid.innerHTML = '';

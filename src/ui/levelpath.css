@@ -1,14 +1,22 @@
-/* THE LEVEL PATH: one road that climbs. Round stones with the level number, three gold stars in an arc over a finished one, the chest of the level beside it, your own cube on the next level. */
-#s-levels.lvp { justify-content: flex-start; align-items: stretch; padding: 0; overflow: hidden; text-align: left; background: #090b12; }
-#s-levels.lvp > :not(.lvp-shell) { display: none !important; }
-.lvp-shell { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; background: #090b12; }
-.lvp-top { position: relative; z-index: 6; display: flex; align-items: center; gap: 12px; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 12px; background: linear-gradient(to bottom, #090b12 55%, rgba(9,11,18,0)); }
-.lvp-top h1 { flex: 1; margin: 0; font: 800 22px/1 "Bricolage Grotesque", system-ui, sans-serif; }
-.lvp-tower-btn { width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgba(124,107,255,.16); color: #b3a9ff; display: grid; place-items: center; -webkit-tap-highlight-color: transparent; } .lvp-tower-btn svg { width: 22px; height: 22px; } .lvp-tower-btn:active { background: rgba(124,107,255,.34); }
-.lvp-stars { display: flex; align-items: center; gap: 6px; color: #ffcf3f; } .lvp-stars .ico { width: 22px; height: 22px; filter: drop-shadow(0 0 8px rgba(255,207,63,.55)); } .lvp-stars b { font: 800 18px/1 "Bricolage Grotesque", system-ui, sans-serif; color: #fff; font-variant-numeric: tabular-nums; }
-.lvp-scroll { position: relative; z-index: 1; flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-top: -12px; }
-.lvp-scroll::-webkit-scrollbar { display: none; }
-.lvp-world { position: relative; margin: 0 auto; overflow: hidden; }
+/* THE LEVEL PATH (in the home menu when the Levels mode is selected). Round stones with the level number, three gold stars in an arc over a finished one, the chest of the level beside it, your own cube on the next level. */
+/* the mode: the home tab becomes the path. The pass row sticks to the top, the mode row and PLAY (the dock) stick to the bottom, everything in between scrolls with the whole tab. */
+.m-dock { display: contents; }
+.mlv { display: none; }
+#s-start.levels-mode .m-body { padding-top: 0; padding-bottom: 0; }
+#s-start.levels-mode .m-tab[data-tab="home"] { gap: 0; }
+#s-start.levels-mode .m-split { position: sticky; top: 0; z-index: 6; margin: 0 -18px; padding: 12px 18px 14px; background: linear-gradient(to bottom, var(--bg) 66%, rgba(13,16,23,0)); }
+#s-start.levels-mode .m-stage { flex: none; min-height: 0; display: block; padding: 0; margin: 0 -18px; }
+#s-start.levels-mode .m-stage > :not(.mlv) { display: none !important; }
+#s-start.levels-mode .mlv { display: block; position: relative; }
+#s-start.levels-mode .m-dock { display: block; position: sticky; bottom: 0; z-index: 6; margin: 0 -18px; padding: 34px 18px 18px; background: linear-gradient(to top, var(--bg) 62%, rgba(13,16,23,0)); }
+#s-start.levels-mode #m-winbar { display: none; }
+#s-start.levels-mode .m-dock .m-modewrap { margin-top: 0; }
+.m-body.dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; } .m-body.dragging * { pointer-events: none; }
+.mlv-hud { position: sticky; top: var(--split-h, 0px); z-index: 5; height: 0; display: flex; justify-content: flex-end; align-items: flex-start; gap: 12px; padding: 4px 16px 0; pointer-events: none; }
+.mlv-hud > * { pointer-events: auto; }
+.mlv-tower { width: 40px; height: 40px; border: 0; border-radius: 12px; background: rgba(124,107,255,.2); color: #c4bcff; display: grid; place-items: center; -webkit-tap-highlight-color: transparent; backdrop-filter: blur(4px); } .mlv-tower svg { width: 22px; height: 22px; } .mlv-tower:active { background: rgba(124,107,255,.4); }
+.lvp-stars { display: flex; align-items: center; gap: 6px; height: 40px; color: #ffcf3f; text-shadow: 0 2px 8px rgba(0,0,0,.6); } .lvp-stars .ico { width: 22px; height: 22px; filter: drop-shadow(0 0 8px rgba(255,207,63,.55)); } .lvp-stars b { font: 800 18px/1 "Bricolage Grotesque", system-ui, sans-serif; color: #fff; font-variant-numeric: tabular-nums; }
+.lvp-world { position: relative; margin: 0 auto; overflow: hidden; user-select: none; -webkit-user-select: none; }
 .lvp-bg { position: absolute; left: 0; width: 100%; z-index: 0; display: block; }
 .lvp-road { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; }
 .lvp-road path { fill: none; stroke-linecap: round; }
