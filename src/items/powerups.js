@@ -5,6 +5,7 @@
 (function () {
     'use strict';
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
+    const NITRO_TIME = 10, NET_TIME = 20, JET_TIME = 8, JET_JUMPS = 3, NET_DROP = 330;          // Nitro / Safety Net / Jetpack (only in Arena Race and Build Race, never in a party)
     const DJ_TIME = 5, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
     const BOMB_R = 174, BOMB_LIFE = 3.5, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds until it explodes, stun length, immunity after a stun
     const clouds = [], bombs = [], hits = [];                                // hits: "you hit someone" markers for the player who dropped the bomb
@@ -97,7 +98,7 @@
         for (let i = 0; i < 10; i++) particles.push({ x: x + rnd(-16, 16), y: y + rnd(-4, 8), vx: rnd(-90, 90), vy: rnd(10, 90), life: 1, decay: rnd(1.4, 2.2), color: i % 3 ? '#ffffff' : '#9fe8ff', size: rnd(1.6, 3.2) });
     }
     function airJumpVel(p, vx, vy) {                                      // the extra jump itself: your drag, a touch weaker than the first jump
-        p.vx = vx; p.vy = vy; p.djUsed = true; p.squash = 1.3; p.charged = false;
+        p.vx = vx; p.vy = vy; p.djN = (p.djN || 1) - 1; p.djUsed = p.djN <= 0; p.squash = 1.3; p.charged = false;          // the Double Jump has one extra jump, the Jetpack three
         if (p.windT > 0) p.vx += p.windDir * WIND_AIM_ERR * rnd(0.5, 1);
         capUpwardVelocity(p);
         spawnCloud(p.x, p.y + p.r * 0.9);
@@ -175,6 +176,15 @@
         }
     }
 
+    // SAFETY NET: you fell more than about 2.5 ledges below the ledge you last stood on: a ring throws you back up, aimed so that the top of the arc is just above that ledge
+    function netCatch(p) {
+        const g = playerG(p), top = p.lastLedgeY - 50, h = Math.max(60, p.y - top), vy = -Math.min(3200, Math.sqrt(2 * g * h)), T = Math.max(0.2, -vy / g);
+        p.vy = vy; p.vx = Math.max(-900, Math.min(900, (p.lastLedgeX - p.x) / T)); p.netT = 0; p.squash = 1.35; p.charged = false;
+        ring(p.x, p.y, ITEMS.net.color, 110); ring(p.x, p.y, '#ffffff', 70); burst(p.x, p.y, ITEMS.net.color, 24, 360);
+        if (p.local) { SFX.play('bounce'); haptic([20, 30, 50]); camShake = Math.max(camShake, 5); }
+    }
+    function nitroFx(p) { burst(p.x, p.y + p.r, ITEMS.nitro.color, 18, 320); burst(p.x, p.y + p.r, '#fff1b8', 8, 200); ring(p.x, p.y, ITEMS.nitro.color, 60); }
+
     /* ------------------------------------------------------------------------------ the rest ---- */
     function activate(p, it) {
         const k = p.r / BASE_R;
@@ -186,8 +196,23 @@
             return true;
         }
         if (it === 'bomb') { placeBomb(p); return true; }
+        if (it === 'nitro') {
+            p.nitroN = 2; p.nitroT = NITRO_TIME; hint(p, 'NITRO: YOUR NEXT 2 JUMPS LAUNCH HARDER');
+            ring(p.x, p.y, ITEMS.nitro.color, 64 * k); burst(p.x, p.y, ITEMS.nitro.color, 16, 260);
+            return true;
+        }
+        if (it === 'net') {
+            p.netT = NET_TIME; hint(p, 'SAFETY NET: A BIG FALL BOUNCES YOU BACK');
+            ring(p.x, p.y, ITEMS.net.color, 64 * k); burst(p.x, p.y, ITEMS.net.color, 14, 200);
+            return true;
+        }
+        if (it === 'jet') {
+            p.djT = JET_TIME; p.jet = true; p.djN = JET_JUMPS; p.djUsed = false; hint(p, 'JETPACK: ' + JET_JUMPS + ' EXTRA JUMPS IN MID-AIR');
+            ring(p.x, p.y, ITEMS.jet.color, 70 * k); burst(p.x, p.y, ITEMS.jet.color, 16, 260);
+            return true;
+        }
         if (it === 'dj') {
-            p.djT = DJ_TIME; p.djUsed = false; hint(p, 'JUMP AGAIN IN MID-AIR: DRAG AND RELEASE');
+            p.djT = DJ_TIME; p.jet = false; p.djN = 1; p.djUsed = false; hint(p, 'JUMP AGAIN IN MID-AIR: DRAG AND RELEASE');
             ring(p.x, p.y, ITEMS.dj.color, 64 * k); burst(p.x, p.y, ITEMS.dj.color, 14, 200);
             return true;
         }
@@ -218,7 +243,9 @@
                 else { p.cannon = 0; burst(p.x, p.y, ITEMS.cannon.color, 10, 160); }                  // never landed: the cannon is lost
             }
         }
-        if (p.djT > 0) { p.djT -= dt; if (p.djT <= 0) { p.djT = 0; } if (p.mode === 'idle') p.djUsed = false; else if (!p.local && !(p.zapT > 0)) { p.rescueT = (p.rescueT || 0) - dt; if (p.rescueT <= 0) { p.rescueT = 0.09; botRescue(p); } } }
+        if (p.nitroT > 0) { p.nitroT -= dt; if (p.nitroT <= 0) { p.nitroT = 0; p.nitroN = 0; } }
+        if (p.netT > 0) { p.netT -= dt; if (p.netT <= 0) p.netT = 0; else if (p.mode === 'air' && p.vy > 200 && !p.cannon && !(p.cannonFly > 0) && !p.ufoHold && !(p.rocketFx > 0) && p.lastLedgeY !== undefined && p.y > p.lastLedgeY + NET_DROP) netCatch(p); }
+        if (p.djT > 0) { p.djT -= dt; if (p.djT <= 0) { p.djT = 0; p.jet = false; } if (p.mode === 'idle') { if (p.jet) p.djUsed = p.djN <= 0; else { p.djUsed = false; p.djN = 1; } } else if (!p.local && !(p.zapT > 0)) { p.rescueT = (p.rescueT || 0) - dt; if (p.rescueT <= 0) { p.rescueT = 0.09; botRescue(p); } } }
     }
     // Pointer: may this player start a drag now? Normal jumps from a platform, and the extra jump while Double Jump is ready.
     function canAim(p) { return !!p && !p.finished && !(p.zapT > 0) && (p.mode === 'idle' || airAim(p)); }
@@ -438,12 +465,27 @@
             c.strokeStyle = ITEMS.cannon.color; c.shadowBlur = 8; c.shadowColor = ITEMS.cannon.color; c.beginPath(); c.arc(p.x, py, 6, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); c.stroke(); c.restore();
         }
     }
-    function drawUnder(c, p, t) { drawSpring(c, p, t); if (p.djT > 0 && !p.djUsed && p.mode === 'air' && !p.finished) drawReady(c, p, t); }
+    // a soft coloured aura around a player who has Nitro or a Safety Net (everybody can see it); a Jetpack shows flames under the feet while you are in the air
+    function drawAura(c, p, t) {
+        if (p.finished) return;
+        const k = p.r / BASE_R; let col = null, a = 0.5;
+        if (p.nitroN > 0) { col = ITEMS.nitro.color; a = 0.55 + 0.25 * Math.sin(t * 14); }
+        else if (p.netT > 0) { col = ITEMS.net.color; a = 0.4 + 0.12 * Math.sin(t * 4); }
+        if (col) { c.save(); c.globalAlpha = a; c.strokeStyle = col; c.lineWidth = 2.6; c.shadowColor = col; c.shadowBlur = 14; c.beginPath(); c.arc(p.x, p.y, p.r * 1.75, 0, 7); c.stroke(); c.restore(); }
+        if (p.jet && p.djT > 0 && p.mode === 'air' && !p.djUsed) {
+            c.save(); c.translate(p.x, p.y + p.r * 0.9); c.globalAlpha = 0.9;
+            for (const dx of [-0.45, 0.45]) { const h = (11 + 7 * Math.sin(t * 40 + dx * 9)) * k; c.fillStyle = '#ffb02e'; c.beginPath(); c.moveTo(dx * p.r - 4 * k, 0); c.lineTo(dx * p.r, h); c.lineTo(dx * p.r + 4 * k, 0); c.closePath(); c.fill(); c.fillStyle = '#fff3c4'; c.beginPath(); c.moveTo(dx * p.r - 2 * k, 0); c.lineTo(dx * p.r, h * 0.55); c.lineTo(dx * p.r + 2 * k, 0); c.closePath(); c.fill(); }
+            c.restore();
+        }
+    }
+    function drawUnder(c, p, t) { drawAura(c, p, t); drawSpring(c, p, t); if (p.djT > 0 && !p.djUsed && p.mode === 'air' && !p.finished) drawReady(c, p, t); }
 
     /* ------------------------------------------------------------------------------ item slot ---- */
     function hud(p) {
         if (p.cannon > 0) return { icon: 'cannon', badge: p.cannon === 2 ? 'GO' : '', prog: p.cannonT / CANNON_TIME, col: ITEMS.cannon.color };
-        if (p.djT > 0) return { icon: 'dj', badge: p.djUsed ? '0x' : '1x', prog: p.djT / DJ_TIME, col: ITEMS.dj.color };
+        if (p.djT > 0) return p.jet ? { icon: 'jet', badge: (p.djUsed ? 0 : (p.djN || 1)) + 'x', prog: p.djT / JET_TIME, col: ITEMS.jet.color } : { icon: 'dj', badge: p.djUsed ? '0x' : '1x', prog: p.djT / DJ_TIME, col: ITEMS.dj.color };
+        if (p.nitroN > 0) return { icon: 'nitro', badge: p.nitroN + 'x', prog: p.nitroT / NITRO_TIME, col: ITEMS.nitro.color };
+        if (p.netT > 0) return { icon: 'net', badge: '', prog: p.netT / NET_TIME, col: ITEMS.net.color };
         return null;
     }
 
@@ -459,5 +501,5 @@
         if (p.bounceT > 0 && prevVy > 150 && vy < -150) p.spring = 1;       // a rebound: the spring squashes
     }
 
-    window.PU = { activate, tick, update, reset, canAim, airAim, onRelease, slotTap, preview, drawWorld, drawUnder, drawBody, drawOver, hud, sample, parse, apply, cloud: spawnCloud, bomb: addBomb, predict, cannonPlan, cannonFire, CANNON_TIME, DJ_TIME };
+    window.PU = { nitroFx, activate, tick, update, reset, canAim, airAim, onRelease, slotTap, preview, drawWorld, drawUnder, drawBody, drawOver, hud, sample, parse, apply, cloud: spawnCloud, bomb: addBomb, predict, cannonPlan, cannonFire, CANNON_TIME, DJ_TIME };
 })();

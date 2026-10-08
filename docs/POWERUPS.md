@@ -114,3 +114,23 @@ Arena 3 keeps five of the six from arena 2 and swaps one for two new ones. Every
 3. **Player-targeted**: Lightning, Mirror, Snowball.
 4. **Needs new movement**: Glider (steering in the air), Grapple (a hook to a ledge), Swap.
 Each also needs an icon, a sound from the existing bank, the themed look, a bot rule, a party event and a line in the Arenas screen. It would also be worth measuring all of them with a headless simulation (many races with and without each item) before the numbers are final.
+
+## Built since: Nitro, Safety Net, Jetpack (and what the measurements said)
+`src/items/powerups.js` now also holds **Nitro** (next 2 jumps launch 25% harder, 10 s), **Safety Net** (20 s: a fall of more than about 2.5 ledges below the ledge you last stood on throws you back up so that you land on it again) and **Jetpack** (3 extra air jumps in total within 8 s). They only come out of the item boxes in Arena Race and Build Race, from the trophy counts in the table of ARENAS.md; parties and other modes never roll them.
+
+To check the numbers I ran a headless simulation: a bot in 3rd place gets one item in a 4 bot race, and I measure how far it climbs in the next 18 s, against the same race without the item (36 races each, seeded). 1 ledge is about 150 px. The error of one average is about 150 px, so differences below about 300 px are noise.
+
+| Item | Climb vs nothing | Verdict |
+|---|---|---|
+| Cannon | +1,437 px (+9.6 ledges) | the biggest, only far behind: fine |
+| Jetpack (3 charges in total) | +869 px (+5.8) | as strong as a Rocket: odds mostly at the back, nearly never at the front |
+| Rocket | +783 px (+5.2) | fine |
+| Super Bounce | +721 px (+4.8) | **as strong as a Rocket**, yet it used to be MORE likely at the front: fixed (now like the Rocket, mostly at the back) |
+| Giant | +507 px (+3.4) | odds no longer flat: a bit more at the back |
+| Double Jump | +466 px (+3.1) | fine, even for everybody |
+| Nitro | +47 px (about 0) | bots use it as nothing; a human who pulls harder can skip a ledge. Treated as a small helper (a bit more likely at the front) |
+| Safety Net | -38 px (about 0) | it caught a fall in 14 of 36 races; a safety item, not a boost |
+| Moon Boots (built, then dropped) | about -490 px (-3.3) | a longer hang time makes every jump slower: it hurt instead of helped |
+| Jetpack with 3 jumps *per flight* (first try) | +1,489 px (+10) | far too strong: now 3 charges in total |
+
+Planned and still not built: Glider, Grapple, Mirror, Snowball, Swap, Lightning.

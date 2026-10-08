@@ -65,17 +65,22 @@
     const UNLOCKS = [
         { at: 0,    add: ['rocket', 'bounce', 'giant'] },                 // Playground: three simple ones
         { at: 150,  add: ['dj'] },
+        { at: 300,  add: ['nitro'] },                                     // Parking Lot
         { at: 550,  add: ['shield'] },                                    // there is not much to block before the first attacks
         { at: 750,  add: ['wind'] },                                      // Rooftop: the first attack
         { at: 1050, remove: ['giant'] },
         { at: 1350, add: ['bomb'] },                                      // Harbour
+        { at: 1750, add: ['net'] },
         { at: 1950, remove: ['bounce'] },                                 // the springy helper goes: you read the jump yourself
         { at: 2100, add: ['chain'] },                                     // Factory
+        { at: 2550, remove: ['nitro'] },
         { at: 3000, add: ['quake'] },                                     // Subway
+        { at: 3500, remove: ['net'] },                                    // the last safety item goes
         { at: 4100, add: ['ufo'] },                                       // Mountain
         { at: 5400, add: ['cannon'] },                                    // Space Station
+        { at: 6300, add: ['jet'], remove: ['dj'] },                       // the Jetpack is the big brother of the Double Jump
     ];
-    const ORDER = ['bounce', 'rocket', 'giant', 'shield', 'dj', 'wind', 'bomb', 'chain', 'quake', 'ufo', 'cannon'];
+    const ORDER = ['bounce', 'rocket', 'giant', 'shield', 'dj', 'wind', 'bomb', 'chain', 'quake', 'ufo', 'cannon', 'nitro', 'net', 'jet'];
     const INFO = {
         bounce: ['Super Bounce', 'Springs you up and keeps you bouncy for a few seconds'], rocket: ['Rocket', 'Blasts you far up the course'],
         giant: ['Giant', 'Grow huge: bigger jumps, hard to push around'], shield: ['Shield', 'Blocks every attack for a few seconds'],
@@ -83,12 +88,14 @@
         bomb: ['Stun Bomb', 'A danger zone that stuns everyone left inside'], chain: ['Chain', 'Hooks the leader and drags them back'],
         quake: ['Earthquake', 'Shakes the platforms of whoever is ahead'], ufo: ['UFO', 'Carries you up to the player above'],
         cannon: ['Cannon', 'Aim it and fire yourself across the course'],
+        nitro: ['Nitro', 'Your next 2 jumps launch 25% harder'], net: ['Safety Net', 'A big fall bounces you back to your ledge'],
+        jet: ['Jetpack', 'Three extra jumps in mid air (3 charges, 8 seconds)'],
     };
-    const COLORS = { rocket: '#ff7a3d', giant: '#ffcf3f', bounce: '#35e0c8', chain: '#c9d1e3', quake: '#ff5470', shield: '#7ee787', wind: '#8fd6ff', ufo: '#7CFF6B', bomb: '#ff3d5a', cannon: '#ff9f43', dj: '#9fe8ff' };
+    const COLORS = { rocket: '#ff7a3d', giant: '#ffcf3f', bounce: '#35e0c8', chain: '#c9d1e3', quake: '#ff5470', shield: '#7ee787', wind: '#8fd6ff', ufo: '#7CFF6B', bomb: '#ff3d5a', cannon: '#ff9f43', dj: '#9fe8ff', nitro: '#ff9f1c', net: '#4cc9f0', jet: '#ff6b6b' };
     const poolAt = tr => { const s = new Set(); for (const u of UNLOCKS) if (u.at <= tr) { (u.add || []).forEach(k => s.add(k)); (u.remove || []).forEach(k => s.delete(k)); } return ORDER.filter(k => s.has(k)); };
     const arenaEnd = i => (window.Trophies && Trophies.ARENAS[i + 1]) ? Trophies.ARENAS[i + 1].at - 1 : 1e9;         // the last trophy of arena i
     const poolOfArena = i => poolAt(arenaEnd(i));                                                                      // everything an arena has by its end (the test switch uses it)
-    const PARTY_POOL = ORDER.filter(k => k !== 'wind');
+    const PARTY_POOL = ['bounce', 'rocket', 'giant', 'shield', 'dj', 'bomb', 'chain', 'quake', 'ufo', 'cannon'];           // the classic set: no Gust, none of the newer ones
 
     /* ------------------------------------------------------------------------------- colours ---- */
     const hex = h => { if (h[0] !== '#') return h.match(/[\d.]+/g).slice(0, 3).map(Number); const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };      // '#rrggbb' or 'rgb(r,g,b)'
@@ -379,6 +386,8 @@
         if (!cur || !poolSet) return;
         for (const k in w) if (!poolSet.has(k)) w[k] = 0;
         if (poolSet.has('wind')) w.wind = (others && behind) ? 0.10 + 0.12 * f : 0;          // the Gust needs somebody ahead of you
+        const NEWW = { nitro: .16, net: .14, jet: .03 + .24 * f };                        // Nitro and the Net are small helpers (the front gets them 25% more often), the Jetpack is about as strong as a Rocket: mostly the back
+        for (const k in NEWW) if (poolSet.has(k)) w[k] = NEWW[k] * (k === 'jet' ? (behind ? 1 : .2) : (behind ? 1 : 1.25));
         for (const k in cur.bias) if (w[k] > 0) w[k] *= cur.bias[k];
     }
     // WHICH LEDGES: new players meet the ledge types one at a time (a party race and the other modes keep the full mix).

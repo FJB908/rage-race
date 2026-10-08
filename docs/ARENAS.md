@@ -20,17 +20,22 @@ The pool you roll from depends on your **trophies** (it is not only per arena): 
 |---|---|---|---|
 | 0 | Playground | Rocket, Super Bounce, Giant | - |
 | 150 | Playground | Double Jump | - |
+| 300 | Parking Lot | Nitro | - |
 | 550 | Parking Lot | Shield | - |
 | 750 | Rooftop | Gust | - |
 | 1,050 | Rooftop | - | Giant |
 | 1,350 | Harbour | Stun Bomb | - |
+| 1,750 | Harbour | Safety Net | - |
 | 1,950 | Harbour | - | Super Bounce |
 | 2,100 | Factory | Chain | - |
+| 2,550 | Factory | - | Nitro |
 | 3,000 | Subway | Earthquake | - |
+| 3,500 | Subway | - | Safety Net |
 | 4,100 | Mountain | UFO | - |
 | 5,400 | Space Station | Cannon | - |
+| 6,300 | Space Station | Jetpack | Double Jump |
 
-Planned (see POWERUPS.md, not built yet): Nitro, Glider, Safety Net, Grapple, Mirror, Snowball, Moon Boots, Jetpack, Swap and Lightning will be slotted into this table when they exist.
+Planned (see POWERUPS.md, not built yet): Glider, Grapple, Mirror, Snowball, Swap and Lightning will be slotted into this table when they exist. Moon Boots was built, measured and dropped.
 
 Each arena also renames and recolours the **Stun Bomb** and the **Earthquake** (Parking Lot: Car Alarm / Pothole, Rooftop: Firework / Roof Cave-In, Harbour: Depth Charge / Tidal Wave, Factory: Steam Blast / Piston Slam, Subway: Short Circuit / Train Rumble, Mountain: Snowball / Avalanche, Space Station: Ion Burst / Meteor, Volcano: Lava Bomb / Eruption, Summit: Thunder / Lightning Strike) and makes one or two power-ups a bit more common (Parking Lot: Stun Bomb x1.3, Rooftop: Double Jump x1.4, Harbour: Super Bounce x1.4, Factory: Chain x1.4, Subway: Shield x1.3 and Stun Bomb x1.15, Mountain: Giant x1.4, Space Station: Double Jump x1.6 and Super Bounce x1.2, Volcano: Rocket x1.5 and Earthquake x1.3, Summit: Cannon x1.5 and Earthquake x1.2). The names and odds are plain data at the top of `arenatheme.js`.
 

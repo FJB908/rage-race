@@ -409,6 +409,7 @@ function launchPlayer(p, dx, dy) {
     }
     p.charged = false;
     capUpwardVelocity(p);
+    if (p.nitroN > 0){ p.nitroN--; if (window.PU) PU.nitroFx(p); if (p.nitroN <= 0) p.nitroT = 0; }          // a Nitro jump uses one charge
 }
 
 /* ================= ABILITIES / ITEM BOXES ================= */
@@ -421,6 +422,7 @@ function playerPowMul(p, air){
     if (isArena() && p.bomb) m *= 1.16;
     if (isArena() && p.bigBoss) m *= 1.3;                   // the Giant's jumps are huge            // Boom Tag: whoever holds the bomb jumps a little harder, so catching is possible
     if (p.chainT > 0) m *= CHAIN_POW;
+    if (p.nitroN > 0) m *= 1.25;                            // Nitro: your next jumps launch 25% harder
         return m;
 }
 function playerMaxV(p, air){ return MAX_DRAG * POWER * playerPowMul(p, air); }
@@ -566,8 +568,8 @@ function rollItem(p){
     const w = {
         cannon: cannonW, dj: djW,
         rocket: 0.06 + 0.50*f,
-        giant:  0.19,
-        bounce: 0.25 - 0.05*f,
+        giant:  0.10 + 0.12*f,        // measured with bots (see docs/POWERUPS.md): the Giant is worth about +3 ledges, the Super Bounce about +5 (as much as a Rocket), so neither may favour the leader
+        bounce: 0.06 + 0.26*f,
         chain:  (others && !isLeader) ? 0.12 + 0.16*f : 0,   // useless for the leader, so never roll it
         quake:  quakeW,
         shield: shieldW,
@@ -736,6 +738,8 @@ function botWantsItem(p){
         case 'ufo':    return p.mode === 'idle' || p.itemHold > 2;  // call it in from solid ground
         case 'cannon': return p.mode === 'idle';                    // deploy from solid ground
         case 'dj':     return p.mode === 'idle';
+        case 'nitro': case 'jet': return p.mode === 'idle';        // start it from solid ground, then jump
+        case 'net':    return true;
         case 'bomb':   return players.some(o => o !== p && !o.finished && o.y > p.y - 60 && o.y < p.y + 520 && Math.abs(o.x - p.x) < 260);   // drop it when someone is about to pass this spot
     }
     return true;
@@ -749,7 +753,7 @@ function activateItem(p){
     if (it === 'chain' && !chainTarget) return false;
     p.item = null; p.itemState = null; p.itemCool = 4;
     const evx = {};
-    if (p.local) SFX.play({rocket:'rocket', shield:'shield', bomb:'bombset', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce', cannon:'cannon', dj:'cloud'}[it] || 'item');
+    if (p.local) SFX.play({rocket:'rocket', shield:'shield', bomb:'bombset', quake:'quake', chain:'chain', giant:'giant', ufo:'ufo', bounce:'bounce', cannon:'cannon', dj:'cloud', nitro:'boost', net:'shield', jet:'cloud'}[it] || 'item');
     if (it === 'rocket') startRocket(p);
     else if (it === 'giant'){
         p.giantT = GIANT_TIME; p.rv += 60;
@@ -776,7 +780,7 @@ function activateItem(p){
         ring(p.x, p.y, ITEMS.shield.color, 50);
     } else if (it === 'wind'){
         evx.dir = startWind(p);
-    } else if (it === 'cannon' || it === 'dj' || it === 'bomb'){
+    } else if (it === 'cannon' || it === 'dj' || it === 'bomb' || it === 'nitro' || it === 'net' || it === 'jet'){
         PU.activate(p, it);
     }
     if (window.partyMatch && partyMatch.live && (p.local || p.hostedBot)) Social.emitItem(p, it, evx, chainTarget);   // party race: tell the other phones
@@ -1078,6 +1082,9 @@ function drawChains(){
 
 /* ---- Item slot HUD (roulette + active-ability timer) ---- */
 const ICON_SVG = {
+nitro: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icNi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset="1" stop-color="#ff5a1f"/></linearGradient></defs><path d="M25 3c2 9 13 13 13 26a13 13 0 0 1-26 0c0-7 4-10 7-13 0 4 2 7 5 7-2-7-1-14 1-20z" fill="url(#icNi)" stroke="#7a2200" stroke-width="2" stroke-linejoin="round"/><path d="M25 25c2 3 6 5 6 10a6 6 0 0 1-12 0c0-3 3-6 6-10z" fill="#fff3c4"/></svg>`,
+net: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="17" fill="none" stroke="#10151f" stroke-width="13"/><circle cx="24" cy="24" r="17" fill="none" stroke="#ffffff" stroke-width="9"/><circle cx="24" cy="24" r="17" fill="none" stroke="#ff4d5a" stroke-width="9" stroke-dasharray="13.35 13.35" stroke-dashoffset="6.7"/></svg>`,
+jet: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icJt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f1f4fb"/><stop offset="1" stop-color="#9aa6bf"/></linearGradient></defs><rect x="9" y="5" width="12" height="27" rx="6" fill="url(#icJt)" stroke="#2b3347" stroke-width="2"/><rect x="27" y="5" width="12" height="27" rx="6" fill="url(#icJt)" stroke="#2b3347" stroke-width="2"/><rect x="9" y="14" width="30" height="5" fill="#ff6b6b" stroke="#2b3347" stroke-width="1.6"/><path d="M15 34c-4 4-4 9 0 12 4-3 4-8 0-12zM33 34c-4 4-4 9 0 12 4-3 4-8 0-12z" fill="#ffb02e" stroke="#c4531a" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
 ufo: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icUb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7CFF6B" stop-opacity=".85"/><stop offset="1" stop-color="#7CFF6B" stop-opacity="0"/></linearGradient><linearGradient id="icUh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2f5fa"/><stop offset="1" stop-color="#5d6679"/></linearGradient><linearGradient id="icUd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9ffe3"/><stop offset="1" stop-color="#2f9d74"/></linearGradient></defs><path d="M19.5 24 L28.5 24 L38 46 L10 46 Z" fill="url(#icUb)"/><path d="M15.5 18 C15.5 8.5 32.5 8.5 32.5 18 Z" fill="url(#icUd)" stroke="#0d1017" stroke-width="1.6"/><ellipse cx="24" cy="15" rx="3.6" ry="3.9" fill="#5fd35a"/><ellipse cx="24" cy="20.5" rx="18" ry="5.8" fill="url(#icUh)" stroke="#0d1017" stroke-width="1.6"/><circle cx="13.5" cy="21.5" r="1.5" fill="#7CFF6B"/><circle cx="24" cy="23.3" r="1.5" fill="#fff"/><circle cx="34.5" cy="21.5" r="1.5" fill="#7CFF6B"/></svg>`,
 rocket: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="icFl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4c2"/><stop offset=".5" stop-color="#ffcf3f"/><stop offset="1" stop-color="#ff5470" stop-opacity="0"/></linearGradient></defs><g transform="rotate(35 24 24)"><path d="M18.5 33 Q24 51 29.5 33 Z" fill="url(#icFl)"/><path d="M17.5 24 L11 35 L17.5 33 Z" fill="#ff5470"/><path d="M30.5 24 L37 35 L30.5 33 Z" fill="#ff5470"/><path d="M24 3 C30 8.5 30.5 16 30.5 22 L30.5 33 L17.5 33 L17.5 22 C17.5 16 18 8.5 24 3 Z" fill="#eef2f8"/><path d="M24 3 C27.6 6.2 29.3 9.6 30 12.5 L18 12.5 C18.7 9.6 20.4 6.2 24 3 Z" fill="#ff5470"/><circle cx="24" cy="20.5" r="3.8" fill="#7c6bff" stroke="#0d1017" stroke-width="1.8"/><rect x="20.5" y="33" width="7" height="3" rx="1" fill="#6b7489"/></g></svg>`,
 giant: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="38" height="38" rx="9" fill="none" stroke="#ffcf3f" stroke-width="2" stroke-dasharray="5 4" opacity=".55"/><g stroke="#ffcf3f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M16 16 L9 9 M9 15 V9 H15"/><path d="M32 16 L39 9 M39 15 V9 H33"/><path d="M16 32 L9 39 M9 33 V39 H15"/><path d="M32 32 L39 39 M39 33 V39 H33"/></g><rect x="17" y="17" width="14" height="14" rx="3.5" fill="#ffcf3f"/><circle cx="21.3" cy="23" r="1.7" fill="#0d1017"/><circle cx="26.7" cy="23" r="1.7" fill="#0d1017"/></svg>`,
@@ -1443,6 +1450,7 @@ function updateBot(p, dt) {
     p.mode = 'air'; p.plat = null; p.squash = 1.35;
     if (wasCharged) { p.charged = false; burst(p.x, p.y, PLAT.boost, 12, 200); }
     else burst(p.x, p.y, p.color, 8, 140);
+    if (p.nitroN > 0){ p.nitroN--; if (window.PU) PU.nitroFx(p); if (p.nitroN <= 0) p.nitroT = 0; }          // a bot's Nitro jump uses one charge too
 
     p.thinkT = rnd(BOT_BASE.thinkMin, BOT_BASE.thinkMax) * (p.thinkMul || 1) * sprintThink * (p.thinkScale || 1);
 }
@@ -1458,6 +1466,7 @@ function landOn(p, pl) {
     p.extraWait = (!p.local && pl.type !== 'fragile' && !(players[0] && players[0].finished) && Math.random() < 0.10) ? rnd(0.4, 1.0) : 0;
     p.y = pl.y - pl.h/2 - p.r;
     p.vy = 0; p.mode='idle'; p.plat=pl; p.squash = Math.max(0.55, 0.78 - impact / 9000);
+    p.lastLedgeY = p.y; p.lastLedgeX = pl.x;                 // where the Safety Net brings you back to
     if (p.local && window.Tips && gameMode === 'race') Tips.ledge(pl);
 }
 
