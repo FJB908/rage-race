@@ -565,10 +565,12 @@
     ];
     // the home screen is calmer than the race: only a few big shapes (a lone volcano, one storm cloud with its lightning, ...)
     const CALM = {                                                                 // xs: where the far pieces stand (0..1 across), so nothing piles up behind the sun, the title or the island
-        0: { kinds: { far: ['cloud'], mid: [] }, nFar: 1, nMid: 0, xs: [.22], farScale: 1.1 },
-        1: { kinds: { far: ['pillar', 'pillar'], mid: [] }, nFar: 2, nMid: 0, xs: [.1, .9] },
+        0: { kinds: { far: ['cloud', 'cloud'], mid: ['kite'] }, nFar: 2, nMid: 1, xs: [.2, .84], farScale: 1.1 },
+        1: { kinds: { far: ['pillar', 'pillar', 'pillar', 'pillar'], mid: [] }, nFar: 4, nMid: 0, xs: [.06, .3, .72, .94], farScale: 2.2 },
         2: { kinds: { far: ['skyline'], mid: [] }, nFar: 1, nMid: 0, xs: [.5], farScale: 1.2 },
-        3: { kinds: { far: ['ship'], mid: [] }, nFar: 1, nMid: 0, xs: [.2] },
+        3: { kinds: { far: ['ship', 'crane', 'crane'], mid: [] }, nFar: 3, nMid: 0, xs: [.2, .62, .92] },
+        4: { kinds: { far: ['chimney', 'pipes', 'chimney', 'chimney'], mid: [] }, nFar: 4, nMid: 0, xs: [.08, .3, .72, .93], farScale: 2.2 },
+        5: { kinds: { far: ['arch', 'tilepillar', 'tilepillar'], mid: [] }, nFar: 3, nMid: 0, xs: [.5, .08, .93], farScale: 2.2 },
         7: { kinds: { far: ['planet'], mid: [] }, nFar: 1, nMid: 0, xs: [.24], farScale: 1.3 },
         8: { kinds: { far: [], mid: [] }, nFar: 0, nMid: 0 },
         9: { kinds: { far: [], mid: ['crag'] }, nFar: 0, nMid: 2 },
