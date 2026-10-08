@@ -2,20 +2,21 @@
 //   - A trophy count under your character on the home screen: it goes up when you place well and down when you do badly (with floors so it never feels unfair).
 //   - Arenas: the count moves you through 10 arenas (Playground ... Summit). An arena is a safe floor: once you are in it, you cannot drop below its start.
 //   - The Trophy Road: a list of milestones on the way, every one with a reward (coins, gems, chests, boosters, cosmetics, a gem chest).
-// Trophies come from every placing mode: Arena Race, Build Race, Boom Tag, Arcade, Escape and the Gauntlet (they replace the old Ranked mode, and they set how strong your opponents are). Levels and the Summit have their own stars.
+// Trophies come from the placing modes: Arena Race, Boom Tag, Arcade, Escape and the Gauntlet (Build Race stands apart from the arenas and pays none; they replace the old Ranked mode, and they set how strong your opponents are). Levels and the Summit have their own stars.
 // Loaded AFTER game.js and levelrewards.js. Profile fields: tr (trophies), trTop (highest arena index reached), trClaimed (milestones taken), trStreak (wins in a row).
 (function () {
     'use strict';
     const $ = id => document.getElementById(id);
     const TC = { common:'#35e0c8', rare:'#5b8def', epic:'#b3a9ff', mythic:'#ff4d7d', legendary:'#ffcf3f' };
     const ARENAS = [
-        { n:'Playground', at:0,    c:'#35e0c8' }, { n:'Parking Lot', at:300,  c:'#5bb8ff' }, { n:'Rooftop',  at:750,  c:'#ff9a5b' },
-        { n:'Harbour',    at:1350, c:'#4fd3ff' }, { n:'Factory',     at:2100, c:'#ffb21f' }, { n:'Subway',   at:3000, c:'#7cf29c' },
-        { n:'Mountain',   at:4100, c:'#b3a9ff' }, { n:'Space Station', at:5400, c:'#ff8ae6' }, { n:'Volcano', at:7000, c:'#ff6b4a' },
-        { n:'Summit',     at:9000, c:'#ffcf3f' },
-    ];                                  // the arenas get longer as you climb: 300, 450, 600, 750, 900, 1100, 1300, 1600, 2000 (a win is worth +30, an average race about +12)
+        { n:'Playground', at:0,    c:'#35e0c8' }, { n:'Parking Lot', at:500,  c:'#5bb8ff' }, { n:'Rooftop',  at:1000, c:'#ff9a5b' },
+        { n:'Harbour',    at:1750, c:'#4fd3ff' }, { n:'Factory',     at:2500, c:'#ffb21f' }, { n:'Subway',   at:3500, c:'#7cf29c' },
+        { n:'Mountain',   at:4750, c:'#b3a9ff' }, { n:'Space Station', at:6250, c:'#ff8ae6' }, { n:'Volcano', at:8000, c:'#ff6b4a' },
+        { n:'Summit',     at:10000, c:'#ffcf3f' },
+    ];                                  // the arenas get longer as you climb: 500, 500, 750, 750, 1,000, 1,250, 1,500, 1,750, 2,000 (a win is worth +30, an average race about +12)
     const SPAN_LAST = 3000;
     const OLD_AT = [0, 150, 400, 800, 1300, 1900, 2600, 3500, 4600, 6000], OLD_LAST = 2000;
+    const PREV_AT = [0, 300, 750, 1350, 2100, 3000, 4100, 5400, 7000, 9000];                 // the table before the arenas were made bigger again
     const num = n => Math.round(n).toLocaleString('en-US');
     const arenaOf = tr => { let i = 0; for (let a = 0; a < ARENAS.length; a++) if (tr >= ARENAS[a].at) i = a; return i; };
 
@@ -42,7 +43,7 @@
         return lastResult;
     }
     // DIFFICULTY FOLLOWS TROPHIES. The roster bots (src/modes/roster.js) have a rating; this maps your trophies onto that rating, so every placing mode
-    // (Arena Race, Build Race, Boom Tag, Arcade, Escape, Gauntlet, parties) pits you against bots of about your level, and higher up the bots get better:
+    // (Arena Race, Build Race, Boom Tag, Arcade, Escape, Gauntlet, parties; Build Race only borrows the rating for its bots) pits you against bots of about your level, and higher up the bots get better:
     //   0 trophies ~ 1050 (a clumsy bot), the Harbour ~ 1260, the Subway ~ 1450, the Mountain ~ 1530, the Volcano ~ 1660, the Summit (9000) ~ 1700 (the best players in the game).
     const TOP = ARENAS[ARENAS.length - 1].at, MK = TOP / 6000 * 2200;           // the curve is stretched with the arenas: the same arena always has about the same opponents
     const mmr = tr => { tr = tr === undefined ? (prog().tr || 0) : tr; return Math.round(1050 + 650 * (1 - Math.exp(-tr / MK)) / (1 - Math.exp(-TOP / MK))); };
@@ -57,12 +58,25 @@
     })();
     // The arenas were made bigger: whoever had trophies keeps the same place inside the same arena (once)
     (function migrateArenas() {
-        const p = prog(); if (p.trMig2) return; p.trMig2 = 1;
+        const p = prog(); if (p.trMig2) return; p.trMig2 = 1; p.trMig3 = 1;                      // this one maps straight into the current table
         const tr = p.tr || 0;
         if (tr > 0) {
             let i = 0; for (let a = 0; a < OLD_AT.length; a++) if (tr >= OLD_AT[a]) i = a;
             const oldNext = OLD_AT[i + 1] === undefined ? OLD_AT[i] + OLD_LAST : OLD_AT[i + 1], newNext = ARENAS[i + 1] ? ARENAS[i + 1].at : ARENAS[i].at + SPAN_LAST;
             p.tr = Math.round(ARENAS[i].at + (tr - OLD_AT[i]) / (oldNext - OLD_AT[i]) * (newNext - ARENAS[i].at));
+            p.trTop = Math.max(p.trTop || 0, i);
+            try { localStorage.removeItem('rr_tr_shown'); } catch (e) {}
+        }
+        saveProg(p);
+    })();
+    // The arenas were stretched once more (Parking Lot 500, Rooftop 1,000, Harbour 1,750, Factory 2,500, ...): again the same place inside the same arena (once)
+    (function migrateBigger() {
+        const p = prog(); if (p.trMig3) return; p.trMig3 = 1;
+        const tr = p.tr || 0;
+        if (tr > 0) {
+            let i = 0; for (let a = 0; a < PREV_AT.length; a++) if (tr >= PREV_AT[a]) i = a;
+            const oldNext = PREV_AT[i + 1] === undefined ? PREV_AT[i] + SPAN_LAST : PREV_AT[i + 1], newNext = ARENAS[i + 1] ? ARENAS[i + 1].at : ARENAS[i].at + SPAN_LAST;
+            p.tr = Math.round(ARENAS[i].at + (tr - PREV_AT[i]) / (oldNext - PREV_AT[i]) * (newNext - ARENAS[i].at));
             p.trTop = Math.max(p.trTop || 0, i);
             try { localStorage.removeItem('rr_tr_shown'); } catch (e) {}
         }
@@ -88,9 +102,9 @@
             const coins = Math.round(100 * (1 + i * 0.9) / 50) * 50, tier = i < 2 ? 'common' : i < 4 ? 'rare' : i < 7 ? 'epic' : 'mythic';
             const steps = [
                 i === 0 ? { at: 25, r: { t: 'coin', n: 100 } } : { at: A.at, big: true },
-                { at: i === 0 ? 90 : Math.round(A.at + span * .25), r: { t: 'coin', n: coins } },
-                { at: i === 0 ? 165 : Math.round(A.at + span * .5), r: { t: 'drop', tier } },
-                { at: i === 0 ? 230 : Math.round(A.at + span * .75), r: i % 2 ? { t: 'gem', n: 10 + i * 4 } : { t: 'boost', kind: 'xp', mult: 2, n: 3 + Math.floor(i / 2) } },
+                { at: i === 0 ? 125 : Math.round(A.at + span * .25), r: { t: 'coin', n: coins } },
+                { at: i === 0 ? 250 : Math.round(A.at + span * .5), r: { t: 'drop', tier } },
+                { at: i === 0 ? 375 : Math.round(A.at + span * .75), r: i % 2 ? { t: 'gem', n: 10 + i * 4 } : { t: 'boost', kind: 'xp', mult: 2, n: 3 + Math.floor(i / 2) } },
             ];
             for (const s of steps) {
                 let r = s.r;

@@ -1,5 +1,14 @@
-#tip-pill { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 78px); transform: translate(-50%, -8px); z-index: 34; width: min(330px, 88vw); box-sizing: border-box; padding: 11px 16px; border-radius: 16px; background: rgba(12,16,24,.92); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 10px 26px -10px rgba(0,0,0,.8); text-align: center; pointer-events: none; opacity: 0; }
-#tip-pill b { display: block; font: 800 14px/1.2 "Bricolage Grotesque", system-ui, sans-serif; color: #fff; }
-#tip-pill span { display: block; margin-top: 3px; font-size: 12.5px; line-height: 1.35; color: #b9c2d3; }
-#tip-pill.on { animation: tipPill 4.2s ease-out forwards; }
-@keyframes tipPill { 0% { opacity: 0; transform: translate(-50%, -8px); } 8% { opacity: 1; transform: translate(-50%, 0); } 88% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 4px); } }
+/* one-time tip card (src/ui/tips.js): icon tile, small label, name, one line, and a thin line along the bottom that runs out with the time */
+#tip-pill { --tc: #35e0c8; position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 78px); z-index: 34; width: min(344px, 90vw); box-sizing: border-box; display: flex; align-items: center; gap: 13px; padding: 12px 16px 14px 12px; border-radius: 20px; overflow: hidden; pointer-events: none; opacity: 0; transform: translate(-50%, -12px) scale(.97);
+    background: linear-gradient(160deg, rgba(27, 34, 52, .96), rgba(13, 17, 28, .96)); box-shadow: 0 14px 30px -12px rgba(0, 0, 0, .75), inset 0 1px 0 rgba(255, 255, 255, .07); }
+#tip-pill .tp-ic { flex: none; width: 50px; height: 50px; border-radius: 16px; display: grid; place-items: center; color: var(--tc); background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--tc) 30%, transparent), color-mix(in srgb, var(--tc) 9%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tc) 30%, transparent); }
+#tip-pill .tp-ic svg { width: 34px; height: 34px; display: block; filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .35)); }
+#tip-pill .tp-tx { min-width: 0; text-align: left; }
+#tip-pill small { display: block; font: 800 9.5px/1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .16em; color: var(--tc); }
+#tip-pill b { display: block; margin-top: 4px; font: 800 16px/1.15 "Bricolage Grotesque", system-ui, sans-serif; color: #fff; }
+#tip-pill .tp-tx > span { display: block; margin-top: 3px; font-size: 12.5px; line-height: 1.35; color: #aeb8cc; }
+#tip-pill .tp-bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--tc); border-radius: 0 3px 3px 0; opacity: .85; transform-origin: left; }
+#tip-pill.on { animation: tipIn 4.2s cubic-bezier(.2, .8, .2, 1) forwards; }
+#tip-pill.on .tp-bar { animation: tipBar 4.2s linear forwards; }
+@keyframes tipIn { 0% { opacity: 0; transform: translate(-50%, -12px) scale(.97); } 7% { opacity: 1; transform: translate(-50%, 0) scale(1); } 90% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -6px) scale(.98); } }
+@keyframes tipBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }

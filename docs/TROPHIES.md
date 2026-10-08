@@ -1,10 +1,10 @@
 # Trophy Road
 
-A visible progress number, like the trophies in Clash Royale and Brawl Stars. Code: `src/ui/trophies.js` (+ `trophies.css`), hooks in `rewardRace` (Arena Race, Build Race, Boom Tag, Arcade), Escape, Ranked and the Gauntlet.
+A visible progress number, like the trophies in Clash Royale and Brawl Stars. Code: `src/ui/trophies.js` (+ `trophies.css`), hooks in `rewardRace` (Arena Race, Boom Tag, Arcade), Escape and the Gauntlet. **Build Race stands apart from the arenas: it pays no trophies** (a win still fills the daily win meter, and its bots are picked by your trophy rating).
 
 - **Points per result.** Four-player modes: 1st +30, 2nd +12, 3rd -8, 4th -20. A win streak adds +5 per extra win in a row (max +15). Gauntlet (32 players): 1st +45, top 3 +28, top 8 +14, top 16 +2, else -12.
 - **Never unfair.** No losses below 40 trophies. The start of the highest arena you reached is a floor you cannot drop below.
-- **Arenas (10).** Playground 0, Parking Lot 300, Rooftop 750, Harbour 1,350, Factory 2,100, Subway 3,000, Mountain 4,100, Space Station 5,400, Volcano 7,000, Summit 9,000 (see ARENAS.md for why they grow). Only four cosmetics on the whole road (Rooftop skin, Subway trail, Space Station hat, and the gem chest at the Summit); the other arena starts are chests and gems.
+- **Arenas (10).** Playground 0, Parking Lot 500, Rooftop 1,000, Harbour 1,750, Factory 2,500, Subway 3,500, Mountain 4,750, Space Station 6,250, Volcano 8,000, Summit 10,000 (see ARENAS.md for why they grow). Only four cosmetics on the whole road (Rooftop skin, Subway trail, Space Station hat, and the gem chest at the Summit); the other arena starts are chests and gems.
 - **Road.** 40 milestones (a quick one at 15, then four per arena: start, 1/4, 1/2, 3/4). Arena starts give a cosmetic (rare to legendary) and the last one a gem chest; the rest rotate coins, chests, XP boosters and gems.
 - **Home screen.** A chip under the character: count (rolls up or down after a match with a +/- pop), arena name, bar to the next arena, the next reward and a red number when rewards are waiting. Tap = the road.
 - Profile fields: `tr`, `trTop`, `trStreak`, `trClaimed`. `rr_tr_shown` (localStorage) is the number the chip last showed, so it can roll to the new value.

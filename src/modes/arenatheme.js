@@ -1,5 +1,5 @@
 // ARENA THEMES: every arena of the trophy road has its own look and its own power-up pool.
-// Classic script, loaded AFTER game.js and trophies.js. Arena Race and Build Race use the arena your trophies put you in; a party match always looks like the
+// Classic script, loaded AFTER game.js and trophies.js. Arena Race uses the arena your trophies put you in (Build Race has no arena); a party match always looks like the
 // Playground and keeps the full classic power-up set so every friend sees (and gets) the same. Other modes are not touched.
 //
 // LOOK (a background, never an obstacle): a sky gradient that shifts while you climb, a big sun or moon, two layers of far-away scenery that move slowly
@@ -59,25 +59,25 @@
 
     /* ----------------------------------------------------------------- power-ups unlock on trophies ---- */
     // The power-ups you can roll depend on your TROPHIES (not only on the arena): a new one arrives at a trophy count, and a few training wheels leave again later.
-    // The Arenas screen draws exactly this list as the road. Arena Race and Build Race only; a party keeps the classic set (everything except the Gust).
+    // The Arenas screen draws exactly this list as the road. Arena Race only (Build Race stands apart from the arenas); a party keeps the classic set (everything except the Gust).
     // `wind` is the Gust: it was out of the game and comes back from the Rooftop on.
-    // Planned, not built yet (they will be slotted in here when they exist): Glider 900, Grapple 2400, Mirror 3200 (Shield leaves), Snowball 4500, Swap 7400, Lightning 9400 (Earthquake leaves).
+    // Planned, not built yet (they will be slotted in here when they exist): Glider 1200, Grapple 3000, Mirror 4000 (Shield leaves), Snowball 5500, Swap 8800, Lightning 9700 (Earthquake leaves).
     const UNLOCKS = [
         { at: 0,    add: ['rocket', 'bounce', 'giant', 'shield'] },       // Playground: four simple ones (the Shield stops the Giant's bump)
-        { at: 100,  add: ['nitro'] },
-        { at: 200,  add: ['dj'] },
-        { at: 400,  add: ['net'] },                                       // Parking Lot
-        { at: 750,  add: ['wind'] },                                      // Rooftop: the first attack
-        { at: 1050, remove: ['giant'] },
-        { at: 1350, add: ['bomb'] },                                      // Harbour
-        { at: 1950, remove: ['bounce'] },                                 // the springy helper goes: you read the jump yourself
-        { at: 2100, add: ['chain'] },                                     // Factory
-        { at: 2550, remove: ['nitro'] },
-        { at: 3000, add: ['quake'] },                                     // Subway
-        { at: 3500, remove: ['net'] },                                    // the last safety item goes
-        { at: 4100, add: ['ufo'] },                                       // Mountain
-        { at: 5400, add: ['cannon'] },                                    // Space Station
-        { at: 6300, add: ['jet'], remove: ['dj'] },                       // the Jetpack is the big brother of the Double Jump
+        { at: 150,  add: ['nitro'] },
+        { at: 300,  add: ['dj'] },
+        { at: 600,  add: ['net'] },                                       // Parking Lot (starts at 500)
+        { at: 1000, add: ['wind'] },                                      // Rooftop: the first attack
+        { at: 1400, remove: ['giant'] },
+        { at: 1750, add: ['bomb'] },                                      // Harbour
+        { at: 2350, remove: ['bounce'] },                                 // the springy helper goes: you read the jump yourself
+        { at: 2500, add: ['chain'] },                                     // Factory
+        { at: 3000, remove: ['nitro'] },
+        { at: 3500, add: ['quake'] },                                     // Subway
+        { at: 4000, remove: ['net'] },                                    // the last safety item goes
+        { at: 4750, add: ['ufo'] },                                       // Mountain
+        { at: 6250, add: ['cannon'] },                                    // Space Station
+        { at: 7250, add: ['jet'], remove: ['dj'] },                       // the Jetpack is the big brother of the Double Jump
     ];
     const ORDER = ['bounce', 'rocket', 'giant', 'shield', 'dj', 'wind', 'bomb', 'chain', 'quake', 'ufo', 'cannon', 'nitro', 'net', 'jet'];
     const INFO = {

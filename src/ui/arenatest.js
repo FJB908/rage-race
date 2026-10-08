@@ -1,4 +1,4 @@
-// TEST SWITCH (temporary): a small button next to the hanger on the home screen that picks which arena Arena Race and Build Race are played in, so every
+// TEST SWITCH (temporary): a small button next to the hanger on the home screen that picks which arena Arena Race is played in, so every
 // arena can be tried without earning the trophies. It only changes the look, the power-up pool and the ledge types (not the opponents).
 // To remove it later: delete this file, arenatest.css and their two tags in index.html (and `rr_arena_test` is simply ignored).
 (function () {

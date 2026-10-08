@@ -2969,7 +2969,7 @@ function startMatchmaking(quick) {
 function startGame() {
     gameMode = 'race'; esc = null; pk = null; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level'); lv = null;
     showScreen(''); // hide all overlays
-    if (window.ArenaTheme) ArenaTheme.pick(matchSeed);                             // the arena your trophies put you in (a party always plays the Playground)
+    if (window.ArenaTheme) { if (window.buildMatch) ArenaTheme.clear(); else ArenaTheme.pick(matchSeed); }       // the arena your trophies put you in (a party always plays the Playground); Build Race stands apart from the arenas: no arena look, the classic power-ups
     if (window.buildMatch && window.Build) return Build.begin();                 // Build Race makes its own course
     generateLevel(matchSeed); initPlayers(); botsDonePrompted = false;
     if (window.matchBots && window.BotRoster) BotRoster.applyTo(players.slice(1), window.matchBots, { color:true });   // roster opponents with their own skill (set by your trophies)
@@ -4761,11 +4761,12 @@ function rewardRace(place, finished, lootId){
         q.lootGrants[id] = { id, tier:'common', coins, xp, passPoints, cosmetic:null, noDrop:true }; saveProg(q); store('rr_coins', load('rr_coins', 0) + coins);
     }
     if (!drop) drop = { noDrop:true, coins, xp, passPoints };
-    if (gameMode === 'race' && !window.rankedMatch && !window.partyMatch && !alreadyGranted && window.Gentle) Gentle.record(place, finished);       // adaptive difficulty follows your result
+    if (gameMode === 'race' && !window.rankedMatch && !window.partyMatch && !window.buildMatch && !alreadyGranted && window.Gentle) Gentle.record(place, finished);       // adaptive difficulty follows your result
     rewardRace.keyEarned = false;
     if (!alreadyGranted){
         const p = prog(); p.races++; if (finished && place === 1) p.wins++; saveProg(p);
-        if (window.Trophies) Trophies.record(gameMode, place);          // every placing mode pays trophies (the callers above already skip friendly matches and double pays)
+        if (window.buildMatch) { if (place === 1 && window.WinMeter) WinMeter.add(); }                 // Build Race stands apart from the arenas: no trophies, but a win still fills the daily win meter
+        else if (window.Trophies) Trophies.record(gameMode, place);     // every other placing mode pays trophies (the callers above already skip friendly matches and double pays)
         Object.assign(p, prog());                                         // Trophies / WinMeter saved their own fields: pick them up so the save below keeps them
         if (window.Missions && gameMode === 'race' && !window.rankedMatch) Missions.race(place, finished);
         else p.gt.streak = 0;

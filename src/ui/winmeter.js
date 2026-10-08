@@ -19,10 +19,9 @@
         w.n++; const r = REW[w.n];
         if (r) w.got.push(w.n);                                                // marked before paying: never paid twice
         p.wm = w; saveProg(p);
-        if (!r) return;
+        if (!r) return;                                                        // no message: the chest opens by itself, the booster shows on the play button
         if (r.t === 'drop') awardLootDrop(newLootId('winmeter'), { coins: 60, xp: 40, passPoints: 0 }, { tier: r.tier });   // pending chest: opens by itself on the home screen
         else Boost.grant(r.kind, r.mult, r.n);
-        if (typeof toast === 'function') setTimeout(() => toast('Win meter: ' + nameOf(r)), 1200);
     }
     let lastKey = '', shownN = null;
     function render() {

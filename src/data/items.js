@@ -11,7 +11,7 @@ const ITEMS = {
     bomb:   { name:'STUN BOMB!',    color:'#ff3d5a' },
     cannon: { name:'CANNON!',       color:'#ff9f43' },
     dj:     { name:'DOUBLE JUMP!',  color:'#9fe8ff' },
-    nitro:  { name:'NITRO!',        color:'#ff9f1c' },      // the four below only come out of the item boxes in Arena Race / Build Race, from certain trophies on (see ArenaTheme.UNLOCKS)
+    nitro:  { name:'NITRO!',        color:'#ff9f1c' },      // the four below only come out of the item boxes in Arena Race, from certain trophies on (see ArenaTheme.UNLOCKS)
     net:    { name:'SAFETY NET!',   color:'#4cc9f0' },
     jet:    { name:'JETPACK!',      color:'#ff6b6b' },
 };

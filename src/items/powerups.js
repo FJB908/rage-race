@@ -5,7 +5,7 @@
 (function () {
     'use strict';
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
-    const NITRO_TIME = 10, NET_TIME = 20, JET_TIME = 8, JET_JUMPS = 3, NET_DROP = 330;          // Nitro / Safety Net / Jetpack (only in Arena Race and Build Race, never in a party)
+    const NITRO_TIME = 10, NET_TIME = 20, JET_TIME = 8, JET_JUMPS = 3, NET_DROP = 330;          // Nitro / Safety Net / Jetpack (only in Arena Race, never in a party or Build Race)
     const DJ_TIME = 5, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
     const BOMB_R = 174, BOMB_LIFE = 3.5, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds until it explodes, stun length, immunity after a stun
     const clouds = [], bombs = [], hits = [];                                // hits: "you hit someone" markers for the player who dropped the bomb
