@@ -203,7 +203,9 @@
         const r = rng((seed | 0) + idx * 97), L = Math.max(9000, typeof TRACK === 'number' ? TRACK : 9000);
         far = layer(cur, cur.kinds.far, 330, L * 0.09 + 1300, r); mid = layer(cur, cur.kinds.mid, 240, L * 0.2 + 1300, r);
         air = []; for (let a = 0; a < 26; a++) air.push({ x: r(), y: r(), s: .5 + r(), v: .4 + r() * .8 });
-        flash = 0; flashAt = 3 + r() * 5; lastT = 0;
+        flash = 0; flashAt = 3 + r() * 5; lastT = 0; bgKey = ''; mKey = '';
+        for (const [list, nm] of [[cur.kinds.far, 'far'], [cur.kinds.mid, 'mid']]) for (const k of new Set(list)) for (const v of [0, 1]) { try { const sp = sprite(idx, k, nm, v); if (sp.def.glow) sprite(idx, k, nm, v, true); } catch (e) {} }      // painted now, during the countdown, never in the middle of the race
+        try { sprite(idx, 'balloon', 'mid', 0); sprite(idx, 'balloon', 'mid', 1); } catch (e) {}
         banner(cur.name, idx);
     }
     function clear() { restore(); cur = null; idx = -1; poolSet = null; rulesNow = null; if (tagEl) tagEl.classList.remove('on'); }
@@ -229,9 +231,11 @@
     }
     function drawLayer(c, list, name, W, H, base, climbed, f, alpha, kScale, now, th) {
         for (const p of list) {
-            const s = sprite(idx, p.k, name, p.v), k = p.s * kScale, y = base - p.d + climbed * f - p.up;
+            const s = sprite(idx, p.k, name, p.v), k = p.s * kScale; let y = base - p.d + climbed * f - p.up;
             if (y < 0 || y - s.h * k > H) continue;
-            const x = W * p.x, def = s.def;
+            let x = W * p.x; const def = s.def;
+            if (p.k === 'balloon') { const sp = .3 + ((p.d * 7) % 10) / 10;             // every balloon drifts: slow ones and quick ones, up and down, a little sideways
+                y += Math.sin(now * sp + p.d) * 34; x += Math.cos(now * sp * .7 + p.d) * 16; }
             put(c, s, x, y, k, alpha, def.rot ? now * def.rot * (p.v ? 1 : -1) : 0);
             if (def.glow) { const g = sprite(idx, p.k, name, p.v, true); c.globalCompositeOperation = 'lighter'; put(c, g, x, y, k, alpha * (.55 + .45 * Math.sin(now * (p.k === 'antenna' ? 3.2 : 5) + p.d * .01)), 0); c.globalCompositeOperation = 'source-over'; }
         }
@@ -241,7 +245,7 @@
     // now and then a balloon floats up from the bottom of the screen to the top (home world and race background), swaying a little; at most two at a time
     let floaters = [], nextB = 4;
     function balloons(c, i, W, H, dt) {
-        nextB -= dt; if (nextB <= 0 && floaters.length < 2) { floaters.push({ x: .1 + Math.random() * .8, y: 1.12, v: Math.random() > .5 ? 1 : 0, ph: Math.random() * 6, sp: .035 + Math.random() * .025, k: .5 + Math.random() * .25 }); nextB = 7 + Math.random() * 9; }
+        nextB -= dt; if (nextB <= 0 && floaters.length < 2) { floaters.push({ x: .1 + Math.random() * .8, y: 1.12, v: Math.random() > .5 ? 1 : 0, ph: Math.random() * 6, sp: .02 + Math.random() * .07, k: .5 + Math.random() * .25 }); nextB = 7 + Math.random() * 9; }
         for (let q = floaters.length - 1; q >= 0; q--) {
             const b = floaters[q]; b.y -= b.sp * dt; if (b.y < -.25) { floaters.splice(q, 1); continue; }
             const sp = sprite(i, 'balloon', 'mid', b.v), x = W * b.x + Math.sin(b.y * 9 + b.ph) * 12;
@@ -281,27 +285,44 @@
         return rbC;
     }
     function drawRainbow(c, W, H, a) { if (a > .01) { c.globalAlpha = a; c.drawImage(rainbowPic(W, H, .86, .82), 0, 0, W, H); c.globalAlpha = 1; } }
+    // The still parts of the background (sky, sun and its glow, the two mist bands, the vignette) are painted into small pictures and only blitted each frame, so a frame costs
+    // a few drawImage calls and no gradient fills. The sky picture is repainted when the climb has moved the colour by a hair.
+    let bgC = null, bgKey = '', m1C = null, m2C = null, mKey = '';
+    function statics(c, W, H, p, br) {
+        const ratio = Math.max(1, Math.round((c.getTransform ? c.getTransform().a : 1) * 100) / 100), pq = Math.round(p * 120), key = idx + '|' + W + 'x' + H + '|' + ratio;
+        if (!bgC || bgKey !== key + '|' + pq) {
+            bgKey = key + '|' + pq; bgC = bgC || document.createElement('canvas'); bgC.width = Math.ceil(W * ratio); bgC.height = Math.ceil(H * ratio);
+            const x = bgC.getContext('2d'); x.setTransform(ratio, 0, 0, ratio, 0, 0); x.clearRect(0, 0, W, H); skyFill(x, W, H, cur, pq / 120); orbDraw(x, W, H, cur);
+            if (br && cur.orb) { const ox = cur.orb.x * W, oy = cur.orb.y * H; x.fillStyle = rg(x, ox, oy, 10, H * .9, [[0, 'rgba(255,248,210,.55)'], [.35, 'rgba(255,248,210,.16)'], [1, 'rgba(255,248,210,0)']]); x.fillRect(0, 0, W, H); }
+        }
+        if (!m1C || mKey !== key) {                                                                // the haze and the vignette are smooth: a quarter of the size is plenty
+            mKey = key; m1C = m1C || document.createElement('canvas'); m2C = m2C || document.createElement('canvas');
+            for (const [cv, parts] of [[m1C, [[H * .2, H, br ? .14 : .3]]], [m2C, [[H * .5, H, br ? .1 : .26]]]]) {
+                cv.width = Math.ceil(W / 4); cv.height = Math.ceil(H / 4); const x = cv.getContext('2d'); x.setTransform(.25, 0, 0, .25, 0, 0); x.clearRect(0, 0, W, H);
+                for (const q of parts) mistFill(x, W, H, cur, q[0], q[1], q[2]);
+                if (cv === m2C) vignette(x, W, H, br);
+            }
+        }
+    }
     function drawSky(c, W, H, camY) {
         if (!cur) return;
         const now = performance.now() / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0); lastT = now;
         const prog_ = Math.max(0, Math.min(1, (START_Y - camY) / Math.max(1, TRACK)));
         c.save();
-        skyFill(c, W, H, cur, prog_); orbDraw(c, W, H, cur);
+        const br = !!cur.bright;                                                          // a bright arena (the Playground): light sky, fuller colours, less haze, a warm sun glow, a very light vignette
+        statics(c, W, H, prog_, br); c.drawImage(bgC, 0, 0, W, H);
         const climbed = (START_Y - VH * 0.62) - camY, base = H * 0.99;
         if (cur.bright) { const ph = ((performance.now() / 1000) + 22) % 70, a = ph < 18 ? Math.sin(ph / 18 * Math.PI) : 0; drawRainbow(c, W, H, Math.min(1, a * 1.4) * .5); }       // every 70 s a rainbow stays for 18 s
-        const br = !!cur.bright;                                                          // a bright arena (the Playground): light sky, fuller colours, less haze, a warm sun glow, a very light vignette
-        if (br && cur.orb) { const ox = cur.orb.x * W, oy = cur.orb.y * H; c.fillStyle = rg(c, ox, oy, 10, H * .9, [[0, 'rgba(255,248,210,.55)'], [.35, 'rgba(255,248,210,.16)'], [1, 'rgba(255,248,210,0)']]); c.fillRect(0, 0, W, H); }
         drawLayer(c, far, 'far', W, H, base, climbed, 0.09, br ? 0.62 : 0.5, 1.2, now, cur);
-        mistFill(c, W, H, cur, H * 0.2, H, br ? 0.14 : 0.3);
+        c.drawImage(m1C, 0, 0, W, H);
         drawLayer(c, mid, 'mid', W, H, base, climbed, 0.2, br ? 0.95 : 0.62, 0.92, now, cur);
-        mistFill(c, W, H, cur, H * 0.5, H, br ? 0.1 : 0.26);
+        c.drawImage(m2C, 0, 0, W, H);
         specks(c, cur, air, W, H, now, dt); balloons(c, idx, W, H, Math.min(dt, .1));
         c.globalAlpha = 1;
         if (idx === 9) {                                                   // Summit: a cosmetic lightning flash now and then (it never touches the platforms)
             flashAt -= dt; if (flashAt <= 0) { flash = 1; flashAt = 4 + Math.random() * 7; }
             if (flash > 0) { c.fillStyle = 'rgba(255,255,230,' + 0.2 * flash + ')'; c.fillRect(0, 0, W, H); flash -= dt * 3.2; }
         }
-        vignette(c, W, H, br);
         c.restore();
     }
 
@@ -341,7 +362,7 @@
     // carries a few pieces of the arena. Both are painted once into canvases; only the air specks and the island's slow bob (CSS) move.
     // props: [kind, x (-1 left .. 1 right), scale, hover (1 = floats above the island)]
     const ISLE = [
-        { top: '#6fd37f', edge: '#d3f9bd', under: ['#94643f', '#35241a'], deco: 'grass', hang: 'rock',     props: [['windmill', .78, .6], ['balloon', -.8, .55, 1], ['cloud', .5, .28, 1]] },
+        { top: '#6fd37f', edge: '#d3f9bd', under: ['#94643f', '#35241a'], deco: 'grass', hang: 'rock',     props: [['windmill', .78, .6], ['cloud', .5, .28, 1]] },
         { top: '#3b4254', edge: '#7a84a2', under: ['#4d5468', '#1a1e2a'], deco: 'lines', hang: 'rock',     props: [['lamp', -.8, .62], ['car', .72, .5], ['cone', -.42, .6]] },
         { top: '#b9615f', edge: '#f0a58c', under: ['#80405a', '#2d1727'], deco: 'tiles', hang: 'rock',     props: [['antenna', .82, .6], ['tank', -.76, .62], ['birds', .1, .5, 1]] },
         { top: '#9b6c43', edge: '#d9a56b', under: ['#493626', '#171210'], deco: 'planks', hang: 'posts',   props: [['lighthouse', .8, .44], ['containers', -.74, .5]] },
