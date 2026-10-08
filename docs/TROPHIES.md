@@ -4,7 +4,7 @@ A visible progress number, like the trophies in Clash Royale and Brawl Stars. Co
 
 - **Points per result.** Four-player modes: 1st +30, 2nd +12, 3rd -8, 4th -20. A win streak adds +5 per extra win in a row (max +15). Gauntlet (32 players): 1st +45, top 3 +28, top 8 +14, top 16 +2, else -12.
 - **Never unfair.** No losses below 40 trophies. The start of the highest arena you reached is a floor you cannot drop below.
-- **Arenas (10).** Playground 0, Parking Lot 150, Rooftop 400, Harbour 800, Factory 1300, Subway 1900, Mountain 2600, Space Station 3500, Volcano 4600, Summit 6000. Only four cosmetics on the whole road (Rooftop skin, Subway trail, Space Station hat, and the gem chest at the Summit); the other arena starts are chests and gems.
+- **Arenas (10).** Playground 0, Parking Lot 300, Rooftop 750, Harbour 1,350, Factory 2,100, Subway 3,000, Mountain 4,100, Space Station 5,400, Volcano 7,000, Summit 9,000 (see ARENAS.md for why they grow). Only four cosmetics on the whole road (Rooftop skin, Subway trail, Space Station hat, and the gem chest at the Summit); the other arena starts are chests and gems.
 - **Road.** 40 milestones (a quick one at 15, then four per arena: start, 1/4, 1/2, 3/4). Arena starts give a cosmetic (rare to legendary) and the last one a gem chest; the rest rotate coins, chests, XP boosters and gems.
 - **Home screen.** A chip under the character: count (rolls up or down after a match with a +/- pop), arena name, bar to the next arena, the next reward and a red number when rewards are waiting. Tap = the road.
 - Profile fields: `tr`, `trTop`, `trStreak`, `trClaimed`. `rr_tr_shown` (localStorage) is the number the chip last showed, so it can roll to the new value.
@@ -16,7 +16,7 @@ A visible progress number, like the trophies in Clash Royale and Brawl Stars. Co
 
 ## Opponents get better as you climb (replaces Ranked)
 Ranked is gone. Your trophies set the strength of the bots in every placing mode:
-- `Trophies.mmr()` maps trophies to the roster rating: 0 trophies ~ 1050 (clumsy bots), 800 ~ 1260, 1900 ~ 1450, 2600 ~ 1530, 4600 ~ 1660, 6000 ~ 1700 (the best level in the game).
+- `Trophies.mmr()` maps trophies to the roster rating: 0 trophies ~ 1050 (clumsy bots), Harbour ~ 1260, Subway ~ 1450, Mountain ~ 1530, Volcano ~ 1660, Summit ~ 1700 (the curve is stretched with the arena sizes).
 - `Trophies.matchMmr()` is the same rating, made kinder while the game is still helping you (beginners and after a few losses: `Gentle.ease()`, up to -220).
 - Arena Race and Build Race pick 3 roster bots of that rating when the match is made (so the lobby shows the same names that race). Boom Tag, Arcade, Escape (+100) and the Gauntlet (+120, wide pool) use it too; parties use `Trophies.mmr()` for their bot fill.
 - Existing Ranked players got trophies once: `min(4200, RP x 2.2)`.

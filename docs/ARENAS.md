@@ -7,6 +7,12 @@
 - **Arenas screen** (tap the banner): one arena per page (swipe or arrows, or tap one of the ten nodes). Big picture, name, progress or lock, the power-ups that arrive and leave, and the four trophy rewards of that arena (claim one or all).
 - **Name**: the main mode is now called **Arena Race** (it used to be Quick play).
 
+## Arena sizes and the new-player ramp
+- **Trophies per arena** (start of each arena): Playground 0, Parking Lot 300, Rooftop 750, Harbour 1,350, Factory 2,100, Subway 3,000, Mountain 4,100, Space Station 5,400, Volcano 7,000, Summit 9,000. The arenas grow (300, 450, 600, 750, 900, 1,100, 1,300, 1,600, 2,000 trophies) because a win is worth +30 and an average race about +12, so the first arena lasts about 25 races, which is the time a new player needs to learn the four starter power-ups. The opponent curve stretches with the arenas (the same arena has the same opponents as before). Whoever already had trophies keeps the same place inside the same arena (a one-time conversion).
+- **Ledge types are met one at a time** (Arena Race): Playground has normal, boost and moving ledges; the Parking Lot adds crumbling ledges; the Rooftop adds ice; from the Harbour on there are sealed ledges (ceilings) too. A party race keeps the full mix.
+- **Tips, not hand-holding**: the first time a power-up lands in your slot, or a crumbling / icy / moving / boost / sealed ledge is under your feet, one short line says what it is (once per account, `src/ui/tips.js`). The adaptive help is a bit smaller than before (it starts at 80% instead of 100% and never drops below 60% in the first three races).
+- **Test switch**: the small TEST button next to the hanger on the home screen picks the arena Arena Race and Build Race are played in (look, power-ups, ledges). It is temporary: delete `src/ui/arenatest.js`, `arenatest.css` and their tags in `index.html`.
+
 ## Power-ups per arena (Arena Race and Build Race)
 The pool is cumulative: an arena has everything the arenas before it added, minus what has left. The Gust (`wind`) was out of the game and comes back from the Rooftop on. Parties keep the classic set (everything except the Gust). The Gauntlet, Boom Tag, Arcade and Escape are not touched.
 
@@ -44,15 +50,15 @@ The trophy count already puts every player in one of 10 arenas (see TROPHIES.md)
 | # | Arena | Look | Signature rule | How it plays |
 |---|---|---|---|---|
 | 1 | **Playground** (0) | bright sand and sky, soft shadows, toy-like blocks | none (the clean game) | wide platforms, no hazards: learn the jump |
-| 2 | **Parking Lot** (150) | grey concrete, painted lines, yellow cones, a flickering street lamp | **Oil patches**: some platforms are slippery (you slide a little after landing) | landing needs a bit more care, a darker shiny platform tells you |
-| 3 | **Rooftop** (400) | orange sunset skyline, antennas, water towers, pigeons | **Gusts**: every 10 s a gust pushes everyone sideways for 1.5 s (visible streaks first) | time your jumps between gusts; the side walls matter |
-| 4 | **Harbour** (800) | blue night, cranes, crates, fog horn, water at the bottom | **Floating docks**: platforms bob up and down slowly | you aim at where the dock will be, not where it is |
-| 5 | **Factory** (1300) | steel and amber, sparks, gears turning in the back | **Conveyor belts**: some platforms carry you left or right; **pistons** retract platforms on a beat | rhythm: a visible drum beat in the music sets the piston timing |
-| 6 | **Subway** (1900) | green tiles, flickering lights, rails, wet floor | **Trains**: a warning light and a rumble, then a train crosses the track at one height and knocks anyone in its way | you check the light before you jump into a lane |
-| 7 | **Mountain** (2600) | cold blue and white, snow, breath fog, wind | **Thin ice**: platforms crack and drop 1.2 s after you land | no standing still; every platform is a short rest |
-| 8 | **Space Station** (3500) | dark with stars, glass and white panels, a slow planet in the back | **Low gravity bands**: horizontal bands where jumps float (longer air time, slower fall) | big jumps, but the landing is harder to judge |
-| 9 | **Volcano** (4600) | black rock, red glow, ash falling | **Rising lava** from below, slowly (like Escape): stay above it | racing and surviving at the same time; the leader is safe, the last player is in danger |
-| 10 | **Summit** (6000) | storm clouds, lightning, gold at the finish | **Lightning**: random platforms are marked, then struck (like the quake warning); plus mild gusts from arena 3 | the hardest read, and the prestige arena |
+| 2 | **Parking Lot** (300) | grey concrete, painted lines, yellow cones, a flickering street lamp | **Oil patches**: some platforms are slippery (you slide a little after landing) | landing needs a bit more care, a darker shiny platform tells you |
+| 3 | **Rooftop** (750) | orange sunset skyline, antennas, water towers, pigeons | **Gusts**: every 10 s a gust pushes everyone sideways for 1.5 s (visible streaks first) | time your jumps between gusts; the side walls matter |
+| 4 | **Harbour** (1,350) | blue night, cranes, crates, fog horn, water at the bottom | **Floating docks**: platforms bob up and down slowly | you aim at where the dock will be, not where it is |
+| 5 | **Factory** (2,100) | steel and amber, sparks, gears turning in the back | **Conveyor belts**: some platforms carry you left or right; **pistons** retract platforms on a beat | rhythm: a visible drum beat in the music sets the piston timing |
+| 6 | **Subway** (3,000) | green tiles, flickering lights, rails, wet floor | **Trains**: a warning light and a rumble, then a train crosses the track at one height and knocks anyone in its way | you check the light before you jump into a lane |
+| 7 | **Mountain** (4,100) | cold blue and white, snow, breath fog, wind | **Thin ice**: platforms crack and drop 1.2 s after you land | no standing still; every platform is a short rest |
+| 8 | **Space Station** (5,400) | dark with stars, glass and white panels, a slow planet in the back | **Low gravity bands**: horizontal bands where jumps float (longer air time, slower fall) | big jumps, but the landing is harder to judge |
+| 9 | **Volcano** (7,000) | black rock, red glow, ash falling | **Rising lava** from below, slowly (like Escape): stay above it | racing and surviving at the same time; the leader is safe, the last player is in danger |
+| 10 | **Summit** (9,000) | storm clouds, lightning, gold at the finish | **Lightning**: random platforms are marked, then struck (like the quake warning); plus mild gusts from arena 3 | the hardest read, and the prestige arena |
 
 ## How it fits in the game
 - **Data**: one object per arena: `{ id, name, at, palette, sky layers, platform style, music, ambient, rule }`. The race builder (`generateTrack`) gets the arena and changes the platform mix; `update` applies the rule through a few multipliers (gravity, friction, wind, platform life, lava height). The trophy code already knows the arena index.

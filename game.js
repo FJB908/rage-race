@@ -227,6 +227,7 @@ function generateLevelTrack() {
     let lastX = pw/2;
     let row = 0;
     const ceilingCandidates = [];   // platforms eligible for a ceiling, filled in below
+    const AR = (window.ArenaTheme && gameMode === 'race' && ArenaTheme.on()) ? ArenaTheme.rules() : null;      // which ledge types this arena has (null = all)
     const EZ = (window.Gentle && !window.rankedMatch && !window.partyMatch) ? Gentle.ease() : 0;     // beginners: wider ledges, shorter gaps, fewer traps
     while (y > FINISH_Y + 300) {
         const diff = 1 - ((y - FINISH_Y) / TRACK);   // 0..1
@@ -246,6 +247,7 @@ function generateLevelTrack() {
         else if (r < 0.26 + diff*0.14)       { type='fragile'; }
         else if (r < 0.50 + diff*0.16)       { type='moving'; speed=rnd(60,120)+diff*70; dir=Math.random()<.5?1:-1; }
         else if (r < 0.70 + diff*0.10)       { type='ice'; }
+        if (AR && type !== 'normal' && !AR.types.has(type)) type = 'normal';          // early arenas only have the ledge types you have met so far
 
         // Keep platforms reachable: modest horizontal shift from previous
         const maxShift = 120 + diff*45;
@@ -311,7 +313,7 @@ function generateLevelTrack() {
     // Assign ceilings to a random 3-12 of the eligible candidates (never more than exist).
     // In the rare layout that comes up short on eligible spots, we simply place fewer —
     // never loosening the safety condition just to hit the target count.
-    const ceilingCount = Math.min(ceilingCandidates.length, Math.round(rnd(3, 12)));
+    const ceilingCount = AR && !AR.ceilings ? 0 : Math.min(ceilingCandidates.length, Math.round(rnd(3, 12)));
     for (const idx of [...ceilingCandidates].sort(() => Math.random() - 0.5).slice(0, ceilingCount)) {
         platforms[idx].ceiling = true;
     }
@@ -669,6 +671,7 @@ function tickAbilities(p, dt){
         p.itemRoll -= dt;
         if (p.itemRoll <= 0){
             p.itemState = 'ready'; p.itemHold = 0;
+            if (p.local && window.Tips) Tips.item(p.item);
             // HUMAN: less uniform than the standard bots — sometimes impulsive (fires almost
             // immediately), sometimes forgets about it for a while. Standard bots stay on a
             // clean, predictable window.
@@ -1455,6 +1458,7 @@ function landOn(p, pl) {
     p.extraWait = (!p.local && pl.type !== 'fragile' && !(players[0] && players[0].finished) && Math.random() < 0.10) ? rnd(0.4, 1.0) : 0;
     p.y = pl.y - pl.h/2 - p.r;
     p.vy = 0; p.mode='idle'; p.plat=pl; p.squash = Math.max(0.55, 0.78 - impact / 9000);
+    if (p.local && window.Tips && gameMode === 'race') Tips.ledge(pl);
 }
 
 function handleFinish(p) {
@@ -4231,6 +4235,7 @@ function prog(){
     if (!Array.isArray(d.passClaimed)) d.passClaimed = [];
     if (!Array.isArray(d.lvClaimed)) d.lvClaimed = [];
     if (!d.wm || typeof d.wm.n !== 'number' || !Array.isArray(d.wm.got)) d.wm = { n: 0, got: [], day: '' };
+    if (!d.tips || typeof d.tips !== 'object') d.tips = {};                           // one-time tips already shown (Tips)
     if (typeof d.tr !== 'number') d.tr = 0;
     if (typeof d.trTop !== 'number') d.trTop = 0;
     if (typeof d.trStreak !== 'number') d.trStreak = 0;

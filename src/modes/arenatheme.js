@@ -166,14 +166,17 @@
     }
 
     /* --------------------------------------------------------------- the live race background ---- */
-    let cur = null, idx = -1, far = [], mid = [], air = [], lastT = 0, flash = 0, flashAt = 0, tagEl = null, poolSet = null, vig = null;
+    let rulesNow = null, cur = null, idx = -1, far = [], mid = [], air = [], lastT = 0, flash = 0, flashAt = 0, tagEl = null, poolSet = null, vig = null;
     function restore() { Object.assign(PLAT, PLAT0); for (const k in ITEMS0) { ITEMS[k].name = ITEMS0[k].name; ITEMS[k].color = ITEMS0[k].color; } }
     // choose the arena for this race: your trophies decide; a party match shares the Playground and the classic power-ups
     function pick(seed) {
         let i = 0, party = !!window.partyMatch;
         if (!party && window.Trophies) { try { i = Trophies.arenaOf(prog().tr || 0); } catch (e) { i = 0; } }
+        const t = testGet(); if (!party && t >= 0) i = t;                      // the test switch on the home screen (src/ui/arenatest.js) overrides the arena
         set(i, seed || 1, { party });
     }
+    function testGet() { try { const v = localStorage.getItem('rr_arena_test'); return v === null || v === '' ? -1 : Math.max(-1, Math.min(T.length - 1, +v)); } catch (e) { return -1; } }
+    function testSet(i) { try { if (i < 0) localStorage.removeItem('rr_arena_test'); else localStorage.setItem('rr_arena_test', String(i)); } catch (e) {} window.dispatchEvent(new Event('arenatest')); }
     function layer(th, kinds, spacing, depthMax, r) {
         const out = []; for (let d = 40 + r() * 80; d < depthMax; d += spacing * (0.75 + r() * 0.5)) { const k = kinds[Math.floor(r() * kinds.length)]; out.push({ d, x: .06 + r() * .88, k, v: r() > .5 ? 1 : 0, s: .8 + r() * .4, up: K[k].float ? r() * 140 : 0 }); }
         return out;
@@ -183,13 +186,14 @@
         PLAT.normal = cur.plat;
         for (const k in cur.items) { ITEMS[k].name = cur.items[k][0]; ITEMS[k].color = cur.items[k][1]; }
         poolSet = new Set(o && o.party ? PARTY_POOL : poolOf(idx));
+        rulesNow = o && o.party ? null : { types: new Set(LEDGES.slice(0, LEDGE_COUNT[Math.min(idx, LEDGE_COUNT.length - 1)])), ceilings: idx >= CEILINGS_FROM };
         const r = rng((seed | 0) + idx * 97), L = Math.max(9000, typeof TRACK === 'number' ? TRACK : 9000);
         far = layer(cur, cur.kinds.far, 330, L * 0.09 + 1300, r); mid = layer(cur, cur.kinds.mid, 240, L * 0.2 + 1300, r);
         air = []; for (let a = 0; a < 26; a++) air.push({ x: r(), y: r(), s: .5 + r(), v: .4 + r() * .8 });
         flash = 0; flashAt = 3 + r() * 5; lastT = 0;
         banner(cur.name, idx);
     }
-    function clear() { restore(); cur = null; idx = -1; poolSet = null; if (tagEl) tagEl.classList.remove('on'); }
+    function clear() { restore(); cur = null; idx = -1; poolSet = null; rulesNow = null; if (tagEl) tagEl.classList.remove('on'); }
     function banner(name, i) {
         if (!tagEl) { tagEl = document.createElement('div'); tagEl.id = 'arena-tag'; document.body.appendChild(tagEl); }
         tagEl.innerHTML = '<small>ARENA ' + (i + 1) + '</small><b>' + name.toUpperCase() + '</b>';
@@ -292,7 +296,11 @@
         if (poolSet.has('wind')) w.wind = others ? 0.10 + 0.12 * f : 0;
         for (const k in cur.bias) if (w[k] > 0) w[k] *= cur.bias[k];
     }
+    // WHICH LEDGES: new players meet the ledge types one at a time (a party race and the other modes keep the full mix).
+    //   Playground: normal, boost, moving ledges.  Parking Lot: + crumbling.  Rooftop: + ice.  From the Harbour on: sealed ledges (ceilings) too.
+    const LEDGES = ['boost', 'moving', 'fragile', 'ice'], LEDGE_COUNT = [2, 3, 4, 4], CEILINGS_FROM = 3;
+    const rules = () => rulesNow;
     const diff = i => ({ add: POOL[i].add.slice(), remove: POOL[i].remove.slice(), pool: poolOf(i) });
-    window.ArenaTheme = { pick, set, clear, on, drawSky, shape, paintScene, grid: () => cur ? cur.grid : null, index: () => idx, THEMES: T, POOL, INFO, ORDER, poolOf, diff,
+    window.ArenaTheme = { pick, set, clear, on, drawSky, shape, paintScene, rules, testGet, testSet, grid: () => cur ? cur.grid : null, index: () => idx, THEMES: T, POOL, INFO, ORDER, poolOf, diff,
         name: i => T[i].name, color: i => T[i].c };
 })();
