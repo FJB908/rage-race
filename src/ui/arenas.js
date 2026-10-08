@@ -48,20 +48,33 @@
         d.querySelectorAll('.tp-it').forEach(it => { it.onclick = () => { const info = ArenaTheme.INFO[it.dataset.k]; if (window.SFX) SFX.play('tap'); toast(e.kind === 'gone' ? info[0] + ' leaves the power-ups' : info[0] + ': ' + info[1]); }; });
         return d;
     }
+    // the icon already says what it is, so the label is only what the icon cannot say: an amount, a booster, a cosmetic's name (never "Coins", "Gems" or "Chest")
+    function labelOf(r) {
+        if (r.t === 'coin') return '<b>' + num(r.n) + '</b>'; if (r.t === 'gem') return '<b>' + r.n + '</b>';
+        if (r.t === 'drop' || r.t === 'gemchest') return '';
+        return Trophies.name(r).replace(/<small>.*?<\/small>/, '');
+    }
     function rowReward(e, tr, done) {
         const m = e.m, claimed = done.includes(m.id), ready = !claimed && m.at <= tr;
         const d = stop('rw' + (claimed ? ' claimed' : ready ? ' ready' : e.at <= tr ? ' reached' : '') + (m.big ? ' big' : ''), m.at,
-            '<span class="tp-art">' + Trophies.art(m.r, m.id) + '</span><span class="tp-lab">' + (m.r.t === 'item' || m.r.t === 'gemchest' ? Trophies.name(m.r).replace(/<small>.*?<\/small>/, '') : Trophies.name(m.r)) + (ready ? '<em>CLAIM</em>' : claimed ? '<i class="got">Collected</i>' : '') + '</span>');
+            '<span class="tp-art">' + Trophies.art(m.r, m.id) + '</span><span class="tp-lab">' + labelOf(m.r) + (ready ? '<em>CLAIM</em>' : claimed ? '<i class="got">Collected</i>' : '') + '</span>');
         d.style.setProperty('--rc', Trophies.color(m.r));
         if (ready) { d.setAttribute('role', 'button'); d.onclick = () => claim([m.id]); }
         const c = d.querySelector('canvas');
         if (c) { const look = Object.assign({ skin: 'classic', hat: 'none', face: 'none', trail: 'none' }, { [m.r.cat]: m.r.id }); if (m.r.cat === 'trail') { c.width = 200; c.height = 100; try { drawTrailPreview(c, Trophies.itemOf(m.r), undefined, 1.5); } catch (er) {} } else { try { renderLook(c, look, { scale: .26, cy: .6 }); } catch (er) {} } }
         return d;
     }
-    function rowMe(tr) {
-        const d = stop('me', tr, '<canvas width="120" height="120"></canvas><span class="tp-lab"><b>You</b></span>');
-        try { renderLook(d.querySelector('canvas'), myLook(), { scale: .34, cy: .56 }); } catch (e) {}
+    // a player on the road: their face sits ON the line, as the dot (you are bigger and glow; a friend is smaller and has a name)
+    function rowPerson(cls, tr, look, name) {
+        const d = document.createElement('div'); d.className = 'tp-row ' + cls;
+        d.innerHTML = '<span class="tp-n">' + num(tr) + '</span><span class="tp-av"><canvas width="112" height="112"></canvas></span><div class="tp-c">' + (name ? '<span class="tp-lab"><b></b></span>' : '') + '</div>';
+        if (name) d.querySelector('b').textContent = name;
+        try { renderLook(d.querySelector('canvas'), look, { scale: .36, cy: .58 }); } catch (e) {}
         return d;
+    }
+    const rowMe = tr => rowPerson('me', tr, myLook());
+    function friends() {                                                            // friends that have a trophy count, from the social list
+        try { return (window.Social && Social.friendList ? Social.friendList() : []).filter(f => typeof f.tr === 'number').map(f => ({ tr: f.tr, look: f.look, name: f.name })); } catch (e) { return []; }
     }
     function gate(i, tr) {
         const th = TH()[i], A = AR()[i], here = Trophies.arenaOf(tr) === i, state = here ? 'here' : tr >= A.at ? 'done' : 'lock';
@@ -76,7 +89,7 @@
 
     /* ------------------------------------------------------------------------------- render ---- */
     function render() {
-        const p = prog(), tr = p.tr || 0, done = p.trClaimed || [], cur = Trophies.arenaOf(tr), all = stops(), cl = Trophies.claimable();
+        const p = prog(), tr = p.tr || 0, done = p.trClaimed || [], cur = Trophies.arenaOf(tr), all = stops(), cl = Trophies.claimable(), fr = friends();
         $('tp-tr').textContent = num(tr);
         const ab = $('tp-all'); ab.hidden = !cl.length; ab.textContent = 'CLAIM ' + cl.length;
         for (const n of [...road.children]) if (!n.classList.contains('tp-line') && !n.classList.contains('tp-fill')) n.remove();
@@ -84,14 +97,15 @@
         for (let i = TH().length - 1; i >= 0; i--) {
             const zone = document.createElement('section'); zone.className = 'tp-zone' + (i === cur ? ' cur' : ''); zone.dataset.arena = i;
             const th = TH()[i]; zone.style.setProperty('--ac', th.c); zone.style.setProperty('--s1', th.sky[0][0]); zone.style.setProperty('--s2', th.sky[0][1]);
-            const list = all.filter(e => Trophies.arenaOf(e.at) === i);
-            let placed = false;
-            for (let k = list.length - 1; k >= 0; k--) {                          // from the top of the arena down to its gate
-                const e = list[k];
-                if (!placed && i === cur && e.at <= tr) { meRow = rowMe(tr); zone.appendChild(meRow); placed = true; }
-                zone.appendChild(e.kind === 'reward' ? rowReward(e, tr, done) : rowItems(e, tr));
+            const list = all.filter(e => Trophies.arenaOf(e.at) === i).map(e => ({ at: e.at, o: 1, e }));
+            if (i === cur) list.push({ at: tr, o: 2, me: true });                  // you, and friends, stand between the stops at their own trophy count
+            fr.filter(f => Trophies.arenaOf(f.tr) === i).forEach(f => list.push({ at: f.tr, o: 1.5, f }));
+            list.sort((a, b) => b.at - a.at || b.o - a.o);                          // from the top of the arena down to its gate; a person stands above a stop with the same number
+            for (const x of list) {
+                if (x.me) { meRow = rowMe(tr); zone.appendChild(meRow); }
+                else if (x.f) zone.appendChild(rowPerson('fr', x.f.tr, x.f.look, x.f.name));
+                else zone.appendChild(x.e.kind === 'reward' ? rowReward(x.e, tr, done) : rowItems(x.e, tr));
             }
-            if (!placed && i === cur) { meRow = rowMe(tr); zone.appendChild(meRow); }
             zone.appendChild(gate(i, tr));
             road.appendChild(zone);
         }

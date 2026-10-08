@@ -399,7 +399,7 @@
 
     // what the home screen needs: members (you first), friends to invite, incoming invites
     function friendList() {
-        return [...S.friends].filter(([, v]) => v.status === 'accepted').map(([u]) => { const d = (S.profiles.get(u) || {}).d || {}; return { uid:u, name:d.name || 'Player', look:d.look || {}, lvl:d.lvl || 1, online:online(d), inParty:S.members.some(m => m.uid === u) }; })
+        return [...S.friends].filter(([, v]) => v.status === 'accepted').map(([u]) => { const d = (S.profiles.get(u) || {}).d || {}; return { uid:u, name:d.name || 'Player', look:d.look || {}, lvl:d.lvl || 1, tr:d.tr, online:online(d), inParty:S.members.some(m => m.uid === u) }; })
             .sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0));
     }
     window.Social = { emitDJ, emitBomb, render, setMode, friendList, createParty, joinParty, leaveParty, invite, kick, startParty, pretty, ready:() => !!S.api, answerInvite:(i, ok) => ok ? (fs().deleteDoc(dref('invites', i.id)).catch(() => {}), joinParty(i.code)) : fs().deleteDoc(dref('invites', i.id)).catch(() => {}), stepRemote, emitItem, emitBox, touch:() => { clearTimeout(window.Social._t); window.Social._t = setTimeout(() => publish(), 20000); }, onPartyFinish:onFinish, state:S, codeFromUid };

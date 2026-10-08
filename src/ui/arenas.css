@@ -41,11 +41,12 @@
 .tp-row.rw.ready { cursor: pointer; } .tp-row.rw.ready .tp-art { filter: drop-shadow(0 0 10px var(--rc)); animation: tpReady 1.5s ease-in-out infinite; }
 .tp-row .tp-lab em { font: 900 10px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .1em; font-style: normal; padding: 6px 9px; border-radius: 8px; background: linear-gradient(#ffe27a, #f5a81c); color: #3a2400; }
 @keyframes tpReady { 50% { transform: scale(1.08); } }
-/* you */
-.tp-row.me { min-height: 92px; }
-.tp-row.me .tp-n { color: #fff; font-size: 13px; font-weight: 800; }
-.tp-row.me .tp-dot { width: 18px; height: 18px; background: #35e0c8; border-color: #0b0e14; box-shadow: 0 0 0 3px #35e0c8, 0 0 22px rgba(53,224,200,.8); }
-.tp-row.me .tp-c canvas { width: 66px; height: 66px; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); } .tp-row.me .tp-lab b { color: #35e0c8; letter-spacing: .14em; text-transform: uppercase; font-size: 12px; }
+/* people on the road: the face is the dot. You are bigger and glow; a friend is smaller, with a name */
+.tp-av { justify-self: center; position: relative; width: 24px; height: 24px; }
+.tp-av canvas { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); border-radius: 50%; background: #11151e; box-shadow: 0 0 0 2px #5b6578; }
+.tp-row.me { min-height: 84px; } .tp-row.me .tp-n { color: #fff; font-size: 13px; font-weight: 800; }
+.tp-row.me .tp-av canvas { width: 54px; height: 54px; background: #12302d; box-shadow: 0 0 0 3px #35e0c8, 0 0 22px rgba(53,224,200,.75); }
+.tp-row.fr { min-height: 64px; } .tp-row.fr .tp-lab b { font-size: 13px; color: #aab3c5; font-weight: 700; }
 /* where an arena starts: a painted band that fades into the road (no border, no frame) */
 .tp-gate { position: relative; z-index: 3; height: 124px; margin-top: 8px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 82%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 26%, #000 82%, transparent 100%); }
 .tp-gate canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -58,3 +59,5 @@
 /* back to my place */
 .tp-me-btn { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 8px; padding: 10px 18px; border: 0; border-radius: 99px; background: #35e0c8; color: #06201b; font: 800 14px/1 "Space Grotesk", system-ui, sans-serif; box-shadow: 0 8px 20px -8px rgba(0,0,0,.8); }
 .tp-me-btn[hidden] { display: none; } .tp-me-btn .ico { width: 16px; height: 16px; transform: rotate(-90deg); } .tp-me-btn.up .ico { transform: rotate(90deg); }
+.tp-row.me .tp-n { margin-right: 16px; } .tp-row.fr .tp-n { margin-right: 8px; }
+.tp-row.me .tp-c, .tp-row.fr .tp-c { padding-left: 16px; } .tp-row.fr .tp-av canvas { width: 36px; height: 36px; }
