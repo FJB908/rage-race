@@ -300,9 +300,9 @@
         try {
             skyFill(c, w, h, th, o.prog === undefined ? 0.15 : o.prog); orbDraw(c, w, h, th, Math.min(1, h / 520), o.orbDy);
             const horizon = h * (o.horizon || (th.ground ? 0.8 : 1.05));
-            const place = (list, name, a, scale, n) => {
+            const place = (list, name, a, scale, n, xs) => {
                 for (let q = 0; q < n; q++) {
-                    const k = list[q % list.length], def = K[k], s = sprite(i, k, name, q % 2), kk = Math.min(scale * (o.scale || 1) * h / def.h, 1.5) * (.85 + r() * .3), x = w * ((q + .5) / n + (r() - .5) * .18);
+                    const k = list[q % list.length], def = K[k], s = sprite(i, k, name, q % 2), kk = Math.min(scale * (o.scale || 1) * h / def.h, 1.5) * (.85 + r() * .3), x = xs ? w * xs[q % xs.length] : w * ((q + .5) / n + (r() - .5) * .18);
                     const y = def.float ? h * (.22 + r() * .34) + def.h * kk * .5 : horizon + (name === 'mid' ? h * .07 : 0);
                     put(c, s, x, y, kk, a, def.rot ? (q + 1) * .7 : 0);
                     if (def.glow) { const g = sprite(i, k, name, q % 2, true); c.globalCompositeOperation = 'lighter'; put(c, g, x, y, kk, a * .8, 0); c.globalCompositeOperation = 'source-over'; }
@@ -311,7 +311,7 @@
             const dens = o.props === undefined ? 1 : o.props;
             const al = o.alpha || 1, mi = o.mist === undefined ? 1 : o.mist * 4;                // alpha: more punch for the big picture; mist: how much haze
             const ko = o.kinds || th.kinds, nf = o.nFar !== undefined ? o.nFar : Math.max(2, Math.round(3 * dens)), nm = o.nMid !== undefined ? o.nMid : Math.max(2, Math.round(3 * dens));
-            if (nf) place(ko.far, 'far', Math.min(1, .7 * al), .36 * (o.farScale || 1), nf);
+            if (nf) place(ko.far, 'far', Math.min(1, .7 * al), .36 * (o.farScale || 1), nf, o.xs);
             mistFill(c, w, h, th, h * .35, h, .25 * mi);
             if (nm) place(ko.mid, 'mid', Math.min(1, .88 * al), .3, nm);
             if (th.ground && o.ground !== false) { c.fillStyle = lg(c, 0, horizon, 0, h, [[0, th.ground], [1, mixc(th.ground, '#000', .35)]]); c.fillRect(0, horizon + h * .06, w, h); c.fillStyle = lg(c, 0, horizon + h * .02, 0, horizon + h * .1, [[0, 'rgba(255,255,255,.1)'], [1, 'rgba(255,255,255,0)']]); c.fillRect(0, horizon + h * .06, w, h * .06); }
@@ -338,18 +338,56 @@
         { top: '#eadba3', edge: '#ffcf3f', under: ['#4d5181', '#161934'], deco: 'gold', hang: 'rock',      props: [['crag', .78, .42]] },
     ];
     // the home screen is calmer than the race: only a few big shapes (a lone volcano, one storm cloud with its lightning, ...)
-    const CALM = {
-        0: { kinds: { far: ['cloud', 'rainbow'], mid: [] }, nFar: 2, nMid: 0 },
-        1: { kinds: { far: ['pillar', 'psign'], mid: [] }, nFar: 2, nMid: 0 },
-        2: { kinds: { far: ['skyline'], mid: [] }, nFar: 2, nMid: 0 },
-        3: { kinds: { far: ['ship', 'crane'], mid: [] }, nFar: 2, nMid: 0 },
-        7: { kinds: { far: ['nebula', 'planet'], mid: [] }, nFar: 2, nMid: 0 },
-        8: { kinds: { far: ['volcano'], mid: [] }, nFar: 1, nMid: 0, farScale: 2.1 },
+    const CALM = {                                                                 // xs: where the far pieces stand (0..1 across), so nothing piles up behind the sun, the title or the island
+        0: { kinds: { far: ['rainbow'], mid: [] }, nFar: 1, nMid: 0, xs: [.3], farScale: 1.3 },
+        1: { kinds: { far: ['pillar', 'psign'], mid: [] }, nFar: 2, nMid: 0, xs: [.12, .88] },
+        2: { kinds: { far: ['skyline'], mid: [] }, nFar: 1, nMid: 0, xs: [.5], farScale: 1.2 },
+        3: { kinds: { far: ['ship'], mid: [] }, nFar: 1, nMid: 0, xs: [.2] },
+        7: { kinds: { far: ['planet'], mid: [] }, nFar: 1, nMid: 0, xs: [.24], farScale: 1.3 },
+        8: { kinds: { far: [], mid: [] }, nFar: 0, nMid: 0 },
         9: { kinds: { far: [], mid: ['crag'] }, nFar: 0, nMid: 2 },
     };
+    // the big volcano of the Volcano home screen: layered rock with ridges, a glowing crater, branching lava streams that glow, a smoke column lit from below, embers
+    function bigVolcano(c, w, h) {
+        const r = rng(4242), cx = w * .5, top = h * .27, base = h * .7, hw = w * .62, cw = w * .1, ry = cw * .22;
+        const flank = (side, k) => { const t = k, x = cx + side * (cw + (hw - cw) * Math.pow(t, 1.25)), y = top + (base - top) * t; return [x + (r() - .5) * 5 * t, y]; };
+        // smoke column (behind the cone), lit orange from below
+        for (let q = 0; q < 16; q++) { const t = q / 15, sx = cx + Math.sin(q * 1.3) * w * .05 * t + t * w * .06, sy = top - 6 - t * h * .26, rr = w * (.06 + t * .12);
+            c.fillStyle = rg(c, sx, sy, 2, rr, [[0, 'rgba(' + Math.round(95 - t * 40) + ',' + Math.round(55 - t * 30) + ',' + Math.round(48 - t * 24) + ',' + (.85 - t * .5) + ')'], [1, 'rgba(40,24,26,0)']]); disc(c, sx, sy, rr); }
+        c.fillStyle = rg(c, cx, top - 10, 4, w * .4, [[0, 'rgba(255,130,50,.35)'], [1, 'rgba(255,130,50,0)']]); c.fillRect(0, 0, w, base);
+        // the cone
+        const L = [], R = []; for (let q = 0; q <= 14; q++) { L.push(flank(-1, q / 14)); R.push(flank(1, q / 14)); }
+        c.beginPath(); c.moveTo(L[0][0], L[0][1]); L.forEach(p => c.lineTo(p[0], p[1])); c.lineTo(cx + w, base + h * .06); c.lineTo(cx - w, base + h * .06); c.lineTo(R[14][0], R[14][1]); for (let q = 13; q >= 0; q--) c.lineTo(R[q][0], R[q][1]); c.closePath();
+        c.fillStyle = lg(c, 0, top, 0, base, [[0, '#2a1612'], [.55, '#1d0f0d'], [1, '#12090a']]); c.fill();
+        c.save(); c.clip();
+        c.fillStyle = lg(c, cx - hw, 0, cx + hw, 0, [[0, 'rgba(255,170,120,.16)'], [.45, 'rgba(255,140,90,.03)'], [.7, 'rgba(0,0,0,.28)'], [1, 'rgba(0,0,0,.5)']]); c.fillRect(0, top - 20, w, base - top + 80);        // light from the left, the right side in shadow
+        c.lineCap = 'round'; for (let q = 0; q < 11; q++) { const a = (q + .5) / 11 * 2 - 1, x0 = cx + a * cw * .9, x1 = cx + a * hw * 1.05; c.strokeStyle = 'rgba(0,0,0,' + (.22 + r() * .2) + ')'; c.lineWidth = 2 + r() * 5; c.beginPath(); c.moveTo(x0, top + 6); c.bezierCurveTo(x0 + (x1 - x0) * .2, top + (base - top) * .4, x0 + (x1 - x0) * .75, top + (base - top) * .6, x1, base + 10); c.stroke(); }
+        c.strokeStyle = 'rgba(255,190,140,.12)'; c.lineWidth = 2; for (let q = 0; q < 5; q++) { const a = -.9 + q * .2, x0 = cx + a * cw, x1 = cx + a * hw * 1.05; c.beginPath(); c.moveTo(x0, top + 8); c.bezierCurveTo(x0 + (x1 - x0) * .25, top + (base - top) * .4, x0 + (x1 - x0) * .7, top + (base - top) * .62, x1, base + 10); c.stroke(); }
+        c.fillStyle = lg(c, 0, base - h * .16, 0, base + h * .06, [[0, 'rgba(255,90,40,0)'], [1, 'rgba(255,90,40,.28)']]); c.fillRect(0, base - h * .16, w, h * .24);                                                  // heat at the foot
+        // lava streams down the flanks: a wide red glow, an orange body, a hot yellow core
+        const streams = [[-.55, -.8, .62], [-.15, -.3, .5], [.2, .42, .56], [.6, .95, .4], [0, .02, .3]];
+        c.globalCompositeOperation = 'lighter';
+        for (const [a0, a1, len] of streams) {
+            const x0 = cx + a0 * cw * 1.6, y0 = top + 4, pts = []; let x = x0;
+            for (let q = 0; q <= 14; q++) { const t = q / 14 * len, y = y0 + (base - top) * t; x = x0 + (a1 - a0) * (hw * .9) * Math.pow(q / 14 * len, 1.2) + Math.sin(q * .62 + a0 * 9) * (1.5 + q * .5); pts.push([x, y]); }
+            const path = () => { c.beginPath(); pts.forEach((p, n) => n ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); };
+            for (const [lw, col] of [[26, 'rgba(255,60,20,.14)'], [13, 'rgba(255,90,25,.4)'], [7.5, 'rgba(255,150,40,.9)'], [3, 'rgba(255,232,150,.95)']]) { c.strokeStyle = col; c.lineWidth = lw; path(); c.stroke(); }
+            c.fillStyle = 'rgba(255,200,90,.9)'; disc(c, pts[pts.length - 1][0], pts[pts.length - 1][1], 3.2);
+        }
+        // small cracks that glow
+        c.lineWidth = 1.6; for (let q = 0; q < 9; q++) { const t = .25 + r() * .6, side = r() > .5 ? 1 : -1, x = cx + side * (cw + (hw - cw) * Math.pow(t, 1.25)) * (.3 + r() * .5), y = top + (base - top) * t; c.strokeStyle = 'rgba(255,140,50,.6)'; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (r() - .5) * 26, y + 8 + r() * 14); c.lineTo(x + (r() - .5) * 30, y + 22 + r() * 16); c.stroke(); }
+        c.globalCompositeOperation = 'source-over'; c.restore();
+        // the crater: rim, lava lake
+        c.fillStyle = lg(c, cx - cw, 0, cx + cw, 0, [[0, '#4a2a22'], [1, '#1c0e0d']]); c.beginPath(); c.ellipse(cx, top, cw * 1.08, ry * 1.2, 0, 0, TAU); c.fill();
+        c.fillStyle = rg(c, cx - cw * .1, top, 2, cw, [[0, '#fff3b0'], [.35, '#ffb038'], [.75, '#ff5a1c'], [1, '#a81808']]); c.beginPath(); c.ellipse(cx, top + 1, cw * .9, ry * .9, 0, 0, TAU); c.fill();
+        c.globalCompositeOperation = 'lighter'; c.fillStyle = rg(c, cx, top, 2, cw * 2.8, [[0, 'rgba(255,170,70,.65)'], [1, 'rgba(255,100,30,0)']]); c.fillRect(cx - cw * 3, top - cw * 3, cw * 6, cw * 6);
+        for (let q = 0; q < 26; q++) { const a = r() * Math.PI * 2, d = r(), ex = cx + (r() - .5) * cw * 2 + Math.sin(a) * d * 14, ey = top - 8 - d * h * .2; c.fillStyle = 'rgba(255,' + Math.round(150 + r() * 80) + ',70,' + (.9 - d * .6) + ')'; disc(c, ex, ey, .8 + r() * 1.8); }
+        c.globalCompositeOperation = 'source-over';
+    }
     function paintWorld(cv, i, w, h) {
         paintScene(cv, i, w, h, Object.assign({ prog: .2, props: 1.7, alpha: 1.15, mist: .9, horizon: .62, ground: false, scale: .62, orbDy: .17 }, CALM[i] || {}));
         const c = cv.getContext('2d'), dpr = cv.width / w; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (i === 8) bigVolcano(c, w, h);
         if (i === 9) {                                                                  // Summit: one dark storm cloud, and the lightning really comes out of it
             const keep = idx; idx = i;
             try {
