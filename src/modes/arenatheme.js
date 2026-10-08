@@ -178,7 +178,16 @@
         storm: { w: 420, h: 200, float: 1, draw(c, P) { c.fillStyle = lg(c, 0, -190, 0, 0, [[0, mixc(P.cl, '#fff', .12)], [1, mixc(P.cl, '#000', .35)]]); for (const q of [[-130, -38, 46], [-76, -78, 56], [-6, -104, 64], [64, -80, 58], [124, -44, 48], [8, -42, 60]]) disc(c, q[0], q[1], q[2]); rrect(c, -170, -50, 340, 50, 24); },
                 glow(c, P) { c.fillStyle = rg(c, 0, -80, 2, 150, [[0, 'rgba(255,229,138,.38)'], [1, 'rgba(255,229,138,0)']]); disc(c, 0, -80, 150); } },
         stormb: { w: 420, h: 380, float: 1, draw(c, P) { c.translate(0, -205); c.fillStyle = lg(c, 0, -190, 0, 0, [[0, mixc(P.cl, '#fff', .12)], [1, mixc(P.cl, '#000', .35)]]); for (const q of [[-130, -38, 46], [-76, -78, 56], [-6, -104, 64], [64, -80, 58], [124, -44, 48], [8, -42, 60]]) disc(c, q[0], q[1], q[2]); rrect(c, -170, -50, 340, 50, 24); },
-                glow(c, P) { c.translate(0, -205); c.fillStyle = rg(c, 0, -80, 2, 150, [[0, 'rgba(255,229,138,.34)'], [1, 'rgba(255,229,138,0)']]); disc(c, 0, -80, 150); c.lineJoin = 'round'; c.lineCap = 'round'; const bolt = () => { c.beginPath(); c.moveTo(14, -46); c.lineTo(2, 0); c.lineTo(-10, 52); c.lineTo(12, 66); c.lineTo(-16, 130); c.lineTo(2, 142); c.lineTo(-20, 196); c.stroke(); }; c.strokeStyle = 'rgba(255,229,138,.28)'; c.lineWidth = 14; bolt(); c.strokeStyle = 'rgba(255,244,190,.95)'; c.lineWidth = 4.5; bolt(); c.fillStyle = rg(c, 14, -46, 1, 34, [[0, 'rgba(255,244,190,.9)'], [1, 'rgba(255,229,138,0)']]); disc(c, 14, -46, 34); } },
+                // the flash: the cloud lights up from inside, the bolt starts deep in it and comes out from under the front lip of the cloud (drawn normally, over the dark cloud, not added)
+                glow(c, P) { c.translate(0, -205); const Q = [[-130, -38, 46], [-76, -78, 56], [-6, -104, 64], [64, -80, 58], [124, -44, 48], [8, -42, 60]];
+                    c.fillStyle = rg(c, 14, -80, 4, 200, [[0, 'rgba(255,240,190,.3)'], [1, 'rgba(255,240,190,0)']]); disc(c, 14, -80, 200);
+                    const cloud = (list) => { c.beginPath(); for (const q of list) { c.moveTo(q[0] + q[2], q[1]); c.arc(q[0], q[1], q[2], 0, TAU); } c.rect(-170, -50, 340, 50); };
+                    const lit = () => rg(c, 14, -62, 6, 210, [[0, '#fffdf0'], [.3, '#fff0b8'], [.65, mixc(P.cl, '#ffe9a0', .45)], [1, mixc(P.cl, '#ffffff', .1)]]);
+                    c.save(); cloud(Q); c.clip(); c.fillStyle = lit(); c.fillRect(-200, -200, 400, 220); c.restore();
+                    c.lineJoin = 'round'; c.lineCap = 'round'; const bolt = () => { c.beginPath(); c.moveTo(14, -72); c.lineTo(4, -30); c.lineTo(-10, 12); c.lineTo(10, 28); c.lineTo(-16, 90); c.lineTo(2, 104); c.lineTo(-20, 158); c.stroke(); c.beginPath(); c.moveTo(10, 28); c.lineTo(34, 52); c.lineTo(30, 78); c.stroke(); };
+                    c.strokeStyle = 'rgba(255,229,138,.3)'; c.lineWidth = 16; bolt(); c.strokeStyle = 'rgba(255,248,210,.98)'; c.lineWidth = 4.6; bolt();
+                    c.save(); cloud(Q); c.clip(); c.fillStyle = lg(c, 0, -70, 0, 0, [[0, 'rgba(70,80,120,0)'], [1, 'rgba(70,80,120,.5)']]); c.fillRect(-200, -70, 400, 70); c.restore();        // the underside of the cloud stays shaded: the light is inside
+                    c.fillStyle = rg(c, 8, 6, 2, 60, [[0, 'rgba(255,244,200,.5)'], [1, 'rgba(255,229,138,0)']]); disc(c, 8, 6, 60); } },
         crag: { w: 380, h: 300, draw(c, P) { c.fillStyle = lg(c, -170, 0, 170, 0, [[0, P.lt], [.5, P.col], [1, P.dk]]); poly(c, [[-180, 0], [-120, -120], [-90, -90], [-40, -230 - P.v * 30], [0, -150], [40, -200], [90, -110], [120, -150], [180, 0]]); c.fillStyle = 'rgba(255,255,255,.14)'; poly(c, [[-40, -230 - P.v * 30], [0, -150], [-12, -120], [-62, -150]]); } },
         bolt: { w: 140, h: 260, float: 1, draw() {}, glow(c, P) { c.strokeStyle = 'rgba(255,240,170,.95)'; c.lineWidth = 5; c.lineJoin = 'round'; c.beginPath(); c.moveTo(10, -250); c.lineTo(-14, -176); c.lineTo(10, -160); c.lineTo(-18, -86); c.lineTo(4, -70); c.lineTo(-22, 0); c.stroke(); c.strokeStyle = 'rgba(255,229,138,.3)'; c.lineWidth = 14; c.stroke(); } },
     };
@@ -390,7 +399,7 @@
         c.drawImage(vig, 0, 0, W, H);
     }
     const GLOW_T = { antenna: 3.2 };
-    function putGlow(c, s, kind, name, v, x, y, k, a, now, d) { const g = sprite(idx, kind, name, v, true); c.globalCompositeOperation = 'lighter'; put(c, g, x, y, k, kind === 'stormb' ? a * (.15 + .85 * Math.pow(Math.max(0, Math.sin(now * 1.6 + d)), 8)) : a * (.55 + .45 * Math.sin(now * (GLOW_T[kind] || 5) + d)), 0); c.globalCompositeOperation = 'source-over'; }
+    function putGlow(c, s, kind, name, v, x, y, k, a, now, d) { const g = sprite(idx, kind, name, v, true); c.globalCompositeOperation = 'lighter'; if (kind === 'stormb') { c.globalCompositeOperation = 'source-over'; const f = Math.pow(Math.max(0, Math.sin(now * 1.6 + d)), 10), f2 = Math.pow(Math.max(0, Math.sin(now * 1.6 + d + .55)), 14); put(c, g, x, y, k, a * Math.min(1, f + f2 * .7), 0); } else put(c, g, x, y, k, a * (.55 + .45 * Math.sin(now * (GLOW_T[kind] || 5) + d)), 0); c.globalCompositeOperation = 'source-over'; }
     function drawTower(c, t, name, W, H, gl) {
         const top = gl - t.ht; if (top >= H) return;
         const tl = tileOf(idx, t.st, t.w, name, t.v), P = tl.h, x = Math.round(W * t.x - t.w / 2), n0 = Math.max(0, Math.floor((gl - H) / P)), n1 = t.ht >= INF ? Math.ceil(gl / P) + 1 : t.ht / P - 1;
@@ -608,13 +617,8 @@
         if (i === 9) {                                                                  // Summit: one dark storm cloud, and the lightning really comes out of it
             const keep = idx; idx = i;
             try {
-                const sp = sprite(i, 'storm', 'far', 0), k = Math.min(1.5, w * .8 / sp.def.w), cx = w * .5, cy = h * .3;
-                put(c, sp, cx, cy, k, .95, 0);
-                const x0 = cx + w * .06, y0 = cy - 46, pts = [[x0, y0], [x0 - 6, cy - 4]]; let x = x0 - 6, y = cy - 4; const rr = rng(77);
-                while (y < h * .56) { y += h * (.035 + rr() * .03); x += (rr() - .5) * w * .1; pts.push([x, y]); }
-                c.lineJoin = 'round'; c.lineCap = 'round'; c.globalCompositeOperation = 'lighter';
-                for (const [lw, a] of [[12, .18], [6, .35], [2.4, .95]]) { c.strokeStyle = 'rgba(255,238,170,' + a + ')'; c.lineWidth = lw; c.beginPath(); pts.forEach((q, n) => n ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); }
-                c.globalCompositeOperation = 'source-over';
+                const sp = sprite(i, 'stormb', 'far', 0), k = Math.min(1.4, w * .8 / sp.def.w), cx = w * .5, base = h * .3 + 205 * k;      // the same cloud as in the race: lit from inside, the bolt comes out from under its front lip
+                put(c, sp, cx, base, k, .95, 0); put(c, sprite(i, 'stormb', 'far', 0, true), cx, base, k, 1, 0);
             } finally { idx = keep; }
         }
         c.fillStyle = lg(c, 0, 0, 0, h * .22, [[0, 'rgba(7,9,14,.7)'], [1, 'rgba(7,9,14,0)']]); c.fillRect(0, 0, w, h * .22);                                  // calm behind the header
