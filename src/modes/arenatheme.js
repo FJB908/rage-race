@@ -568,7 +568,7 @@
         0: { kinds: { far: ['cloud', 'cloud'], mid: ['kite'] }, nFar: 2, nMid: 1, xs: [.2, .84], farScale: 1.1 },
         1: { kinds: { far: ['pillar', 'pillar', 'pillar', 'pillar'], mid: [] }, nFar: 4, nMid: 0, xs: [.06, .3, .72, .94], farScale: 2.2 },
         2: { kinds: { far: ['skyline'], mid: [] }, nFar: 1, nMid: 0, xs: [.5], farScale: 1.2 },
-        3: { kinds: { far: ['ship', 'crane', 'crane'], mid: [] }, nFar: 3, nMid: 0, xs: [.2, .62, .92] },
+        3: { kinds: { far: ['crane', 'crane'], mid: [] }, nFar: 2, nMid: 0, xs: [.3, .94], horizon: .62 },
         4: { kinds: { far: ['chimney', 'pipes', 'chimney', 'chimney'], mid: [] }, nFar: 4, nMid: 0, xs: [.08, .3, .72, .93], farScale: 2.2 },
         5: { kinds: { far: ['arch', 'tilepillar', 'tilepillar'], mid: [] }, nFar: 3, nMid: 0, xs: [.5, .08, .93], farScale: 2.2 },
         7: { kinds: { far: ['planet'], mid: [] }, nFar: 1, nMid: 0, xs: [.24], farScale: 1.3 },
@@ -615,6 +615,15 @@
     function paintWorld(cv, i, w, h) {
         paintScene(cv, i, w, h, Object.assign({ prog: .2, props: 1.7, alpha: 1.15, mist: .9, horizon: .8, ground: false, scale: .62, orbDy: .17 }, CALM[i] || {}));      // the far pieces stand on a horizon that is hidden behind the cards: nothing hovers
         const c = cv.getContext('2d'), dpr = cv.width / w; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (i === 2) {                                                                  // Rooftop: tall buildings rise along both sides of the screen
+            const keep = idx; idx = i;
+            try { const g = h * .96; for (const [t, nm] of [[{ st: 'facade', w: 40, x: .2, ht: 192 * 3, v: 0, cap: 'spire', pr: 0 }, 'rfar'], [{ st: 'facade', w: 36, x: .8, ht: 192 * 2, v: 1, cap: 'flat', pr: 0 }, 'rfar'], [{ st: 'facade', w: 86, x: .045, ht: 192 * 5, v: 1, cap: 'flat', pr: 2 }, 'rmid'], [{ st: 'facade', w: 80, x: .955, ht: 192 * 4, v: 0, cap: 'flat', pr: 1 }, 'rmid']]) drawTower(c, t, nm, w, h, g); } finally { idx = keep; }
+        }
+        if (i === 3) {                                                                  // Harbour: the ship and the cranes stand in the water
+            c.fillStyle = lg(c, 0, h * .6, 0, h, [[0, 'rgba(31,80,120,.9)'], [1, 'rgba(8,24,40,.95)']]); c.fillRect(0, h * .6, w, h * .4);
+            const keep = idx; idx = i;
+            try { const s0 = sprite(i, 'ship', 'far', 0), k = Math.min(1.5, w * .8 / s0.def.w); put(c, s0, w * .74, h * .625, k, 1, 0); } finally { idx = keep; }
+        }
         if (i === 8) bigVolcano(c, w, h);
         if (i === 9) {                                                                  // Summit: one dark storm cloud, and the lightning really comes out of it
             const keep = idx; idx = i;
