@@ -46,7 +46,7 @@
     function hide() { on = false; document.body.classList.remove('fin-moment'); if (el) el.classList.remove('on', 'ff'); clearTimeout(tmr); }
     function skip() {
         if (!on) return;
-        if (window.partyMatch || players.some(p => p.remote) || typeof startFastForward !== 'function') { hide(); giveUpToResults(); return; }       // a live party cannot be sped up
+        if (typeof canFastForward !== 'function' || !canFastForward()) { hide(); giveUpToResults(); return; }       // an online race (party, or later the Arena server) cannot be sped up: RESULTS just leaves it
         el.classList.add('ff'); startFastForward();
     }
 

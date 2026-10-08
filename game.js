@@ -2696,7 +2696,10 @@ function applyInterp(a){
 // FAST FORWARD: you are through and press RESULTS while others are still racing. The rest of the race is simply played faster (as many steps per frame as fit in about 9 ms), so the results are
 // the real ones and always complete. Finish times follow the simulation clock (ffExtra), not the wall clock. At most 75 simulated seconds, then the results show as they are.
 let ffOn = false, ffExtra = 0, ffSteps = 0;
-function startFastForward(){ ffOn = true; ffExtra = 0; ffSteps = 0; botsDonePrompted = true; }
+// Fast-forwarding only exists while the other racers are local bots. Arena Race will run on a server (everyone races at the same time), then ARENA_ONLINE is true and the race can only be left, never sped up.
+window.ARENA_ONLINE = false;
+function canFastForward(){ return !window.ARENA_ONLINE && !window.partyMatch && !players.some(p => p.remote); }
+function startFastForward(){ if (!canFastForward()) return; ffOn = true; ffExtra = 0; ffSteps = 0; botsDonePrompted = true; }
 function fastForwardFrame(){
     const t0 = performance.now();                                                // as many steps as fit in about 9 ms (at least 7, at most 40), so a slow phone still shows a smooth picture
     for (let k = 0; k < 40 && ffOn && state === 'playing'; k++){ ffExtra += SIM_DT; ffSteps++; snapshotPrev(); update(SIM_DT); if (k >= 6 && performance.now() - t0 > 9) break; }
@@ -4384,7 +4387,7 @@ function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Ma
 // A drop is a pending ticket until it is opened. Opening (see src/ui/lootbox.js) lets the player tap it to
 // level its rarity up; the final tier then decides the rewards (resolveDrop).
 const DROP_TIERS = ['common', 'rare', 'epic', 'mythic', 'legendary'];
-const DROP_COIN_MULT = { common:1, rare:1.75, epic:3, mythic:5.5, legendary:9 };
+const DROP_COIN_MULT = { common:1, rare:1.75, epic:3.5, mythic:14, legendary:35 };      // the top tiers are rare, so they pay like it (a mythic chest on a base of 60 coins = 840)
 const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, mythic:2.4, legendary:3.2 };
 const DROP_COSMETIC_CHANCE = { common:0.015, rare:0.04, epic:0.10, mythic:0.24, legendary:0.45 };      // skins are never in chests (shop only), so free play stays slow
 const COSMETIC_PITY = 40;

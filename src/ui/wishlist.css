@@ -16,9 +16,9 @@
 .mw-x { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 17px; background: transparent; color: #6f7a8f; }
 .mw-x:active { background: rgba(255,255,255,.08); color: #fff; }
 /* the pin on a shop card */
-.m-skin .wish-pin { position: absolute; top: 5px; left: 5px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 14px; background: rgba(13,16,23,.55); opacity: .75; z-index: 2; }
-.m-skin .wish-pin .ico { width: 16px; height: 16px; filter: grayscale(1) brightness(1.5); opacity: .8; }
-.m-skin .wish-pin.on { opacity: 1; background: rgba(255,207,63,.2); }
+.m-skin .wish-pin { position: absolute; right: 6px; bottom: 7px; width: 22px; height: 22px; display: grid; place-items: center; background: none; border: 0; opacity: .6; z-index: 2; }
+.m-skin .wish-pin .ico { width: 17px; height: 17px; filter: grayscale(1) brightness(1.5); opacity: .8; }
+.m-skin .wish-pin.on { opacity: 1; }
 .m-skin .wish-pin.on .ico { filter: none; opacity: 1; }
 .m-skin.wish-flash { animation: wishFlash 1.4s ease-out; }
 @keyframes wishFlash { 0% { box-shadow: 0 0 0 3px rgba(255,207,63,.9); } 100% { box-shadow: 0 0 0 3px rgba(255,207,63,0); } }
