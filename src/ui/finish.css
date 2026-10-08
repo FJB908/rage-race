@@ -2,8 +2,7 @@
 #fin-moment { position: absolute; inset: 0; z-index: 6; pointer-events: none; display: none; }
 body.fin-moment #fin-moment { display: block; }
 body.fin-moment #pos-pill, body.fin-moment #finish-menu, body.fin-moment .hint-bubble, body.fin-moment #hint { display: none !important; }       /* the big place replaces the little one; the bottom actions replace the old button */
-#fin-moment::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 52%; background: linear-gradient(to bottom, rgba(6,9,16,.66), rgba(6,9,16,.34) 55%, transparent); opacity: 0; transition: opacity .5s ease; }
-#fin-moment::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 36%; background: linear-gradient(to top, rgba(6,9,16,.68), transparent); opacity: 0; transition: opacity .5s ease; }
+#fin-moment::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 36%; background: linear-gradient(to bottom, rgba(6,9,16,.66), rgba(6,9,16,.34) 55%, transparent); opacity: 0; transition: opacity .5s ease; }
 #fin-moment.on::before, #fin-moment.on::after { opacity: 1; }
 .fm-head { position: absolute; left: 0; right: 0; top: calc(58px + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .fm-place, .res-place { align-self: center; margin: 0; }

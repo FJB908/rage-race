@@ -26,7 +26,7 @@
         root.innerHTML = '<h2>Chest drop rates</h2><p class="od-sub">What can come out of the chests you win after matches. You never pay to open these chests. Odds are exact and come from the game itself.</p>' +
             '<div class="od-card"><h3>WHICH CHEST YOU OPEN</h3>' + rows(T.map(t => [t, NAME[t] + ' chest', pct(o[t])])) + '<p class="od-note">Every chest starts as Common (87%), Rare (12%) or Epic (1%). Each tap can upgrade it before it opens; the numbers above include that.</p></div>' +
             T.map(t => '<div class="od-card"><h3>' + NAME[t].toUpperCase() + ' CHEST</h3>' + rows([
-                ['', 'Coins', 'x' + DROP_COIN_MULT[t]], ['', 'XP', 'x' + DROP_XP_MULT[t]],
+                ['', 'Coins', t === 'legendary' ? '10,000-20,000' : 'x' + DROP_COIN_MULT[t]], ['', 'XP', 'x' + DROP_XP_MULT[t]],
                 ['', 'A cosmetic you do not own yet', pct(DROP_COSMETIC_CHANCE[t])], ['', 'A finisher (if no cosmetic)', pct(fin[t])],
                 ['', 'Gems (' + (t === 'legendary' ? '5-20' : t === 'mythic' ? '5-10' : '5') + ')', gem[t] ? pct(gem[t]) : 'never'],
             ].concat(['common', 'rare', 'epic', 'mythic', 'legendary'].map(r => [r, 'If a cosmetic drops: ' + NAME[r], pct(W[t][r] / sum(t))]))) + (t === 'legendary' ? '<p class="od-note">Legendary chests also give a coin booster (x2 for 3 matches) and have a 0.4% chance of a premium (gem) cosmetic.</p>' : '') + '</div>').join('') +

@@ -4403,7 +4403,7 @@ function newLootId(mode){ return mode + ':' + Date.now().toString(36) + ':' + Ma
 // A drop is a pending ticket until it is opened. Opening (see src/ui/lootbox.js) lets the player tap it to
 // level its rarity up; the final tier then decides the rewards (resolveDrop).
 const DROP_TIERS = ['common', 'rare', 'epic', 'mythic', 'legendary'];
-const DROP_COIN_MULT = { common:1, rare:1.75, epic:3.5, mythic:14, legendary:35 };      // the top tiers are rare, so they pay like it (a mythic chest on a base of 60 coins = 840)
+const DROP_COIN_MULT = { common:1, rare:1.75, epic:3.5, mythic:14, legendary:35 };      // the top tiers are rare, so they pay like it (a mythic chest on a base of 60 coins = 840; legendary is a fixed 10,000-20,000, see resolveDrop)
 const DROP_XP_MULT = { common:1, rare:1.3, epic:1.7, mythic:2.4, legendary:3.2 };
 const DROP_COSMETIC_CHANCE = { common:0.015, rare:0.04, epic:0.10, mythic:0.24, legendary:0.45 };      // skins are never in chests (shop only), so free play stays slow
 const COSMETIC_PITY = 40;
@@ -4444,7 +4444,7 @@ function resolveDrop(id, tier){
     tier = DROP_TIERS.includes(tier) ? tier : pend.tier;
     const drop = {
         id, tier,
-        coins:Math.round(pend.base.coins * DROP_COIN_MULT[tier]),
+        coins: tier === 'legendary' ? 50 * Math.round((10000 + Math.random() * 10000) / 50) : Math.round(pend.base.coins * DROP_COIN_MULT[tier]),      // a legendary chest pays 10,000 to 20,000 coins
         xp:Math.round(pend.base.xp * DROP_XP_MULT[tier]),
         passPoints:pend.base.passPoints,
         cosmetic:null,
