@@ -32,3 +32,6 @@
 .m-tools { position: relative; z-index: 3; display: flex; justify-content: flex-end; align-items: center; gap: 10px; width: min(344px, 94%); align-self: center; }
 .m-tools .m-hanger { position: relative; top: auto; right: auto; }
 .m-tools .m-arenatest { position: relative; top: auto; right: auto; }
+
+/* the arena has no title in the menu: just the trophies and the road to the next arena */
+.ab-kick, .ab-name { display: none; }

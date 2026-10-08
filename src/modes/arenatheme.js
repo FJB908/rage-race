@@ -111,10 +111,24 @@
     // K[kind] = { w, h, float: hangs in the sky instead of standing on the ground, rot: spins (rad/s), draw, glow: an extra picture drawn with a pulse }.
     const K = {
         cloud: { w: 230, h: 90, float: 1, draw(c, P) { c.fillStyle = lg(c, 0, -80, 0, 0, [[0, P.cl], [1, mixc(P.cl, P.col, .45)]]); for (const q of [[-62, -22, 26], [-30, -42, 36], [10, -50, 40], [52, -34, 32], [84, -20, 22], [0, -22, 34]]) disc(c, q[0], q[1], q[2]); rrect(c, -90, -24, 190, 24, 12); } },
+        // a little propeller plane (v mirrors it) and a hot-air balloon: they only drift through the Playground's sky
+        plane: { w: 130, h: 54, float: 1, draw(c, P) { if (P.v) c.scale(-1, 1); c.translate(0, -26);
+            c.fillStyle = '#e9eef7'; c.beginPath(); c.ellipse(0, 0, 44, 12, 0, 0, TAU); c.fill();                                           // body
+            c.fillStyle = '#ff5d6c'; c.beginPath(); c.moveTo(-44, -2); c.quadraticCurveTo(-58, -10, -56, -22); c.lineTo(-40, -8); c.closePath(); c.fill();   // tail fin
+            c.fillStyle = '#c9d3e6'; c.beginPath(); c.moveTo(-36, 2); c.lineTo(-52, 8); c.lineTo(-30, 6); c.closePath(); c.fill();
+            c.fillStyle = '#ff5d6c'; c.fillRect(-30, 3, 62, 3);                                                                           // stripe
+            c.fillStyle = '#9fd8ff'; c.beginPath(); c.ellipse(14, -5, 11, 5.5, 0, Math.PI, 0); c.fill();                                   // cockpit
+            c.fillStyle = '#dfe6f3'; c.beginPath(); c.moveTo(-6, 4); c.lineTo(10, 4); c.lineTo(-4, 20); c.lineTo(-16, 20); c.closePath(); c.fill();   // wing
+            c.fillStyle = '#7c8aa6'; c.fillRect(44, -3, 5, 6); c.fillStyle = 'rgba(60,70,90,.55)'; c.beginPath(); c.ellipse(50, 0, 3, 17, 0, 0, TAU); c.fill(); } },
+        hotair: { w: 74, h: 118, float: 1, draw(c, P) { c.translate(0, -8);
+            c.strokeStyle = 'rgba(70,50,30,.7)'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(-14, -42); c.lineTo(-7, -14); c.moveTo(14, -42); c.lineTo(7, -14); c.stroke();    // ropes
+            c.fillStyle = '#a9743f'; rrect(c, -9, -14, 18, 12, 3);                                                                          // basket
+            const cols = ['#ff6b6b', '#ffd23f', '#4cc9f0', '#ffd23f', '#ff6b6b'];
+            for (let q = 0; q < 5; q++) { const x0 = -30 + q * 12, x1 = x0 + 12; c.fillStyle = cols[q]; c.beginPath(); c.moveTo(0, -112 + (q === 2 ? 0 : 3)); c.bezierCurveTo(x0 * 1.5, -100, x0 * 1.1, -60, x0 * .5, -42); c.lineTo(x1 * .5, -42); c.bezierCurveTo(x1 * 1.1, -60, x1 * 1.5, -100, 0, -112); c.closePath(); c.fill(); }
+            c.fillStyle = 'rgba(255,255,255,.22)'; c.beginPath(); c.ellipse(-12, -78, 6, 22, .25, 0, TAU); c.fill(); } },
         balloon: { w: 70, h: 150, float: 1, draw(c, P) { const col = P.v ? '#ff5f7a' : '#ffc928'; c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(0, -4); c.quadraticCurveTo(-8, -30, 0, -58); c.stroke(); c.fillStyle = rg(c, -9, -92, 4, 38, [[0, mixc(col, '#fff', .55)], [1, col]]); c.beginPath(); c.ellipse(0, -90, 26, 32, 0, 0, TAU); c.fill(); poly(c, [[-5, -58], [5, -58], [0, -63]]); c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(-9, -103, 6, 10, -.5, 0, TAU); c.fill(); } },
         kite: { w: 90, h: 150, float: 1, draw(c, P) { c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, -60); c.bezierCurveTo(-20, -30, 20, -14, 0, 0); c.stroke(); c.fillStyle = P.acc; poly(c, [[0, -140], [28, -100], [0, -62], [-28, -100]]); c.fillStyle = 'rgba(255,255,255,.35)'; poly(c, [[0, -140], [28, -100], [0, -100]]); c.strokeStyle = P.lt; c.lineWidth = 3; c.beginPath(); c.moveTo(0, -62); c.quadraticCurveTo(14, -48, 8, -36); c.quadraticCurveTo(-4, -26, 6, -16); c.stroke(); } },
         windmill: { w: 170, h: 190, draw(c, P) { c.fillStyle = lg(c, -20, 0, 20, 0, [[0, P.lt], [1, P.dk]]); poly(c, [[-22, 0], [-10, -110], [10, -110], [22, 0]]); c.fillStyle = P.dk; poly(c, [[-16, -108], [0, -128], [16, -108]]); c.save(); c.translate(0, -108); c.rotate(.35 + P.v * .5); c.fillStyle = P.lt; for (let i = 0; i < 4; i++) { c.rotate(Math.PI / 2); rrect(c, -4, -70, 8, 70, 3); rrect(c, 4, -70, 18, 30, 3); } c.restore(); c.fillStyle = P.dk; disc(c, 0, -108, 6); } },
-        rainbow: { w: 400, h: 200, float: 1, draw(c, P) { const cols = ['#ff6b6b', '#ffb454', '#ffe27a', '#7ee08f', '#6bb7ff', '#a98bff']; c.lineWidth = 11; for (let i = 0; i < cols.length; i++) { c.strokeStyle = cols[i]; c.globalAlpha = .55; c.beginPath(); c.arc(0, -4, 180 - i * 11, Math.PI, 0); c.stroke(); } c.globalAlpha = 1; } },
         lamp: { w: 160, h: 230, draw(c, P) { c.fillStyle = P.dk; rrect(c, -5, -200, 10, 200, 3); rrect(c, -16, -10, 32, 10, 3); c.save(); c.translate(0, -200); c.rotate(-.06); rrect(c, 0, -5, 52, 8, 4); c.fillStyle = P.col; rrect(c, 40, -3, 30, 11, 5); c.restore(); c.fillStyle = mixc(P.lit, P.col, .3); rrect(c, 44, -192, 22, 6, 3); },
                 glow(c, P) { c.fillStyle = lg(c, 0, -196, 0, 0, [[0, 'rgba(255,230,168,.34)'], [1, 'rgba(255,230,168,0)']]); poly(c, [[44, -194], [66, -194], [112, 0], [0, 0]]); c.fillStyle = rg(c, 55, -194, 2, 34, [[0, 'rgba(255,240,200,.9)'], [1, 'rgba(255,230,168,0)']]); disc(c, 55, -194, 34); } },
         car: { w: 190, h: 70, draw(c, P) { c.fillStyle = lg(c, 0, -58, 0, 0, [[0, P.lt], [1, P.dk]]); c.beginPath(); c.moveTo(-84, -12); c.lineTo(-80, -30); c.quadraticCurveTo(-50, -34, -38, -52); c.lineTo(30, -52); c.quadraticCurveTo(50, -34, 78, -30); c.lineTo(86, -14); c.lineTo(86, -8); c.lineTo(-84, -8); c.closePath(); c.fill(); c.fillStyle = mixc(P.dk, '#000', .3); c.beginPath(); c.moveTo(-30, -46); c.lineTo(-16, -46); c.lineTo(-16, -32); c.lineTo(-42, -32); c.closePath(); c.fill(); c.beginPath(); c.moveTo(-6, -46); c.lineTo(26, -46); c.quadraticCurveTo(40, -36, 48, -32); c.lineTo(-6, -32); c.closePath(); c.fill(); c.fillStyle = '#10131c'; disc(c, -48, -8, 14); disc(c, 52, -8, 14); c.fillStyle = P.lt; disc(c, -48, -8, 6); disc(c, 52, -8, 6); c.fillStyle = mixc(P.lit, P.col, .35); rrect(c, 80, -26, 8, 7, 3); } },
@@ -205,7 +219,7 @@
         air = []; for (let a = 0; a < 26; a++) air.push({ x: r(), y: r(), s: .5 + r(), v: .4 + r() * .8 });
         flash = 0; flashAt = 3 + r() * 5; lastT = 0; bgKey = ''; mKey = '';
         for (const [list, nm] of [[cur.kinds.far, 'far'], [cur.kinds.mid, 'mid']]) for (const k of new Set(list)) for (const v of [0, 1]) { try { const sp = sprite(idx, k, nm, v); if (sp.def.glow) sprite(idx, k, nm, v, true); } catch (e) {} }      // painted now, during the countdown, never in the middle of the race
-        try { sprite(idx, 'balloon', 'mid', 0); sprite(idx, 'balloon', 'mid', 1); } catch (e) {}
+        try { sprite(idx, 'balloon', 'mid', 0); sprite(idx, 'balloon', 'mid', 1); if (idx === 0) for (const k of ['plane', 'hotair', 'cloud']) { sprite(idx, k, 'mid', 0); sprite(idx, k, 'mid', 1); } } catch (e) {}
         banner(cur.name, idx);
     }
     function clear() { restore(); cur = null; idx = -1; poolSet = null; rulesNow = null; if (tagEl) tagEl.classList.remove('on'); }
@@ -253,6 +267,23 @@
         }
         c.globalAlpha = 1;
     }
+    // THE PLAYGROUND'S SKY: clouds drift past every few seconds (slow and quick ones), now and then a little plane flies by with a thin trail, and once in a while a hot-air balloon
+    // floats across, very slowly. All of them in screen space, at most three clouds, one plane and one balloon at a time.
+    let fly = [], nextFly = { cloud: 1.5, plane: 7, hot: 16 };
+    function flyers(c, i, W, H, dt) {
+        const R = Math.random, cnt = k => fly.reduce((n, f) => n + (f.k === k ? 1 : 0), 0);
+        for (const k in nextFly) { nextFly[k] -= dt; if (nextFly[k] > 0) continue;
+            if (k === 'cloud') { nextFly.cloud = 4 + R() * 6; if (cnt('cloud') < 3) { const d = R() < .5 ? 1 : -1, sc = .55 + R() * .8; fly.push({ k: 'cloud', d, sc, x: d > 0 ? -150 * sc : W + 150 * sc, y: H * (.07 + R() * .5), v: 9 + R() * 20, a: .35 + R() * .3 }); } }
+            else if (k === 'plane') { nextFly.plane = 24 + R() * 26; if (!cnt('plane')) { const d = R() < .5 ? 1 : -1; fly.push({ k: 'plane', d, sc: .8, x: d > 0 ? -90 : W + 90, y: H * (.1 + R() * .3), v: 85 + R() * 25, a: 1, ph: R() * 6 }); } }
+            else { nextFly.hot = 50 + R() * 40; if (!cnt('hot')) { const d = R() < .5 ? 1 : -1; fly.push({ k: 'hot', d, sc: .85, x: d > 0 ? -60 : W + 60, y: H * (.16 + R() * .3), v: 11 + R() * 4, a: 1, ph: R() * 6 }); } } }
+        for (let q = fly.length - 1; q >= 0; q--) {
+            const f = fly[q]; f.x += f.d * f.v * dt; if ((f.d > 0 && f.x > W + 240) || (f.d < 0 && f.x < -240)) { fly.splice(q, 1); continue; }
+            const kind = f.k === 'hot' ? 'hotair' : f.k, sp = sprite(i, kind, 'mid', f.d < 0 ? 1 : 0), bob = f.k === 'cloud' ? 0 : Math.sin(performance.now() / (f.k === 'plane' ? 900 : 1800) + f.ph) * (f.k === 'plane' ? 3 : 5);
+            if (f.k === 'plane') { c.globalAlpha = .5; const tl = 150, g = lg(c, f.x, 0, f.x - f.d * tl, 0, [[0, 'rgba(255,255,255,.55)'], [1, 'rgba(255,255,255,0)']]); c.fillStyle = g; c.fillRect(Math.min(f.x, f.x - f.d * tl), f.y + bob - 24, tl, 3); }
+            put(c, sp, f.x, f.y + bob + sp.oy * f.sc, f.sc, f.a, 0);
+        }
+        c.globalAlpha = 1;
+    }
     function specks(c, th, list, W, H, now, dt) {
         const kind = th.air[0], col = th.air[1], dens = th.air[2]; c.fillStyle = col; c.strokeStyle = col;
         for (let i = 0; i < list.length; i++) {
@@ -271,20 +302,6 @@
         }
         c.globalAlpha = 1;
     }
-    // A RAINBOW is wide: one big arch over the whole width of the screen, its ends running off both sides (never a short piece that stops in mid air). It is painted once
-    // per screen size into its own picture; in a race it shows up now and then and fades in and out, on the home screen of the Playground it just hangs there.
-    let rbC = null, rbKey = '';
-    function rainbowPic(W, H, cyK, RK) {
-        const key = W + 'x' + H + '|' + cyK + '|' + RK; if (rbC && rbKey === key) return rbC; rbKey = key;
-        rbC = document.createElement('canvas'); rbC.width = Math.ceil(W / 2); rbC.height = Math.ceil(H / 2); const x = rbC.getContext('2d'); x.scale(.5, .5);
-        const cols = ['#ff5d5d', '#ff9e4a', '#ffe45e', '#6fe08a', '#4fb6ff', '#6b78ff', '#b06bff'], R = W * RK, bw = R * .045, cx = W / 2, cy = H * cyK;
-        x.lineWidth = bw + 1; x.lineCap = 'butt';
-        cols.forEach((col, k) => { x.strokeStyle = col; x.beginPath(); x.arc(cx, cy, R - k * bw, Math.PI, 0); x.stroke(); });
-        x.globalCompositeOperation = 'destination-in';                                                    // the two edges of the band fade softly, like real light
-        x.fillStyle = rg(x, cx, cy, R - 7 * bw - 2, R + bw, [[0, 'rgba(0,0,0,0)'], [.12, 'rgba(0,0,0,.85)'], [.5, '#000'], [.88, 'rgba(0,0,0,.85)'], [1, 'rgba(0,0,0,0)']]); x.fillRect(0, 0, W, H);
-        return rbC;
-    }
-    function drawRainbow(c, W, H, a) { if (a > .01) { c.globalAlpha = a; c.drawImage(rainbowPic(W, H, .86, .82), 0, 0, W, H); c.globalAlpha = 1; } }
     // The still parts of the background (sky, sun and its glow, the two mist bands, the vignette) are painted into small pictures and only blitted each frame, so a frame costs
     // a few drawImage calls and no gradient fills. The sky picture is repainted when the climb has moved the colour by a hair.
     let bgC = null, bgKey = '', m1C = null, m2C = null, mKey = '';
@@ -312,7 +329,7 @@
         const br = !!cur.bright;                                                          // a bright arena (the Playground): light sky, fuller colours, less haze, a warm sun glow, a very light vignette
         statics(c, W, H, prog_, br); c.drawImage(bgC, 0, 0, W, H);
         const climbed = (START_Y - VH * 0.62) - camY, base = H * 0.99;
-        if (cur.bright) { const ph = ((performance.now() / 1000) + 22) % 70, a = ph < 18 ? Math.sin(ph / 18 * Math.PI) : 0; drawRainbow(c, W, H, Math.min(1, a * 1.4) * .5); }       // every 70 s a rainbow stays for 18 s
+        if (idx === 0) flyers(c, idx, W, H, Math.min(dt, .1));                           // the Playground: clouds drift by, now and then a little plane or a hot-air balloon (behind the scenery)
         drawLayer(c, far, 'far', W, H, base, climbed, 0.09, br ? 0.62 : 0.5, 1.2, now, cur);
         c.drawImage(m1C, 0, 0, W, H);
         drawLayer(c, mid, 'mid', W, H, base, climbed, 0.2, br ? 0.95 : 0.62, 0.92, now, cur);
@@ -423,7 +440,6 @@
     function paintWorld(cv, i, w, h) {
         paintScene(cv, i, w, h, Object.assign({ prog: .2, props: 1.7, alpha: 1.15, mist: .9, horizon: .62, ground: false, scale: .62, orbDy: .17 }, CALM[i] || {}));
         const c = cv.getContext('2d'), dpr = cv.width / w; c.setTransform(dpr, 0, 0, dpr, 0, 0);
-        if (i === 0) { c.globalAlpha = .75; c.drawImage(rainbowPic(w, h * .9, .86, .84), 0, h * .08, w, h * .9); c.globalAlpha = 1; }
         if (i === 8) bigVolcano(c, w, h);
         if (i === 9) {                                                                  // Summit: one dark storm cloud, and the lightning really comes out of it
             const keep = idx; idx = i;
@@ -490,7 +506,7 @@
         c.setTransform(1, 0, 0, 1, 0, 0);
     }
     const airMake = (i, n) => { const r = rng(77 + i * 5); return Array.from({ length: n || 30 }, () => ({ x: r(), y: r(), s: .5 + r(), v: .4 + r() * .8 })); };
-    const airStep = (c, i, list, w, h, now, dt) => { specks(c, T[i], list, w, h, now, dt); balloons(c, i, w, h, Math.min(dt, .1)); };
+    const airStep = (c, i, list, w, h, now, dt) => { if (i === 0) flyers(c, i, w, h, Math.min(dt, .1)); specks(c, T[i], list, w, h, now, dt); balloons(c, i, w, h, Math.min(dt, .1)); };
 
     /* ------------------------------------------------------------------------------ power-ups ---- */
     // called by the item roll: removes what the arena does not have, switches the Gust on where it exists, and shifts a few odds

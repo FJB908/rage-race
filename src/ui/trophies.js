@@ -181,7 +181,7 @@
     isleCv.addEventListener('click', () => { if (window.SFX) SFX.play('count'); open(); });
     let worldKey = '', isleKey = '', airList = [], airAi = -1, shown = null, anim = 0;
     const viewArena = ai => (window.ArenaTheme && ArenaTheme.testGet() >= 0) ? ArenaTheme.testGet() : ai;                // the test switch (arenatest.js) previews its arena
-    function placeIsle(ih) { if (row && ih) isleCv.style.top = Math.round(row.offsetHeight - 40 - ih * .4) + 'px'; }      // the island's top surface sits under the player's feet
+    function placeIsle(ih) { if (ih) { isleCv.style.top = 'auto'; isleCv.style.bottom = Math.round(40 - ih * .6) + 'px'; } }      // the island's top surface sits under the player's feet; measured from the bottom, so it is right the moment the home screen shows (no jump above the player)
     function paintWorld(ai) {
         if (!window.ArenaTheme || !startEl) return; ai = viewArena(ai);
         const w = startEl.clientWidth, h = startEl.clientHeight; if (w < 40 || h < 40) return;
