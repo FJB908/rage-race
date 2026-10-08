@@ -134,3 +134,6 @@ To check the numbers I ran a headless simulation: a bot in 3rd place gets one it
 | Jetpack with 3 jumps *per flight* (first try) | +1,489 px (+10) | far too strong: now 3 charges in total |
 
 Planned and still not built: Glider, Grapple, Mirror, Snowball, Swap, Lightning.
+
+## How the next power-up is chosen (spread)
+The odds come from your place in the race, the trophy pool and the per-arena boosts. On top of that the **last three power-ups you got count against you**: the newest one is rolled at 12% of its normal odds, the one before at 35%, the one before that at 60% (`rollItem`, `p.itemHist`). So you cycle through the pool instead of seeing the same few. Measured with the Playground pool: the same power-up twice in a row 2 to 6% of the time (it was 12%), and 3.3 to 3.7 different ones in every four.

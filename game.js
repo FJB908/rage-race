@@ -577,11 +577,16 @@ function rollItem(p){
         ufo:    ufoW,
     };
     if (window.ArenaTheme && gameMode === 'race') ArenaTheme.shape(w, f, others, !isLeader);       // the arena's power-up pool (some arrive, some leave) and a few shifted odds
-    if (p.lastItem && w[p.lastItem] > 0) w[p.lastItem] *= 0.2;      // seldom the same item twice in a row: it spreads out
+    // a good spread: the last 3 items you got count against you, the newest most (its odds drop to 12%, then 35%, then 60%), so you cycle through the pool instead of seeing the same few over and over
+    const hist = p.itemHist || (p.itemHist = []), RECENT = [0.12, 0.35, 0.6];
+    for (let i = 0; i < hist.length; i++) { const k = hist[hist.length - 1 - i]; if (w[k] > 0) w[k] *= RECENT[i]; }
     let sum = 0; for (const k in w) sum += w[k];
-    let r = Math.random()*sum;
-    for (const k in w){ r -= w[k]; if (r <= 0){ p.lastItem = k; return k; } }
-    p.lastItem = 'bounce'; return 'bounce';
+    let r = Math.random()*sum, pick = null;
+    for (const k in w){ if (w[k] <= 0) continue; r -= w[k]; if (r <= 0){ pick = k; break; } }
+    if (!pick) for (const k in w) if (w[k] > 0) pick = k;
+    if (!pick) pick = 'bounce';
+    hist.push(pick); if (hist.length > 3) hist.shift();
+    p.lastItem = pick; return pick;
 }
 
 function updateItemBoxes(dt){
@@ -2186,7 +2191,8 @@ function draw() {
         let dx=sx-cx, dy=sy-cy; const d=Math.hypot(dx,dy);
         if (d>14){
             if (d>MAX_DRAG){ dx=dx/d*MAX_DRAG; dy=dy/d*MAX_DRAG; }
-            const col = lp.charged ? 'rgba(53,224,200,0.85)' : lp.chainT>0 ? 'rgba(255,140,160,0.7)' : 'rgba(255,255,255,0.7)';
+            const lightBg = window.ArenaTheme && gameMode === 'race' && ArenaTheme.light();      // a light sky (Playground, Mountain) gets a dark dotted line, every other background a light one
+            const col = lp.charged ? (lightBg ? 'rgba(0,128,112,0.95)' : 'rgba(53,224,200,0.85)') : lp.chainT>0 ? (lightBg ? 'rgba(200,40,80,0.9)' : 'rgba(255,140,160,0.7)') : (lightBg ? 'rgba(12,24,52,0.82)' : 'rgba(255,255,255,0.7)');
             if (window.PU && PU.preview(ctx, lp, dx, dy)){ /* the cannon drew its own arc */ }
             else if ((gameMode === 'parkour' || gameMode === 'level') && !(DIMENSIONS[curDim] && DIMENSIONS[curDim].tutorial)) {      // the tutorial teaches with the normal dotted line
                 // Parkour rules: only direction and power, never a hint of where you'll land.

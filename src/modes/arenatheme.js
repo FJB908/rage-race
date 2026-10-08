@@ -15,8 +15,8 @@
 
     /* ------------------------------------------------------------------------ the ten arenas ---- */
     const T = [
-        { name: 'Playground', tag: 'Learn the jump', c: '#35e0c8', sky: [['#3b8ee3', '#a9defc'], ['#2a73cf', '#86c9f5']], orb: { x: .78, y: .16, r: 46, c: '#fff6c9' },
-          far: '#8fcbf3', mid: '#7ab9ec', lit: '#ffffff', acc: '#ffd166', cloud: '#ffffff', mist: '#d4f0ff', ground: '#7fd18a',
+        { name: 'Playground', tag: 'Learn the jump', c: '#35e0c8', bright: true, light: true, sky: [['#2f94f4', '#c4ecff'], ['#2380e2', '#98d6ff']], orb: { x: .78, y: .16, r: 48, c: '#fff4b8' },
+          far: '#a8dbff', mid: '#8ecbff', lit: '#ffffff', acc: '#ffd23f', cloud: '#ffffff', mist: '#eaf7ff', ground: '#7fd18a',
           kinds: { far: ['cloud', 'rainbow', 'cloud'], mid: ['balloon', 'kite', 'windmill', 'cloud'] },
           plat: '#4ade80', air: ['dust', '#ffffff', 0.5], grid: 'rgba(255,255,255,0.10)', items: {}, bias: {} },
         { name: 'Parking Lot', tag: 'Painted lines, flickering lamps', c: '#5bb8ff', sky: [['#151925', '#39405a'], ['#0e111a', '#262c40']], orb: null,
@@ -39,7 +39,7 @@
           far: '#22534b', mid: '#1c443e', lit: '#c7fbe9', acc: '#a5d86a', mist: '#41968a', ground: '#102925',
           kinds: { far: ['arch', 'tilepillar', 'arch'], mid: ['hanglamp', 'roundel', 'tilepillar', 'hanglamp'] },
           plat: '#a5d86a', air: ['dust', '#a8f0d8', 0.3], grid: 'rgba(120,255,214,0.05)', items: { bomb: ['SHORT CIRCUIT!', '#b5ff5e'], quake: ['TRAIN RUMBLE!', '#ff5470'] }, bias: { shield: 1.3, bomb: 1.15 } },
-        { name: 'Mountain', tag: 'Thin air, thick snow', c: '#b3a9ff', sky: [['#2f5f9c', '#d4e9f9'], ['#1f4478', '#9bc3e6']], orb: { x: .2, y: .2, r: 40, c: '#fffbe0' },
+        { name: 'Mountain', tag: 'Thin air, thick snow', c: '#b3a9ff', light: true, sky: [['#2f5f9c', '#d4e9f9'], ['#1f4478', '#9bc3e6']], orb: { x: .2, y: .2, r: 40, c: '#fffbe0' },
           far: '#a9c9e6', mid: '#86abd0', lit: '#ffffff', acc: '#ffffff', cloud: '#f4faff', mist: '#eaf5ff', ground: '#c9dcef',
           kinds: { far: ['ridge', 'peak', 'cloud'], mid: ['peak', 'pines', 'cloud', 'pines'] },
           plat: '#8aa0b8', air: ['snow', '#ffffff', 0.7], grid: 'rgba(255,255,255,0.10)', items: { bomb: ['SNOWBALL!', '#bfe6ff'], quake: ['AVALANCHE!', '#e8f6ff'] }, bias: { giant: 1.4 } },
@@ -63,14 +63,13 @@
     // `wind` is the Gust: it was out of the game and comes back from the Rooftop on.
     // Planned, not built yet (they will be slotted in here when they exist): Glider 900, Grapple 2400, Mirror 3200 (Shield leaves), Snowball 4500, Swap 7400, Lightning 9400 (Earthquake leaves).
     const UNLOCKS = [
-        { at: 0,    add: ['rocket', 'bounce', 'giant'] },                 // Playground: three simple ones
-        { at: 150,  add: ['dj'] },
-        { at: 300,  add: ['nitro'] },                                     // Parking Lot
-        { at: 550,  add: ['shield'] },                                    // there is not much to block before the first attacks
+        { at: 0,    add: ['rocket', 'bounce', 'giant', 'shield'] },       // Playground: four simple ones (the Shield stops the Giant's bump)
+        { at: 100,  add: ['nitro'] },
+        { at: 200,  add: ['dj'] },
+        { at: 400,  add: ['net'] },                                       // Parking Lot
         { at: 750,  add: ['wind'] },                                      // Rooftop: the first attack
         { at: 1050, remove: ['giant'] },
         { at: 1350, add: ['bomb'] },                                      // Harbour
-        { at: 1750, add: ['net'] },
         { at: 1950, remove: ['bounce'] },                                 // the springy helper goes: you read the jump yourself
         { at: 2100, add: ['chain'] },                                     // Factory
         { at: 2550, remove: ['nitro'] },
@@ -98,7 +97,7 @@
     const PARTY_POOL = ['bounce', 'rocket', 'giant', 'shield', 'dj', 'bomb', 'chain', 'quake', 'ufo', 'cannon'];           // the classic set: no Gust, none of the newer ones
 
     /* ------------------------------------------------------------------------------- colours ---- */
-    const hex = h => { if (h[0] !== '#') return h.match(/[\d.]+/g).slice(0, 3).map(Number); const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };      // '#rrggbb' or 'rgb(r,g,b)'
+    const hex = h => { if (h[0] !== '#') return h.match(/[\d.]+/g).slice(0, 3).map(Number); if (h.length === 4) h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3]; const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };      // '#rrggbb', '#rgb' or 'rgb(r,g,b)'
     const mixc = (a, b, k) => { const A = hex(a), B = hex(b); return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * k)).join(',') + ')'; };
     const rng = s => () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
     const lg = (c, x0, y0, x1, y1, st) => { const g = c.createLinearGradient(x0, y0, x1, y1); st.forEach(s => g.addColorStop(s[0], s[1])); return g; };
@@ -112,7 +111,7 @@
     // K[kind] = { w, h, float: hangs in the sky instead of standing on the ground, rot: spins (rad/s), draw, glow: an extra picture drawn with a pulse }.
     const K = {
         cloud: { w: 230, h: 90, float: 1, draw(c, P) { c.fillStyle = lg(c, 0, -80, 0, 0, [[0, P.cl], [1, mixc(P.cl, P.col, .45)]]); for (const q of [[-62, -22, 26], [-30, -42, 36], [10, -50, 40], [52, -34, 32], [84, -20, 22], [0, -22, 34]]) disc(c, q[0], q[1], q[2]); rrect(c, -90, -24, 190, 24, 12); } },
-        balloon: { w: 70, h: 150, float: 1, draw(c, P) { const col = [P.acc, '#ff7a8a', '#9fe8ff'][P.v ? 1 : 0]; c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(0, -4); c.quadraticCurveTo(-8, -30, 0, -58); c.stroke(); c.fillStyle = rg(c, -9, -92, 4, 38, [[0, mixc(col, '#fff', .45)], [1, col]]); c.beginPath(); c.ellipse(0, -90, 26, 32, 0, 0, TAU); c.fill(); poly(c, [[-5, -58], [5, -58], [0, -63]]); } },
+        balloon: { w: 70, h: 150, float: 1, draw(c, P) { const col = P.v ? '#ff5f7a' : '#ffc928'; c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(0, -4); c.quadraticCurveTo(-8, -30, 0, -58); c.stroke(); c.fillStyle = rg(c, -9, -92, 4, 38, [[0, mixc(col, '#fff', .55)], [1, col]]); c.beginPath(); c.ellipse(0, -90, 26, 32, 0, 0, TAU); c.fill(); poly(c, [[-5, -58], [5, -58], [0, -63]]); c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(-9, -103, 6, 10, -.5, 0, TAU); c.fill(); } },
         kite: { w: 90, h: 150, float: 1, draw(c, P) { c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, -60); c.bezierCurveTo(-20, -30, 20, -14, 0, 0); c.stroke(); c.fillStyle = P.acc; poly(c, [[0, -140], [28, -100], [0, -62], [-28, -100]]); c.fillStyle = 'rgba(255,255,255,.35)'; poly(c, [[0, -140], [28, -100], [0, -100]]); c.strokeStyle = P.lt; c.lineWidth = 3; c.beginPath(); c.moveTo(0, -62); c.quadraticCurveTo(14, -48, 8, -36); c.quadraticCurveTo(-4, -26, 6, -16); c.stroke(); } },
         windmill: { w: 170, h: 190, draw(c, P) { c.fillStyle = lg(c, -20, 0, 20, 0, [[0, P.lt], [1, P.dk]]); poly(c, [[-22, 0], [-10, -110], [10, -110], [22, 0]]); c.fillStyle = P.dk; poly(c, [[-16, -108], [0, -128], [16, -108]]); c.save(); c.translate(0, -108); c.rotate(.35 + P.v * .5); c.fillStyle = P.lt; for (let i = 0; i < 4; i++) { c.rotate(Math.PI / 2); rrect(c, -4, -70, 8, 70, 3); rrect(c, 4, -70, 18, 30, 3); } c.restore(); c.fillStyle = P.dk; disc(c, 0, -108, 6); } },
         rainbow: { w: 400, h: 200, float: 1, draw(c, P) { const cols = ['#ff6b6b', '#ffb454', '#ffe27a', '#7ee08f', '#6bb7ff', '#a98bff']; c.lineWidth = 11; for (let i = 0; i < cols.length; i++) { c.strokeStyle = cols[i]; c.globalAlpha = .55; c.beginPath(); c.arc(0, -4, 180 - i * 11, Math.PI, 0); c.stroke(); } c.globalAlpha = 1; } },
@@ -219,10 +218,12 @@
     function orbDraw(c, W, H, th, k, dy) {
         const o = th.orb; if (!o) return; const x = o.x * W, y = (o.y + (dy || 0)) * H, R = o.r * (k || 1);
         c.fillStyle = rg(c, x, y, R * .5, R * 4.2, [[0, mixc(o.c, '#ffffff', 0).replace('rgb', 'rgba').replace(')', ',.3)')], [1, 'rgba(255,255,255,0)']]); c.fillRect(x - R * 4.2, y - R * 4.2, R * 8.4, R * 8.4);
-        c.fillStyle = o.c; c.globalAlpha = .92; disc(c, x, y, R); c.globalAlpha = 1;
+        c.fillStyle = th.bright ? rg(c, x - R * .25, y - R * .25, R * .1, R, [[0, '#ffffff'], [.55, o.c], [1, '#ffd96b']]) : o.c; c.globalAlpha = th.bright ? 1 : .92; disc(c, x, y, R); c.globalAlpha = 1;
     }
     function mistFill(c, W, H, th, y0, y1, a) { c.fillStyle = lg(c, 0, y0, 0, y1, [[0, mixc(th.mist, th.mist, 0).replace('rgb', 'rgba').replace(')', ',0)')], [1, mixc(th.mist, th.mist, 0).replace('rgb', 'rgba').replace(')', ',' + a + ')')]]); c.fillRect(0, y0, W, y1 - y0); }
-    function vignette(c, W, H) {
+    let vigL = null;
+    function vignette(c, W, H, light) {
+        if (light) { if (!vigL) { vigL = document.createElement('canvas'); vigL.width = vigL.height = 128; const x = vigL.getContext('2d'); x.fillStyle = rg(x, 64, 64, 40, 92, [[0, 'rgba(10,40,90,0)'], [1, 'rgba(10,40,90,.12)']]); x.fillRect(0, 0, 128, 128); } c.drawImage(vigL, 0, 0, W, H); return; }
         if (!vig) { vig = document.createElement('canvas'); vig.width = vig.height = 128; const x = vig.getContext('2d'); x.fillStyle = rg(x, 64, 64, 30, 90, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,.34)']]); x.fillRect(0, 0, 128, 128); }
         c.drawImage(vig, 0, 0, W, H);
     }
@@ -262,17 +263,19 @@
         c.save();
         skyFill(c, W, H, cur, prog_); orbDraw(c, W, H, cur);
         const climbed = (START_Y - VH * 0.62) - camY, base = H * 0.99;
-        drawLayer(c, far, 'far', W, H, base, climbed, 0.09, 0.5, 1.2, now, cur);
-        mistFill(c, W, H, cur, H * 0.2, H, 0.3);
-        drawLayer(c, mid, 'mid', W, H, base, climbed, 0.2, 0.62, 0.92, now, cur);
-        mistFill(c, W, H, cur, H * 0.5, H, 0.26);
+        const br = !!cur.bright;                                                          // a bright arena (the Playground): light sky, fuller colours, less haze, a warm sun glow, a very light vignette
+        if (br && cur.orb) { const ox = cur.orb.x * W, oy = cur.orb.y * H; c.fillStyle = rg(c, ox, oy, 10, H * .9, [[0, 'rgba(255,248,210,.55)'], [.35, 'rgba(255,248,210,.16)'], [1, 'rgba(255,248,210,0)']]); c.fillRect(0, 0, W, H); }
+        drawLayer(c, far, 'far', W, H, base, climbed, 0.09, br ? 0.62 : 0.5, 1.2, now, cur);
+        mistFill(c, W, H, cur, H * 0.2, H, br ? 0.14 : 0.3);
+        drawLayer(c, mid, 'mid', W, H, base, climbed, 0.2, br ? 0.95 : 0.62, 0.92, now, cur);
+        mistFill(c, W, H, cur, H * 0.5, H, br ? 0.1 : 0.26);
         specks(c, cur, air, W, H, now, dt);
         c.globalAlpha = 1;
         if (idx === 9) {                                                   // Summit: a cosmetic lightning flash now and then (it never touches the platforms)
             flashAt -= dt; if (flashAt <= 0) { flash = 1; flashAt = 4 + Math.random() * 7; }
             if (flash > 0) { c.fillStyle = 'rgba(255,255,230,' + 0.2 * flash + ')'; c.fillRect(0, 0, W, H); flash -= dt * 3.2; }
         }
-        vignette(c, W, H);
+        vignette(c, W, H, br);
         c.restore();
     }
 
@@ -394,6 +397,6 @@
     //   Playground: normal, boost, moving ledges.  Parking Lot: + crumbling.  Rooftop: + ice.  From the Harbour on: sealed ledges (ceilings) too.
     const LEDGES = ['boost', 'moving', 'fragile', 'ice'], LEDGE_COUNT = [2, 3, 4, 4], CEILINGS_FROM = 3;
     const rules = () => rulesNow;
-    window.ArenaTheme = { pick, set, clear, on, drawSky, shape, paintScene, paintWorld, paintIsland, airMake, airStep, rules, testGet, testSet, UNLOCKS, COLORS, poolAt, poolOfArena, grid: () => cur ? cur.grid : null, index: () => idx, THEMES: T, INFO, ORDER,
+    window.ArenaTheme = { pick, set, clear, on, drawSky, shape, paintScene, paintWorld, paintIsland, airMake, airStep, rules, testGet, testSet, UNLOCKS, COLORS, poolAt, poolOfArena, grid: () => cur ? cur.grid : null, light: () => !!(cur && cur.light), index: () => idx, THEMES: T, INFO, ORDER,
         name: i => T[i].name, color: i => T[i].c };
 })();

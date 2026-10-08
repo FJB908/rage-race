@@ -2,7 +2,7 @@
 
 **Built:** `src/modes/arenatheme.js` (look + power-up pool), `src/ui/arenas.js` (the Arenas screen) and the arena banner on the home screen (`src/ui/trophies.js`).
 
-- **Look** (Arena Race and Build Race; a party match always uses the Playground): a sky that shifts while you climb, a big sun or moon, two layers of far-away scenery that move slowly (parallax), mist between the layers, drifting specks and a soft vignette. The colours of the scenery are close to the sky, so it is clearly a background and never looks like something to stand on. Every piece of scenery is painted once into a small cached picture; a frame only does a few `drawImage` calls. The normal platforms get a colour that fits the arena; the special platforms (ice, moving, fragile, boost, safety) keep their meaning colours.
+- **Look** (Arena Race and Build Race; a party match always uses the Playground): a sky that shifts while you climb, a big sun or moon (the Playground is the bright one: a lighter sky, a warm glowing sun, clear colours, hardly any haze and a very light vignette, and its balloons are saturated yellow and pink), two layers of far-away scenery that move slowly (parallax), mist between the layers, drifting specks and a soft vignette. On a light sky (Playground, Mountain) the jump aim line is dark instead of white, so it never disappears into the background. The colours of the scenery are close to the sky, so it is clearly a background and never looks like something to stand on. Every piece of scenery is painted once into a small cached picture; a frame only does a few `drawImage` calls. The normal platforms get a colour that fits the arena; the special platforms (ice, moving, fragile, boost, safety) keep their meaning colours.
 - **Home screen = a little world**: the arena you are in fills the whole background of the home tab (sky, sun or moon, far scenery, mist, drifting air). Your player stands on a **floating island** that carries a few pieces of the arena (a windmill and balloon in the Playground, a lamp, car and cones in the Parking Lot, a lighthouse and containers in the Harbour, a volcano and floating rocks in the Volcano, ...) and bobs slowly. Each island has its own material (grass, asphalt with parking lines, roof tiles, planks, riveted steel, subway tiles with a safety strip, snow, glowing hex panels, cracked basalt, gold) and its own underside (rock, wooden posts, pipes, a thruster flame, lava drips). Above it, no card: just `ARENA 4`, the arena name in big letters, the trophy count and a thin bar with what is left to the next arena. Tap the title or the island to open the Arenas screen. All of it is painted once (`ArenaTheme.paintWorld`, `paintIsland`); only the air specks and the island's bob (CSS) move.
 - **Arenas screen = the Trophy Path** (tap the arena title or the island): one road that climbs like the game, the Playground at the bottom and the Summit at the top, and your own marker on it (a button brings you back when you scroll away). Along the road, in order of trophies: the power-ups that arrive (**NEW**) or leave (**LEAVES**) at a trophy count and the trophy rewards (tap a ready one to claim it, or CLAIM ALL at the top). Every arena starts at a painted gate with its name. No boxes or frames, almost no text: a trophy number, an icon and a name; tap a power-up for one line about it. Power-ups that arrive at the same trophy count share one stop. The data is `ArenaTheme.UNLOCKS` (trophies -> power-ups) plus `Trophies.road()` (the rewards).
 - **Name**: the main mode is now called **Arena Race** (it used to be Quick play).
@@ -14,18 +14,17 @@
 - **Test switch**: the small TEST button next to the hanger on the home screen picks the arena Arena Race and Build Race are played in (look, power-ups, ledges). It is temporary: delete `src/ui/arenatest.js`, `arenatest.css` and their tags in `index.html`.
 
 ## Power-ups unlock on trophies (Arena Race and Build Race)
-The pool you roll from depends on your **trophies** (it is not only per arena): a new power-up arrives at a trophy count and a few training wheels leave later. Parties keep the classic set (everything except the Gust). The Gust only hits players ahead of you. The table is `ArenaTheme.UNLOCKS` in `arenatheme.js`; the Arenas screen draws exactly that list.
+The pool you roll from depends on your **trophies** (it is not only per arena): a new power-up arrives at a trophy count and a few training wheels leave later. The Playground starts with a pool of four and has six by 200 trophies, so a new player does not see the same few every race. Parties keep the classic set (everything except the Gust). The Gust only hits players ahead of you. The table is `ArenaTheme.UNLOCKS` in `arenatheme.js`; the Arenas screen draws exactly that list.
 
 | Trophies | Arena | Arrives | Leaves |
 |---|---|---|---|
-| 0 | Playground | Rocket, Super Bounce, Giant | - |
-| 150 | Playground | Double Jump | - |
-| 300 | Parking Lot | Nitro | - |
-| 550 | Parking Lot | Shield | - |
+| 0 | Playground | Rocket, Super Bounce, Giant, Shield | - |
+| 100 | Playground | Nitro | - |
+| 200 | Playground | Double Jump | - |
+| 400 | Parking Lot | Safety Net | - |
 | 750 | Rooftop | Gust | - |
 | 1,050 | Rooftop | - | Giant |
 | 1,350 | Harbour | Stun Bomb | - |
-| 1,750 | Harbour | Safety Net | - |
 | 1,950 | Harbour | - | Super Bounce |
 | 2,100 | Factory | Chain | - |
 | 2,550 | Factory | - | Nitro |
