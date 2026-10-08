@@ -118,14 +118,14 @@
         // hero: the chest for finishing all three
         let h = '<div class="ms-hero' + (p.missions.bonus ? ' done' : all ? ' ready' : '') + '"><div class="ms-hero-chest" style="--c:#5b8def;--c2:#1f3f8f">' + chestArt('rare', 'mh') + '</div>' +
             '<div class="ms-hero-tx"><small>DAILY CHEST</small><b>' + (p.missions.bonus ? 'Opened today' : all ? 'Ready to open' : 'Finish all 3') + '</b><div class="ms-pips"><i class="' + (done > 0 ? 'on' : '') + '"></i><i class="' + (done > 1 ? 'on' : '') + '"></i><i class="' + (done > 2 ? 'on' : '') + '"></i></div></div>' +
-            (p.missions.bonus ? '<span class="ms-ok">' + icon('check') + '</span>' : all ? '<button class="ms-go big" data-t="b" type="button">OPEN</button>' : '') + '</div>';
+            (p.missions.bonus ? '<span class="ms-ok">DONE</span>' : all ? '<button class="ms-go big" data-t="b" type="button">OPEN</button>' : '') + '</div>';
         h += '<h2 class="scr-h2">Today</h2><div class="ms-list">';
         p.missions.list.forEach((m, i) => {
             const d = BY[m.id], pct = Math.round(100 * m.n / d.target), ready = !m.claimed && m.n >= d.target;
             h += '<div class="ms-row' + (m.claimed ? ' done' : ready ? ' ready' : '') + '"><span class="ms-ic">' + icon(EV_ICON[d.ev] || 'star') + '</span><div class="ms-main"><b>' + d.text + '</b>' +
                 '<div class="ms-bar"><i style="width:' + pct + '%"></i></div><small>' + Math.min(m.n, d.target).toLocaleString('en-US') + ' / ' + d.target.toLocaleString('en-US') + '</small></div>' +
                 '<div class="ms-side"><div class="ms-rw">' + R('coin', d.coins) + R('pass', d.pass) + '</div>' +
-                (m.claimed ? '<span class="ms-ok">' + icon('check') + '</span>' : ready ? '<button class="ms-go" data-t="m" data-i="' + i + '" type="button">CLAIM</button>' : '') + '</div></div>';
+                (m.claimed ? '<span class="ms-ok">DONE</span>' : ready ? '<button class="ms-go" data-t="m" data-i="' + i + '" type="button">CLAIM</button>' : '') + '</div></div>';
         });
         h += '</div>';
         const w = BY[p.weekly.id], wp = Math.round(100 * p.weekly.n / w.target), wr = !p.weekly.claimed && p.weekly.n >= w.target;
@@ -133,12 +133,12 @@
             '<div class="ms-week' + (p.weekly.claimed ? ' done' : wr ? ' ready' : '') + '"><div class="ms-week-chest" style="--c:#b3a9ff;--c2:#4f3fc4">' + chestArt('epic', 'mw') + '</div>' +
             '<div class="ms-main"><b>' + w.text + '</b><div class="ms-bar"><i style="width:' + wp + '%"></i></div><small>' + Math.min(p.weekly.n, w.target).toLocaleString('en-US') + ' / ' + w.target.toLocaleString('en-US') + '</small>' +
             '<div class="ms-rw row">' + R('gem', WEEK_REWARD.gems) + R('coin', WEEK_REWARD.coins) + '</div></div>' +
-            (p.weekly.claimed ? '<span class="ms-ok">' + icon('check') + '</span>' : wr ? '<button class="ms-go" data-t="w" type="button">CLAIM</button>' : '') + '</div>';
+            (p.weekly.claimed ? '<span class="ms-ok">DONE</span>' : wr ? '<button class="ms-go" data-t="w" type="button">CLAIM</button>' : '') + '</div>';
         body.innerHTML = h;
         body.querySelectorAll('.ms-go').forEach(b => b.onclick = () => claim([{ t: b.dataset.t, i: +b.dataset.i }]));
         const n = claimables(p).length;
         claimBtn.disabled = !n; claimBtn.classList.toggle('ready', !!n);
-        claimBtn.innerHTML = n ? 'CLAIM ALL <b>' + n + '</b>' : '<span>' + icon('check') + '</span> NOTHING TO CLAIM';
+        claimBtn.innerHTML = n ? 'CLAIM ALL <b>' + n + '</b>' : 'NOTHING TO CLAIM';
     }
     let busy = false;
     async function grant(c) {

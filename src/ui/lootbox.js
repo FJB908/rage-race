@@ -236,7 +236,7 @@
         o.el.appendChild(b); void b.offsetWidth; b.classList.add('show');
         b.onclick = () => {
             const q = prog(); q.finisher = f.id; saveProg(q); sfx('item'); buzz(25);
-            b.classList.add('done'); b.disabled = true; b.innerHTML = icon('check') + ' EQUIPPED';
+            b.classList.add('done'); b.disabled = true; b.innerHTML = 'EQUIPPED';
             try { refreshMenu(); } catch (e) {}
         };
     }
@@ -248,7 +248,7 @@
         o.el.appendChild(b); void b.offsetWidth; b.classList.add('show');
         b.onclick = () => {
             const q = prog(); q[slot] = cos.id; saveProg(q); sfx('item'); buzz(25);
-            b.classList.add('done'); b.disabled = true; b.innerHTML = icon('check') + ' EQUIPPED';
+            b.classList.add('done'); b.disabled = true; b.innerHTML = 'EQUIPPED';
             try { refreshMenu(); } catch (e) {}
         };
     }

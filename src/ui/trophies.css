@@ -23,3 +23,10 @@
 #m-arena-bg { position: absolute; left: 50%; top: 0; transform: translateX(-50%); z-index: -1; pointer-events: none; opacity: .55; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 24%, #000 66%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 24%, #000 66%, transparent 100%); }
 /* trophies after a race, in the result line */
 .tr-res { display: inline-flex; align-items: center; gap: 4px; font-weight: 900; vertical-align: middle; } .tr-res .ico { width: 20px; height: 20px; } .tr-res.up { color: #7cf29c; } .tr-res.down { color: #ff6b81; }
+/* the stage: the arena banner on top, under it the tools (test switch, hanger), the character in the middle of what is left */
+.m-tab .m-stage { justify-content: flex-start; gap: 8px; }
+.m-stage .pt-row { margin-top: auto; margin-bottom: auto; }
+.m-stage.party .m-trophy { margin-top: 46px; }
+.m-tools { position: relative; z-index: 3; display: flex; justify-content: flex-end; align-items: center; gap: 10px; width: min(344px, 94%); align-self: center; }
+.m-tools .m-hanger { position: relative; top: auto; right: auto; }
+.m-tools .m-arenatest { position: relative; top: auto; right: auto; }

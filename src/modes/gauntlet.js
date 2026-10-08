@@ -820,7 +820,7 @@
         const steps = STAGES.map((s, k) => {
             const cls = r.reached > k || (r.win) ? 'ok' : r.reached === k ? 'out' : 'na';
             const pl = (gt.places && gt.places[k]) || (cls === 'out' ? r.place : 0);
-            const num = pl ? '<em class="pl"><b>' + pl + '</b><u>' + ord(pl).replace(/^\d+/, '') + '</u></em>' : cls === 'ok' ? icon('check') : cls === 'out' ? '<em>X</em>' : icon('lock');
+            const num = pl ? '<em class="pl"><b>' + pl + '</b><u>' + ord(pl).replace(/^\d+/, '') + '</u></em>' : cls === 'ok' ? '<em>IN</em>' : cls === 'out' ? '<em>X</em>' : icon('lock');
             return '<div class="gt-rs ' + cls + (pl ? ' has' : '') + '"><span>' + (cls === 'na' ? icon('lock') : num) + '</span><small>' + s.name + '</small></div>';
         }).join('<i></i>');
         const winner = gt.winner;

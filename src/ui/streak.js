@@ -51,14 +51,14 @@
             const day = i + 1, claimed = day <= st.shown, isToday = st.canClaim && day === st.nextDay, milestone = r.t === 'prem' || r.t === 'gemchest' || r.t === 'item' || (r.t === 'drop' && r.tier === 'legendary');
             const tile = document.createElement('div');
             tile.className = 'sk-tile' + (claimed ? ' claimed' : '') + (isToday ? ' today' : '') + (milestone ? ' mile' : '') + (r.t === 'prem' ? ' prem' : '') + (r.t === 'gemchest' ? ' gemchest' : '');
-            tile.innerHTML = '<small>' + (isToday ? 'TODAY' : day) + '</small><div class="sk-art">' + art(r, i) + '</div>' + amount(r) + (claimed ? '<span class="sk-check">' + icon('check') + '</span>' : '');
+            tile.innerHTML = '<small>' + (isToday ? 'TODAY' : day) + '</small><div class="sk-art">' + art(r, i) + '</div>' + amount(r);
             grid.appendChild(tile);
             const cv = tile.querySelector('canvas');
             if (cv) { const it = itemOf(r), look = Object.assign({ skin:'classic', hat:'none', face:'none', trail:'none' }, { [r.cat]:r.id }); try { renderLook(cv, look, { scale:.24, cy:.6 }); } catch (e) {} }
         });
         const sv = el.querySelector('#sk-save'); sv.hidden = !st.canSave; sv.dataset.armed = ''; sv.innerHTML = icon('calendar') + '<span>Save your ' + st.lost + ' day streak</span><b>' + icon('gem') + ' ' + SAVE_GEMS + '</b>';
         claimBtn.disabled = !st.canClaim;
-        claimBtn.innerHTML = st.canClaim ? 'CLAIM DAY ' + st.nextDay : '<span>' + icon('check') + '</span> COME BACK TOMORROW';
+        claimBtn.innerHTML = st.canClaim ? 'CLAIM DAY ' + st.nextDay : 'COME BACK TOMORROW';
         claimBtn.classList.toggle('ready', st.canClaim);
     }
     function scrollToToday() { const t = grid.querySelector('.today') || grid.querySelector('.sk-tile:not(.claimed)'); if (t) grid.scrollTop = Math.max(0, t.offsetTop - grid.clientHeight / 2 + t.offsetHeight / 2); }

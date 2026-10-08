@@ -18,7 +18,7 @@
 .ms-bar { height:8px; border-radius:99px; background:rgba(0,0,0,.45); overflow:hidden; } .ms-bar i { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,#35e0c8,#7c6bff); transition:width .4s; }
 .ms-rw { display:flex; flex-direction:column; gap:3px; align-items:flex-end; font-size:12px; } .ms-chest .ico { width:34px; height:34px; }
 .ms-go { height:38px; border:0; border-radius:12px; background:linear-gradient(#ffe27a,#f5a81c); color:#3a2400; font:900 12px/1 system-ui,sans-serif; letter-spacing:.06em; box-shadow:0 3px 0 #8a5a00; }
-.ms-ok { display:grid; place-items:center; color:#5df0da; } .ms-ok .ico { width:26px; height:26px; } .ms-wait { display:block; }
+.ms-ok { display:grid; place-items:center; color:#5df0da; font:800 11px/1 "Space Grotesk",system-ui,sans-serif; letter-spacing:.12em; } .ms-wait { display:block; }
 .ms-row.done { opacity:.55; } .ms-row.ready { border-color:#ffcf3f; box-shadow:0 0 18px -6px #ffcf3f; }
 .ms-row.bonus { border-color:rgba(91,141,239,.45); background:linear-gradient(120deg,rgba(91,141,239,.14),#141923 70%); }
 .ms-row.weekly { border-color:rgba(179,169,255,.5); background:linear-gradient(120deg,rgba(179,169,255,.16),#141923 70%); }

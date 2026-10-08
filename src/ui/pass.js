@@ -146,7 +146,7 @@
             const fState = none ? '<span class="pz-state"></span>' : ready ? '<span class="pz-claim">CLAIM</span>' : claimed ? '<span class="pz-state">CLAIMED</span>' : '<span class="pz-state lock">' + (i < st.done ? '' : icon('lock')) + '</span>';
             const rState = rReady ? '<span class="pz-claim">CLAIM</span>' : rClaimed ? '<span class="pz-state">CLAIMED</span>' : '<span class="pz-state lock">' + icon('lock') + '</span>';
             const top = card(t, 'f' + i, 'free' + (none ? ' none' : '') + (claimed ? ' claimed' : ready ? ' ready' : i < st.done ? '' : ' locked'), fState, () => { if (ready) claim([['f', i]]); });
-            const node = document.createElement('div'); node.className = 'pz-node'; node.innerHTML = claimed && (!p.rage || rClaimed) ? icon('check') : String(i + 1);
+            const node = document.createElement('div'); node.className = 'pz-node'; node.innerHTML = String(i + 1);
             const bot = card(rt, 'r' + i, 'rage' + (p.rage ? '' : ' off') + (rClaimed ? ' claimed' : rReady ? ' ready' : ''), rState, () => {
                 if (rReady) claim([['r', i]]); else if (!p.rage) { toast('Unlock the Rage pass first'); const b = document.getElementById('pz-rage'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
             });

@@ -5,7 +5,7 @@
     'use strict';
     const stage = document.querySelector('.m-stage'); if (!stage || !window.ArenaTheme) return;
     const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'm-arenatest'; btn.setAttribute('aria-label', 'Test: choose the arena you play');
-    stage.appendChild(btn);
+    (stage.querySelector('.m-tools') || stage).insertBefore(btn, (stage.querySelector('.m-tools') || stage).firstChild);          // left of the hanger, under the arena banner
     function label() { const t = ArenaTheme.testGet(); btn.innerHTML = '<b>' + (t < 0 ? 'A' : t + 1) + '</b><small>TEST</small>'; btn.classList.toggle('set', t >= 0); }
     function close() { const s = document.getElementById('at-sheet'); if (s) s.remove(); }
     function open() {

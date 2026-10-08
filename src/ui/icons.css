@@ -12,7 +12,7 @@
 .resource-pack .pack-cost, .pass-reward b { display:flex; align-items:center; gap:.4em; }
 .m-skin-f .price { display:inline-flex; align-items:center; gap:.3em; }
 
-.ico-star, .ico-lock, .ico-check, .ico-chev-l, .ico-chev-r, .ico-arrow-up, .ico-arrow-down, .ico-home { filter:none; width:1em; height:1em; vertical-align:-.12em; }
+.ico-star, .ico-lock, .ico-chev-l, .ico-chev-r, .ico-arrow-up, .ico-arrow-down, .ico-home { filter:none; width:1em; height:1em; vertical-align:-.12em; }
 .star .ico-star, .s .ico-star { width:1em; height:1em; vertical-align:middle; }
 
 .ico-drop, .ico-drop-common, .ico-drop-rare, .ico-drop-epic, .ico-drop-legendary { filter:none; width:1.15em; height:1.15em; }

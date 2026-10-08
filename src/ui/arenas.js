@@ -45,7 +45,7 @@
         if (s.here) { fill.style.width = Math.max(3, Math.min(100, 100 * (s.tr - s.from) / (s.to - s.from))).toFixed(1) + '%'; txt.innerHTML = s.next ? '<b>' + num(s.to - s.tr) + '</b> to ' + s.next.n : 'Top arena'; }
         else if (s.done) { fill.style.width = '100%'; txt.textContent = 'Reached'; }
         else { fill.style.width = '0%'; txt.innerHTML = '<b>' + num(s.from - s.tr) + '</b> trophies to go'; }
-        $('ax-badge').className = 'ax-badge' + (s.here ? ' here' : s.done ? ' done' : ' lock'); $('ax-badge').innerHTML = s.here ? 'YOU ARE HERE' : s.done ? icon('check') + ' REACHED' : icon('lock') + ' ' + num(s.from) + ' TROPHIES';
+        $('ax-badge').className = 'ax-badge' + (s.here ? ' here' : s.done ? ' done' : ' lock'); $('ax-badge').innerHTML = s.here ? 'YOU ARE HERE' : s.done ? 'REACHED' : icon('lock') + ' ' + num(s.from) + ' TROPHIES';
         prog_.classList.toggle('dim', s.locked);
         if (dir) { hero.classList.remove('sl', 'sr'); void hero.offsetWidth; hero.classList.add(dir > 0 ? 'sl' : 'sr'); }
         paintArt(i);
@@ -84,7 +84,7 @@
             const claimed = done.includes(m.id), ready = !claimed && m.at <= tr, cur = nm && nm.id === m.id;
             const t = document.createElement(ready ? 'button' : 'div'); if (ready) t.type = 'button';
             t.className = 'ax-r' + (claimed ? ' claimed' : ready ? ' ready' : ' locked') + (cur ? ' next' : '') + (m.big ? ' big' : ''); t.style.setProperty('--rc', Trophies.color(m.r));
-            t.innerHTML = '<span class="ax-ra">' + Trophies.art(m.r, m.id) + '</span><span class="ax-rn">' + Trophies.name(m.r) + '</span><span class="ax-rs">' + (claimed ? icon('check') + ' Collected' : ready ? 'TAP TO CLAIM' : icon('trophy') + ' ' + num(m.at)) + '</span>';
+            t.innerHTML = '<span class="ax-ra">' + Trophies.art(m.r, m.id) + '</span><span class="ax-rn">' + Trophies.name(m.r) + '</span><span class="ax-rs">' + (claimed ? 'Collected' : ready ? 'TAP TO CLAIM' : icon('trophy') + ' ' + num(m.at)) + '</span>';
             if (ready) t.onclick = () => claim([m.id]);
             box.appendChild(t);
             const c = t.querySelector('canvas');

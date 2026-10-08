@@ -154,6 +154,8 @@
     const chip = document.createElement('button'); chip.type = 'button'; chip.id = 'm-trophy'; chip.className = 'm-trophy';
     chip.innerHTML = '<canvas class="ab-thumb" width="120" height="120"></canvas><span class="ab-copy"><span class="ab-top"><span class="ab-kick"></span><span class="ab-cup"><span class="tc-cup">' + icon('trophy') + '<em class="tc-badge" hidden></em></span><b class="tc-n">0</b><span class="tc-d"></span></span></span><b class="ab-name"></b><span class="ab-prog"><i class="tc-bar"><u></u></i><span class="ab-next"></span></span></span>';
     const row = $('pt-row'); if (row) row.insertAdjacentElement('beforebegin', chip);          // above the character
+    const tools = document.createElement('div'); tools.className = 'm-tools'; chip.insertAdjacentElement('afterend', tools);      // under the banner: the test switch and the hanger
+    const hanger = document.querySelector('.m-stage .m-hanger'); if (hanger) tools.appendChild(hanger);
     chip.addEventListener('click', e => { e.stopPropagation(); if (window.SFX) SFX.play('count'); open(); });
     const stage = document.querySelector('.m-stage'), bg = document.createElement('canvas'); bg.id = 'm-arena-bg'; bg.setAttribute('aria-hidden', 'true');
     if (stage) stage.insertBefore(bg, stage.firstChild);

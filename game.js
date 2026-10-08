@@ -4420,7 +4420,7 @@ function renderLootDrop(containerId, drop, opts){
             if (final.cosmetic) chips.push(`<span class="rwd rwd-item"><canvas class="mini-item" width="112" height="112" style="--rc:${RARITY[final.cosmetic.rarity].color}"></canvas></span>`);
             panel.classList.remove('big');
             const ft = final.tier || tier;                            // the chest you just opened, open, in the rarity it had
-            panel.innerHTML = `<div class="opened-chest tier-${ft}" aria-hidden="true">${window.LB_CHEST ? LB_CHEST('rs' + Math.floor(Math.random() * 1e6), ft) : icon('check')}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;
+            panel.innerHTML = `<div class="opened-chest tier-${ft}" aria-hidden="true">${window.LB_CHEST ? LB_CHEST('rs' + Math.floor(Math.random() * 1e6), ft) : icon('drop-' + ft)}</div><div class="loot-info"><div class="loot-items">${chips.join('')}</div></div>`;
             const mc = panel.querySelector('canvas.mini-item');
             if (mc && final.cosmetic){
                 const slot = ['skin', 'hat', 'face', 'trail'].find(k => COS_BY[k].some(i => i.id === final.cosmetic.id)) || 'skin';

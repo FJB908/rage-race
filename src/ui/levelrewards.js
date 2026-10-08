@@ -53,7 +53,7 @@
             const row = document.createElement('div');
             row.className = 'lr-row' + (claimed ? ' claimed' : ready ? ' ready' : ' locked') + (cur ? ' next' : '') + (poster ? ' mile' : '');
             row.dataset.l = l; row.style.setProperty('--rc', color(r));
-            row.innerHTML = '<div class="lr-node">' + (claimed ? icon('check') : '<span>' + l + '</span>') + '</div>' +
+            row.innerHTML = '<div class="lr-node">' + '<span>' + l + '</span>' + '</div>' +
                 '<div class="lr-card"><div class="lr-art">' + art(r, l) + '</div><div class="lr-name">' + (poster ? '<em class="lr-kick">LEVEL ' + l + '</em>' : '') + name(r) + '</div>' +
                 (ready ? '<button type="button" class="lr-claim">CLAIM</button>' : claimed ? '<span class="lr-state">CLAIMED</span>' : '<span class="lr-state lock">' + (poster ? icon('lock') : '') + '</span>') + '</div>';
             if (ready) row.querySelector('.lr-claim').onclick = () => claim([l]);

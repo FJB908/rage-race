@@ -42,8 +42,6 @@
 .sk-legend .lg-done::before { border-color:#35e0c8; background:rgba(53,224,200,.35); } .sk-legend .lg-now::before { border-color:#ffcf3f; background:rgba(255,207,63,.45); } .sk-legend .lg-next::before { border-color:#4a5366; background:#1a2030; }
 .sk-tile.claimed, .sk-tile.claimed.mile, .sk-tile.claimed.prem { border:2px solid #2fbfa8; background:linear-gradient(170deg,rgba(53,224,200,.16),#0f1a1c 75%); box-shadow:0 3px 0 #0a0d14; }
 .sk-tile.claimed small { color:#35e0c8; } .sk-tile.claimed .sk-art { opacity:.5; filter:saturate(.5); } .sk-tile.claimed b { opacity:.6; }
-.sk-check { position:absolute; top:-7px; right:-6px; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; background:#35e0c8; color:#06201c; box-shadow:0 2px 0 #0a0d14; }
-.sk-check .ico { width:14px; height:14px; }
 .sk-tile.today { border:2px solid #ffcf3f; background:linear-gradient(170deg,rgba(255,207,63,.3),#1a2030 75%); animation:skGlow 1.4s ease-in-out infinite; transform:translateY(-2px); }
 .sk-tile.today small { color:#ffcf3f; }
 .sk-tile:not(.claimed):not(.today):not(.mile):not(.prem) { border-color:#2a3142; }
