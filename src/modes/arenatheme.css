@@ -1,0 +1,6 @@
+/* the arena name that fades in at the start of a race */
+#arena-tag { position: fixed; left: 50%; top: calc(14% + env(safe-area-inset-top, 0px)); transform: translate(-50%, -8px); z-index: 35; pointer-events: none; opacity: 0; text-align: center; }
+#arena-tag small { display: block; font: 800 11px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .3em; color: #ffcf3f; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+#arena-tag b { display: block; margin-top: 4px; font: 900 30px/1 "Bricolage Grotesque", "Space Grotesk", system-ui, sans-serif; letter-spacing: .06em; color: #fff; text-shadow: 0 3px 14px rgba(0,0,0,.75); }
+#arena-tag.on { animation: arenaTag 3.2s ease-out forwards; }
+@keyframes arenaTag { 0% { opacity: 0; transform: translate(-50%, -8px) scale(.94); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1); } 78% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 6px); } }

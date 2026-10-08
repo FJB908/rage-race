@@ -163,6 +163,7 @@
         hide($('gt-entry')); hide($('gt-result'));
         showScreen('');
         gameMode = 'gauntlet'; esc = null; pk = null; lv = null;
+        if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Quick play and Build Race only
         document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level');
         document.body.classList.add('mode-gauntlet');
         gtPrevQ = qLevel;

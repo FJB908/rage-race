@@ -1,4 +1,8 @@
-# Arena themes (ideas only, nothing built yet)
+# Arena themes
+
+**Built (step 1 of the order below):** `src/modes/arenatheme.js` gives every arena its own sky (gradient that shifts while you climb), far-away props (parallax at a quarter of the camera speed), drifting air (dust, snow, rain, ash, sparks, stars), a colour for the normal platforms and a name banner at the start of the race. It also renames and recolours the Stun Bomb and the Earthquake per arena (for example Lava Bomb / Eruption in the Volcano, Snowball / Avalanche on the Mountain) and gives each arena a small bias in which power-ups are more common (Space Station: more Double jumps, Harbour: more Super Bounce, Volcano: more Rockets and Earthquakes). Quick play and Build Race use the arena your trophies put you in; a party match always uses the Playground. It is a look only: the signature rules below are still ideas.
+
+Everything below is the original idea list.
 
 The trophy count already puts every player in one of 10 arenas (see TROPHIES.md). Right now an arena is only a name and a place on the road. The idea: **an arena is a theme plus exactly one signature rule**, so that climbing feels like going somewhere new and not like a number going up.
 

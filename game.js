@@ -572,6 +572,7 @@ function rollItem(p){
         bomb:   bombW,
         ufo:    ufoW,
     };
+    if (window.ArenaTheme && gameMode === 'race') ArenaTheme.bias(w);                 // an arena makes some power-ups a bit more common
     if (p.lastItem && w[p.lastItem] > 0) w[p.lastItem] *= 0.2;      // seldom the same item twice in a row: it spreads out
     let sum = 0; for (const k in w) sum += w[k];
     let r = Math.random()*sum;
@@ -2133,7 +2134,8 @@ function draw() {
     ctx.fillRect(0,0,CW,CH);
     _menuPainted = state==='menu';
     if (state==='menu') return;
-    if (gameMode === 'parkour') drawParkourSky();
+    if (gameMode === 'race' && window.ArenaTheme && ArenaTheme.on()) ArenaTheme.drawSky(ctx, SCREEN_PW(), CH, cameraY);          // the arena's sky, far props and air (Quick play, Build Race)
+    else if (gameMode === 'parkour') drawParkourSky();
     else if (gameMode === 'level') drawLevelSky();
     else if (gameMode === 'gauntlet') gtDrawSky();
 
@@ -2150,7 +2152,7 @@ function draw() {
     const viewBottom = cameraY + VH + 100;
 
     // depth grid
-    ctx.strokeStyle='rgba(255,255,255,0.035)'; ctx.lineWidth=1;
+    ctx.strokeStyle=(window.ArenaTheme && ArenaTheme.on() && gameMode === 'race' && ArenaTheme.grid()) || 'rgba(255,255,255,0.035)'; ctx.lineWidth=1;
     const startG = Math.floor(cameraY/120)*120;
     for (let gy=startG; gy<cameraY+VH+120; gy+=120){
         ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(PLAY_W(),gy); ctx.stroke();
@@ -2948,6 +2950,7 @@ function startMatchmaking(quick) {
 function startGame() {
     gameMode = 'race'; esc = null; pk = null; document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level'); lv = null;
     showScreen(''); // hide all overlays
+    if (window.ArenaTheme) ArenaTheme.pick(matchSeed);                             // the arena your trophies put you in (a party always plays the Playground)
     if (window.buildMatch && window.Build) return Build.begin();                 // Build Race makes its own course
     generateLevel(matchSeed); initPlayers(); botsDonePrompted = false;
     if (window.matchBots && window.BotRoster) BotRoster.applyTo(players.slice(1), window.matchBots, { color:true });   // roster opponents with their own skill (set by your trophies)
@@ -3102,6 +3105,7 @@ function escGenRow(){
 
 function startEscape(){
     gameMode = 'escape';
+    if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Quick play and Build Race only
     document.body.classList.remove('mode-parkour', 'mode-level'); pk = null; lv = null;
     document.body.classList.add('mode-escape');
     showScreen('');
@@ -4942,6 +4946,7 @@ function openParkour(){
 }
 function pkStart(save){
     gameMode = 'parkour';
+    if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Quick play and Build Race only
     document.body.classList.remove('mode-escape', 'mode-level'); lv = null;
     document.body.classList.add('mode-parkour');
     esc = null;
@@ -5356,6 +5361,7 @@ function openLevels(gotoDim){
 /* ---- playing a level ---- */
 function lvStart(i){
     gameMode = 'level';
+    if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Quick play and Build Race only
     document.body.classList.remove('mode-escape', 'mode-parkour');
     document.body.classList.add('mode-level');
     esc = null; pk = null;

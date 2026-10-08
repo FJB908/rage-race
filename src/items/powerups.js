@@ -7,7 +7,7 @@
     const CANNON_TIME = 9, CANNON_V = 2750, CANNON_ANG = 0.38;          // seconds before it fires itself, launch speed (normal max is 1425), widest angle off vertical (about 22 degrees)
     const DJ_TIME = 5, DJ_POW = 0.94;                                  // seconds the double jump lasts, power of the extra jump relative to a normal one
     const BOMB_R = 174, BOMB_LIFE = 3.5, BOMB_STUN = 1.0, BOMB_IMM = 2.2;      // zone radius, seconds until it explodes, stun length, immunity after a stun
-    const clouds = [], bombs = [];
+    const clouds = [], bombs = [], hits = [];                                // hits: "you hit someone" markers for the player who dropped the bomb
     const sc = a => Math.max(-CANNON_ANG, Math.min(CANNON_ANG, a));
     const angOf = (dx, dy) => Math.atan2(dx, -dy);                      // 0 = straight up, negative = left
     const cannonVel = a => ({ vx: Math.sin(a) * CANNON_V, vy: -Math.cos(a) * CANNON_V });
@@ -158,12 +158,19 @@
             if (b.t < BOMB_LIFE || b.boom) continue;
             b.boom = true;                                                    // the ring reached the rim: BOOM
             ring(b.x, b.y, '#ffe45e', BOMB_R * 1.15); ring(b.x, b.y, ITEMS.bomb.color, BOMB_R * 0.7); burst(b.x, b.y, '#ffe45e', 26, 420); burst(b.x, b.y, ITEMS.bomb.color, 18, 300); burst(b.x, b.y, '#ffffff', 8, 460);
+            const owner = players.find(q => q.id === b.by), mine = !!(owner && owner.local), gotHit = [];
             for (const p of players) {
-                if (p.remote || p.finished || p.gone || p.zapT > 0 || p.zapImm > 0) continue;
+                if (p.finished || p.gone || p.zapT > 0 || p.zapImm > 0) continue;
                 if (Math.hypot(p.x - b.x, p.y - b.y) > BOMB_R + p.r * 0.4) continue;
-                if (shieldBlocks(p)) { burst(p.x, p.y, ITEMS.shield.color, 8, 160); continue; }
-                zap(p);
+                if (p.remote) { if (mine) gotHit.push(p); continue; }                 // a friend's phone applies the stun itself; you still see that you caught them
+                if (shieldBlocks(p)) { burst(p.x, p.y, ITEMS.shield.color, 8, 160); if (mine && p !== owner) hits.push({ p, t: 0, blocked: true }); continue; }
+                zap(p); if (mine && p !== owner) gotHit.push(p);
             }
+            if (gotHit.length) {                                                  // your bomb caught someone: a big marker on them, a chime, a buzz and a line
+                for (const p of gotHit) hits.push({ p, t: 0 });
+                SFX.play('combo'); haptic([20, 40, 20, 40, 60]);
+                hint(owner, gotHit.length > 1 ? 'DIRECT HIT: ' + gotHit.length + ' PLAYERS' : 'DIRECT HIT: ' + (gotHit[0].name || 'PLAYER').toUpperCase());
+            } else if (mine && hits.every(h => h.t > 0.1)) { /* nobody inside: no marker */ }
             if (players.some(p => p.local && Math.hypot(p.x - b.x, p.y - b.y) < BOMB_R * 2)) { camShake = Math.max(camShake, 9); SFX.play('quake'); haptic([40, 30, 90]); }
         }
     }
@@ -265,9 +272,10 @@
         }
         c.restore();
     }
-    function reset() { clouds.length = 0; bombs.length = 0; if (typeof hintEl !== 'undefined' && HINT0) hintEl.innerHTML = HINT0; }
+    function reset() { clouds.length = 0; bombs.length = 0; hits.length = 0; if (typeof hintEl !== 'undefined' && HINT0) hintEl.innerHTML = HINT0; }
     function update(dt) {
         updateBombs(dt);
+        for (let i = hits.length - 1; i >= 0; i--) { hits[i].t += dt; if (hits[i].t > 1.4) hits.splice(i, 1); }
         for (let i = clouds.length - 1; i >= 0; i--) { clouds[i].t += dt; if (clouds[i].t > 0.85) clouds.splice(i, 1); }
     }
 
@@ -323,10 +331,32 @@
         const fl = 0.6 + 0.4 * Math.sin(t * 30 + b.seed); c.fillStyle = '#ffe45e'; c.beginPath(); c.arc(b.x + 9, by - r - 6, 2.6 * fl + 1, 0, 7); c.fill(); c.fillStyle = '#ff7a3d'; c.beginPath(); c.arc(b.x + 9, by - r - 6, 1.4, 0, 7); c.fill();
         c.restore();
     }
+    // "you hit them": a starburst with a target ring that follows the player who was caught, then a bomb badge that floats up
+    function drawHit(c, h, t) {
+        const p = h.p, k = Math.min(1, h.t / 0.25), e = easeOutBack(k), fade = h.t < 0.9 ? 1 : Math.max(0, 1 - (h.t - 0.9) / 0.5), col = h.blocked ? ITEMS.shield.color : '#ffe45e';
+        if (fade <= 0) return;
+        const R = (p.r || 16) * (2.4 + 0.5 * Math.sin(t * 16)) * (0.5 + 0.5 * e);
+        c.save(); c.globalAlpha = fade; c.translate(p.x, p.y);
+        c.rotate(t * 1.4); c.fillStyle = col; c.beginPath();
+        for (let i = 0; i < 16; i++) { const an = i * Math.PI / 8, rr = i % 2 ? R * 0.62 : R * 1.15; c.lineTo(Math.cos(an) * rr, Math.sin(an) * rr); }
+        c.closePath(); c.globalAlpha = fade * 0.28; c.fill(); c.globalAlpha = fade;
+        c.rotate(-t * 1.4); c.strokeStyle = col; c.lineWidth = 3; c.beginPath(); c.arc(0, 0, R * 0.8, 0, 7); c.stroke();
+        c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); for (const a of [0, 1.5708, 3.1416, 4.7124]) { c.moveTo(Math.cos(a) * R * 0.52, Math.sin(a) * R * 0.52); c.lineTo(Math.cos(a) * R * 1.08, Math.sin(a) * R * 1.08); } c.stroke();
+        c.restore();
+        if (h.blocked) return;
+        const by = p.y - (p.r || 16) * 2.6 - h.t * 26;                                       // the badge: a dark disc with a bomb and a check
+        c.save(); c.globalAlpha = fade; c.translate(p.x, by); c.scale(e, e);
+        c.fillStyle = '#10141c'; c.strokeStyle = ITEMS.bomb.color; c.lineWidth = 3; c.beginPath(); c.arc(0, 0, 15, 0, 7); c.fill(); c.stroke();
+        c.fillStyle = ITEMS.bomb.color; c.beginPath(); c.arc(0, 1.5, 6.5, 0, 7); c.fill();
+        c.strokeStyle = '#ffe45e'; c.lineWidth = 2; c.beginPath(); c.moveTo(3, -4); c.quadraticCurveTo(7, -9, 10, -7); c.stroke();
+        c.fillStyle = '#ffe45e'; c.beginPath(); c.arc(10, -7, 2.2, 0, 7); c.fill();
+        c.restore();
+    }
     function drawWorld(c) {
         const tt = performance.now() / 1000;
         for (const b of bombs) drawBomb(c, b, tt);
         for (const cl of clouds) drawCloud(c, cl);
+        for (const h of hits) drawHit(c, h, tt);
     }
     // under the player's feet (called before the body is drawn)
     function drawSpring(c, p, t) {

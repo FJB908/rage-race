@@ -81,6 +81,7 @@
         ensureRoot();
         hideResult(); $('tg-root').classList.remove('over'); { const u = $('tg-hud').querySelector('.tg-bomb use'); if (u) u.setAttribute('href', '#ico-mode-tag'); const cp = $('tg-cap'); if (cp) cp.style.display = 'none'; } $('tg-banner').className = 'tg-banner';
         gameMode = 'tag'; esc = null; pk = null; lv = null; ufos = []; window.rankedMatch = false; window.partyMatch = null;
+        if (window.ArenaTheme) ArenaTheme.clear();                // arena looks are for Quick play and Build Race only
         document.body.classList.remove('mode-escape', 'mode-parkour', 'mode-level', 'mode-gauntlet'); document.body.classList.add('mode-tag');
         showScreen('');
         WORLD_W = 356; resize();
