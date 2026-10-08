@@ -99,6 +99,24 @@
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
     function slotOf(item) { for (const k of ['skin', 'hat', 'face', 'trail']) if (COS_BY[k].some(i => i.id === item.id)) return k; return 'skin'; }
 
+    // Particle sprites: painted once per colour (a soft glow dot, a four-point spark, a glossy confetti chip) and then only stamped with drawImage, so a burst is cheap and still looks crisp.
+    const SPR = {};
+    function spriteOf(kind, col) {
+        const key = kind + col; if (SPR[key]) return SPR[key];
+        const N = 48, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), m = N / 2;
+        if (kind === 'dot') {
+            const gr = g.createRadialGradient(m, m, 0, m, m, m); gr.addColorStop(0, '#fff'); gr.addColorStop(.25, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, N, N);
+        } else if (kind === 'spark') {
+            const gr = g.createRadialGradient(m, m, 0, m, m, m); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = .55; g.fillStyle = gr; g.fillRect(0, 0, N, N); g.globalAlpha = 1;
+            g.fillStyle = '#fff'; g.beginPath(); g.moveTo(m, 2); g.quadraticCurveTo(m + 3, m - 3, N - 2, m); g.quadraticCurveTo(m + 3, m + 3, m, N - 2); g.quadraticCurveTo(m - 3, m + 3, 2, m); g.quadraticCurveTo(m - 3, m - 3, m, 2); g.fill();
+            g.fillStyle = col; g.globalAlpha = .6; g.beginPath(); g.arc(m, m, 5, 0, 7); g.fill();
+        } else {
+            const w = 26, h = 15, x = m - w / 2, y = m - h / 2; g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, 4) : g.rect(x, y, w, h); g.fill();
+            const sh = g.createLinearGradient(0, y, 0, y + h); sh.addColorStop(0, 'rgba(255,255,255,.55)'); sh.addColorStop(.5, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(0,0,0,.25)'); g.fillStyle = sh; g.fillRect(x, y, w, h);
+        }
+        return (SPR[key] = c);
+    }
+
     // Shared overlay + particle layer ------------------------------------------------------------
     function makeOverlay(tier, inner) {
         const el = document.createElement('div');
@@ -112,37 +130,57 @@
         el.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive:false });
         ['gesturestart', 'gesturechange', 'dblclick'].forEach(t => el.addEventListener(t, e => e.preventDefault()));
         const cv = el.querySelector('.lb-fx'), g = cv.getContext('2d'), parts = [];
-        let W = 0, H = 0, raf = 0, closed = false;
-        const fit = () => { const d = 1; W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); };
+        let W = 0, H = 0, raf = 0, closed = false, dirtyBox = null, density = 1, slowN = 0;
+        const fit = () => { const d = Math.min(1.5, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = Math.round(W * d); cv.height = Math.round(H * d); g.setTransform(d, 0, 0, d, 0, 0); dirtyBox = null; };
         fit(); addEventListener('resize', fit);
         const api = {
             el, $: s => el.querySelector(s), get W() { return W; }, get H() { return H; }, get closed() { return closed; },
             emit(n, o) {
-                n = Math.ceil(n * .55);
-                for (let i = 0; i < n && parts.length < 110; i++) {
-                    const a = o.dir !== undefined ? o.dir + (Math.random() - .5) * o.spread : Math.random() * 6.283, s = o.speed * (.35 + Math.random() * .65);
-                    parts.push({ x:o.x, y:o.y, vx:Math.cos(a) * s, vy:Math.sin(a) * s, life:1, decay:.5 + Math.random() * .8, size:o.size * (.5 + Math.random()), g:o.g === undefined ? 900 : o.g, c:o.colors[i % o.colors.length], rot:Math.random() * 6, vr:(Math.random() - .5) * 12 });
+                n = Math.ceil(n * .8 * density);                                         // the layer thins itself out when frames run slow (density)
+                const calm = (o.g === undefined ? 900 : o.g) <= 320;                    // a ring of sparks (calm) or a spray of confetti
+                for (let i = 0; i < n && parts.length < 170; i++) {
+                    const a = o.dir !== undefined ? o.dir + (Math.random() - .5) * o.spread : Math.random() * 6.283, s = o.speed * (.35 + Math.random() * .65), r = Math.random();
+                    const kind = calm ? (r < .55 ? 'spark' : r < .85 ? 'dot' : 'conf') : (r < .5 ? 'conf' : r < .8 ? 'spark' : 'dot'), c = o.colors[i % o.colors.length];
+                    parts.push({ x:o.x, y:o.y, vx:Math.cos(a) * s, vy:Math.sin(a) * s, life:1, decay:.5 + Math.random() * .8, size:o.size * (.6 + Math.random() * .9), g:o.g === undefined ? 900 : o.g, spr:spriteOf(kind, c), kind, rot:Math.random() * 6.283, vr:(Math.random() - .5) * 12, ph:Math.random() * 6 });
                 }
             },
             shake() { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); },
             flash() { const f = el.querySelector('.lb-flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); },
-            close(cb) { if (closed) return; closed = true; cancelAnimationFrame(raf); removeEventListener('resize', fit); el.classList.remove('in'); setTimeout(() => { el.remove(); if (cb) cb(); }, 350); },
+            close(cb) { if (closed) return; closed = true; cancelAnimationFrame(raf); document.body.classList.remove('lb-open'); removeEventListener('resize', fit); el.classList.remove('in'); setTimeout(() => { el.remove(); if (cb) cb(); }, 350); },
         };
-        let lastT = performance.now(), dirty = true;
+        let lastT = performance.now();
         (function tick(t) {
             if (closed) return;
-            const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
-            if (!parts.length) { if (dirty) { g.clearRect(0, 0, W, H); dirty = false; } raf = requestAnimationFrame(tick); return; }      // nothing flying: leave the full-screen canvas alone (redrawing it every frame made phones lag)
-            g.clearRect(0, 0, W, H); dirty = true;
-            let k = 0;
+            const raw = (t - lastT) / 1000, dt = Math.min(.05, raw); lastT = t;
+            if (parts.length) { if (raw > .026) { if (++slowN > 12) density = Math.max(.4, density - .15), slowN = 0; } else if (slowN > 0) slowN--; }
+            if (!parts.length) { if (dirtyBox) { g.clearRect(dirtyBox[0], dirtyBox[1], dirtyBox[2] - dirtyBox[0], dirtyBox[3] - dirtyBox[1]); dirtyBox = null; } raf = requestAnimationFrame(tick); return; }      // nothing flying: leave the canvas alone
+            if (dirtyBox) g.clearRect(dirtyBox[0], dirtyBox[1], dirtyBox[2] - dirtyBox[0], dirtyBox[3] - dirtyBox[1]);      // only wipe where the last frame drew (the canvas is full screen)
+            let k = 0, x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
             for (const p of parts) {
-                p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; p.life -= p.decay * dt;
+                p.vy += p.g * dt; p.vx *= 1 - .6 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; p.life -= p.decay * dt;
                 if (p.life <= 0) continue; parts[k++] = p;
-                g.globalAlpha = Math.min(1, p.life * 1.6); g.fillStyle = p.c; g.fillRect(p.x - p.size / 2, p.y - p.size / 3, p.size, p.size * .6);
+                const e = p.size * 1.7 + 6; if (p.x - e < x0) x0 = p.x - e; if (p.y - e < y0) y0 = p.y - e; if (p.x + e > x1) x1 = p.x + e; if (p.y + e > y1) y1 = p.y + e;
             }
-            parts.length = k; g.globalAlpha = 1; raf = requestAnimationFrame(tick);
+            parts.length = k;
+            if (k) {
+                dirtyBox = [Math.max(0, Math.floor(x0)), Math.max(0, Math.floor(y0)), Math.min(W, Math.ceil(x1)), Math.min(H, Math.ceil(y1))];
+                g.globalCompositeOperation = 'source-over';
+                for (const p of parts) if (p.kind === 'conf') {                                      // confetti flutters: it turns over as it falls
+                    const sz = p.size * 1.25, fl = Math.cos(p.rot * 1.6 + p.ph);
+                    g.globalAlpha = Math.min(1, p.life * 1.8); g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.scale(1, .25 + Math.abs(fl) * .75); g.drawImage(p.spr, -sz, -sz, sz * 2, sz * 2); g.restore();
+                }
+                g.globalCompositeOperation = 'lighter';                                              // sparks and glows add up to light
+                for (const p of parts) if (p.kind !== 'conf') {
+                    const tw = p.kind === 'spark' ? .75 + .25 * Math.sin(p.rot * 3 + p.ph) : 1, sz = p.size * 1.5 * (.4 + .6 * p.life) * tw;
+                    g.globalAlpha = Math.min(1, p.life * 1.6) * (p.kind === 'dot' ? .8 : 1);
+                    if (p.kind === 'spark') { g.save(); g.translate(p.x, p.y); g.rotate(p.rot * .3); g.drawImage(p.spr, -sz, -sz, sz * 2, sz * 2); g.restore(); } else g.drawImage(p.spr, p.x - sz, p.y - sz, sz * 2, sz * 2);
+                }
+                g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+            }
+            raf = requestAnimationFrame(tick);
         })(lastT);
         requestAnimationFrame(() => el.classList.add('in'));
+        setTimeout(() => { if (!closed && el.isConnected) document.body.classList.add('lb-open'); }, 420);      // fully faded in: the screen behind is covered, so it stops being drawn (see lootbox.css)
         return api;
     }
 

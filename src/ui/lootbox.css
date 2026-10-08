@@ -188,3 +188,6 @@ body.await-chest .btn:not(.loot-view), body.await-chest .gt-cta, body.await-ches
 .lb-shine, .lb-sparks .sp, .lb-leak, .lb-lid, .loot-big .lb-lid, .loot-big .lb-leak { animation:none !important; }
 .lb-sparks { display:none; }
 .lb-shine { display:none; }
+
+/* the opening is opaque: nothing behind it needs painting (the home world and its animated sky are the heaviest thing on a phone) */
+body.lb-open .screen, body.lb-open #game, body.lb-open #hud { visibility:hidden !important; }

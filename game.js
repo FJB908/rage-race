@@ -2705,12 +2705,15 @@ function fastForwardFrame(){
     for (let k = 0; k < 40 && ffOn && state === 'playing'; k++){ ffExtra += SIM_DT; ffSteps++; snapshotPrev(); update(SIM_DT); if (k >= 6 && performance.now() - t0 > 9) break; }
     if (ffOn && state === 'playing' && ffSteps > 60 * 75){ ffOn = false; giveUpToResults(); }
 }
-let qSlow = 0, qFast = 0;
+let qSlow = 0, qFast = 0, qState = '', qStateT = 0;
 function adaptQuality(rawDt){
-    if (state !== 'playing' || Date.now() - matchStart < 2500) return;      // never retune quality during the countdown or the first seconds (that flicker looked like the screen trembling)
+    if (state !== qState){ qState = state; qStateT = Date.now(); }
+    const building = state === 'build';                                        // Build Race: the placing phase draws the whole course, so it needs the same self-tuning as the race itself
+    if (state !== 'playing' && !building) return;
+    if (building ? Date.now() - qStateT < 2000 : Date.now() - matchStart < 2500) return;      // never retune quality during the countdown or the first seconds (that flicker looked like the screen trembling)
     if (rawDt > 0.1) return;                          // tab switch / hitch, ignore
-    if (rawDt > 0.024) { qSlow++; qFast = 0; } else { qFast++; qSlow = Math.max(0, qSlow - 1); }
-    if (qSlow >= 45 && qLevel < QUALITY_STEPS.length - 1) {   // ~45 slow frames: step down
+    if (rawDt > 0.024) { qSlow++; qFast = 0; } else { qFast++; qSlow = Math.max(0, qSlow - .5); }
+    if (qSlow >= 40 && qLevel < QUALITY_STEPS.length - 1) {   // ~40 slow frames: step down
         qLevel++; dprCap = QUALITY_STEPS[qLevel].dpr; glowK = QUALITY_STEPS[qLevel].glow;
         qSlow = 0; resize();
     }
@@ -2723,7 +2726,8 @@ function loop(t){
     if (hitStop > 0){ hitStop -= dt; simAcc += dt * 0.2; }
     else if (slowT > 0){ slowT -= dt; simAcc += dt * slowK; }
     else simAcc += dt;
-    { const hide = state === 'menu'; if (canvas._hidden !== hide){ canvas._hidden = hide; canvas.style.visibility = hide ? 'hidden' : 'visible'; } }      // the menu covers the whole screen: no need to composite the world canvas behind it
+    const bdRoot = state === 'build' ? (loop._bd || (loop._bd = document.getElementById('bd-root'))) : null, bdCover = !!(bdRoot && !bdRoot.hidden);      // Build Race placing phase: its own full-screen canvas covers the world, so the world is not drawn at all
+    { const hide = state === 'menu' || bdCover; if (canvas._hidden !== hide){ canvas._hidden = hide; canvas.style.visibility = hide ? 'hidden' : 'visible'; } }      // the menu covers the whole screen: no need to composite the world canvas behind it
     let steps = 0;
     while (simAcc >= SIM_DT - 1e-6 && steps < 10) { snapshotPrev(); update(SIM_DT); simAcc -= SIM_DT; steps++; }
     if (ffOn && state === 'playing') fastForwardFrame();
@@ -2733,6 +2737,7 @@ function loop(t){
     // The simulation runs at a fixed 60 Hz, but screens refresh at 60/90/120 Hz and frame times
     // jitter. Draw the world blended between the last two sim states so motion stays even.
     const a = Math.min(1, simAcc / SIM_DT);
+    if (bdCover){ requestAnimationFrame(loop); return; }
     // Gauntlet on a slow phone (quality already stepped down): draw every other frame. A steady 30 fps feels better than a stuttering 40.
     if (gameMode === 'gauntlet' && qLevel >= 2 && drewOnce && (loop._n = (loop._n || 0) + 1) % 2) { requestAnimationFrame(loop); return; }
     const restore = applyInterp(a);

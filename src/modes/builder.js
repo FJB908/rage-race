@@ -216,8 +216,10 @@
     const panel = document.createElement('div'); panel.id = 'bd-panel'; panel.hidden = true; document.body.appendChild(panel);
 
     const view = { S: 0.85, ox: 0, camTop: 0, w: 0, h: 0 };
+    let fitQ = -1;
     function fit() {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2); view.w = window.innerWidth; view.h = window.innerHeight;
+        fitQ = typeof qLevel === 'number' ? qLevel : 0;
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5, typeof dprCap === 'number' ? dprCap : 1.5);      // blocky art: 1.5 is plenty, and it follows the game's own quality steps view.w = window.innerWidth; view.h = window.innerHeight;
         cv.width = Math.round(view.w * dpr); cv.height = Math.round(view.h * dpr); cx.setTransform(dpr, 0, 0, dpr, 0, 0);
         view.S = Math.min(1.05, (view.w - 70) / PLAY_W()); view.ox = (view.w - 34 - PLAY_W() * view.S) / 2;
     }
@@ -269,6 +271,7 @@
     let raf = 0;
     function render() {
         raf = requestAnimationFrame(render); if (root.hidden) return;
+        if (typeof qLevel === 'number' && qLevel !== fitQ) fit();                 // the game stepped its quality down: follow it
         const S = view.S, now = performance.now();
         const dtp = Math.min(0.05, (now - (B.lastT || now)) / 1000); B.lastT = now;
         cx.clearRect(0, 0, view.w, view.h); cx.fillStyle = '#0d1017'; cx.fillRect(0, 0, view.w, view.h);
