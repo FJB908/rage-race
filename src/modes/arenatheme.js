@@ -6,7 +6,7 @@
 // (parallax), mist between the layers, a few drifting specks and a soft vignette. Scenery uses colours very close to the sky so it never looks like something
 // you can stand on. Every piece of scenery is painted once into a small cached picture; a frame only does a handful of drawImage calls.
 //
-// POWER-UPS: the pool grows with the arenas (see POOL below and docs/ARENAS.md), a few leave again at the top, and each arena renames and recolours the Stun
+// POWER-UPS: the pool follows your trophies (see UNLOCKS below and docs/ARENAS.md), a few leave again later, and each arena renames and recolours the Stun
 // Bomb and the Earthquake and makes one or two power-ups a bit more common. The same data feeds the Arenas screen (src/ui/arenas.js).
 (function () {
     'use strict';
@@ -57,31 +57,37 @@
           plat: '#ffcf3f', air: ['rain', '#cfd8ff', 0.4], grid: 'rgba(255,224,120,0.05)', items: { bomb: ['THUNDER!', '#ffe45e'], quake: ['LIGHTNING STRIKE!', '#ffe45e'] }, bias: { cannon: 1.5, quake: 1.2 } },
     ];
 
-    /* ------------------------------------------------------------------- power-up pool per arena ---- */
-    // The pool is cumulative: an arena has everything the arenas before it added, minus what has left. Arena Race and Build Race only (parties keep the classic set).
+    /* ----------------------------------------------------------------- power-ups unlock on trophies ---- */
+    // The power-ups you can roll depend on your TROPHIES (not only on the arena): a new one arrives at a trophy count, and a few training wheels leave again later.
+    // The Arenas screen draws exactly this list as the road. Arena Race and Build Race only; a party keeps the classic set (everything except the Gust).
     // `wind` is the Gust: it was out of the game and comes back from the Rooftop on.
-    const POOL = [
-        { add: ['bounce', 'rocket', 'giant', 'shield'], remove: [] },       // 1 Playground: the four easy ones
-        { add: ['dj'], remove: [] },                                        // 2 Parking Lot
-        { add: ['wind'], remove: [] },                                      // 3 Rooftop
-        { add: ['bomb'], remove: [] },                                      // 4 Harbour
-        { add: ['chain'], remove: [] },                                     // 5 Factory
-        { add: ['quake'], remove: [] },                                     // 6 Subway
-        { add: ['ufo'], remove: [] },                                       // 7 Mountain
-        { add: ['cannon'], remove: [] },                                    // 8 Space Station
-        { add: [], remove: ['bounce'] },                                    // 9 Volcano: the springy helper is gone, you have to read the jump yourself
-        { add: [], remove: ['giant'] },                                     // 10 Summit: no more training wheels
+    // Planned, not built yet (they will be slotted in here when they exist): Glider 900, Grapple 2400, Mirror 3200 (Shield leaves), Snowball 4500, Swap 7400, Lightning 9400 (Earthquake leaves).
+    const UNLOCKS = [
+        { at: 0,    add: ['rocket', 'bounce', 'giant'] },                 // Playground: three simple ones
+        { at: 150,  add: ['dj'] },
+        { at: 550,  add: ['shield'] },                                    // there is not much to block before the first attacks
+        { at: 750,  add: ['wind'] },                                      // Rooftop: the first attack
+        { at: 1050, remove: ['giant'] },
+        { at: 1350, add: ['bomb'] },                                      // Harbour
+        { at: 1950, remove: ['bounce'] },                                 // the springy helper goes: you read the jump yourself
+        { at: 2100, add: ['chain'] },                                     // Factory
+        { at: 3000, add: ['quake'] },                                     // Subway
+        { at: 4100, add: ['ufo'] },                                       // Mountain
+        { at: 5400, add: ['cannon'] },                                    // Space Station
     ];
     const ORDER = ['bounce', 'rocket', 'giant', 'shield', 'dj', 'wind', 'bomb', 'chain', 'quake', 'ufo', 'cannon'];
     const INFO = {
         bounce: ['Super Bounce', 'Springs you up and keeps you bouncy for a few seconds'], rocket: ['Rocket', 'Blasts you far up the course'],
         giant: ['Giant', 'Grow huge: bigger jumps, hard to push around'], shield: ['Shield', 'Blocks every attack for a few seconds'],
-        dj: ['Double Jump', 'One extra jump in mid air'], wind: ['Gust', 'A crosswind for everyone else: their aim goes shaky'],
+        dj: ['Double Jump', 'One extra jump in mid air'], wind: ['Gust', 'A crosswind for everyone ahead of you: their aim goes shaky'],
         bomb: ['Stun Bomb', 'A danger zone that stuns everyone left inside'], chain: ['Chain', 'Hooks the leader and drags them back'],
         quake: ['Earthquake', 'Shakes the platforms of whoever is ahead'], ufo: ['UFO', 'Carries you up to the player above'],
         cannon: ['Cannon', 'Aim it and fire yourself across the course'],
     };
-    const poolOf = i => { const s = new Set(); for (let a = 0; a <= i; a++) { POOL[a].add.forEach(k => s.add(k)); POOL[a].remove.forEach(k => s.delete(k)); } return ORDER.filter(k => s.has(k)); };
+    const COLORS = { rocket: '#ff7a3d', giant: '#ffcf3f', bounce: '#35e0c8', chain: '#c9d1e3', quake: '#ff5470', shield: '#7ee787', wind: '#8fd6ff', ufo: '#7CFF6B', bomb: '#ff3d5a', cannon: '#ff9f43', dj: '#9fe8ff' };
+    const poolAt = tr => { const s = new Set(); for (const u of UNLOCKS) if (u.at <= tr) { (u.add || []).forEach(k => s.add(k)); (u.remove || []).forEach(k => s.delete(k)); } return ORDER.filter(k => s.has(k)); };
+    const arenaEnd = i => (window.Trophies && Trophies.ARENAS[i + 1]) ? Trophies.ARENAS[i + 1].at - 1 : 1e9;         // the last trophy of arena i
+    const poolOfArena = i => poolAt(arenaEnd(i));                                                                      // everything an arena has by its end (the test switch uses it)
     const PARTY_POOL = ORDER.filter(k => k !== 'wind');
 
     /* ------------------------------------------------------------------------------- colours ---- */
@@ -172,8 +178,9 @@
     function pick(seed) {
         let i = 0, party = !!window.partyMatch;
         if (!party && window.Trophies) { try { i = Trophies.arenaOf(prog().tr || 0); } catch (e) { i = 0; } }
-        const t = testGet(); if (!party && t >= 0) i = t;                      // the test switch on the home screen (src/ui/arenatest.js) overrides the arena
-        set(i, seed || 1, { party });
+        let tr = 0; try { tr = prog().tr || 0; } catch (e) {}
+        const t = testGet(); if (!party && t >= 0) { i = t; tr = arenaEnd(t); }          // the test switch on the home screen (src/ui/arenatest.js) plays an arena with everything it has by its end
+        set(i, seed || 1, { party, tr });
     }
     function testGet() { try { const v = localStorage.getItem('rr_arena_test'); return v === null || v === '' ? -1 : Math.max(-1, Math.min(T.length - 1, +v)); } catch (e) { return -1; } }
     function testSet(i) { try { if (i < 0) localStorage.removeItem('rr_arena_test'); else localStorage.setItem('rr_arena_test', String(i)); } catch (e) {} window.dispatchEvent(new Event('arenatest')); }
@@ -185,7 +192,7 @@
         restore(); idx = Math.max(0, Math.min(T.length - 1, i)); cur = T[idx];
         PLAT.normal = cur.plat;
         for (const k in cur.items) { ITEMS[k].name = cur.items[k][0]; ITEMS[k].color = cur.items[k][1]; }
-        poolSet = new Set(o && o.party ? PARTY_POOL : poolOf(idx));
+        poolSet = new Set(o && o.party ? PARTY_POOL : poolAt(o && o.tr !== undefined ? o.tr : arenaEnd(idx)));
         rulesNow = o && o.party ? null : { types: new Set(LEDGES.slice(0, LEDGE_COUNT[Math.min(idx, LEDGE_COUNT.length - 1)])), ceilings: idx >= CEILINGS_FROM };
         const r = rng((seed | 0) + idx * 97), L = Math.max(9000, typeof TRACK === 'number' ? TRACK : 9000);
         far = layer(cur, cur.kinds.far, 330, L * 0.09 + 1300, r); mid = layer(cur, cur.kinds.mid, 240, L * 0.2 + 1300, r);
@@ -368,17 +375,16 @@
 
     /* ------------------------------------------------------------------------------ power-ups ---- */
     // called by the item roll: removes what the arena does not have, switches the Gust on where it exists, and shifts a few odds
-    function shape(w, f, others) {
+    function shape(w, f, others, behind) {
         if (!cur || !poolSet) return;
         for (const k in w) if (!poolSet.has(k)) w[k] = 0;
-        if (poolSet.has('wind')) w.wind = others ? 0.10 + 0.12 * f : 0;
+        if (poolSet.has('wind')) w.wind = (others && behind) ? 0.10 + 0.12 * f : 0;          // the Gust needs somebody ahead of you
         for (const k in cur.bias) if (w[k] > 0) w[k] *= cur.bias[k];
     }
     // WHICH LEDGES: new players meet the ledge types one at a time (a party race and the other modes keep the full mix).
     //   Playground: normal, boost, moving ledges.  Parking Lot: + crumbling.  Rooftop: + ice.  From the Harbour on: sealed ledges (ceilings) too.
     const LEDGES = ['boost', 'moving', 'fragile', 'ice'], LEDGE_COUNT = [2, 3, 4, 4], CEILINGS_FROM = 3;
     const rules = () => rulesNow;
-    const diff = i => ({ add: POOL[i].add.slice(), remove: POOL[i].remove.slice(), pool: poolOf(i) });
-    window.ArenaTheme = { pick, set, clear, on, drawSky, shape, paintScene, paintWorld, paintIsland, airMake, airStep, rules, testGet, testSet, grid: () => cur ? cur.grid : null, index: () => idx, THEMES: T, POOL, INFO, ORDER, poolOf, diff,
+    window.ArenaTheme = { pick, set, clear, on, drawSky, shape, paintScene, paintWorld, paintIsland, airMake, airStep, rules, testGet, testSet, UNLOCKS, COLORS, poolAt, poolOfArena, grid: () => cur ? cur.grid : null, index: () => idx, THEMES: T, INFO, ORDER,
         name: i => T[i].name, color: i => T[i].c };
 })();

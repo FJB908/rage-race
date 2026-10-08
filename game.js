@@ -562,7 +562,7 @@ function rollItem(p){
         const lead = players.reduce((m, o) => (o !== p && !o.finished && o.y < m) ? o.y : m, p.y), gap = p.y - lead;
         if (gap > 650) cannonW = Math.min(0.55, 0.12 + (gap - 650) / 2600) * (f < 0.85 ? 0.6 : 1);
     }
-    const djW = inRace ? 0.15 + 0.10*f + (isLeader ? 0.06 : 0) : 0;
+    const djW = inRace ? 0.12 + 0.08*f + (isLeader ? 0.04 : 0) : 0;
     const w = {
         cannon: cannonW, dj: djW,
         rocket: 0.06 + 0.50*f,
@@ -574,7 +574,7 @@ function rollItem(p){
         bomb:   bombW,
         ufo:    ufoW,
     };
-    if (window.ArenaTheme && gameMode === 'race') ArenaTheme.shape(w, f, others);       // the arena's power-up pool (some arrive, some leave) and a few shifted odds
+    if (window.ArenaTheme && gameMode === 'race') ArenaTheme.shape(w, f, others, !isLeader);       // the arena's power-up pool (some arrive, some leave) and a few shifted odds
     if (p.lastItem && w[p.lastItem] > 0) w[p.lastItem] *= 0.2;      // seldom the same item twice in a row: it spreads out
     let sum = 0; for (const k in w) sum += w[k];
     let r = Math.random()*sum;
@@ -732,7 +732,7 @@ function botWantsItem(p){
         case 'chain':  return !!pickChainTarget(p);
         case 'quake':  return p.mode === 'idle';   // fire from solid ground, not mid-air
         case 'shield': return true;                 // hold it defensively as soon as it's ready
-        case 'wind':   return players.some(o => o !== p && !o.finished); // useless with nobody else left
+        case 'wind':   return players.some(o => o !== p && !o.finished && o.y < p.y - 20); // useless with nobody ahead
         case 'ufo':    return p.mode === 'idle' || p.itemHold > 2;  // call it in from solid ground
         case 'cannon': return p.mode === 'idle';                    // deploy from solid ground
         case 'dj':     return p.mode === 'idle';
@@ -800,7 +800,7 @@ function startWind(p, forcedDir){
     let hit = 0;
     const dir = forcedDir || (Math.random() < 0.5 ? -1 : 1);      // one real crosswind direction, shared by everyone it hits
     for (const o of players){
-        if (o === p || o.finished) continue;
+        if (o === p || o.finished || !(o.y < p.y - 20)) continue;                      // only the players AHEAD of you: it must not hurt the ones behind
         if (shieldBlocks(o)){ if (p.local) floatText(o.x, o.y - o.r - 18, 'BLOCKED!', ITEMS.shield.color); continue; }
         o.windT = WIND_TIME;
         o.windSeed = Math.random()*1000;

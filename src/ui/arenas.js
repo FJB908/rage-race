@@ -1,127 +1,133 @@
-// THE ARENAS SCREEN: one arena per page. A big painted picture of the arena with its name and how far you are in it, the ten arenas as a strip you can tap,
-// the power-ups that arrive or leave in that arena, and the four trophy rewards of that arena. It replaces the long Trophy Road list.
-// Loaded AFTER trophies.js and arenatheme.js (it reads their data). Opened from the arena banner on the home screen: Trophies.open() -> Arenas.open().
+// THE ARENAS SCREEN: one road that climbs, like the game. At the bottom the Playground, at the top the Summit; your own marker stands on it.
+// Along the road, in order of trophies: the power-ups that arrive (NEW) or leave (LEAVES) at a trophy count, and the trophy rewards. Every arena starts at a painted gate.
+// No boxes or frames: icons and names sit directly on the road, with room around them. Almost no text: a trophy number, an icon and a name.
+// Tap a power-up for one line about it, tap a ready reward to claim it.
+// Loaded AFTER trophies.js and arenatheme.js. Opened from the arena title on the home screen: Trophies.open() -> Arenas.open().
 (function () {
     'use strict';
     const $ = id => document.getElementById(id), num = n => Math.round(n).toLocaleString('en-US');
-    const TH = () => window.ArenaTheme.THEMES, AR = () => Trophies.ARENAS;
-    let page = 0, busy = false, art = null;
+    const TH = () => ArenaTheme.THEMES, AR = () => Trophies.ARENAS;
+    let busy = false, meRow = null, tick = 0;
 
     const el = document.createElement('div');
     el.id = 's-trophy'; el.className = 'screen arenas-screen'; el.style.cssText = 'display:none;opacity:0';
     el.innerHTML =
-        '<section class="ax-shell"><header class="ax-top"><button class="pass-back" type="button" id="ax-back" aria-label="Back">' + icon('chev-l') + '</button>' +
-        '<h1 class="ax-title">Arenas</h1><div class="ax-tr">' + icon('trophy') + '<b id="ax-tr">0</b></div></header>' +
-        '<div class="ax-scroll" id="ax-scroll">' +
-        '<div class="ax-hero" id="ax-hero"><canvas id="ax-art"></canvas><div class="ax-shade"></div>' +
-        '<button class="ax-nav prev" type="button" id="ax-prev" aria-label="Previous arena">' + icon('chev-l') + '</button><button class="ax-nav next" type="button" id="ax-next" aria-label="Next arena">' + icon('chev-l') + '</button>' +
-        '<span class="ax-badge" id="ax-badge"></span>' +
-        '<div class="ax-copy"><span class="ax-kick" id="ax-kick"></span><h2 class="ax-name" id="ax-name"></h2><p class="ax-tag" id="ax-tag"></p>' +
-        '<div class="ax-prog"><i class="ax-bar"><u id="ax-fill"></u></i><span id="ax-ptxt"></span></div></div></div>' +
-        '<div class="ax-strip" id="ax-strip"></div>' +
-        '<section class="ax-sec"><div class="ax-sh"><h3>Power-ups</h3><span id="ax-pcount"></span></div><div id="ax-pu"></div></section>' +
-        '<section class="ax-sec"><div class="ax-sh"><h3>Rewards</h3><button type="button" class="ax-all" id="ax-all" hidden></button></div><div class="ax-rw" id="ax-rw"></div></section>' +
-        '</div></section>';
+        '<section class="tp-shell"><header class="tp-top"><button class="pass-back" type="button" id="tp-back" aria-label="Back">' + icon('chev-l') + '</button>' +
+        '<h1 class="tp-title">Arenas</h1><button type="button" class="tp-all" id="tp-all" hidden></button><div class="tp-tr-pill">' + icon('trophy') + '<b id="tp-tr">0</b></div></header>' +
+        '<div class="tp-scroll" id="tp-scroll"><div class="tp-road" id="tp-road"><i class="tp-line"></i><i class="tp-fill"></i></div></div>' +
+        '<button type="button" class="tp-me-btn" id="tp-me-btn" hidden></button></section>';
     document.body.appendChild(el); S.trophy = el;
-    const cv = $('ax-art'), hero = $('ax-hero');
+    const scroll = $('tp-scroll'), road = $('tp-road');
 
-    /* ---------------------------------------------------------------------------- the page ---- */
-    function state(i) {                                                      // where the player stands against arena i
-        const tr = prog().tr || 0, A = AR()[i], next = AR()[i + 1], cur = Trophies.arenaOf(tr);
-        return { tr, A, next, cur, here: i === cur, done: i < cur, locked: i > cur, from: A.at, to: next ? next.at : A.at + Trophies.SPAN_LAST };
-    }
-    function paintArt(i) {
-        const w = hero.clientWidth, h = hero.clientHeight; if (w < 40 || h < 40) return;
-        const dpr = Math.min(2, window.devicePixelRatio || 1), key = i + '|' + w + 'x' + h + '|' + dpr; if (cv._key === key) return; cv._key = key;
-        cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.width = w + 'px'; cv.style.height = h + 'px';
-        try { ArenaTheme.paintScene(cv, i, w, h, { prog: .12 + i * .02, props: .8, alpha: 1.45, mist: .1, horizon: .62 }); } catch (e) {}
-    }
-    function renderHero(i, dir) {
-        const th = TH()[i], s = state(i);
-        el.style.setProperty('--ac', th.c);
-        $('ax-kick').textContent = 'ARENA ' + (i + 1) + ' OF ' + TH().length;
-        $('ax-name').textContent = th.name; $('ax-tag').textContent = th.tag;
-        const fill = $('ax-fill'), txt = $('ax-ptxt'), prog_ = $('ax-hero').querySelector('.ax-prog');
-        if (s.here) { fill.style.width = Math.max(3, Math.min(100, 100 * (s.tr - s.from) / (s.to - s.from))).toFixed(1) + '%'; txt.innerHTML = s.next ? '<b>' + num(s.to - s.tr) + '</b> to ' + s.next.n : 'Top arena'; }
-        else if (s.done) { fill.style.width = '100%'; txt.textContent = 'Reached'; }
-        else { fill.style.width = '0%'; txt.innerHTML = '<b>' + num(s.from - s.tr) + '</b> trophies to go'; }
-        $('ax-badge').className = 'ax-badge' + (s.here ? ' here' : s.done ? ' done' : ' lock'); $('ax-badge').innerHTML = s.here ? 'YOU ARE HERE' : s.done ? 'REACHED' : icon('lock') + ' ' + num(s.from) + ' TROPHIES';
-        prog_.classList.toggle('dim', s.locked);
-        if (dir) { hero.classList.remove('sl', 'sr'); void hero.offsetWidth; hero.classList.add(dir > 0 ? 'sl' : 'sr'); }
-        paintArt(i);
-        $('ax-prev').disabled = i <= 0; $('ax-next').disabled = i >= TH().length - 1;
-    }
-    function renderStrip(i) {
-        const st = $('ax-strip'), cl = Trophies.claimable(); st.innerHTML = '';
-        TH().forEach((th, a) => {
-            const s = state(a), b = document.createElement('button'); b.type = 'button';
-            b.className = 'ax-node' + (a === i ? ' sel' : '') + (s.here ? ' here' : s.done ? ' done' : ' lock'); b.style.setProperty('--nc', th.c);
-            b.innerHTML = '<span>' + (a + 1) + '</span>' + (cl.some(m => m.arena === a) ? '<i class="ax-dot"></i>' : ''); b.setAttribute('aria-label', 'Arena ' + (a + 1) + ' ' + th.name);
-            b.onclick = () => go(a); st.appendChild(b);
-        });
-    }
-    const itemRow = (k, kind, i) => {                                       // kind: 'new' | 'gone'
-        const info = ArenaTheme.INFO[k], th = TH()[i], themed = th.items[k] ? th.items[k][0] : '', svg = (typeof ICON_SVG !== 'undefined' && ICON_SVG[k]) || '';
-        return '<div class="ax-pu ' + kind + '" style="--pc:' + (ITEMS0col(k) || '#9aa4b6') + '"><span class="ax-pi">' + svg + '</span><span class="ax-pt"><b>' + info[0] + (themed && kind === 'new' ? '<em>' + themed.replace('!', '') + '</em>' : '') + '</b><small>' + (kind === 'gone' ? 'Not in this arena any more' : info[1]) + '</small></span><span class="ax-tagc ' + kind + '">' + (kind === 'new' ? (i === 0 ? 'STARTER' : 'NEW') : 'GONE') + '</span></div>';
-    };
-    const BASECOL = { rocket: '#ff7a3d', giant: '#ffcf3f', bounce: '#35e0c8', chain: '#c9d1e3', quake: '#ff5470', shield: '#7ee787', wind: '#8fd6ff', ufo: '#7CFF6B', bomb: '#ff3d5a', cannon: '#ff9f43', dj: '#9fe8ff' };
-    function ITEMS0col(k) { return BASECOL[k]; }
-    function renderPowerups(i) {
-        const d = ArenaTheme.diff(i), box = $('ax-pu');
-        $('ax-pcount').textContent = d.pool.length + ' of ' + ArenaTheme.ORDER.length + ' in play';
-        let h = '';
-        if (d.add.length) h += '<div class="ax-pg">' + (i === 0 ? 'The starter set' : 'New in this arena') + '</div>' + d.add.map(k => itemRow(k, 'new', i)).join('');
-        if (d.remove.length) h += '<div class="ax-pg">Leaves in this arena</div>' + d.remove.map(k => itemRow(k, 'gone', i)).join('');
-        h += '<div class="ax-pg">All power-ups here</div><div class="ax-all-pu">' + ArenaTheme.ORDER.map(k => '<span class="' + (d.pool.includes(k) ? 'on' : 'off') + (d.add.includes(k) ? ' fresh' : '') + '" title="' + ArenaTheme.INFO[k][0] + '">' + ((typeof ICON_SVG !== 'undefined' && ICON_SVG[k]) || '') + '</span>').join('') + '</div>';
-        const th = TH()[i], ren = Object.keys(th.items).filter(k => d.pool.includes(k)).map(k => ArenaTheme.INFO[k][0] + ' becomes <b>' + th.items[k][0].replace('!', '') + '</b>');
-        if (ren.length) h += '<p class="ax-note">' + ren.join(' · ') + '</p>';
-        box.innerHTML = h;
-    }
-    function renderRewards(i) {
-        const p = prog(), tr = p.tr || 0, done = p.trClaimed || [], box = $('ax-rw'), road = Trophies.road().filter(m => m.arena === i), nm = Trophies.nextMilestone(), cl = Trophies.claimable();
-        box.innerHTML = '';
-        for (const m of road) {
-            const claimed = done.includes(m.id), ready = !claimed && m.at <= tr, cur = nm && nm.id === m.id;
-            const t = document.createElement(ready ? 'button' : 'div'); if (ready) t.type = 'button';
-            t.className = 'ax-r' + (claimed ? ' claimed' : ready ? ' ready' : ' locked') + (cur ? ' next' : '') + (m.big ? ' big' : ''); t.style.setProperty('--rc', Trophies.color(m.r));
-            t.innerHTML = '<span class="ax-ra">' + Trophies.art(m.r, m.id) + '</span><span class="ax-rn">' + Trophies.name(m.r) + '</span><span class="ax-rs">' + (claimed ? 'Collected' : ready ? 'TAP TO CLAIM' : icon('trophy') + ' ' + num(m.at)) + '</span>';
-            if (ready) t.onclick = () => claim([m.id]);
-            box.appendChild(t);
-            const c = t.querySelector('canvas');
-            if (c) { const look = Object.assign({ skin: 'classic', hat: 'none', face: 'none', trail: 'none' }, { [m.r.cat]: m.r.id }); if (m.r.cat === 'trail') { c.width = 200; c.height = 100; try { drawTrailPreview(c, Trophies.itemOf(m.r), undefined, 1.5); } catch (e) {} } else { try { renderLook(c, look, { scale: .26, cy: .6 }); } catch (e) {} } }
+    /* ----------------------------------------------------------------------------- the data ---- */
+    // every stop on the road: {at, kind: 'new' | 'gone' | 'reward', ...}
+    function stops() {
+        const ev = [];
+        Trophies.road().forEach(m => ev.push({ at: m.at, kind: 'reward', o: 1, m }));
+        ArenaTheme.UNLOCKS.forEach(u => { (u.add || []).forEach(k => ev.push({ at: u.at, kind: 'new', o: 0, k })); (u.remove || []).forEach(k => ev.push({ at: u.at, kind: 'gone', o: 0, k })); });
+        ev.sort((a, b) => a.at - b.at || a.o - b.o);
+        const out = [];                                                         // power-ups that arrive (or leave) at the same trophy count share one stop
+        for (const e of ev) {
+            const last = out[out.length - 1];
+            if (e.kind !== 'reward' && last && last.kind === e.kind && last.at === e.at) last.ks.push(e.k);
+            else out.push(e.kind === 'reward' ? e : { at: e.at, kind: e.kind, ks: [e.k] });
         }
-        const all = $('ax-all'); all.hidden = !cl.length; all.textContent = 'CLAIM ALL (' + cl.length + ')';
+        return out;
     }
+    const icoOf = k => (typeof ICON_SVG !== 'undefined' && ICON_SVG[k]) || '';
+
+    /* ------------------------------------------------------------------------------ the rows ---- */
+    function stop(cls, at, content) {
+        const d = document.createElement('div'); d.className = 'tp-row ' + cls;
+        d.innerHTML = '<span class="tp-n">' + num(at) + '</span><i class="tp-dot"></i><div class="tp-c">' + content + '</div>';
+        return d;
+    }
+    function rowItems(e, tr) {
+        const cls = 'pu ' + e.kind + (e.at <= tr ? ' reached' : '') + (e.ks.length > 1 ? ' many' : '');
+        const d = stop(cls, e.at, e.ks.map(k => '<span class="tp-it" data-k="' + k + '" style="--pc:' + (ArenaTheme.COLORS[k] || '#9aa4b6') + '">' + icoOf(k) + '<span class="tp-lab"><b>' + ArenaTheme.INFO[k][0] + '</b><i>' + (e.kind === 'gone' ? 'LEAVES' : 'NEW') + '</i></span></span>').join(''));
+        d.querySelectorAll('.tp-it').forEach(it => { it.onclick = () => { const info = ArenaTheme.INFO[it.dataset.k]; if (window.SFX) SFX.play('tap'); toast(e.kind === 'gone' ? info[0] + ' leaves the power-ups' : info[0] + ': ' + info[1]); }; });
+        return d;
+    }
+    function rowReward(e, tr, done) {
+        const m = e.m, claimed = done.includes(m.id), ready = !claimed && m.at <= tr;
+        const d = stop('rw' + (claimed ? ' claimed' : ready ? ' ready' : e.at <= tr ? ' reached' : '') + (m.big ? ' big' : ''), m.at,
+            '<span class="tp-art">' + Trophies.art(m.r, m.id) + '</span><span class="tp-lab">' + (m.r.t === 'item' || m.r.t === 'gemchest' ? Trophies.name(m.r).replace(/<small>.*?<\/small>/, '') : Trophies.name(m.r)) + (ready ? '<em>CLAIM</em>' : claimed ? '<i class="got">Collected</i>' : '') + '</span>');
+        d.style.setProperty('--rc', Trophies.color(m.r));
+        if (ready) { d.setAttribute('role', 'button'); d.onclick = () => claim([m.id]); }
+        const c = d.querySelector('canvas');
+        if (c) { const look = Object.assign({ skin: 'classic', hat: 'none', face: 'none', trail: 'none' }, { [m.r.cat]: m.r.id }); if (m.r.cat === 'trail') { c.width = 200; c.height = 100; try { drawTrailPreview(c, Trophies.itemOf(m.r), undefined, 1.5); } catch (er) {} } else { try { renderLook(c, look, { scale: .26, cy: .6 }); } catch (er) {} } }
+        return d;
+    }
+    function rowMe(tr) {
+        const d = stop('me', tr, '<canvas width="120" height="120"></canvas><span class="tp-lab"><b>You</b></span>');
+        try { renderLook(d.querySelector('canvas'), myLook(), { scale: .34, cy: .56 }); } catch (e) {}
+        return d;
+    }
+    function gate(i, tr) {
+        const th = TH()[i], A = AR()[i], here = Trophies.arenaOf(tr) === i, state = here ? 'here' : tr >= A.at ? 'done' : 'lock';
+        const g = document.createElement('div'); g.className = 'tp-gate ' + state; g.style.setProperty('--ac', th.c);
+        const cv = document.createElement('canvas'); cv.width = 588; cv.height = 180; g.appendChild(cv);
+        try { ArenaTheme.paintScene(cv, i, 392, 120, { prog: .15 + i * .02, props: .7, alpha: 1.4, mist: .1, horizon: .86, scale: .9 }); } catch (e) {}
+        const t = document.createElement('div'); t.className = 'tp-gt';
+        t.innerHTML = '<span class="tp-gk">ARENA ' + (i + 1) + '</span><b>' + th.name + '</b><span class="tp-gn">' + (state === 'lock' ? icon('lock') : icon('trophy')) + num(A.at) + '</span>';
+        g.appendChild(t);
+        return g;
+    }
+
+    /* ------------------------------------------------------------------------------- render ---- */
     function render() {
-        $('ax-tr').textContent = num(prog().tr || 0);
-        renderHero(page); renderStrip(page); renderPowerups(page); renderRewards(page);
+        const p = prog(), tr = p.tr || 0, done = p.trClaimed || [], cur = Trophies.arenaOf(tr), all = stops(), cl = Trophies.claimable();
+        $('tp-tr').textContent = num(tr);
+        const ab = $('tp-all'); ab.hidden = !cl.length; ab.textContent = 'CLAIM ' + cl.length;
+        for (const n of [...road.children]) if (!n.classList.contains('tp-line') && !n.classList.contains('tp-fill')) n.remove();
+        meRow = null;
+        for (let i = TH().length - 1; i >= 0; i--) {
+            const zone = document.createElement('section'); zone.className = 'tp-zone' + (i === cur ? ' cur' : ''); zone.dataset.arena = i;
+            const th = TH()[i]; zone.style.setProperty('--ac', th.c); zone.style.setProperty('--s1', th.sky[0][0]); zone.style.setProperty('--s2', th.sky[0][1]);
+            const list = all.filter(e => Trophies.arenaOf(e.at) === i);
+            let placed = false;
+            for (let k = list.length - 1; k >= 0; k--) {                          // from the top of the arena down to its gate
+                const e = list[k];
+                if (!placed && i === cur && e.at <= tr) { meRow = rowMe(tr); zone.appendChild(meRow); placed = true; }
+                zone.appendChild(e.kind === 'reward' ? rowReward(e, tr, done) : rowItems(e, tr));
+            }
+            if (!placed && i === cur) { meRow = rowMe(tr); zone.appendChild(meRow); }
+            zone.appendChild(gate(i, tr));
+            road.appendChild(zone);
+        }
+        layout();
     }
-    function go(i, silent) {
-        i = Math.max(0, Math.min(TH().length - 1, i)); if (i === page && !silent) return;
-        const dir = i > page ? 1 : -1; page = i; if (window.SFX && !silent) SFX.play('tap');
-        $('ax-tr').textContent = num(prog().tr || 0);
-        renderHero(page, silent ? 0 : dir); renderStrip(page); renderPowerups(page); renderRewards(page);
-        const sc = $('ax-scroll'); if (!silent && sc.scrollTop > hero.offsetHeight) sc.scrollTop = 0;
+    function layout() {                                                           // the coloured part of the line, from the bottom up to you
+        if (!meRow) return;
+        const rr = road.getBoundingClientRect(), mr = meRow.getBoundingClientRect();
+        road.style.setProperty('--fill', Math.max(0, road.scrollHeight - (mr.top - rr.top + mr.height / 2)) + 'px');
+        meBtn();
     }
+    function meBtn() {                                                            // the "back to me" button shows while your marker is off screen, pointing the way
+        const b = $('tp-me-btn'); if (!meRow) { b.hidden = true; return; }
+        const sr = scroll.getBoundingClientRect(), mr = meRow.getBoundingClientRect(), above = mr.bottom < sr.top + 20, below = mr.top > sr.bottom - 20;
+        b.hidden = !(above || below); if (b.hidden) return;
+        b.classList.toggle('up', above); if (b._tr !== (prog().tr || 0)) { b._tr = prog().tr || 0; b.innerHTML = icon('chev-l') + '<span>' + num(b._tr) + '</span>'; }
+    }
+    scroll.addEventListener('scroll', () => { if (!tick) tick = requestAnimationFrame(() => { tick = 0; meBtn(); }); }, { passive: true });
+    function goToMe(smooth) { if (!meRow) return; const rr = road.getBoundingClientRect(), mr = meRow.getBoundingClientRect(); scroll.scrollTo({ top: Math.max(0, mr.top - rr.top - scroll.clientHeight * .5 + mr.height / 2), behavior: smooth ? 'smooth' : 'auto' }); }
     async function claim(ids) {
         if (busy) return; busy = true;
         try { await Trophies.claim(ids); } finally { busy = false; render(); }
     }
-    // swipe on the picture: left = next arena, right = previous
-    let sx = 0, sy = 0, sw = false;
-    hero.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; sw = true; });
-    hero.addEventListener('pointerup', e => { if (!sw) return; sw = false; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.4) go(page + (dx < 0 ? 1 : -1)); });
-    hero.addEventListener('pointercancel', () => { sw = false; });
-    $('ax-prev').onclick = () => go(page - 1); $('ax-next').onclick = () => go(page + 1);
-    $('ax-all').onclick = () => claim(Trophies.claimable().map(m => m.id));
-    $('ax-back').onclick = () => showScreen('start');
+    $('tp-all').onclick = () => claim(Trophies.claimable().map(m => m.id));
+    $('tp-back').onclick = () => showScreen('start');
+    $('tp-me-btn').onclick = () => goToMe(true);
 
     window.Arenas = {
         render,
         open(i) {
-            page = typeof i === 'number' ? i : Trophies.arenaOf(prog().tr || 0); cv._key = '';
             render(); showScreen('trophy');
-            setTimeout(() => { cv._key = ''; paintArt(page); $('ax-scroll').scrollTop = 0; }, 90);
+            setTimeout(() => {
+                layout();                                                         // measured now that the screen is visible
+                if (typeof i === 'number') { const z = road.querySelector('.tp-zone[data-arena="' + i + '"]'); if (z) { const rr = road.getBoundingClientRect(), zr = z.getBoundingClientRect(); scroll.scrollTop = Math.max(0, zr.top - rr.top - 10); return; } }
+                goToMe(false);
+            }, 80);
         },
     };
 })();

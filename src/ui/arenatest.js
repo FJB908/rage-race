@@ -15,7 +15,7 @@
         const row = (i, name, sub, col) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'at-row' + (i === cur ? ' on' : ''); b.style.setProperty('--c', col);
             b.innerHTML = '<i>' + (i < 0 ? 'A' : i + 1) + '</i><span><b>' + name + '</b><small>' + sub + '</small></span>'; b.onclick = () => { ArenaTheme.testSet(i); label(); close(); if (window.SFX) SFX.play('select'); }; list.appendChild(b); };
         row(-1, 'Automatic', 'Your own arena: ' + ArenaTheme.THEMES[real].name, '#8b95a7');
-        ArenaTheme.THEMES.forEach((t, i) => row(i, t.name, ArenaTheme.poolOf(i).length + ' power-ups', t.c));
+        ArenaTheme.THEMES.forEach((t, i) => row(i, t.name, ArenaTheme.poolOfArena(i).length + ' power-ups', t.c));
         s.addEventListener('click', e => { if (e.target === s) close(); }); s.querySelector('.at-x').onclick = close;
         document.body.appendChild(s);
     }

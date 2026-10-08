@@ -4,7 +4,7 @@
 
 - **Look** (Arena Race and Build Race; a party match always uses the Playground): a sky that shifts while you climb, a big sun or moon, two layers of far-away scenery that move slowly (parallax), mist between the layers, drifting specks and a soft vignette. The colours of the scenery are close to the sky, so it is clearly a background and never looks like something to stand on. Every piece of scenery is painted once into a small cached picture; a frame only does a few `drawImage` calls. The normal platforms get a colour that fits the arena; the special platforms (ice, moving, fragile, boost, safety) keep their meaning colours.
 - **Home screen = a little world**: the arena you are in fills the whole background of the home tab (sky, sun or moon, far scenery, mist, drifting air). Your player stands on a **floating island** that carries a few pieces of the arena (a windmill and balloon in the Playground, a lamp, car and cones in the Parking Lot, a lighthouse and containers in the Harbour, a volcano and floating rocks in the Volcano, ...) and bobs slowly. Each island has its own material (grass, asphalt with parking lines, roof tiles, planks, riveted steel, subway tiles with a safety strip, snow, glowing hex panels, cracked basalt, gold) and its own underside (rock, wooden posts, pipes, a thruster flame, lava drips). Above it, no card: just `ARENA 4`, the arena name in big letters, the trophy count and a thin bar with what is left to the next arena. Tap the title or the island to open the Arenas screen. All of it is painted once (`ArenaTheme.paintWorld`, `paintIsland`); only the air specks and the island's bob (CSS) move.
-- **Arenas screen** (tap the banner): one arena per page (swipe or arrows, or tap one of the ten nodes). Big picture, name, progress or lock, the power-ups that arrive and leave, and the four trophy rewards of that arena (claim one or all).
+- **Arenas screen = the Trophy Path** (tap the arena title or the island): one road that climbs like the game, the Playground at the bottom and the Summit at the top, and your own marker on it (a button brings you back when you scroll away). Along the road, in order of trophies: the power-ups that arrive (**NEW**) or leave (**LEAVES**) at a trophy count and the trophy rewards (tap a ready one to claim it, or CLAIM ALL at the top). Every arena starts at a painted gate with its name. No boxes or frames, almost no text: a trophy number, an icon and a name; tap a power-up for one line about it. Power-ups that arrive at the same trophy count share one stop. The data is `ArenaTheme.UNLOCKS` (trophies -> power-ups) plus `Trophies.road()` (the rewards).
 - **Name**: the main mode is now called **Arena Race** (it used to be Quick play).
 
 ## Arena sizes and the new-player ramp
@@ -13,23 +13,24 @@
 - **Tips, not hand-holding**: the first time a power-up lands in your slot, or a crumbling / icy / moving / boost / sealed ledge is under your feet, one short line says what it is (once per account, `src/ui/tips.js`). The adaptive help is a bit smaller than before (it starts at 80% instead of 100% and never drops below 60% in the first three races).
 - **Test switch**: the small TEST button next to the hanger on the home screen picks the arena Arena Race and Build Race are played in (look, power-ups, ledges). It is temporary: delete `src/ui/arenatest.js`, `arenatest.css` and their tags in `index.html`.
 
-## Power-ups per arena (Arena Race and Build Race)
-The pool is cumulative: an arena has everything the arenas before it added, minus what has left. The Gust (`wind`) was out of the game and comes back from the Rooftop on. Parties keep the classic set (everything except the Gust). The Gauntlet, Boom Tag, Arcade and Escape are not touched.
+## Power-ups unlock on trophies (Arena Race and Build Race)
+The pool you roll from depends on your **trophies** (it is not only per arena): a new power-up arrives at a trophy count and a few training wheels leave later. Parties keep the classic set (everything except the Gust). The Gust only hits players ahead of you. The table is `ArenaTheme.UNLOCKS` in `arenatheme.js`; the Arenas screen draws exactly that list.
 
-| # | Arena | New | Leaves | In play |
-|---|---|---|---|---|
-| 1 | Playground | Super Bounce, Rocket, Giant, Shield (the starter set) | - | 4 |
-| 2 | Parking Lot | Double Jump | - | 5 |
-| 3 | Rooftop | Gust | - | 6 |
-| 4 | Harbour | Stun Bomb | - | 7 |
-| 5 | Factory | Chain | - | 8 |
-| 6 | Subway | Earthquake | - | 9 |
-| 7 | Mountain | UFO | - | 10 |
-| 8 | Space Station | Cannon | - | 11 (everything) |
-| 9 | Volcano | - | Super Bounce | 10 |
-| 10 | Summit | - | Giant | 9 |
+| Trophies | Arena | Arrives | Leaves |
+|---|---|---|---|
+| 0 | Playground | Rocket, Super Bounce, Giant | - |
+| 150 | Playground | Double Jump | - |
+| 550 | Parking Lot | Shield | - |
+| 750 | Rooftop | Gust | - |
+| 1,050 | Rooftop | - | Giant |
+| 1,350 | Harbour | Stun Bomb | - |
+| 1,950 | Harbour | - | Super Bounce |
+| 2,100 | Factory | Chain | - |
+| 3,000 | Subway | Earthquake | - |
+| 4,100 | Mountain | UFO | - |
+| 5,400 | Space Station | Cannon | - |
 
-Why this order: the four easy ones teach the game; the Double Jump is the first skill item; the Gust and Stun Bomb are the first attacks; the Chain and Earthquake only matter against a leader, so they need a field that is competitive; the UFO and Cannon are the big comeback tools and come last. At the top the helpers that make jumping forgiving (Super Bounce, Giant) leave, so the best players have to read their own jumps.
+Planned (see POWERUPS.md, not built yet): Nitro, Glider, Safety Net, Grapple, Mirror, Snowball, Moon Boots, Jetpack, Swap and Lightning will be slotted into this table when they exist.
 
 Each arena also renames and recolours the **Stun Bomb** and the **Earthquake** (Parking Lot: Car Alarm / Pothole, Rooftop: Firework / Roof Cave-In, Harbour: Depth Charge / Tidal Wave, Factory: Steam Blast / Piston Slam, Subway: Short Circuit / Train Rumble, Mountain: Snowball / Avalanche, Space Station: Ion Burst / Meteor, Volcano: Lava Bomb / Eruption, Summit: Thunder / Lightning Strike) and makes one or two power-ups a bit more common (Parking Lot: Stun Bomb x1.3, Rooftop: Double Jump x1.4, Harbour: Super Bounce x1.4, Factory: Chain x1.4, Subway: Shield x1.3 and Stun Bomb x1.15, Mountain: Giant x1.4, Space Station: Double Jump x1.6 and Super Bounce x1.2, Volcano: Rocket x1.5 and Earthquake x1.3, Summit: Cannon x1.5 and Earthquake x1.2). The names and odds are plain data at the top of `arenatheme.js`.
 
