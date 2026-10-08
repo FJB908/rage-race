@@ -1,15 +1,15 @@
 // WISHLIST GOAL: pin one shop item as "my goal". The home screen then shows a quiet progress bar (coins or gems saved / price), so every race moves toward something the player picked.
 // Easy to switch off: the little x on the bar removes the goal, and Settings has a "Wishlist goal" switch that hides the bar and the pin stars everywhere.
-// Works for the four wardrobe categories of the shop (skin, hat, face, trail). The goal lives in the profile (prog().wish), the on/off switch in localStorage (rr_wish_on).
+// Works for the wardrobe categories of the shop (skin, hat, face, trail, costume) and for finishers. The goal lives in the profile (prog().wish), the on/off switch in localStorage (rr_wish_on).
 (function () {
     'use strict';
     const $ = id => document.getElementById(id), KEY = 'rr_wish_on';
-    const CATS = ['skin', 'hat', 'face', 'trail'];
+    const CATS = ['skin', 'hat', 'face', 'trail', 'costume', 'finisher'];
     const enabled = () => { try { return localStorage.getItem(KEY) !== '0'; } catch (e) { return true; } };
     const setEnabled = on => { try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {} };
     const num = n => Math.round(n).toLocaleString('en-US');
 
-    function itemOf(w) { const list = w && COS_BY[w.cat]; return list ? list.find(i => i.id === w.id) : null; }
+    function itemOf(w) { if (!w) return null; const list = w.cat === 'finisher' ? (window.Finishers && Finishers.FINISHERS) : COS_BY[w.cat]; return list ? list.find(i => i.id === w.id) || null : null; }
     // the goal as the home screen needs it, or null when there is none / it is switched off / you already own it
     function goal() {
         const p = prog(), w = p.wish; if (!w || !enabled()) return null;
@@ -43,7 +43,12 @@
                 '<button class="mw-x" type="button" aria-label="Remove goal"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>';
             const me = prog(), cat = g.w.cat;
             const look = { skin: me.skin, hat: me.hat, face: me.face, trail: 'none', costume: 'none' }; look[cat === 'trail' ? 'trail' : cat] = g.w.id;
-            try { if (cat === 'trail') { const cv = box.querySelector('canvas'); drawTrailPreview(cv, g.it, undefined, 1.3); } else renderLook(box.querySelector('canvas'), look, { scale: .27, cy: .66 }); } catch (e) {}
+            try {
+                const cv = box.querySelector('canvas');
+                if (cat === 'trail') drawTrailPreview(cv, g.it, undefined, 1.3);
+                else if (cat === 'finisher') Finishers.mount(cv, g.it, { span: g.it.pv || 340, oy: .84, static: true });      // one still frame: the home screen stays quiet
+                else renderLook(cv, look, cat === 'costume' ? { scale: .21, cy: .64 } : { scale: .27, cy: .66 });
+            } catch (e) {}
             box.querySelector('.mw-main').onclick = () => { menuTab('shop'); renderShop(g.w.cat); setTimeout(() => { const c = document.querySelector('#m-skins [data-tid="' + g.w.id + '"]'); if (c) { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); c.classList.remove('wish-flash'); void c.offsetWidth; c.classList.add('wish-flash'); } }, 60); };
             box.querySelector('.mw-x').onclick = e => { e.stopPropagation(); clear(); if (window.SFX) SFX.play('back'); };
         }

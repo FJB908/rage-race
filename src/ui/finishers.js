@@ -383,6 +383,7 @@
     function mount(cv, f, opts) {
         const m = Object.assign({ cv, f, ctx: cv.getContext('2d'), sim: null, idle: Math.random() * .15, age: 0, hold: .35 }, opts || {});
         prime(m);
+        if (opts && opts.static) return m;                                              // a single still frame, nothing keeps running
         m.vis = true; mounts.add(m); if (!raf) raf = requestAnimationFrame(tick); return m;
     }
 
@@ -403,6 +404,7 @@
             b.innerHTML = '<span class="m-skin-pv"><canvas width="340" height="248" class="fn-pv"></canvas></span><b>' + f.name + '</b>' +
                 '<span class="m-skin-f"><span class="buy-hint">Tap again</span><span class="' + (own ? (eq ? 'eqd' : 'own') : 'price') + '">' + (own ? (eq ? 'EQUIPPED' : 'OWNED') : f.premium ? icon('gem') + ' ' + f.gemPrice : icon('coin') + ' ' + f.price.toLocaleString('en-US')) + '</span></span>';
             mount(b.querySelector('canvas'), f, { span: f.pv || 340, oy: .84 });
+            b.dataset.tid = f.id; if (window.Wish) Wish.decorate(b, 'finisher', f, own);
             b.onclick = () => {
                 if (own) { const q = prog(); q.finisher = eq ? 'f-none' : f.id; saveProg(q); SFX.play('item'); renderShop(grid); return; }
                 const afford = f.premium ? gemCount() >= f.gemPrice : load('rr_coins', 0) >= f.price;
