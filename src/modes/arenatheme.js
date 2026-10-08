@@ -299,9 +299,10 @@
             };
             const dens = o.props === undefined ? 1 : o.props;
             const al = o.alpha || 1, mi = o.mist === undefined ? 1 : o.mist * 4;                // alpha: more punch for the big picture; mist: how much haze
-            place(th.kinds.far, 'far', Math.min(1, .7 * al), .36, Math.max(2, Math.round(3 * dens)));
+            const ko = o.kinds || th.kinds, nf = o.nFar !== undefined ? o.nFar : Math.max(2, Math.round(3 * dens)), nm = o.nMid !== undefined ? o.nMid : Math.max(2, Math.round(3 * dens));
+            if (nf) place(ko.far, 'far', Math.min(1, .7 * al), .36 * (o.farScale || 1), nf);
             mistFill(c, w, h, th, h * .35, h, .25 * mi);
-            place(th.kinds.mid, 'mid', Math.min(1, .88 * al), .3, Math.max(2, Math.round(3 * dens)));
+            if (nm) place(ko.mid, 'mid', Math.min(1, .88 * al), .3, nm);
             if (th.ground && o.ground !== false) { c.fillStyle = lg(c, 0, horizon, 0, h, [[0, th.ground], [1, mixc(th.ground, '#000', .35)]]); c.fillRect(0, horizon + h * .06, w, h); c.fillStyle = lg(c, 0, horizon + h * .02, 0, horizon + h * .1, [[0, 'rgba(255,255,255,.1)'], [1, 'rgba(255,255,255,0)']]); c.fillRect(0, horizon + h * .06, w, h * .06); }
             mistFill(c, w, h, th, h * .55, h, .18 * mi);
             vignette(c, w, h);
@@ -322,12 +323,34 @@
         { top: '#2f7469', edge: '#d9e86a', under: ['#1f504a', '#0a1d1b'], deco: 'tiles2', hang: 'rock',    props: [['roundel', .78, .55], ['tilepillar', -.8, .42]] },
         { top: '#f1f7ff', edge: '#cfe6ff', under: ['#7f98b4', '#2e3e54'], deco: 'snow', hang: 'rock',      props: [['pines', -.74, .62], ['peak', .78, .36]] },
         { top: '#cdd3ea', edge: '#9f8bff', under: ['#4b507c', '#191b38'], deco: 'hex', hang: 'thruster',   props: [['sat', .78, .55, 1], ['station', -.62, .4, 1], ['asteroid', .45, .4, 1]] },
-        { top: '#3f2c29', edge: '#ff7a3d', under: ['#2c1613', '#0d0504'], deco: 'cracks', hang: 'drips',   props: [['volcano', .72, .4], ['rockfloat', -.8, .5, 1]] },
-        { top: '#eadba3', edge: '#ffcf3f', under: ['#4d5181', '#161934'], deco: 'gold', hang: 'rock',      props: [['crag', .78, .42], ['storm', -.55, .3, 1]] },
+        { top: '#3f2c29', edge: '#ff7a3d', under: ['#2c1613', '#0d0504'], deco: 'cracks', hang: 'drips',   props: [] },
+        { top: '#eadba3', edge: '#ffcf3f', under: ['#4d5181', '#161934'], deco: 'gold', hang: 'rock',      props: [['crag', .78, .42]] },
     ];
+    // the home screen is calmer than the race: only a few big shapes (a lone volcano, one storm cloud with its lightning, ...)
+    const CALM = {
+        0: { kinds: { far: ['cloud', 'rainbow'], mid: [] }, nFar: 2, nMid: 0 },
+        1: { kinds: { far: ['pillar', 'psign'], mid: [] }, nFar: 2, nMid: 0 },
+        2: { kinds: { far: ['skyline'], mid: [] }, nFar: 2, nMid: 0 },
+        3: { kinds: { far: ['ship', 'crane'], mid: [] }, nFar: 2, nMid: 0 },
+        7: { kinds: { far: ['nebula', 'planet'], mid: [] }, nFar: 2, nMid: 0 },
+        8: { kinds: { far: ['volcano'], mid: [] }, nFar: 1, nMid: 0, farScale: 2.1 },
+        9: { kinds: { far: [], mid: ['crag'] }, nFar: 0, nMid: 2 },
+    };
     function paintWorld(cv, i, w, h) {
-        paintScene(cv, i, w, h, { prog: .2, props: 1.7, alpha: 1.15, mist: .9, horizon: .62, ground: false, scale: .62, orbDy: .17 });
+        paintScene(cv, i, w, h, Object.assign({ prog: .2, props: 1.7, alpha: 1.15, mist: .9, horizon: .62, ground: false, scale: .62, orbDy: .17 }, CALM[i] || {}));
         const c = cv.getContext('2d'), dpr = cv.width / w; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (i === 9) {                                                                  // Summit: one dark storm cloud, and the lightning really comes out of it
+            const keep = idx; idx = i;
+            try {
+                const sp = sprite(i, 'storm', 'far', 0), k = Math.min(1.5, w * .8 / sp.def.w), cx = w * .5, cy = h * .3;
+                put(c, sp, cx, cy, k, .95, 0);
+                const x0 = cx + w * .06, y0 = cy - 6, pts = [[x0, y0]]; let x = x0, y = y0; const rr = rng(77);
+                while (y < h * .56) { y += h * (.035 + rr() * .03); x += (rr() - .5) * w * .1; pts.push([x, y]); }
+                c.lineJoin = 'round'; c.lineCap = 'round'; c.globalCompositeOperation = 'lighter';
+                for (const [lw, a] of [[12, .18], [6, .35], [2.4, .95]]) { c.strokeStyle = 'rgba(255,238,170,' + a + ')'; c.lineWidth = lw; c.beginPath(); pts.forEach((q, n) => n ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); }
+                c.globalCompositeOperation = 'source-over';
+            } finally { idx = keep; }
+        }
         c.fillStyle = lg(c, 0, 0, 0, h * .22, [[0, 'rgba(7,9,14,.7)'], [1, 'rgba(7,9,14,0)']]); c.fillRect(0, 0, w, h * .22);                                  // calm behind the header
         c.fillStyle = lg(c, 0, h * .7, 0, h, [[0, 'rgba(7,9,14,0)'], [.45, 'rgba(7,9,14,.74)'], [1, 'rgba(7,9,14,.96)']]); c.fillRect(0, h * .7, w, h * .3);       // calm behind the cards
         c.setTransform(1, 0, 0, 1, 0, 0);

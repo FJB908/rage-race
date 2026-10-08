@@ -36,8 +36,7 @@
     function item(k) {
         if (!k || window.TUT_ITEM || !window.ArenaTheme) return;
         const i = ArenaTheme.INFO[k]; if (!i) return;
-        let first = true; try { first = !Object.keys(prog().tips || {}).some(t => t.indexOf('item-') === 0); } catch (e) {}
-        show('item-' + k, { label: 'NEW POWER-UP', title: i[0], text: i[1] + '.' + (first ? ' Tap the item button to use it.' : ''), color: ArenaTheme.COLORS[k] || '#9aa4b6', icon: (typeof ICON_SVG !== 'undefined' && ICON_SVG[k]) || '' });
+        show('item-' + k, { label: 'NEW POWER-UP', title: i[0], text: i[1] + '.', color: ArenaTheme.COLORS[k] || '#9aa4b6', icon: (typeof ICON_SVG !== 'undefined' && ICON_SVG[k]) || '' });
     }
     function ledge(pl) {
         if (!pl || pl.ground || pl.type === 'safety' || pl.type === 'finish') return;
