@@ -219,7 +219,7 @@
     let fitQ = -1;
     function fit() {
         fitQ = typeof qLevel === 'number' ? qLevel : 0;
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5, typeof dprCap === 'number' ? dprCap : 1.5);      // blocky art: 1.5 is plenty, and it follows the game's own quality steps view.w = window.innerWidth; view.h = window.innerHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5, typeof dprCap === 'number' ? dprCap : 1.5);      /* blocky art: 1.5 is plenty, and it follows the game's own quality steps */ view.w = window.innerWidth; view.h = window.innerHeight;
         cv.width = Math.round(view.w * dpr); cv.height = Math.round(view.h * dpr); cx.setTransform(dpr, 0, 0, dpr, 0, 0);
         view.S = Math.min(1.05, (view.w - 70) / PLAY_W()); view.ox = (view.w - 34 - PLAY_W() * view.S) / 2;
     }
