@@ -4793,7 +4793,7 @@ function refreshMenu(){
     { const mk = p.lastMode in MODE_POSTER ? p.lastMode : 'race', mp = MODE_POSTER[mk], row = document.querySelector('#s-start .m-row[data-go="play"]');         // the mode row looks like that mode's poster in the Play tab
       const wrap = document.getElementById('m-modewrap'); if (wrap) wrap.style.setProperty('--mc', mp.c);
       document.getElementById('m-mode').textContent = mp.n; const sub = document.getElementById('m-mode-sub'); if (sub) sub.textContent = mp.s; if (row) row.style.setProperty('--mc', mp.c);
-      root.style.setProperty('--mode-c', mp.c); root.classList.toggle('arena-mode', mk === 'race'); root.classList.toggle('levels-mode', mk === 'parkour'); }      // the arena world and title are for Arena Race only; Levels shows the path
+      root.style.setProperty('--mode-c', mp.c); root.classList.toggle('arena-mode', mk === 'race' && !(window.Party && Party.active())); root.classList.toggle('levels-mode', mk === 'parkour'); }      // the arena world and title are for Arena Race only; Levels shows the path
     document.getElementById('m-mode-ico').innerHTML = icon(MODE_ICON[p.lastMode] || MODE_ICON.race);
     document.querySelectorAll('#s-start .m-card[data-mode]').forEach(c => c.classList.toggle('sel', c.dataset.mode === p.lastMode));
     renderPassHome(p);
@@ -4850,7 +4850,7 @@ function rewardRace(place, finished, lootId){
     if (!alreadyGranted){
         const p = prog(); p.races++; if (finished && place === 1) p.wins++; saveProg(p);
         if (window.buildMatch) { if (place === 1 && window.WinMeter) WinMeter.add(); }                 // Build Race stands apart from the arenas: no trophies, but a win still fills the daily win meter
-        else if (window.Trophies) Trophies.record(gameMode, place);     // every other placing mode pays trophies (the callers above already skip friendly matches and double pays)
+        else if (window.Trophies && !window.partyMatch) Trophies.record(gameMode, place);      // a party race is a private lobby, not the arena: no trophies     // every other placing mode pays trophies (the callers above already skip friendly matches and double pays)
         Object.assign(p, prog());                                         // Trophies / WinMeter saved their own fields: pick them up so the save below keeps them
         if (window.Missions && gameMode === 'race' && !window.rankedMatch) Missions.race(place, finished);
         else p.gt.streak = 0;

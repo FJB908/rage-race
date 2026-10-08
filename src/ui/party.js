@@ -115,7 +115,7 @@
         const t = e.target.closest('[data-a]'); if (!t || !window.Social) return;
         const inv = S().invites.find(i => i.id === t.dataset.id); if (inv) Social.answerInvite(inv, t.dataset.a === 'join');
     });
-    window.addEventListener('party-change', () => { render(); if (sheet.kind === 'inv') inviteSheet(); else if (sheet.kind === 'mem' && !inParty()) closeSheet(); });
+    window.addEventListener('party-change', () => { if (typeof refreshMenu === 'function') refreshMenu(); render(); if (sheet.kind === 'inv') inviteSheet(); else if (sheet.kind === 'mem' && !inParty()) closeSheet(); });
 
     /* ------------------------------------------------------------ PLAY rules ---- */
     // Called by PLAY on the home screen. Returns true when the party took over.
