@@ -148,47 +148,67 @@
     }
 
 
-    /* ------------------------------------------------------------ arena banner on the home screen ---- */
-    // above the character: a small picture of your arena, "ARENA 4 / HARBOUR", the trophy count (it counts up or down after a match) and a bar that shows
-    // how far you are in this arena, with what is left to the next one. A painted copy of the arena also sits faintly behind the character.
+    /* ------------------------------------------------------------ the home screen is a world ---- */
+    // The arena you are in fills the whole background of the home screen (sky, sun or moon, far scenery, drifting air). Your player stands on a floating island that carries a few
+    // pieces of the arena and bobs slowly. Above the island: "ARENA 4 / HARBOUR", the trophy count (it rolls up or down after a match) and a bar with what is left to the next arena.
+    // Tap the title or the island to open the Arenas screen.
+    const startEl = $('s-start'), stage = document.querySelector('.m-stage');
+    const world = document.createElement('canvas'); world.id = 'm-world'; world.setAttribute('aria-hidden', 'true');
+    const airCv = document.createElement('canvas'); airCv.id = 'm-air'; airCv.setAttribute('aria-hidden', 'true');
+    if (startEl) { startEl.insertBefore(airCv, startEl.firstChild); startEl.insertBefore(world, startEl.firstChild); }
     const chip = document.createElement('button'); chip.type = 'button'; chip.id = 'm-trophy'; chip.className = 'm-trophy';
-    chip.innerHTML = '<canvas class="ab-thumb" width="120" height="120"></canvas><span class="ab-copy"><span class="ab-top"><span class="ab-kick"></span><span class="ab-cup"><span class="tc-cup">' + icon('trophy') + '<em class="tc-badge" hidden></em></span><b class="tc-n">0</b><span class="tc-d"></span></span></span><b class="ab-name"></b><span class="ab-prog"><i class="tc-bar"><u></u></i><span class="ab-next"></span></span></span>';
+    chip.innerHTML = '<span class="ab-kick"></span><b class="ab-name"></b><span class="ab-prog"><span class="ab-cup"><span class="tc-cup">' + icon('trophy') + '<em class="tc-badge" hidden></em></span><b class="tc-n">0</b><span class="tc-d"></span></span><i class="tc-bar"><u></u></i><span class="ab-next"></span></span>';
     const row = $('pt-row'); if (row) row.insertAdjacentElement('beforebegin', chip);          // above the character
-    const tools = document.createElement('div'); tools.className = 'm-tools'; chip.insertAdjacentElement('afterend', tools);      // under the banner: the test switch and the hanger
+    const tools = document.createElement('div'); tools.className = 'm-tools'; chip.insertAdjacentElement('afterend', tools);      // under the title: the test switch and the hanger
     const hanger = document.querySelector('.m-stage .m-hanger'); if (hanger) tools.appendChild(hanger);
+    const isle = document.createElement('div'), isleCv = document.createElement('canvas'); isle.className = 'm-isle'; isleCv.className = 'm-isle-art'; isleCv.setAttribute('aria-hidden', 'true');
+    if (row) { tools.insertAdjacentElement('afterend', isle); isle.appendChild(isleCv); isle.appendChild(row); }
     chip.addEventListener('click', e => { e.stopPropagation(); if (window.SFX) SFX.play('count'); open(); });
-    const stage = document.querySelector('.m-stage'), bg = document.createElement('canvas'); bg.id = 'm-arena-bg'; bg.setAttribute('aria-hidden', 'true');
-    if (stage) stage.insertBefore(bg, stage.firstChild);
-    let bgKey = '', thumbAi = -1, shown = null, anim = 0;
-    function paintBg(ai) {
-        if (window.ArenaTheme && ArenaTheme.testGet() >= 0) ai = ArenaTheme.testGet();                  // the test switch (arenatest.js) previews its arena behind the character                                                       // the faint arena behind the character (repainted when the arena or the size changes)
-        if (!stage || !window.ArenaTheme) return;
-        const w = stage.clientWidth, h = stage.clientHeight; if (w < 40 || h < 40) return;
-        const dpr = Math.min(2, window.devicePixelRatio || 1), key = ai + '|' + w + 'x' + h + '|' + dpr; if (key === bgKey) return; bgKey = key;
-        bg.width = Math.round(w * dpr); bg.height = Math.round(h * dpr); bg.style.width = w + 'px'; bg.style.height = h + 'px';
-        try {
-            ArenaTheme.paintScene(bg, ai, w, h, { prog: .2, props: 1 });
-            const c = bg.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.globalCompositeOperation = 'destination-in';             // soft left and right edges (the top and bottom fade in CSS)
-            const g = c.createLinearGradient(0, 0, w, 0); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.16, 'rgba(0,0,0,1)'); g.addColorStop(.84, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-            c.fillStyle = g; c.fillRect(0, 0, w, h); c.globalCompositeOperation = 'source-over'; c.setTransform(1, 0, 0, 1, 0, 0);
-        } catch (e) {}
+    isleCv.addEventListener('click', () => { if (window.SFX) SFX.play('count'); open(); });
+    let worldKey = '', isleKey = '', airList = [], airAi = -1, shown = null, anim = 0;
+    const viewArena = ai => (window.ArenaTheme && ArenaTheme.testGet() >= 0) ? ArenaTheme.testGet() : ai;                // the test switch (arenatest.js) previews its arena
+    function placeIsle(ih) { if (row && ih) isleCv.style.top = Math.round(row.offsetHeight - 40 - ih * .4) + 'px'; }      // the island's top surface sits under the player's feet
+    function paintWorld(ai) {
+        if (!window.ArenaTheme || !startEl) return; ai = viewArena(ai);
+        const w = startEl.clientWidth, h = startEl.clientHeight; if (w < 40 || h < 40) return;
+        const dpr = Math.min(2, window.devicePixelRatio || 1), key = ai + '|' + w + 'x' + h + '|' + dpr;
+        if (key !== worldKey) {
+            worldKey = key; for (const c of [world, airCv]) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); c.style.width = w + 'px'; c.style.height = h + 'px'; }
+            try { ArenaTheme.paintWorld(world, ai, w, h); } catch (e) {}
+            if (airAi !== ai) { airAi = ai; airList = ArenaTheme.airMake(ai, 30); }
+        }
+        const iw = Math.min(380, w * .96), ih = Math.round(iw * 300 / 360), ikey = ai + '|' + Math.round(iw) + '|' + dpr;
+        if (ikey !== isleKey) { isleKey = ikey; isleCv.width = Math.round(iw * dpr); isleCv.height = Math.round(ih * dpr); isleCv.style.width = iw + 'px'; isleCv.style.height = ih + 'px'; try { ArenaTheme.paintIsland(isleCv, ai, iw, ih); } catch (e) {} }
+        placeIsle(ih);
     }
-    window.addEventListener('arenatest', () => { bgKey = ''; paintBg(arenaOf(prog().tr || 0)); });
-    if (stage && window.ResizeObserver) new ResizeObserver(() => { bgKey = ''; paintBg(arenaOf(prog().tr || 0)); }).observe(stage);
+    window.addEventListener('arenatest', () => { worldKey = isleKey = ''; refresh(); });
+    if (startEl && window.ResizeObserver) new ResizeObserver(() => { worldKey = isleKey = ''; paintWorld(arenaOf(prog().tr || 0)); }).observe(startEl);
+    // the drifting air: a light loop that only runs while the home tab is on screen
+    let airT = 0;
+    function airLoop(now) {
+        requestAnimationFrame(airLoop);
+        if (document.hidden || now - airT < 42 || !window.ArenaTheme || airAi < 0) return;
+        const dt = Math.min(.1, (now - airT) / 1000); airT = now;
+        if (!startEl || startEl.style.display === 'none' || !document.querySelector('.m-tab[data-tab="home"].on')) return;
+        const dpr = airCv.width / (parseFloat(airCv.style.width) || 1), c = airCv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        c.clearRect(0, 0, airCv.width / dpr, airCv.height / dpr); ArenaTheme.airStep(c, airAi, airList, airCv.width / dpr, airCv.height / dpr, now / 1000, dt);
+    }
+    requestAnimationFrame(airLoop);
     function shownGet() { try { const v = localStorage.getItem('rr_tr_shown'); return v === null ? null : +v; } catch (e) { return null; } }
     function shownSet(v) { try { localStorage.setItem('rr_tr_shown', String(v)); } catch (e) {} }
     function paintChip(v) {
         const tr = v, ai = arenaOf(tr), A = ARENAS[ai], nxtA = ARENAS[ai + 1], cl = claimable().length;
         chip.style.setProperty('--ac', A.c);
         chip.querySelector('.tc-n').textContent = num(tr);
-        chip.querySelector('.ab-kick').textContent = 'ARENA ' + (ai + 1);
-        chip.querySelector('.ab-name').textContent = A.n;
+        const vi = viewArena(ai), test = vi !== ai;                                           // with the test switch on, the title names the arena you are previewing
+        chip.querySelector('.ab-kick').textContent = 'ARENA ' + (vi + 1) + (test ? ' - TEST' : '');
+        chip.querySelector('.ab-name').textContent = ARENAS[vi].n;
+        if (test) chip.style.setProperty('--ac', ARENAS[vi].c);
         const from = A.at, to = nxtA ? nxtA.at : from + SPAN_LAST;
         chip.querySelector('.tc-bar u').style.width = Math.max(3, Math.min(100, 100 * (tr - from) / (to - from))).toFixed(1) + '%';
         chip.querySelector('.ab-next').textContent = nxtA ? num(nxtA.at - tr) + ' to ' + nxtA.n : 'Top arena';
         const bd = chip.querySelector('.tc-badge'); bd.hidden = !cl; bd.textContent = cl;
-        if (thumbAi !== ai && window.ArenaTheme) { thumbAi = ai; try { ArenaTheme.paintScene(chip.querySelector('.ab-thumb'), ai, 60, 60, { props: .6, ground: true }); } catch (e) {} }
-        paintBg(ai);
+        paintWorld(ai);
         chip.setAttribute('aria-label', 'Arena ' + (ai + 1) + ', ' + A.n + ', ' + num(tr) + ' trophies' + (nxtA ? ', ' + num(nxtA.at - tr) + ' to ' + nxtA.n : '') + (cl ? ', ' + cl + ' rewards to claim' : ''));
     }
     function visible() { return chip.getClientRects().length > 0 && $('s-start') && $('s-start').style.display !== 'none'; }

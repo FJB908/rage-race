@@ -152,9 +152,9 @@
     const cache = new Map(), dprNow = () => Math.min(2, window.devicePixelRatio || 1);
     function sprite(idx, kind, layer, v, glow) {
         const key = idx + '|' + kind + '|' + layer + '|' + v + (glow ? 'g' : ''); let s = cache.get(key); if (s) return s;
-        const def = K[kind], th = T[idx], pad = 8, S = dprNow() * (layer === 'far' ? 0.55 : 0.85), W = def.w + pad * 2, H = def.h + pad * 2, cv = document.createElement('canvas');
+        const def = K[kind], th = T[idx], pad = 8, S = dprNow() * (layer === 'far' ? 0.55 : layer === 'near' ? 1 : 0.85), W = def.w + pad * 2, H = def.h + pad * 2, cv = document.createElement('canvas');
         cv.width = Math.ceil(W * S); cv.height = Math.ceil(H * S); const c = cv.getContext('2d'); c.scale(S, S); c.translate(W / 2, H - pad);
-        const col = layer === 'far' ? th.far : th.mid, P = { col, dk: mixc(col, '#000000', .3), lt: mixc(col, '#ffffff', .17), lit: th.lit, acc: th.acc, cl: th.cloud || '#ffffff', v, far: layer === 'far' };
+        const col = layer === 'far' ? th.far : layer === 'near' ? (th.near || mixc(th.mid, th.lit, .3)) : th.mid, P = { col, dk: mixc(col, '#000000', .3), lt: mixc(col, '#ffffff', .17), lit: th.lit, acc: th.acc, cl: th.cloud || '#ffffff', v, far: layer === 'far' };
         c.lineJoin = 'round';
         try { if (glow) def.glow && def.glow(c, P); else def.draw(c, P); } catch (e) {}
         s = { cv, w: W, h: H, ox: W / 2, oy: H - pad, def }; cache.set(key, s); return s;
@@ -202,8 +202,8 @@
     }
     const on = () => !!cur;
     function skyFill(c, W, H, th, p) { const a = th.sky[0], b = th.sky[1]; c.fillStyle = lg(c, 0, 0, 0, H, [[0, mixc(a[0], b[0], p)], [1, mixc(a[1], b[1], p)]]); c.fillRect(0, 0, W, H); }
-    function orbDraw(c, W, H, th, k) {
-        const o = th.orb; if (!o) return; const x = o.x * W, y = o.y * H, R = o.r * (k || 1);
+    function orbDraw(c, W, H, th, k, dy) {
+        const o = th.orb; if (!o) return; const x = o.x * W, y = (o.y + (dy || 0)) * H, R = o.r * (k || 1);
         c.fillStyle = rg(c, x, y, R * .5, R * 4.2, [[0, mixc(o.c, '#ffffff', 0).replace('rgb', 'rgba').replace(')', ',.3)')], [1, 'rgba(255,255,255,0)']]); c.fillRect(x - R * 4.2, y - R * 4.2, R * 8.4, R * 8.4);
         c.fillStyle = o.c; c.globalAlpha = .92; disc(c, x, y, R); c.globalAlpha = 1;
     }
@@ -222,21 +222,11 @@
         }
         c.globalAlpha = 1;
     }
-    function drawSky(c, W, H, camY) {
-        if (!cur) return;
-        const now = performance.now() / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0); lastT = now;
-        const prog_ = Math.max(0, Math.min(1, (START_Y - camY) / Math.max(1, TRACK)));
-        c.save();
-        skyFill(c, W, H, cur, prog_); orbDraw(c, W, H, cur);
-        const climbed = (START_Y - VH * 0.62) - camY, base = H * 0.99;
-        drawLayer(c, far, 'far', W, H, base, climbed, 0.09, 0.5, 1.2, now, cur);
-        mistFill(c, W, H, cur, H * 0.2, H, 0.3);
-        drawLayer(c, mid, 'mid', W, H, base, climbed, 0.2, 0.62, 0.92, now, cur);
-        mistFill(c, W, H, cur, H * 0.5, H, 0.26);
-        // a few drifting specks
-        const kind = cur.air[0], col = cur.air[1], dens = cur.air[2]; c.fillStyle = col; c.strokeStyle = col;
-        for (let i = 0; i < air.length; i++) {
-            const q = air[i]; if (i / air.length > dens + 0.15) break;
+    // drifting specks (dust, snow, rain, ash, sparks, stars): `list` is a set of {x, y, s, v} in 0..1, moved here a little every call
+    function specks(c, th, list, W, H, now, dt) {
+        const kind = th.air[0], col = th.air[1], dens = th.air[2]; c.fillStyle = col; c.strokeStyle = col;
+        for (let i = 0; i < list.length; i++) {
+            const q = list[i]; if (i / list.length > dens + 0.15) break;
             if (kind === 'snow') { q.y += dt * 0.07 * q.v; q.x += Math.sin(now + i) * dt * 0.01; }
             else if (kind === 'rain') q.y += dt * 1.3 * q.v;
             else if (kind === 'ash') { q.y += dt * 0.05 * q.v; q.x += dt * 0.02; }
@@ -249,6 +239,20 @@
             else if (kind === 'star') { c.globalAlpha = 0.3 + 0.6 * Math.abs(Math.sin(now * (0.6 + q.v) + i)); c.fillRect(x, y, 1.6 * q.s, 1.6 * q.s); }
             else { c.globalAlpha = kind === 'spark' ? 0.85 : 0.5; disc(c, x, y, (kind === 'snow' ? 2.2 : kind === 'spark' ? 1.5 : 1.8) * q.s); }
         }
+        c.globalAlpha = 1;
+    }
+    function drawSky(c, W, H, camY) {
+        if (!cur) return;
+        const now = performance.now() / 1000, dt = Math.min(0.05, lastT ? now - lastT : 0); lastT = now;
+        const prog_ = Math.max(0, Math.min(1, (START_Y - camY) / Math.max(1, TRACK)));
+        c.save();
+        skyFill(c, W, H, cur, prog_); orbDraw(c, W, H, cur);
+        const climbed = (START_Y - VH * 0.62) - camY, base = H * 0.99;
+        drawLayer(c, far, 'far', W, H, base, climbed, 0.09, 0.5, 1.2, now, cur);
+        mistFill(c, W, H, cur, H * 0.2, H, 0.3);
+        drawLayer(c, mid, 'mid', W, H, base, climbed, 0.2, 0.62, 0.92, now, cur);
+        mistFill(c, W, H, cur, H * 0.5, H, 0.26);
+        specks(c, cur, air, W, H, now, dt);
         c.globalAlpha = 1;
         if (idx === 9) {                                                   // Summit: a cosmetic lightning flash now and then (it never touches the platforms)
             flashAt -= dt; if (flashAt <= 0) { flash = 1; flashAt = 4 + Math.random() * 7; }
@@ -266,11 +270,11 @@
         c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
         const keep = idx; idx = i;                                            // sprite() reads the current arena index for its cache key
         try {
-            skyFill(c, w, h, th, o.prog === undefined ? 0.15 : o.prog); orbDraw(c, w, h, th, Math.min(1, h / 520));
+            skyFill(c, w, h, th, o.prog === undefined ? 0.15 : o.prog); orbDraw(c, w, h, th, Math.min(1, h / 520), o.orbDy);
             const horizon = h * (o.horizon || (th.ground ? 0.8 : 1.05));
             const place = (list, name, a, scale, n) => {
                 for (let q = 0; q < n; q++) {
-                    const k = list[q % list.length], def = K[k], s = sprite(i, k, name, q % 2), kk = Math.min(scale * h / def.h, 1.5) * (.85 + r() * .3), x = w * ((q + .5) / n + (r() - .5) * .18);
+                    const k = list[q % list.length], def = K[k], s = sprite(i, k, name, q % 2), kk = Math.min(scale * (o.scale || 1) * h / def.h, 1.5) * (.85 + r() * .3), x = w * ((q + .5) / n + (r() - .5) * .18);
                     const y = def.float ? h * (.22 + r() * .34) + def.h * kk * .5 : horizon + (name === 'mid' ? h * .07 : 0);
                     put(c, s, x, y, kk, a, def.rot ? (q + 1) * .7 : 0);
                     if (def.glow) { const g = sprite(i, k, name, q % 2, true); c.globalCompositeOperation = 'lighter'; put(c, g, x, y, kk, a * .8, 0); c.globalCompositeOperation = 'source-over'; }
@@ -288,6 +292,80 @@
         c.setTransform(1, 0, 0, 1, 0, 0);
     }
 
+    /* ------------------------------------------------------------- the home screen: a world with an island ---- */
+    // The home screen is a little world. The arena fills the whole background (sky, sun or moon, far scenery, mist) and your player stands on a floating island that
+    // carries a few pieces of the arena. Both are painted once into canvases; only the air specks and the island's slow bob (CSS) move.
+    // props: [kind, x (-1 left .. 1 right), scale, hover (1 = floats above the island)]
+    const ISLE = [
+        { top: '#6fd37f', edge: '#d3f9bd', under: ['#94643f', '#35241a'], deco: 'grass', hang: 'rock',     props: [['windmill', .78, .6], ['balloon', -.8, .55, 1], ['cloud', .5, .28, 1]] },
+        { top: '#3b4254', edge: '#7a84a2', under: ['#4d5468', '#1a1e2a'], deco: 'lines', hang: 'rock',     props: [['lamp', -.8, .62], ['car', .72, .5], ['cone', -.42, .6]] },
+        { top: '#b9615f', edge: '#f0a58c', under: ['#80405a', '#2d1727'], deco: 'tiles', hang: 'rock',     props: [['antenna', .82, .6], ['tank', -.76, .62], ['birds', .1, .5, 1]] },
+        { top: '#9b6c43', edge: '#d9a56b', under: ['#493626', '#171210'], deco: 'planks', hang: 'posts',   props: [['lighthouse', .8, .44], ['containers', -.74, .5]] },
+        { top: '#7a8398', edge: '#cdd5e6', under: ['#4a3b2d', '#17110c'], deco: 'rivets', hang: 'pipes',   props: [['chimney', .8, .42], ['gear', -.78, .4]] },
+        { top: '#2f7469', edge: '#d9e86a', under: ['#1f504a', '#0a1d1b'], deco: 'tiles2', hang: 'rock',    props: [['roundel', .78, .55], ['tilepillar', -.8, .42]] },
+        { top: '#f1f7ff', edge: '#cfe6ff', under: ['#7f98b4', '#2e3e54'], deco: 'snow', hang: 'rock',      props: [['pines', -.74, .62], ['peak', .78, .36]] },
+        { top: '#cdd3ea', edge: '#9f8bff', under: ['#4b507c', '#191b38'], deco: 'hex', hang: 'thruster',   props: [['sat', .78, .55, 1], ['station', -.62, .4, 1], ['asteroid', .45, .4, 1]] },
+        { top: '#3f2c29', edge: '#ff7a3d', under: ['#2c1613', '#0d0504'], deco: 'cracks', hang: 'drips',   props: [['volcano', .72, .4], ['rockfloat', -.8, .5, 1]] },
+        { top: '#eadba3', edge: '#ffcf3f', under: ['#4d5181', '#161934'], deco: 'gold', hang: 'rock',      props: [['crag', .78, .42], ['storm', -.55, .3, 1]] },
+    ];
+    function paintWorld(cv, i, w, h) {
+        paintScene(cv, i, w, h, { prog: .2, props: 1.7, alpha: 1.15, mist: .9, horizon: .62, ground: false, scale: .62, orbDy: .17 });
+        const c = cv.getContext('2d'), dpr = cv.width / w; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        c.fillStyle = lg(c, 0, 0, 0, h * .22, [[0, 'rgba(7,9,14,.7)'], [1, 'rgba(7,9,14,0)']]); c.fillRect(0, 0, w, h * .22);                                  // calm behind the header
+        c.fillStyle = lg(c, 0, h * .7, 0, h, [[0, 'rgba(7,9,14,0)'], [.45, 'rgba(7,9,14,.74)'], [1, 'rgba(7,9,14,.96)']]); c.fillRect(0, h * .7, w, h * .3);       // calm behind the cards
+        c.setTransform(1, 0, 0, 1, 0, 0);
+    }
+    function paintIsland(cv, i, w, h) {
+        const th = T[i], is = ISLE[i], dpr = cv.width / w, c = cv.getContext('2d'), r = rng(900 + i * 31);
+        c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h); c.lineJoin = 'round'; c.lineCap = 'round';
+        const cx = w / 2, topY = h * .4, rx = w * .43, ry = rx * .21, thick = h * .05, depth = h * .44;
+        const ell = (x, y, a, b, fill) => { c.beginPath(); c.ellipse(x, y, a, b, 0, 0, TAU); if (fill) c.fill(); };
+        // 1 the underside: an upside-down rock with a ragged bottom
+        const pts = [[cx - rx, topY + thick]]; const n = 9;
+        for (let k = 1; k < n; k++) { const u = k / n, prof = Math.pow(Math.sin(u * Math.PI), .85); pts.push([cx - rx + u * rx * 2, topY + thick + depth * prof * (.5 + .5 * r())]); pts.push([cx - rx + (u + .5 / n) * rx * 2, topY + thick + depth * Math.pow(Math.sin((u + .5 / n) * Math.PI), .85) * (.2 + .3 * r())]); }
+        pts.push([cx + rx, topY + thick]);
+        // the deepest point makes a stalactite in the middle
+        const mid = Math.floor(pts.length / 2); pts[mid] = [cx + (r() - .5) * rx * .2, topY + thick + depth];
+        if (is.hang === 'posts') for (const dx of [-.5, -.12, .34]) { const x = cx + dx * rx; c.fillStyle = mixc(is.under[0], '#000', .2); c.fillRect(x - 4, topY + thick + depth * .45, 8, depth * .62 * (.8 + r() * .3)); c.strokeStyle = 'rgba(210,190,150,.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x, topY + thick + depth * .5); c.bezierCurveTo(x + 14, topY + depth * .9, x - 14, topY + depth * 1.1, x + 3, topY + depth * 1.3); c.stroke(); }
+        if (is.hang === 'pipes') { c.strokeStyle = mixc(is.top, '#000', .35); c.lineWidth = 9; c.beginPath(); c.moveTo(cx - rx * .55, topY + thick * 2); c.bezierCurveTo(cx - rx * .8, topY + depth * .8, cx - rx * .2, topY + depth * 1.05, cx + rx * .1, topY + depth * 1.25); c.stroke(); c.strokeStyle = is.top; c.lineWidth = 4; c.stroke(); c.fillStyle = is.edge; for (const q of [.2, .55, .85]) disc(c, cx - rx * (.55 - q * .65), topY + depth * (.35 + q * .8), 5.5); }
+        if (is.hang === 'thruster') { const g = lg(c, 0, topY + depth * .6, 0, topY + depth * 1.35, [[0, 'rgba(159,139,255,.8)'], [.5, 'rgba(120,170,255,.35)'], [1, 'rgba(120,170,255,0)']]); c.fillStyle = g; c.beginPath(); c.moveTo(cx - rx * .2, topY + depth * .6); c.lineTo(cx + rx * .2, topY + depth * .6); c.lineTo(cx + rx * .08, topY + depth * 1.35); c.lineTo(cx - rx * .08, topY + depth * 1.35); c.closePath(); c.fill(); }
+        c.beginPath(); pts.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath();
+        c.fillStyle = lg(c, 0, topY, 0, topY + depth, [[0, is.under[0]], [1, is.under[1]]]); c.fill();
+        c.fillStyle = lg(c, cx - rx, 0, cx + rx, 0, [[0, 'rgba(255,255,255,.14)'], [.5, 'rgba(255,255,255,0)'], [1, 'rgba(0,0,0,.34)']]); c.fill();           // light from the left
+        if (is.hang === 'drips') for (let k = 0; k < 5; k++) { const x = cx + (r() - .5) * rx * 1.1, y0 = topY + thick + depth * .35, len = depth * (.25 + r() * .5); c.strokeStyle = 'rgba(255,122,61,.9)'; c.lineWidth = 2.4; c.shadowColor = '#ff7a3d'; c.shadowBlur = 8; c.beginPath(); c.moveTo(x, y0); c.lineTo(x + (r() - .5) * 6, y0 + len); c.stroke(); c.fillStyle = '#ffb36b'; disc(c, x, y0 + len + 3, 3.2); c.shadowBlur = 0; }
+        if (is.hang === 'rock') for (let k = 0; k < 4; k++) { c.fillStyle = mixc(is.under[1], is.under[0], .4); disc(c, cx + (r() - .5) * rx * 1.2, topY + depth * (1.05 + r() * .22), 3 + r() * 5); }
+        // 2 the thickness and the top
+        c.fillStyle = mixc(is.top, '#000000', .5); ell(cx, topY + thick, rx, ry, true);
+        c.save(); c.translate(cx, topY); c.scale(1, ry / rx); c.fillStyle = rg(c, -rx * .15, -rx * .1, rx * .05, rx * 1.05, [[0, mixc(is.top, '#ffffff', .2)], [.7, is.top], [1, mixc(is.top, '#000000', .22)]]); c.beginPath(); c.arc(0, 0, rx, 0, TAU); c.fill(); c.restore();
+        c.save(); c.beginPath(); c.ellipse(cx, topY, rx - 1, ry - 1, 0, 0, TAU); c.clip();
+        const rin = () => { const a = r() * TAU, d = Math.sqrt(r()); return [cx + Math.cos(a) * d * rx * .92, topY + Math.sin(a) * d * ry * .9]; };
+        if (is.deco === 'grass') { for (let k = 0; k < 90; k++) { const [x, y] = rin(); c.strokeStyle = r() > .5 ? mixc(is.top, '#ffffff', .3) : mixc(is.top, '#000000', .25); c.lineWidth = 1.6; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (r() - .5) * 3, y - 4 - r() * 4); c.stroke(); } for (let k = 0; k < 7; k++) { const [x, y] = rin(); c.fillStyle = [th.acc, '#ff7a8a', '#ffffff'][k % 3]; disc(c, x, y, 2.2); } }
+        else if (is.deco === 'lines') { c.strokeStyle = '#ffd400'; c.globalAlpha = .75; c.lineWidth = 3.4; c.setLineDash([12, 9]); for (let k = -3; k <= 3; k++) { c.beginPath(); c.moveTo(cx + k * rx * .3, topY + ry); c.lineTo(cx + k * rx * .3 + rx * .14, topY - ry); c.stroke(); } c.setLineDash([]); c.globalAlpha = 1; }
+        else if (is.deco === 'tiles') { c.strokeStyle = mixc(is.top, '#000000', .35); c.lineWidth = 1.6; for (let y = topY - ry; y < topY + ry; y += ry * .3) for (let x = cx - rx; x < cx + rx; x += rx * .17) { c.beginPath(); c.arc(x + ((y / ry * 10 | 0) % 2 ? rx * .085 : 0), y, rx * .08, 0, Math.PI); c.stroke(); } }
+        else if (is.deco === 'planks') { c.strokeStyle = mixc(is.top, '#000000', .45); c.lineWidth = 1.8; for (let k = -9; k <= 9; k++) { const x = cx + k * rx * .11; c.beginPath(); c.moveTo(x, topY - ry); c.lineTo(x - rx * .06, topY + ry); c.stroke(); } c.fillStyle = 'rgba(255,255,255,.07)'; for (let k = -8; k <= 8; k += 2) { const x = cx + k * rx * .11; poly(c, [[x, topY - ry], [x + rx * .11, topY - ry], [x + rx * .05, topY + ry], [x - rx * .06, topY + ry]]); } }
+        else if (is.deco === 'rivets') { c.strokeStyle = mixc(is.top, '#000000', .4); c.lineWidth = 1.6; for (let k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(cx + k * rx * .4, topY - ry); c.lineTo(cx + k * rx * .45, topY + ry); c.stroke(); } c.beginPath(); c.moveTo(cx - rx, topY); c.lineTo(cx + rx, topY); c.stroke(); c.fillStyle = mixc(is.top, '#ffffff', .4); for (let k = -4; k <= 4; k++) for (const y of [-.7, .7]) disc(c, cx + k * rx * .22, topY + y * ry, 2); }
+        else if (is.deco === 'tiles2') { c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 1.2; for (let k = -8; k <= 8; k++) { c.beginPath(); c.moveTo(cx + k * rx * .12, topY - ry); c.lineTo(cx + k * rx * .15, topY + ry); c.stroke(); } for (let y = topY - ry; y <= topY + ry; y += ry * .34) { c.beginPath(); c.moveTo(cx - rx, y); c.lineTo(cx + rx, y); c.stroke(); } c.strokeStyle = is.edge; c.lineWidth = 6; c.globalAlpha = .8; c.beginPath(); c.ellipse(cx, topY, rx * .94, ry * .86, 0, .1, Math.PI - .1); c.stroke(); c.globalAlpha = 1; }
+        else if (is.deco === 'snow') { c.fillStyle = 'rgba(160,190,225,.35)'; for (let k = 0; k < 6; k++) { const [x, y] = rin(); c.beginPath(); c.ellipse(x, y + 3, rx * .12, ry * .12, 0, 0, TAU); c.fill(); } c.fillStyle = '#ffffff'; for (let k = 0; k < 26; k++) { const [x, y] = rin(); disc(c, x, y, 1 + r() * 1.4); } }
+        else if (is.deco === 'hex') { c.strokeStyle = 'rgba(159,139,255,.4)'; c.lineWidth = 1.4; const R = rx * .13; for (let q = -6; q <= 6; q++) for (let p2 = -3; p2 <= 3; p2++) { const x = cx + q * R * 1.73 + (p2 % 2 ? R * .86 : 0), y = topY + p2 * R * 1.5 * (ry / rx) * 1.1; c.beginPath(); for (let a = 0; a < 6; a++) { const an = a * Math.PI / 3 + Math.PI / 6; c.lineTo(x + Math.cos(an) * R, y + Math.sin(an) * R * (ry / rx) * 1.1); } c.closePath(); c.stroke(); } }
+        else if (is.deco === 'cracks') { c.strokeStyle = '#ff7a3d'; c.lineWidth = 2; c.shadowColor = '#ff7a3d'; c.shadowBlur = 7; for (let k = 0; k < 6; k++) { let [x, y] = rin(); c.beginPath(); c.moveTo(x, y); for (let q = 0; q < 4; q++) { x += (r() - .5) * rx * .24; y += (r() - .5) * ry * .5; c.lineTo(x, y); } c.stroke(); } c.shadowBlur = 0; }
+        else if (is.deco === 'gold') { c.strokeStyle = is.edge; c.globalAlpha = .55; c.lineWidth = 2; for (const f of [.8, .55, .3]) { c.beginPath(); c.ellipse(cx, topY, rx * f, ry * f, 0, 0, TAU); c.stroke(); } c.globalAlpha = 1; }
+        c.restore();
+        c.strokeStyle = is.edge; c.lineWidth = 2.6; c.globalAlpha = .85; if (is.deco === 'hex' || is.deco === 'cracks') { c.shadowColor = is.edge; c.shadowBlur = 10; } ell(cx, topY, rx, ry, false); c.stroke(); c.shadowBlur = 0; c.globalAlpha = 1;
+        // 3 the arena standing on it (the player stands in front of these)
+        const sc = w / 360, prev = idx; idx = i;
+        try {
+            for (const q of is.props) {
+                const def = K[q[0]], v = q[0].length % 2, s0 = sprite(i, q[0], 'near', v), k = q[2] * sc, hover = def.float || q[3];
+                const x = cx + q[1] * rx * .88, y = hover ? topY - ry * 1.15 - 4 * sc - q[2] * 14 * sc : topY - ry * .28;
+                put(c, s0, x, y, k, 1, def.rot ? .6 : 0);
+                if (def.glow) { const g = sprite(i, q[0], 'near', v, true); c.globalCompositeOperation = 'lighter'; put(c, g, x, y, k, .85, 0); c.globalCompositeOperation = 'source-over'; }
+            }
+        } finally { idx = prev; }
+        c.setTransform(1, 0, 0, 1, 0, 0);
+    }
+    const airMake = (i, n) => { const r = rng(77 + i * 5); return Array.from({ length: n || 30 }, () => ({ x: r(), y: r(), s: .5 + r(), v: .4 + r() * .8 })); };
+    const airStep = (c, i, list, w, h, now, dt) => specks(c, T[i], list, w, h, now, dt);
+
     /* ------------------------------------------------------------------------------ power-ups ---- */
     // called by the item roll: removes what the arena does not have, switches the Gust on where it exists, and shifts a few odds
     function shape(w, f, others) {
@@ -301,6 +379,6 @@
     const LEDGES = ['boost', 'moving', 'fragile', 'ice'], LEDGE_COUNT = [2, 3, 4, 4], CEILINGS_FROM = 3;
     const rules = () => rulesNow;
     const diff = i => ({ add: POOL[i].add.slice(), remove: POOL[i].remove.slice(), pool: poolOf(i) });
-    window.ArenaTheme = { pick, set, clear, on, drawSky, shape, paintScene, rules, testGet, testSet, grid: () => cur ? cur.grid : null, index: () => idx, THEMES: T, POOL, INFO, ORDER, poolOf, diff,
+    window.ArenaTheme = { pick, set, clear, on, drawSky, shape, paintScene, paintWorld, paintIsland, airMake, airStep, rules, testGet, testSet, grid: () => cur ? cur.grid : null, index: () => idx, THEMES: T, POOL, INFO, ORDER, poolOf, diff,
         name: i => T[i].name, color: i => T[i].c };
 })();

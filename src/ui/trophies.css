@@ -1,31 +1,33 @@
-/* ---- the arena banner above the character: a picture of your arena, its name, the trophy count and how far you are in it ---- */
-.m-trophy { position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; align-self: center; width: min(344px, 94%); box-sizing: border-box; padding: 9px 14px 9px 9px; border: 1px solid color-mix(in srgb, var(--ac, #35e0c8) 42%, transparent); border-radius: 18px; background: linear-gradient(120deg, color-mix(in srgb, var(--ac, #35e0c8) 20%, #0f141d), #0f141d 78%); color: inherit; text-align: left; box-shadow: 0 10px 24px -12px rgba(0,0,0,.8); -webkit-tap-highlight-color: transparent; transition: transform .12s; }
+/* ---- the home screen is a world: the arena is the background, the player stands on a floating island, the title floats above it (no card, no window) ---- */
+#s-start > #m-world, #s-start > #m-air { position: absolute; left: 0; top: 0; z-index: -1; max-width: none; margin: 0; pointer-events: none; transition: opacity .35s; }
+#s-start:not(:has(.m-tab[data-tab="home"].on)) > #m-world, #s-start:not(:has(.m-tab[data-tab="home"].on)) > #m-air { opacity: 0; }
+.m-trophy { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 3px; align-self: center; width: min(330px, 92%); box-sizing: border-box; padding: 2px 6px 4px; border: 0; background: none; color: #fff; text-align: center; -webkit-tap-highlight-color: transparent; transition: transform .12s; }
 .m-trophy:active { transform: scale(.97); }
-.ab-thumb { flex: none; width: 60px; height: 60px; border-radius: 13px; background: #10141c; box-shadow: 0 0 0 1.5px rgba(255,255,255,.15); }
-.ab-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.ab-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.ab-kick { font: 800 10.5px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .16em; color: var(--ac, #35e0c8); }
-.ab-cup { position: relative; display: flex; align-items: center; gap: 5px; }
+.ab-kick { font: 800 11px/1 "Space Grotesk", system-ui, sans-serif; letter-spacing: .34em; padding-left: .34em; color: var(--ac, #35e0c8); text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+.ab-name { font: 900 36px/1.02 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .01em; text-transform: uppercase; text-shadow: 0 3px 18px rgba(0,0,0,.75), 0 0 2px rgba(0,0,0,.5); }
+.ab-prog { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 5px; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+.ab-cup { position: relative; flex: none; display: flex; align-items: center; gap: 5px; }
 .tc-cup { position: relative; flex: none; width: 19px; height: 19px; filter: none; } .tc-cup .ico { width: 100%; height: 100%; }
 .tc-n { font: 800 16px/1 "Bricolage Grotesque", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 .tc-badge { position: absolute; top: -8px; left: -9px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 8px; background: #ff4d6a; color: #fff; font: 900 9.5px/15px system-ui; text-align: center; font-style: normal; box-sizing: border-box; }
 .tc-badge[hidden] { display: none; }
-.ab-name { font: 900 22px/1.05 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ab-prog { display: flex; align-items: center; gap: 9px; margin-top: 2px; }
-.tc-bar { flex: 1; display: block; min-width: 0; height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; }
+.tc-bar { flex: 1; display: block; min-width: 0; height: 6px; border-radius: 3px; background: rgba(0,0,0,.4); box-shadow: 0 0 0 1px rgba(255,255,255,.14); overflow: hidden; }
 .tc-bar u { display: block; height: 100%; border-radius: 3px; background: var(--ac, #35e0c8); text-decoration: none; transition: width .3s; }
-.ab-next { flex: none; font-size: 10.5px; font-weight: 700; color: #9aa4b6; white-space: nowrap; }
+.ab-next { flex: none; font-size: 11px; font-weight: 800; color: #dfe6f3; white-space: nowrap; }
 .tc-d { position: absolute; right: 100%; top: 0; margin-right: 8px; font: 900 16px/1 system-ui; opacity: 0; pointer-events: none; white-space: nowrap; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
 .tc-d.up { color: #7cf29c; } .tc-d.down { color: #ff6b81; }
 .tc-d.go { animation: tcPop 1.5s ease-out; }
 @keyframes tcPop { 0% { opacity: 0; transform: translateY(8px) scale(.7); } 15% { opacity: 1; transform: translateY(0) scale(1.15); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
-/* a faint painted copy of your arena behind the character (inside the stage, under everything) */
-#m-arena-bg { position: absolute; left: 50%; top: 0; transform: translateX(-50%); z-index: -1; pointer-events: none; opacity: .55; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 24%, #000 66%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 24%, #000 66%, transparent 100%); }
+/* the island: it floats under the player and bobs slowly */
+.m-isle { position: relative; z-index: 1; display: flex; justify-content: center; width: 100%; margin: auto 0; animation: isleBob 6.5s ease-in-out infinite; }
+.m-isle .pt-row { margin: 0; }
+.m-isle-art { position: absolute; left: 50%; transform: translateX(-50%); z-index: 0; pointer-events: auto; max-width: none; }
+@keyframes isleBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@media (prefers-reduced-motion: reduce) { .m-isle { animation: none; } }
 /* trophies after a race, in the result line */
 .tr-res { display: inline-flex; align-items: center; gap: 4px; font-weight: 900; vertical-align: middle; } .tr-res .ico { width: 20px; height: 20px; } .tr-res.up { color: #7cf29c; } .tr-res.down { color: #ff6b81; }
 /* the stage: the arena banner on top, under it the tools (test switch, hanger), the character in the middle of what is left */
 .m-tab .m-stage { justify-content: flex-start; gap: 8px; }
-.m-stage .pt-row { margin-top: auto; margin-bottom: auto; }
 .m-stage.party .m-trophy { margin-top: 46px; }
 .m-tools { position: relative; z-index: 3; display: flex; justify-content: flex-end; align-items: center; gap: 10px; width: min(344px, 94%); align-self: center; }
 .m-tools .m-hanger { position: relative; top: auto; right: auto; }
