@@ -178,7 +178,7 @@
         storm: { w: 420, h: 200, float: 1, draw(c, P) { c.fillStyle = lg(c, 0, -190, 0, 0, [[0, mixc(P.cl, '#fff', .12)], [1, mixc(P.cl, '#000', .35)]]); for (const q of [[-130, -38, 46], [-76, -78, 56], [-6, -104, 64], [64, -80, 58], [124, -44, 48], [8, -42, 60]]) disc(c, q[0], q[1], q[2]); rrect(c, -170, -50, 340, 50, 24); },
                 glow(c, P) { c.fillStyle = rg(c, 0, -80, 2, 150, [[0, 'rgba(255,229,138,.38)'], [1, 'rgba(255,229,138,0)']]); disc(c, 0, -80, 150); } },
         stormb: { w: 420, h: 380, float: 1, draw(c, P) { c.translate(0, -205); c.fillStyle = lg(c, 0, -190, 0, 0, [[0, mixc(P.cl, '#fff', .12)], [1, mixc(P.cl, '#000', .35)]]); for (const q of [[-130, -38, 46], [-76, -78, 56], [-6, -104, 64], [64, -80, 58], [124, -44, 48], [8, -42, 60]]) disc(c, q[0], q[1], q[2]); rrect(c, -170, -50, 340, 50, 24); },
-                glow(c, P) { c.translate(0, -205); c.fillStyle = rg(c, 0, -80, 2, 150, [[0, 'rgba(255,229,138,.34)'], [1, 'rgba(255,229,138,0)']]); disc(c, 0, -80, 150); c.lineJoin = 'round'; c.lineCap = 'round'; const bolt = () => { c.beginPath(); c.moveTo(14, -6); c.lineTo(-10, 52); c.lineTo(12, 66); c.lineTo(-16, 130); c.lineTo(2, 142); c.lineTo(-20, 196); c.stroke(); }; c.strokeStyle = 'rgba(255,229,138,.28)'; c.lineWidth = 14; bolt(); c.strokeStyle = 'rgba(255,244,190,.95)'; c.lineWidth = 4.5; bolt(); } },
+                glow(c, P) { c.translate(0, -205); c.fillStyle = rg(c, 0, -80, 2, 150, [[0, 'rgba(255,229,138,.34)'], [1, 'rgba(255,229,138,0)']]); disc(c, 0, -80, 150); c.lineJoin = 'round'; c.lineCap = 'round'; const bolt = () => { c.beginPath(); c.moveTo(14, -46); c.lineTo(2, 0); c.lineTo(-10, 52); c.lineTo(12, 66); c.lineTo(-16, 130); c.lineTo(2, 142); c.lineTo(-20, 196); c.stroke(); }; c.strokeStyle = 'rgba(255,229,138,.28)'; c.lineWidth = 14; bolt(); c.strokeStyle = 'rgba(255,244,190,.95)'; c.lineWidth = 4.5; bolt(); c.fillStyle = rg(c, 14, -46, 1, 34, [[0, 'rgba(255,244,190,.9)'], [1, 'rgba(255,229,138,0)']]); disc(c, 14, -46, 34); } },
         crag: { w: 380, h: 300, draw(c, P) { c.fillStyle = lg(c, -170, 0, 170, 0, [[0, P.lt], [.5, P.col], [1, P.dk]]); poly(c, [[-180, 0], [-120, -120], [-90, -90], [-40, -230 - P.v * 30], [0, -150], [40, -200], [90, -110], [120, -150], [180, 0]]); c.fillStyle = 'rgba(255,255,255,.14)'; poly(c, [[-40, -230 - P.v * 30], [0, -150], [-12, -120], [-62, -150]]); } },
         bolt: { w: 140, h: 260, float: 1, draw() {}, glow(c, P) { c.strokeStyle = 'rgba(255,240,170,.95)'; c.lineWidth = 5; c.lineJoin = 'round'; c.beginPath(); c.moveTo(10, -250); c.lineTo(-14, -176); c.lineTo(10, -160); c.lineTo(-18, -86); c.lineTo(4, -70); c.lineTo(-22, 0); c.stroke(); c.strokeStyle = 'rgba(255,229,138,.3)'; c.lineWidth = 14; c.stroke(); } },
     };
@@ -286,8 +286,9 @@
             return { far, mid }; },
         2(r, Df, Dm) { const far = mk(), mid = mk();                                                                    // ROOFTOP: you climb out of a city; the skyline sinks, the sun sets behind it
             shuf(slots(5, r), r).forEach((x, q) => twr(far, 'facade', 44 + r() * 26, x, choice(r, [1, 2, 2, 3, 4, 5, 7]), q, r() < .35 ? 'spire' : 'flat', 0));
-            shuf(slots(3, r), r).forEach((x, q) => twr(mid, 'facade', 80 + r() * 36, x, choice(r, [2, 3, 4, 5, 7, 9]), q, 'flat', 1 + Math.floor(r() * 3)));
-            for (let q = 0; q < 3; q++) spr(far, 'birds', .1 + r() * .8, 380 + r() * 1500, .7 + r() * .4, q & 1);
+            shuf(slots(3, r), r).forEach((x, q) => twr(mid, 'facade', 80 + r() * 36, x, choice(r, [2, 3, 5, 7, 10, 14]), q, 'flat', 1 + Math.floor(r() * 3)));
+            for (let q = 0; q < 4; q++) spr(far, 'birds', .1 + r() * .8, 380 + r() * 1700, .7 + r() * .4, q & 1);
+            for (let q = 0; q < 8; q++) spr(q % 2 ? mid : far, 'cloud', .06 + r() * .88, 700 + q * 280 + r() * 150, .6 + r() * .6, q & 1, q % 2 ? .8 : .55);
             return { far, mid }; },
         3(r, Df, Dm) { const far = mk(), mid = mk();                                                                    // HARBOUR: cranes, a ship, a lighthouse, a stack of containers at the quay
             shuf(slots(3, r), r).forEach((x, q) => twr(far, 'lattice', 38 + r() * 14, x, 4 + Math.floor(r() * 12), q, 'jib'));
@@ -309,22 +310,23 @@
             return { far, mid }; },
         6(r, Df, Dm) { const far = mk(), mid = mk();                                                                    // MOUNTAIN: ridges and peaks at the foot of the climb that sink away, then clouds all the way up
             spr(far, 'ridge', .28, 0, 1.15, 0); spr(far, 'ridge', .82, 0, 1.05, 1); spr(far, 'peak', .52, 0, 1.2, 1); spr(mid, 'peak', .12, 0, .9, 0); spr(mid, 'pines', .74, 0, .95, 0); spr(mid, 'pines', .36, 0, .75, 1);
-            for (let q = 0; q < 9; q++) spr(q % 2 ? mid : far, 'cloud', .06 + r() * .88, 230 + q * 300 + r() * 160, .7 + r() * .6, q & 1, q % 2 ? .95 : .7);
+            for (let q = 0; q < 15; q++) spr(q % 2 ? mid : far, 'cloud', .06 + r() * .88, 200 + q * 190 + r() * 120, .7 + r() * .7, q & 1, q % 2 ? .95 : .7);
+            for (let q = 0; q < 5; q++) spr(q % 2 ? mid : far, 'birds', .1 + r() * .8, 350 + q * 460 + r() * 200, .8 + r() * .4, q & 1);
             return { far, mid }; },
         8(r, Df, Dm) { const far = mk(), mid = mk();                                                                    // VOLCANO: cones at the horizon, then ash clouds and rocks that hover in the heat
             spr(far, 'volcano', .26, 0, 1.0, 0); spr(far, 'volcano', .82, 0, .8, 1);
-            for (let q = 0; q < 7; q++) spr(q % 2 ? far : mid, 'cloud', .06 + r() * .88, 280 + q * 380 + r() * 200, .8 + r() * .6, q & 1, q % 2 ? .6 : .85);
-            for (let q = 0; q < 8; q++) spr(mid, 'rockfloat', .08 + r() * .84, 300 + q * 340 + r() * 200, .5 + r() * .4, q & 1);
-            for (let q = 0; q < 3; q++) spr(far, 'rockfloat', .1 + r() * .8, 500 + q * 800 + r() * 300, .5 + r() * .3, q & 1);
+            for (let q = 0; q < 13; q++) spr(q % 2 ? far : mid, 'cloud', .06 + r() * .88, 240 + q * 200 + r() * 140, .8 + r() * .7, q & 1, q % 2 ? .6 : .85);
+            for (let q = 0; q < 13; q++) spr(mid, 'rockfloat', .08 + r() * .84, 260 + q * 200 + r() * 140, .45 + r() * .45, q & 1);
+            for (let q = 0; q < 6; q++) spr(far, 'rockfloat', .1 + r() * .8, 400 + q * 340 + r() * 200, .45 + r() * .3, q & 1);
             return { far, mid }; },
         9(r, Df, Dm) { const far = mk(), mid = mk();                                                                    // SUMMIT: peaks through the cloud sea, then storms that carry their own lightning
             spr(far, 'peak', .22, 0, 1.0, 1); spr(far, 'peak', .7, 0, 1.25, 0); spr(far, 'crag', .5, 0, .9, 1); spr(mid, 'crag', .86, 0, .8, 0);
-            for (let q = 0; q < 6; q++) spr(mid, 'stormb', .1 + r() * .8, 420 + q * 480 + r() * 160, .7 + r() * .3, q & 1, .95);
-            for (let q = 0; q < 4; q++) spr(far, 'cloud', .06 + r() * .88, 300 + q * 600 + r() * 200, .8 + r() * .5, q & 1, .55);
+            for (let q = 0; q < 10; q++) spr(mid, 'stormb', .1 + r() * .8, 380 + q * 300 + r() * 120, .65 + r() * .35, q & 1, .95);
+            for (let q = 0; q < 10; q++) spr(far, 'cloud', .06 + r() * .88, 260 + q * 300 + r() * 160, .8 + r() * .6, q & 1, .55);
             return { far, mid }; },
     };
     [1, 2, 3, 4, 5, 6, 8, 9].forEach(i => { T[i].hz = .625; T[i].gnd = true; });
-    T[8].cloud = '#7a3a2c';
+    T[8].cloud = '#7a3a2c'; T[2].cloud = '#f0a98f';
     // the Playground and the Space Station are all sky: only things that can float (their lists are in `kinds`)
     function skyList(th, kinds, spacing, depthMax, r, a) {
         const L = mk(); for (let d = 40 + r() * 80; d < depthMax; d += spacing * (0.75 + r() * 0.5)) { const k = kinds[Math.floor(r() * kinds.length)]; spr(L, k, .06 + r() * .88, d + K[k].float * r() * 140, .8 + r() * .4, r() > .5 ? 1 : 0, a); }
@@ -359,7 +361,7 @@
         const r = rng((seed | 0) + idx * 97), L = Math.max(9000, typeof TRACK === 'number' ? TRACK : 9000);
         const Df = L * 0.09 + 1300, Dm = L * 0.2 + 1300;
         if (SCENE[idx]) { const o = SCENE[idx](r, Df, Dm); far = o.far; mid = o.mid; }
-        else { far = skyList(cur, cur.kinds.far, 330, Df, r, idx === 0 ? .62 : .8); mid = skyList(cur, cur.kinds.mid, 240, Dm, r, idx === 0 ? .95 : .92); }
+        else { const sp = idx === 7 ? .7 : 1; far = skyList(cur, cur.kinds.far, 330 * sp, Df, r, idx === 0 ? .62 : .8); mid = skyList(cur, cur.kinds.mid, 240 * sp, Dm, r, idx === 0 ? .95 : .92); }
         air = []; for (let a = 0; a < 26; a++) air.push({ x: r(), y: r(), s: .5 + r(), v: .4 + r() * .8 });
         flash = 0; flashAt = 3 + r() * 5; lastT = 0; bgKey = ''; mKey = '';
         warm(far, 'rfar'); warm(mid, 'rmid');                                                      // painted now, during the countdown, never in the middle of the race
@@ -388,7 +390,7 @@
         c.drawImage(vig, 0, 0, W, H);
     }
     const GLOW_T = { antenna: 3.2 };
-    function putGlow(c, s, kind, name, v, x, y, k, a, now, d) { const g = sprite(idx, kind, name, v, true); c.globalCompositeOperation = 'lighter'; put(c, g, x, y, k, a * (.55 + .45 * Math.sin(now * (GLOW_T[kind] || 5) + d)), 0); c.globalCompositeOperation = 'source-over'; }
+    function putGlow(c, s, kind, name, v, x, y, k, a, now, d) { const g = sprite(idx, kind, name, v, true); c.globalCompositeOperation = 'lighter'; put(c, g, x, y, k, kind === 'stormb' ? a * (.15 + .85 * Math.pow(Math.max(0, Math.sin(now * 1.6 + d)), 8)) : a * (.55 + .45 * Math.sin(now * (GLOW_T[kind] || 5) + d)), 0); c.globalCompositeOperation = 'source-over'; }
     function drawTower(c, t, name, W, H, gl) {
         const top = gl - t.ht; if (top >= H) return;
         const tl = tileOf(idx, t.st, t.w, name, t.v), P = tl.h, x = Math.round(W * t.x - t.w / 2), n0 = Math.max(0, Math.floor((gl - H) / P)), n1 = t.ht >= INF ? Math.ceil(gl / P) + 1 : t.ht / P - 1;
@@ -608,7 +610,7 @@
             try {
                 const sp = sprite(i, 'storm', 'far', 0), k = Math.min(1.5, w * .8 / sp.def.w), cx = w * .5, cy = h * .3;
                 put(c, sp, cx, cy, k, .95, 0);
-                const x0 = cx + w * .06, y0 = cy - 6, pts = [[x0, y0]]; let x = x0, y = y0; const rr = rng(77);
+                const x0 = cx + w * .06, y0 = cy - 46, pts = [[x0, y0], [x0 - 6, cy - 4]]; let x = x0 - 6, y = cy - 4; const rr = rng(77);
                 while (y < h * .56) { y += h * (.035 + rr() * .03); x += (rr() - .5) * w * .1; pts.push([x, y]); }
                 c.lineJoin = 'round'; c.lineCap = 'round'; c.globalCompositeOperation = 'lighter';
                 for (const [lw, a] of [[12, .18], [6, .35], [2.4, .95]]) { c.strokeStyle = 'rgba(255,238,170,' + a + ')'; c.lineWidth = lw; c.beginPath(); pts.forEach((q, n) => n ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); }
