@@ -73,3 +73,6 @@ Frame cost (headless Chromium, no GPU): 60 fps flat with all 32 visible; with a 
 - While the Gauntlet is the selected mode (`#s-start.gauntlet-mode`), `src/ui/crowd.js` + `crowd.css` put a grandstand behind your player with 32 little characters (one for every runner). Their looks come from `randomBotLook()` (skins, hats, faces, now and then a costume).
 - They hop with a squash, wave their arms, some hold a pennant, the stadium wave runs through the stands every 8-12 s (with confetti), cameras flash, and a light runs along the hoarding. Everybody pops in when the mode is picked; a new crowd each time.
 - Cost: the stands and the hoarding are painted once, the people canvas is redrawn about 25 times a second with 32 small sprite stamps (no rotated images: that is the slow path of a canvas). It only runs while the home tab is visible, and switches to a lite mode (no flashes or confetti, 16 fps) when drawing takes more than 7 ms. `Crowd.pause(true)` freezes it for tests.
+
+## Bumping in the Gauntlet
+With 32 runners on one course, ordinary shoving and head-stomps knocked you off your line all the time. In the Gauntlet players now pass through each other (`resolveBumps` skips the ordinary bump and the stomp when `gameMode === 'gauntlet'`). Power-ups still count: a Giant knocks people away, and a Shield still blocks it.

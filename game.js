@@ -1871,6 +1871,7 @@ function resolveBumps() {
             const distSq = dx * dx + dy * dy;
             if (distSq >= rs * rs || distSq === 0) continue;
             if (p1.giantT > 0 || p2.giantT > 0) { giantHit(p1, p2, dx); continue; }
+            if (gameMode === 'gauntlet') continue;                         // 32 runners on one course: ordinary players pass through each other (no shoving, no stomping you through the ledge). Only a Giant still knocks people away.
             const dist = Math.sqrt(distSq), overlap = rs - dist;
             const idle1 = p1.mode === 'idle', idle2 = p2.mode === 'idle';
             const dom1 = p1.shieldT > 0 && !(p2.shieldT > 0), dom2 = p2.shieldT > 0 && !(p1.shieldT > 0);      // a shield wins every bump
