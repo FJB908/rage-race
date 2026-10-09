@@ -1871,12 +1871,12 @@ function resolveBumps() {
             const distSq = dx * dx + dy * dy;
             if (distSq >= rs * rs || distSq === 0) continue;
             if (p1.giantT > 0 || p2.giantT > 0) { giantHit(p1, p2, dx); continue; }
-            if (gameMode === 'gauntlet') continue;                         // 32 runners on one course: ordinary players pass through each other (no shoving, no stomping you through the ledge). Only a Giant still knocks people away.
+            const soft = gameMode === 'gauntlet', lw1 = soft && p1.local ? .2 : 1, lw2 = soft && p2.local ? .2 : 1;      // Gauntlet (32 runners): you give way a lot less (a fifth), nobody stomps you through a ledge
             const dist = Math.sqrt(distSq), overlap = rs - dist;
             const idle1 = p1.mode === 'idle', idle2 = p2.mode === 'idle';
             const dom1 = p1.shieldT > 0 && !(p2.shieldT > 0), dom2 = p2.shieldT > 0 && !(p1.shieldT > 0);      // a shield wins every bump
             if (idle1 && idle2) {                         // two standing players: nudge apart sideways only
-                const s = dx !== 0 ? Math.sign(dx) : (Math.random() < 0.5 ? -1 : 1), push = Math.min(overlap, rs - Math.abs(dx)), a1 = dom1 ? 0 : dom2 ? 1 : 0.5, a2 = 1 - a1;
+                const s = dx !== 0 ? Math.sign(dx) : (Math.random() < 0.5 ? -1 : 1), push = Math.min(overlap, rs - Math.abs(dx)), b1 = dom1 ? 0 : dom2 ? 1 : 0.5, q1 = b1 * lw1, q2 = (1 - b1) * lw2, tq = (q1 + q2) || 1, a1 = q1 / tq, a2 = q2 / tq;
                 p1.x -= s * push * a1; p2.x += s * push * a2; p1.vx -= s * a1; p2.vx += s * a2;
             } else if (idle1 !== idle2) {                 // one stands, one is in the air: only the flyer gives way
                 const S = idle1 ? p1 : p2, F = idle1 ? p2 : p1;
@@ -1887,7 +1887,7 @@ function resolveBumps() {
                     continue;
                 }
                 // STOMP: landing on someone's head knocks them down through the platform they stand on
-                if (F.vy > 150 && F.y < S.y - 4 && Math.abs(F.x - S.x) < rs * 0.8 && S.plat && !S.plat.ground && !(S._stompTick && bumpTick - S._stompTick < 30)) {
+                if (!soft && F.vy > 150 && F.y < S.y - 4 && Math.abs(F.x - S.x) < rs * 0.8 && S.plat && !S.plat.ground && !(S._stompTick && bumpTick - S._stompTick < 30)) {
                     if (shieldBlocks(S)) { F.vy = -260; F.vx += (F.x >= S.x ? 1 : -1) * 120; continue; }
                     S._stompTick = bumpTick;
                     S.dropPlat = S.plat; S.dropT = 0.6;
@@ -1900,12 +1900,13 @@ function resolveBumps() {
                 }
                 const side = F.x !== S.x ? Math.sign(F.x - S.x) : (Math.random() < 0.5 ? -1 : 1);
                 const need = Math.sqrt(Math.max(0, rs * rs - (F.y - S.y) * (F.y - S.y))) + 0.5;   // sideways distance that clears the overlap
-                F.x = S.x + side * Math.max(need, Math.abs(F.x - S.x));
-                F.vx += side * 80;
+                F.x = S.x + side * Math.max(need * (soft && F.local ? .5 : 1), Math.abs(F.x - S.x));
+                F.vx += side * (soft && F.local ? 25 : 80);
                 if (F.vy > 0) F.vy *= 0.5;                // soften the fall onto the person below
             } else {                                      // both airborne: classic mass-weighted shove
                 const m1 = massOf(p1), m2 = massOf(p2);
-                let w1 = m2 / (m1 + m2), w2 = m1 / (m1 + m2);
+                let w1 = m2 / (m1 + m2) * lw1, w2 = m1 / (m1 + m2) * lw2;
+                if (soft) { const t = w1 + w2; w1 /= t; w2 /= t; }
                 if (dom1) { w1 = 0; w2 = 1; } else if (dom2) { w1 = 1; w2 = 0; }                     // the shielded one is not moved at all
                 const nx = dx / dist, ny = dy / dist;
                 p1.x -= nx * overlap * w1; p1.y -= ny * overlap * w1;
